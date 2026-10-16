@@ -1,5 +1,22 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+INSTALARE INTERNA PREGATITA (inca fara scriere): autorizare explicita utilizator
+boot/system pe partiile actuale, inclusiv formatarea userdata; declara backup.
+Backup live suplimentar boot/system salvat/verificat in backup-live/kaios-before-internal.
+system KaiOS MD5 da7c173453b8b7f6c47c39f4c9dc46a2, SHA256
+a16d027dba2702fc9114ef3269770c30595a8e9b595329e5b7527588345fbdd6.
+Boot original SHA256 a23fcbcc993a0f5f1f03736eb59d7e431604d9c2d8900f100b927c06a1c81338.
+ADB sync pull pe nod block este binar corect; exec-out nu merge in early adbd,
+iar shell -T altereaza newline-uri in binar, deci acele capturi sunt invalide.
+Boot intern offline SHA256 f2dfea4a3390fc9f885a92ede53053aaeaa54ed97038f88d0aef470304d67c44.
+System intern SHA256 84fa95846c85036873082a7e4c4d1a08814fc7fd7e063026b8bc79be24f663e6.
+Include Keymaster, layout corectat, LeoShell ca aplicatie system si setup dupa boot.
+LeoShell lasa acum vizibila bara Android SystemUI, pe langa bara proprie soft-key.
+framework-mount.c are mod explicit /leo-framework-internal cu validare model,
+serial, nume/dimensiuni/major-minor si monteaza p30 system RO/p39 userdata RW.
+Scriptul installer verifica backup si readback, formateaza userdata numai cu
+--install --format-userdata, scrie boot ultimul si nu atinge recovery/radio.
+
 LEO SHELL INSTALAT: ro.leo.shell/.MainActivity, APK10160 bytes SHA256
 8a26524841e6612c7a9740e6c1ebc42360d216b62889cd5d0d88e6dbb547ab04.
 Compilat cu aapt/javac8/dx/signapk; zipalign INAINTE de signapk (dupa semnare

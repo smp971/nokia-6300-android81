@@ -1,4 +1,4 @@
-/* Mount only dedicated test image FILES on removable SD; never internal partitions. */
+/* Explicit boot modes: SD image files, or validated internal Android partitions. */
 #define _GNU_SOURCE
 #include <errno.h>
 #include <fcntl.h>
@@ -36,6 +36,23 @@ static int loop_image(const char *file,const char *target,int number,int readonl
 }
 int main(void){
     char buf[256];
+    if(access("/leo-framework-internal",F_OK)==0){
+        char identity[2048];
+        if(text("/proc/cmdline",identity,sizeof(identity))||!strstr(identity,"androidboot.serialno=695d ")||!strstr(identity,"androidboot.hw.name=leo "))return 20;
+        if(text("/sys/class/block/mmcblk0p30/dev",buf,sizeof(buf))||strcmp(buf,"179:30\n"))return 21;
+        if(text("/sys/class/block/mmcblk0p30/size",buf,sizeof(buf))||strcmp(buf,"1638400\n"))return 22;
+        if(text("/sys/class/block/mmcblk0p30/uevent",buf,sizeof(buf))||!strstr(buf,"PARTNAME=system\n"))return 23;
+        if(text("/sys/class/block/mmcblk0p39/dev",buf,sizeof(buf))||strcmp(buf,"259:7\n"))return 24;
+        if(text("/sys/class/block/mmcblk0p39/size",buf,sizeof(buf))||strcmp(buf,"5013471\n"))return 25;
+        if(text("/sys/class/block/mmcblk0p39/uevent",buf,sizeof(buf))||!strstr(buf,"PARTNAME=userdata\n"))return 26;
+        if(mknod("/dev/leo-internal-system",S_IFBLK|0600,makedev(179,30))&&errno!=EEXIST)return 27;
+        if(mknod("/dev/leo-internal-data",S_IFBLK|0600,makedev(259,7))&&errno!=EEXIST)return 28;
+        mkdir("/system",0755);mkdir("/data",0771);
+        if(mount("/dev/leo-internal-system","/system","ext4",MS_RDONLY|MS_NODEV,"noload")){perror("internal system");return 29;}
+        if(access("/system/framework/services.jar",R_OK)){fputs("Not an Android system partition\n",stderr);return 30;}
+        if(mount("/dev/leo-internal-data","/data","ext4",MS_NOSUID|MS_NODEV,"errors=remount-ro")){perror("internal data");return 31;}
+        puts("LEO_INTERNAL_ANDROID_PARTITIONS_MOUNTED");return 0;
+    }
     /* This kernel reports removable=0 even for the SD slot; verify card type. */
     if(text("/sys/class/block/mmcblk1/device/type",buf,sizeof(buf))||strcmp(buf,"SD\n"))return 2;
     if(text("/sys/class/block/mmcblk1p1/dev",buf,sizeof(buf))||strcmp(buf,"179:65\n"))return 3;

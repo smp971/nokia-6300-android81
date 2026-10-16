@@ -1,0 +1,3 @@
+# Internal Android partitions, formatted/installed only by the guarded PC script.
+/dev/block/mmcblk0p30 /system ext4 ro wait
+/dev/block/mmcblk0p39 /data ext4 noatime,nosuid,nodev wait

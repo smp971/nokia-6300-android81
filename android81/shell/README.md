@@ -10,7 +10,8 @@ dezactiveaza accelerarea HWUI. SurfaceFlinger ramane necesar pentru afisare.
 - Inapoi revine la ecranul principal. Tasta Home este gestionata de Android.
 - Bara inferioara afiseaza actiunile curente ale soft stanga / OK / soft dreapta.
 
-Bara apartine launcherului. Nu se suprapune peste aplicatiile deschise si nu
+Bara de stare SystemUI Android este vizibila deasupra shellului. Bara tastelor
+apartine launcherului. Nu se suprapune peste aplicatiile deschise si nu
 pretinde ca acestea sunt adaptate la taste. Aplicatiile pot ramane lente pe
 SwiftShader. Nu furnizeaza T9, modem, browser propriu sau servicii KaiOS.
 Ceasul foloseste data sistemului: fara sincronizare, aceasta poate fi incorecta.

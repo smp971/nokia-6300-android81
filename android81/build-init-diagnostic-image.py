@@ -5,7 +5,9 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--ui',action='store_true',help='Embed native UI test and start init automatically')
 parser.add_argument('--graphics',action='store_true',help='Embed tested RAM graphics runtime and automatic startup')
 parser.add_argument('--framework',action='store_true',help='Boot full framework from dedicated SD image files')
+parser.add_argument('--internal',action='store_true',help='Boot Android from validated system/userdata partitions')
 args=parser.parse_args()
+if args.internal:args.framework=True
 if args.graphics:args.ui=True
 here=Path(__file__).resolve().parent;out=here/'output'
 def digest(b):return hashlib.sha256(b).hexdigest()
@@ -19,9 +21,9 @@ def parse(b):
         n=c[i+110:i+109+f[11]].decode();a=(i+110+f[11]+3)&~3
         if n=='TRAILER!!!':return k,r,p,off,e
         assert n not in e;e[n]=(f,c[a:a+f[6]]);i=(a+f[6]+3)&~3
-stock=(here/'backup-live/recovery-device.img').read_bytes()
+stock=(here/('backup-live/boot-device.img' if args.internal else 'backup-live/recovery-device.img')).read_bytes()
 saved=json.loads((here/'backup-live/checksums.json').read_text())
-assert digest(stock)==saved['recovery']['sha256']
+assert digest(stock)==saved['boot' if args.internal else 'recovery']['sha256']
 probe=(out/'boot-ramdisk-probe.img').read_bytes()
 assert digest(probe)=='8efb73d20c085d731a07d55cfe4ed15bbe2bcf279c7da1ee714357d59bfe1b3f'
 k,r,page,off,stockentries=parse(stock)
@@ -108,6 +110,9 @@ if args.framework:
     put('leo-autostart-android',b'Android framework SD diagnostic.\n',0o100644)
     put('prop.default',e['default.prop'][1],0o100644)
     put('fstab.qcom',(here/'device/nokia/leo/framework.fstab').read_bytes(),0o100644)
+    if args.internal:
+        put('leo-framework-internal',b'Validated internal Android partitions.\n',0o100644)
+        put('fstab.qcom',(here/'device/nokia/leo/internal.fstab').read_bytes(),0o100644)
     put('init.qcom.rc',b'''# System and test data are already mounted by bootstrap from SD files.
 on init
     setprop ro.opengles.version 131072
@@ -125,6 +130,25 @@ on boot
     setprop service.bootanim.exit 1
     trigger nonencrypted
 ''',0o100750)
+    if args.internal:
+        internal_rc=e['init.qcom.rc'][1]+b'''
+on post-fs-data
+    # Volatile compressed RAM; no swap writes to internal flash or SD.
+    write /sys/block/zram0/disksize 268435456
+    exec -- /system/bin/mkswap /dev/block/zram0
+    exec -- /system/bin/swapon /dev/block/zram0
+
+on property:sys.boot_completed=1
+    start leo_first_setup
+
+service leo_first_setup /system/bin/sh /system/etc/leo-first-setup.sh
+    user root
+    group root system shell
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+'''
+        put('init.qcom.rc',internal_rc,0o100750)
 if args.graphics:
     archive=(out/'graphics-runtime.tar.gz').read_bytes()
     graphics_meta=json.loads((out/'graphics-runtime.json').read_text())
@@ -187,7 +211,7 @@ assert image[max(end,off+up(r)):]==stock[max(end,off+up(r)):]
 check=parse(image)[4]
 assert len(check)==len(e)
 for n,(f,b) in e.items():assert check[n][1]==b and check[n][0][1]==f[1],n
-stem='recovery-android81-framework' if args.framework else 'recovery-android81-graphics' if args.graphics else 'recovery-android81-ui' if args.ui else 'recovery-init-diagnostic'
+stem='boot-android81-internal' if args.internal else 'recovery-android81-framework' if args.framework else 'recovery-android81-graphics' if args.graphics else 'recovery-android81-ui' if args.ui else 'recovery-init-diagnostic'
 (out/(stem+'.img')).write_bytes(image)
 report={'bytes':len(image),'md5':hashlib.md5(image).hexdigest(),'sha256':digest(image),
         'kernel_unchanged':True,'stock_os_version_preserved':True,'stock_cmdline_preserved':True,
@@ -207,6 +231,7 @@ report.update(graphics_embedded=args.graphics,ramdisk_compressed_bytes=len(packe
 if args.framework:
     framework_meta=json.loads((out/'framework-runtime.json').read_text())
     report.update(framework_launcher_included=True,framework_boot_pending=True,android_init_autostart=True,auto_normal_reboot_without_init_gate=False,external_test_image_mounts=['system read-only','data read-write'],framework_system_image_sha256=framework_meta['images']['system.raw.img']['sha256'])
+    if args.internal:report.update(boot_from_internal_partitions=True,external_test_image_mounts=[],persistent_partitions_mounted=['system read-only','userdata read-write','cache diagnostic logs'],stock_image_base='boot',recovery_partition_unchanged=True)
 if args.graphics:report['graphics_runtime_sha256']=graphics_meta['sha256']
 if args.ui:
     report.update(auto_normal_reboot_without_init_gate=False,native_ui_sha256=digest(ui))

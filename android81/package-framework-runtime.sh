@@ -16,6 +16,17 @@ mkdir -p "$STAGE/system"
 rsync -a "$PRODUCT/system/" "$STAGE/system/"
 cp "$PRODUCT/system/vendor/lib/hw/hwcomposer.leo.so" "$STAGE/system/vendor/lib/hw/hwcomposer.default.so"
 cp "$TASK_DIR/device/nokia/leo/framework.fstab" "$STAGE/system/etc/recovery.fstab"
+if [ "${LEO_INTERNAL_PACKAGE:-0}" = 1 ]; then
+    cp "$TASK_DIR/device/nokia/leo/internal.fstab" "$STAGE/system/etc/recovery.fstab"
+    for layout in matrix_keypad gpio-keys qpnp_pon; do
+        cp "$TASK_DIR/device/nokia/leo/$layout.kl" "$STAGE/system/usr/keylayout/$layout.kl"
+    done
+    test -s "$STAGE/system/vendor/lib/hw/android.hardware.keymaster@3.0-impl.so"
+    mkdir -p "$STAGE/system/app/LeoShell"
+    cp "$DEST/leo-shell.apk" "$STAGE/system/app/LeoShell/LeoShell.apk"
+    cp "$TASK_DIR/leo-first-setup.sh" "$STAGE/system/etc/leo-first-setup.sh"
+    chmod 644 "$STAGE/system/etc/leo-first-setup.sh"
+fi
 rm -f "$STAGE/system/bin/install-recovery.sh"
 CONTEXTS="$PRODUCT/obj/ETC/file_contexts.bin_intermediates/file_contexts.bin"
 test -s "$CONTEXTS"

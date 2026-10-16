@@ -13,7 +13,6 @@ import android.os.Handler;
 import android.telephony.TelephonyManager;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.WindowManager;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,8 +34,8 @@ public class MainActivity extends Activity {
 
     public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                             WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        // Keep Android's compact SystemUI status bar (battery, radio, clock).
+        getWindow().setStatusBarColor(Color.rgb(12, 20, 30));
         shell = new ShellView();
         setContentView(shell);
     }
