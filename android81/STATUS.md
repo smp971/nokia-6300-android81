@@ -1,5 +1,18 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+REMEDIERE KEYSTORE PROBATA: lipsa HAL android.hardware.keymaster@3.0-impl
+ducea la iesirea Keystore si NullPointerException IKeystoreService.exist in
+ConnectivityService la USER_STARTED, apoi restart system_server. Compilate cu
+succes implementarea si serviciul Keymaster3 (keymaster-build.log, exit0).
+test-keymaster-overlay.py a adaugat biblioteca prin bind mount volatil al
+/system/vendor/lib/hw, fara modificarea imaginii SD/recovery. SHA256 HAL:
+73d3ad778590737bf7a10cfaefaf9bb66787bcf78c741f748eb3841945e13d99.
+Dupa proba: init.svc.keystore=running, service android.security.keystore found;
+jurnalul confirma folosirea SoftKeymasterDevice software. Persistenta la reboot
+necesita regenerarea pachetului system cu noile PRODUCT_PACKAGES deja adaugate.
+Launcher ramane nevalidat: pm enable component a reusit, start explicit inca
+returneaza Error type3. Nu este declarata finalizata stabilizarea intregii interfete.
+
 CONTROL FARA TOUCH: ADB 695d conectat, uid=0 confirmat. Prin serviciul
 lock_settings: `set-disabled true` reusit si `get-disabled` returneaza true.
 Setari numai in data imaginii de test: screen_off_timeout=1800000;
