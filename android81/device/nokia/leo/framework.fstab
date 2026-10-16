@@ -1,0 +1,3 @@
+# Dedicated SD image loops only; bootstrap has already mounted them.
+/dev/block/loop0 /system ext4 ro wait
+/dev/block/loop1 /data ext4 noatime,nosuid,nodev wait

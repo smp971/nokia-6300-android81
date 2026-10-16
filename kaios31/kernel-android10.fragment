@@ -1,0 +1,4 @@
+# Candidate for a SEPARATE experimental kernel; never apply to the running stock OS.
+# Confirmed mismatch: stock kernel Binder protocol 7, donor userspace protocol 8.
+# Existing stock Binder clients must not be assumed compatible after this change.
+# CONFIG_ANDROID_BINDER_IPC_32BIT is not set

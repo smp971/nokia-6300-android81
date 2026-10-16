@@ -1,0 +1,2 @@
+add_lunch_combo aosp_leo_diag-eng
+add_lunch_combo aosp_leo_go-eng

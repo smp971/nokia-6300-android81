@@ -1,0 +1,2 @@
+# First diagnostic target intentionally excludes userdata, cache and modem/NV.
+/dev/block/bootdevice/by-name/system /system ext4 ro,barrier=1 wait

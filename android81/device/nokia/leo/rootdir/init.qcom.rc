@@ -1,0 +1,18 @@
+import /init.leo.usb.rc
+
+on fs
+    # Requires an Android diagnostic system image, not the stock KaiOS system.
+    mount_all /fstab.qcom
+    # Volatile diagnostic data; do not mount or format the stock userdata.
+    mount tmpfs tmpfs /data mode=0771,uid=1000,gid=1000
+
+on post-fs-data
+    mkdir /data/misc 01771 system misc
+    mkdir /data/misc/adb 02750 system shell
+    mkdir /data/local 0751 root root
+    mkdir /data/local/tmp 0771 shell shell
+
+on boot
+    # AOSP init.usb.rc resets this to 0 in its earlier boot action.
+    setprop sys.usb.configfs 1
+    setprop sys.usb.config adb

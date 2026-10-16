@@ -1,0 +1,18 @@
+# Shared Nokia hardware bring-up configuration.
+PRODUCT_COPY_FILES += \
+    device/nokia/leo/prebuilt/kernel:kernel \
+    device/nokia/leo/rootdir/init.qcom.rc:root/init.qcom.rc \
+    device/nokia/leo/rootdir/fstab.qcom:root/fstab.qcom \
+    device/nokia/leo/rootdir/ueventd.qcom.rc:root/ueventd.qcom.rc \
+    device/nokia/leo/rootdir/init.leo.usb.rc:root/init.leo.usb.rc \
+    device/nokia/leo/matrix_keypad.kl:system/usr/keylayout/matrix_keypad.kl
+# The diagnostic build has no UI to approve an ADB authentication prompt.
+ifneq ($(wildcard device/nokia/leo/local/adb_keys),)
+PRODUCT_COPY_FILES += device/nokia/leo/local/adb_keys:root/adb_keys
+endif
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.config.low_ram=true \
+    ro.adb.secure=1 \
+    persist.sys.usb.config=adb
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.sf.lcd_density=120

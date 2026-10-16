@@ -1,0 +1,21 @@
+# Adapted for the msm_hsusb controller observed on the real Nokia.
+# Standard Android 8.1 init.usb.configfs.rc binds after adbd opens FunctionFS.
+on init
+    mkdir /config 0755 root root
+    mount configfs none /config
+    mkdir /config/usb_gadget/g1 0770 shell shell
+    write /config/usb_gadget/g1/idVendor 0x18d1
+    write /config/usb_gadget/g1/idProduct 0xd001
+    mkdir /config/usb_gadget/g1/strings/0x409 0770 shell shell
+    write /config/usb_gadget/g1/strings/0x409/serialnumber ${ro.boot.serialno}
+    write /config/usb_gadget/g1/strings/0x409/manufacturer Nokia
+    write /config/usb_gadget/g1/strings/0x409/product "Leo Android Diagnostic"
+    mkdir /config/usb_gadget/g1/functions/ffs.adb 0770 shell shell
+    mkdir /config/usb_gadget/g1/configs/b.1 0770 shell shell
+    mkdir /config/usb_gadget/g1/configs/b.1/strings/0x409 0770 shell shell
+    write /config/usb_gadget/g1/configs/b.1/MaxPower 500
+    mkdir /dev/usb-ffs 0770 shell shell
+    mkdir /dev/usb-ffs/adb 0770 shell shell
+    mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=2000
+    setprop sys.usb.controller msm_hsusb
+    setprop sys.usb.configfs 1
