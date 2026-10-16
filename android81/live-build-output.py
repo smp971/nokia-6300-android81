@@ -11,6 +11,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/log':
             try:
                 candidates = [Path(LOG), Path(LOG).with_name('keymaster-build.log'),
+                              Path(LOG).with_name('settings-fix-build.log'),
+                              Path(LOG).with_name('radio-compat-build.log'),
+                              Path(__file__).parent/'output/radio-audit/linker-probe.txt',
                               Path(__file__).parent/'output/internal-install.json']
                 current = max((p for p in candidates if p.exists()), key=lambda p: p.stat().st_mtime)
                 with current.open(encoding='utf-8', errors='replace') as stream:

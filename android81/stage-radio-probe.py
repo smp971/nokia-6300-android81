@@ -28,7 +28,11 @@ modern_xml = Path('//wsl.localhost/kaios/root/android81-leo/src/out/target/produ
 if modern_xml.exists():
     shutil.copy2(modern_xml, stage/'lib/libxml2.so')
 (OUT/'radio-audit/staged-libraries.json').write_text(json.dumps(copied, indent=2))
-subprocess.run(ADB+['push', str(stage), '/tmp/leo-radio-probe'], check=True)
+subprocess.run(ADB+['shell', '/sbin/leo-framework-exec /system/bin/mkdir -p '
+                   '/tmp/leo-radio-probe/lib'], check=True)
+subprocess.run(ADB+['push', *map(str, sorted((stage/'lib').glob('*.so'))),
+                   '/tmp/leo-radio-probe/lib/'], check=True)
+subprocess.run(ADB+['push', str(stage/'probe'), '/tmp/leo-radio-probe/probe'], check=True)
 for name in ('libril.so', 'librilutils.so'):
     subprocess.run(ADB+['shell', '/sbin/leo-framework-exec /system/bin/rm -f '
                        '/tmp/leo-radio-probe/lib/'+name], check=True)

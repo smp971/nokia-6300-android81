@@ -2,7 +2,8 @@
 
 Repository local pentru sursele, configurarile si uneltele dezvoltate in acest
 proiect. Dump-urile, datele private, cheile ADB, kernelul precompilat, imaginile
-generate si rapoartele brute raman local, in afara Git.
+generate si rapoartele brute raman local, in afara Git. Capturile selectate
+pentru documentatie sunt incluse in `android81/screenshots`.
 
 - `android81/device/nokia/leo`: produs AOSP, initializare, tastatura si componente native.
 - `android81`: scripturi de compilare, patch-uri AOSP reproductibile, impachetare si diagnostic.
@@ -17,7 +18,22 @@ locale se aplica prin scripturile din acest repository; nu este copiat aici.
 Istoricul incepe cu starea existenta la initializarea Git. Experimentele vechi
 nu au commit-uri retroactive; documentatia pastreaza rezultatele lor.
 Modificarile viitoare se salveaza in commit-uri distincte, cu verificarea efectuata
-si limitarile cunoscute. Nu este configurat niciun remote si nimic nu este publicat.
+si limitarile cunoscute. Sursele sunt sincronizate in repository-ul privat GitHub
+`smp971/nokia-6300-android81`.
+
+## Capturi de pe telefon
+
+Android 8.1 ruleaza de pe memoria interna. Leo Shell afiseaza aplicatiile,
+bara de stare Android si actiunile tastelor soft. Setari se deschide dupa
+corectarea verificarii serviciului Wi-Fi Direct absent. Prezenta categoriilor
+de conectivitate nu inseamna ca modemul, Wi-Fi sau Bluetooth functioneaza.
+
+| Leo Shell | Setari |
+| --- | --- |
+| ![Leo Shell pe Nokia 6300](android81/screenshots/leo-shell.png) | ![Setari Android 8.1](android81/screenshots/settings.png) |
+
+Capturi reale la 240 x 320, obtinute prin ADB pe 16 octombrie 2026.
+Ceasul telefonului nu este inca sincronizat.
 
 Acesta este un prototip de diagnostic, nu un ROM pregatit pentru utilizare zilnica.
 Scripturile de flash valideaza tinta; consultati sursele inainte de executare.
