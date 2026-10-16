@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('key', choices=['HOME', 'BACK', 'MENU', 'DPAD_UP', 'DPAD_DOWN',
                                   'DPAD_LEFT', 'DPAD_RIGHT', 'DPAD_CENTER'])
 parser.add_argument('--capture', action='store_true')
+parser.add_argument('--scan-code', type=int, help='Choose a specific physical key when mappings repeat')
 args = parser.parse_args()
 
 def call(*arguments):
@@ -26,8 +27,9 @@ assert call('shell', '/system/bin/busybox cat /sys/class/input/event1/device/nam
 layout = call('shell', HELPER + '/system/bin/cat /system/usr/keylayout/matrix_keypad.kl')
 matches = [int(parts[1]) for line in layout.splitlines()
            if len(parts := line.split()) >= 3 and parts[0] == 'key' and parts[2] == args.key]
-assert len(matches) == 1, 'Expected one installed key mapping'
-code = matches[0]
+assert matches, 'No installed key mapping'
+code = args.scan_code if args.scan_code is not None else matches[0]
+assert code in matches, 'Requested scan code does not map to this Android action'
 
 def event(event_type, value):
     call('shell', HELPER + f'/system/bin/sendevent /dev/input/event1 {event_type} {code if event_type else 0} {value}')

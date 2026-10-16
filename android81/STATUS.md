@@ -1,5 +1,19 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+CALIBRARE FIZICA: utilizatorul confirma soft stanga->meniu Launcher,
+soft dreapta->Back, Apel->Telefon, EndCall->Home. Captura binara event1 dupa
+apasarea dedicata Meniu apoi Back: EV_KEY212 down/up (MSC_SCAN8), respectiv
+EV_KEY14 down/up (MSC_SCAN25). Corectat14 DEL->BACK in matrix_keypad.kl.
+212 era deja MENU, deci lipsa de reactie necesita verificare in aplicatie.
+Maparile au fost copiate intr-un director volatil /tmp/leo-keylayout, bind peste
+/system/usr/keylayout; ctl.restart zygote pentru recitire, fara flash/reboot.
+InputReader confirma matrix_keypad.kl si gpio-keys.kl. qpnp_pon a cazut pe
+Generic deoarece flag WAKE nu este suportat in InputEventLabels.h AOSP8.1;
+flag eliminat din surse. Reincarcarea acestei corectii qpnp_pon ramane in asteptare.
+navigate-keypad.py permite --scan-code pentru actiuni duplicate, de exemplu
+BACK --scan-code14 si MENU --scan-code212. Prima captura getevent prin pipe
+nu a pastrat datele; captura binara cu dd in namespace PID1 a reusit.
+
 NAVIGARE RAW ADB: navigate-keypad.py citeste maparea .kl instalata, verifica
 serial695d/root/numele event1 si injecteaza EV_KEY+SYN_REPORT down/up. Tastele
 CALL/POWER nu sunt expuse de utilitar. Release se executa in finally.

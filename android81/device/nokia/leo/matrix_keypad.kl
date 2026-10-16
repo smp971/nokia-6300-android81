@@ -46,11 +46,11 @@ key 106     DPAD_RIGHT
 key 352     DPAD_CENTER
 key 231     CALL
 
-key 14      DEL
+# Dedicated back-arrow key: physically verified through EV_KEY capture.
+key 14      BACK
 key 107     HOME
 key 212     MENU
 key 522     STAR
 key 523     POUND
 
 #key 116     POWER      WAKE
-
