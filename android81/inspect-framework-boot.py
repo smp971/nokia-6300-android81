@@ -6,7 +6,7 @@ ADB=['D:/ROMS/platform-tools/adb.exe','-s','695d']
 HELPER='/sbin/leo-framework-exec '
 def shell(command):
     try:
-        r=subprocess.run(ADB+['shell',command],capture_output=True,text=True,timeout=25)
+        r=subprocess.run(ADB+['shell',command],capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=25)
         return {'returncode':r.returncode,'stdout':r.stdout.replace('\r',''),'stderr':r.stderr}
     except subprocess.TimeoutExpired:return {'error':'timeout'}
 identity=shell('/system/bin/busybox cat /proc/cmdline')

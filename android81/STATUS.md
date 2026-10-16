@@ -1,5 +1,23 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+LAUNCHER AFISAT: dupa remedierea Keystore, system_server PID8614 a ramas activ
+pe durata verificarilor urmatoare. Captura framebuffer via screencap RAW confirma
+ecranul Launcher cu Email, Gallery, Phone si lista aplicatiilor. dumpsys window:
+mCurrentFocus=com.android.launcher3/com.android.launcher3.Launcher;
+activity ResumedActivity=.Launcher. Nu implica validare fizica D-pad sau stabilitate
+pe termen lung. Captura locala output/framework-screen-current.png.
+Erori recente separate: Bluetooth crapa in hci_layer_android.cc:109,
+btHci==nullptr (HAL neinclus/neintegrat). Pentru test a fost dezactivat prin
+svc bluetooth disable, bluetooth_on=0, ble_scan_always_enabled=0;
+dumpsys bluetooth_manager confirma enabled=false, state=OFF.
+ANR Dialer: main asteapta ThreadedRenderer.nFence, RenderThread lucreaza in
+SwiftShader. Aceasta este o problema grafica/performance ramasa de investigat;
+nu este declarata reparata prin oprirea Bluetooth.
+inspect-framework-boot.py citeste explicit UTF-8 cu errors=replace; logcat poate
+contine octeti care nu sunt decodabili cu cp1252 implicit pe Windows.
+Keystore ramane inregistrat. ADB/root disponibil. Nu s-a scris recovery in aceasta
+etapa; remedierea Keymaster este inca bind mount volatil, dispare la reboot.
+
 REMEDIERE KEYSTORE PROBATA: lipsa HAL android.hardware.keymaster@3.0-impl
 ducea la iesirea Keystore si NullPointerException IKeystoreService.exist in
 ConnectivityService la USER_STARTED, apoi restart system_server. Compilate cu
