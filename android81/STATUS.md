@@ -1,4 +1,14 @@
-# Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
+# Etapa initiala Android 8.1 â€” actualizat 16 octombrie 2026
+
+SETARI REPARATE: WifiDisplaySettings.isAvailable interoga wifip2p absent,
+producand system_app_wtf si inchidere fatala in build eng (UID system).
+patch-settings-optional-wifi.py verifica FEATURE_WIFI_DIRECT inaintea serviciului.
+Build make Settings reusit; APK instalat cu pm install -r ca actualizare system
+in /data/app pe memoria interna. Nu s-au rescris boot/recovery si nu s-au
+formatat datele. Verificat Settings RESUMED, proces viu si lista de categorii
+vizibila in output/settings-fixed2.png. Initial afiseaza temporar pagina alba;
+performanta aplicatiilor ramane limitata. Wi-Fi/modem nu devin functionale prin
+aceasta corectie. Build-framework aplica patch-ul si pentru imaginile viitoare.
 
 VALIDARE FINALA INTERNA: dupa repornirea cu gralloc corectat, SF PID343 si
 system_server PID429 au ramas aceleasi pe durata probelor (cateva minute).
@@ -63,7 +73,7 @@ Compilat cu aapt/javac8/dx/signapk; zipalign INAINTE de signapk (dupa semnare
 strica semnatura v2). pm install prin framework-command.py: Success.
 set-home-activity: Success, HOME107 si ResumedActivity confirma Leo Shell.
 View Canvas software, hardwareAccelerated=false, fara wallpaper/animatii/WebView.
-Bara jos contextuala: Meniu/Aplicatii/— pe home, Acasa/Deschide/Inapoi in lista.
+Bara jos contextuala: Meniu/Aplicatii/â€” pe home, Acasa/Deschide/Inapoi in lista.
 Probe raw139 MENU,106RIGHT,14BACK si212MENU: capturi confirma home/lista/selectie;
 BACK14 revine acasa. Meminfo moment proba: TOTAL PSS9398KiB, swap PSS2036KiB,
 WebViews0, Graphics0 in aplicatie. Nu este o masurare de FPS sau garantie de
