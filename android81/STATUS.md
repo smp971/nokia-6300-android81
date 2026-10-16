@@ -1,5 +1,22 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+LEO SHELL INSTALAT: ro.leo.shell/.MainActivity, APK10160 bytes SHA256
+8a26524841e6612c7a9740e6c1ebc42360d216b62889cd5d0d88e6dbb547ab04.
+Compilat cu aapt/javac8/dx/signapk; zipalign INAINTE de signapk (dupa semnare
+strica semnatura v2). pm install prin framework-command.py: Success.
+set-home-activity: Success, HOME107 si ResumedActivity confirma Leo Shell.
+View Canvas software, hardwareAccelerated=false, fara wallpaper/animatii/WebView.
+Bara jos contextuala: Meniu/Aplicatii/— pe home, Acasa/Deschide/Inapoi in lista.
+Probe raw139 MENU,106RIGHT,14BACK si212MENU: capturi confirma home/lista/selectie;
+BACK14 revine acasa. Meminfo moment proba: TOTAL PSS9398KiB, swap PSS2036KiB,
+WebViews0, Graphics0 in aplicatie. Nu este o masurare de FPS sau garantie de
+fluiditate a altor aplicatii. Barra nu apare peste celelalte aplicatii Android.
+Lansat force-stop pentru Launcher3 vechi, fara dezinstalare; rezultatul comenzii
+inca asteptat la momentul notarii. Datele Android ruleaza inca pe card.
+Migrare interna: p39 userdata verificat 259:7,5013471sectoare; montat numai
+ro,noload in namespace earlyADB la /tmp/leo-internal-check, spatiu disponibil
+2330148KiB. Nu au fost copiate imagini sau date pe aceasta partitie.
+
 CALIBRARE FIZICA: utilizatorul confirma soft stanga->meniu Launcher,
 soft dreapta->Back, Apel->Telefon, EndCall->Home. Captura binara event1 dupa
 apasarea dedicata Meniu apoi Back: EV_KEY212 down/up (MSC_SCAN8), respectiv
