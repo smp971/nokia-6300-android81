@@ -1,5 +1,21 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+INPUT/RADIO AUDIT: InputReader confirma matrix_keypad.kl pe event1, dar
+gpio-keys (event2, KEY_NUMERIC_STAR522) si qpnp_pon (event0, POWER116 si
+KEY_NUMERIC_POUND523) folosesc Generic.kl. Generic.kl nu contine522/523.
+Adaugate in surse gpio-keys.kl si qpnp_pon.kl cu STAR/POUND si POWER WAKE;
+incluse in device-common.mk, neinstalate/nevalidate fizic inca. Asteptam
+exemplele utilizatorului pentru eventuale inversari din matricea principala.
+show_ime_with_hard_keyboard era deja0; reafirmat0 si BACK injectat pentru
+inchiderea IME. ABC/T9 nu este inca implementat.
+Radio: RILJ repeta RadioProxy/OemHook getService NoSuchElementException;
+ril-daemon ruleaza, dar nu exista dovada unui HAL radio functional.
+subsys2 name=modem state=OFFLINING, subsys1=wcnss OFFLINING, subsys0=venus
+OFFLINING. /firmware, /vendor/firmware si /system/vendor/firmware lipsesc.
+Nu deducem din acestea o defectiune fizica a modemului. Dump stock foloseste
+libril-qc-qmi-1.so si servicii rmt_storage/qmuxd/netmgrd, neintegrate in AOSP.
+Nu au fost scrise partitii radio/EFS si nu au fost pornite servicii stock de radio.
+
 LAUNCHER AFISAT: dupa remedierea Keystore, system_server PID8614 a ramas activ
 pe durata verificarilor urmatoare. Captura framebuffer via screencap RAW confirma
 ecranul Launcher cu Email, Gallery, Phone si lista aplicatiilor. dumpsys window:

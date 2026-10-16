@@ -1,0 +1,2 @@
+# Dedicated star key is reported by gpio-keys, not only matrix_keypad.
+key 522 STAR

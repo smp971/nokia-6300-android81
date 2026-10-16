@@ -1,0 +1,3 @@
+# Power and dedicated pound key are reported by the PMIC input device.
+key 116 POWER WAKE
+key 523 POUND
