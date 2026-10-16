@@ -50,3 +50,11 @@ Mutarea pe eMMC elimina accesul la imaginile SD pentru sistem/date; nu adauga
 automat drivere radio, Wi-Fi sau GPU. SwiftShader ramane compozitorul software.
 Shellul are bara soft-key proprie si lasa vizibila bara de stare SystemUI Android.
 Ora/data reflecta ceasul telefonului, care poate necesita sincronizare.
+
+Instalarea curenta a primit ulterior corectia gralloc.default din
+patch-leo-gralloc.py, prin install-gralloc-fix.py. Biblioteca originala a fost
+salvata local; copia noua evita alocarile HW_FB fizice pentru puntea software.
+Boot a fost actualizat separat cu update-internal-boot.py pentru eliminarea
+animatiei de pornire. Aceste operatii nu formateaza din nou datele si nu ating
+recovery. Hash-ul imaginii system initiale nu mai este hash-ul partitiei dupa
+inlocuirea atomica a bibliotecii; consultati gralloc-fix-install.json local.

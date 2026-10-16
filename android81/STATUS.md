@@ -1,5 +1,20 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+VALIDARE FINALA INTERNA: dupa repornirea cu gralloc corectat, SF PID343 si
+system_server PID429 au ramas aceleasi pe durata probelor (cateva minute).
+boot_completed=1, early ADB/root activ, Keystore permanent disponibil.
+sysboot setup a rulat automat si a iesit0; HOME resolver este ro.leo.shell,
+user0 RUNNING_UNLOCKED. Meniu fizic212 prin injectie raw deschide lista de
+aplicatii Leo Shell; captura output/internal-leo-shell-statusbar.png confirma
+bara Android sus si actiunile soft-key jos. dumpsys focus Leo Shell.
+Montari finale: /dev/leo-internal-system -> /system RO, /dev/leo-internal-data
+-> /data RW; nu depind de SD. Buffer logcat crash gol la ultima proba.
+La pornire a aparut ANR system (fara moartea procesului), inchis prin Wait;
+intarzierea initiala si performanta HWUI in aplicatii raman probleme deschise.
+Nu se declara stabilitate generala, modem functional sau accelerare GPU.
+Leo Shell/Keymaster/layouts sunt acum in system, fara overlay-uri volatile.
+Recovery ramas c9dc5f8b611368906b7b3bce5448272f; nu a fost restaurat/rescris.
+
 ANDROID PE PARTITII INTERNE INSTALAT: install-android-internal.py cu
 --install --format-userdata a verificat system, formatat p39 userdata, scris boot
 ultimul si verificat recovery nemodificat. Raport output/internal-install.json.
