@@ -132,6 +132,10 @@ on boot
 ''',0o100750)
     if args.internal:
         internal_rc=e['init.qcom.rc'][1]+b'''
+on init
+    # GLES1 boot animation crashes in SwiftShader FrameBuffer::copyLocked.
+    setprop debug.sf.nobootanimation 1
+
 on post-fs-data
     # Volatile compressed RAM; no swap writes to internal flash or SD.
     write /sys/block/zram0/disksize 268435456

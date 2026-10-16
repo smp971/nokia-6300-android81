@@ -33,6 +33,7 @@ activity=report['checks']['activity'].get('stdout','')
 processes=report['checks']['processes'].get('stdout','')
 report.update(boot_completed='[sys.boot_completed]: [1]' in props,
     system_server_present='system_server' in processes,
-    launcher_mentioned_in_activity_dump='com.android.launcher3' in activity)
+    launcher_mentioned_in_activity_dump=any(name in activity for name in ('com.android.launcher3','ro.leo.shell')),
+    leo_shell_mentioned_in_activity_dump='ro.leo.shell' in activity)
 (OUT/'framework-boot-result.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
 print(json.dumps({k:v for k,v in report.items() if k!='checks'},indent=2))

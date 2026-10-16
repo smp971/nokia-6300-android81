@@ -10,7 +10,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/log':
             try:
-                candidates = [Path(LOG), Path(LOG).with_name('keymaster-build.log')]
+                candidates = [Path(LOG), Path(LOG).with_name('keymaster-build.log'),
+                              Path(__file__).parent/'output/internal-install.json']
                 current = max((p for p in candidates if p.exists()), key=lambda p: p.stat().st_mtime)
                 with current.open(encoding='utf-8', errors='replace') as stream:
                     body = ''.join(deque(stream, maxlen=45))

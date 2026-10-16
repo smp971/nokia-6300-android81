@@ -1,5 +1,30 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+ANDROID PE PARTITII INTERNE INSTALAT: install-android-internal.py cu
+--install --format-userdata a verificat system, formatat p39 userdata, scris boot
+ultimul si verificat recovery nemodificat. Raport output/internal-install.json.
+Prima pornire normala confirma LEO_INTERNAL_ANDROID_PARTITIONS_MOUNTED;
+/system=179:30 p30 RO, /data=259:7 p39 RW, fara SD/loop pentru sistem/date.
+Keymaster ruleaza din system; zram256MiB porneste automat. Datele KaiOS sterse
+conform cererii explicite; backup live boot/system pe PC, userdata backup declarat
+de utilizator (nu este produs de scriptul nostru).
+Boot actualizat separat pentru debug.sf.nobootanimation=1; SHA256 curent
+040009a0ee0f2f77c0cd8d7880ef571b5dd7244ba24d956dc1f18cb357ee506f.
+Anularea bootanimation SINGURA nu a rezolvat SIGSEGV SurfaceFlinger.
+Gasita cale nesigura gralloc.default: GRALLOC_USAGE_HW_FB aloca framebuffer
+fizic RGB565 cu adrese locale procesului allocator; HWC nostru cere RGBA8888
+partajabil, convertit explicit. patch-leo-gralloc.py elimina HW_FB numai pentru
+TARGET_DEVICE=leo, compilat gralloc.default. Install-gralloc-fix.py a salvat
+originalul si a inlocuit biblioteca atomic pe system, apoi a remontat system RO.
+SHA256 gralloc nou 053f033ec39074997d30091bfc6164e78a4c2d63722404e17d3aeb40916e6e77.
+Nu s-a reformatat data si nu s-a rescris recovery la aceste reparatii.
+Hash-ul imaginii system initiale nu mai descrie partitia actuala dupa patch-ul
+de biblioteca; raportul gralloc-fix-install.json documenteaza diferenta.
+In sesiunea dupa patch system_server3198/SF3169 au ramas active si boot_completed1;
+dialoguri ANR/erori ale aplicatiilor ramase de la pornire au persistat.
+Repornire curata finala in curs de validare: SF343 si system_server429 active,
+buffer crash gol la uptime35s. Nu este declarata inca stabilitate pe termen lung.
+
 INSTALARE INTERNA PREGATITA (inca fara scriere): autorizare explicita utilizator
 boot/system pe partiile actuale, inclusiv formatarea userdata; declara backup.
 Backup live suplimentar boot/system salvat/verificat in backup-live/kaios-before-internal.

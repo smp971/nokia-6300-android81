@@ -4,6 +4,7 @@ TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$TASK_DIR/environment.sh"
 python3 "$TASK_DIR/configure-jack-framework.py"
 python3 "$TASK_DIR/patch-art-host-mmap.py"
+python3 "$TASK_DIR/patch-leo-gralloc.py"
 bash "$TASK_DIR/stage-device.sh"
 cd /root/android81-leo/src
 source build/envsetup.sh
