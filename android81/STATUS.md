@@ -1,5 +1,17 @@
 # Etapa initiala Android 8.1 — actualizat 16 octombrie 2026
 
+NAVIGARE RAW ADB: navigate-keypad.py citeste maparea .kl instalata, verifica
+serial695d/root/numele event1 si injecteaza EV_KEY+SYN_REPORT down/up. Tastele
+CALL/POWER nu sunt expuse de utilitar. Release se executa in finally.
+Proba: HOME107 revine la Launcher, DOWN108/RIGHT106 muta selectia vizibila
+in dock; CENTER352 pe pictograma robot lanseaza org.chromium.webview_shell/
+.WebViewBrowserActivity (confirmat ResumedActivity). HOME107 ulterior confirma
+din nou .Launcher ca ResumedActivity. BACK158 trimis, dar efectul nu a fost
+confirmat in intervalul scurt, aplicatia WebView pornind lent. UP103 trimis,
+fara validare completa pentru toate pozitiile din Launcher. Nu sunt teste ale
+contactelor fizice; utilizatorul trebuie sa confirme ce tasta produce fiecare cod.
+Capturi output/keypad-*.png, neincluse in Git; utilitarul si rezultatele sunt urmarite.
+
 INPUT/RADIO AUDIT: InputReader confirma matrix_keypad.kl pe event1, dar
 gpio-keys (event2, KEY_NUMERIC_STAR522) si qpnp_pon (event0, POWER116 si
 KEY_NUMERIC_POUND523) folosesc Generic.kl. Generic.kl nu contine522/523.
