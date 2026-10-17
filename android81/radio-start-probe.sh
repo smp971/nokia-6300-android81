@@ -2,10 +2,15 @@
 # Temporary, bounded daemon trial, executed in PID 1's mount namespace.
 set -eu
 export PATH=/system/bin
+if [ "$(getprop init.svc.leo_rild1)" = running ] || [ "$(getprop init.svc.leo_rild2)" = running ]; then
+    echo 'Permanent radio services are active; refusing an overlapping trial.' >&2
+    exit 1
+fi
 export LD_LIBRARY_PATH=/tmp/leo-radio-probe/lib:/system/vendor/lib
 chmod 0755 /tmp/leo-radio-probe/probe /tmp/leo-radio-probe/rmt_storage /tmp/leo-radio-probe/qmuxd /tmp/leo-radio-probe/irsc_util /tmp/leo-radio-probe/pm-service
 if [ "${1:-}" = --ipc ]; then
     export LD_LIBRARY_PATH=/tmp/leo-radio-ipc:/tmp/leo-radio-probe/lib:/system/vendor/lib
+    setprop persist.leo.radio.trace 1
     # Stock uses separate rild instances, not AOSP's multi-SIM callback ABI.
     [ ! -f /tmp/leo-radio-ipc/libril.so ]
     setprop persist.radio.multisim.config dsds
@@ -59,4 +64,10 @@ else
         > /tmp/leo-radio-rild.log 2>&1 &
 fi
 echo $! > /tmp/leo-radio-rild.pid
+if [ "${1:-}" = --ipc ]; then
+    # Stock dual-SIM init runs a separate single-ABI RIL process for instance 1.
+    timeout 180 env LD_PRELOAD=/tmp/leo-radio-ipc/shim.so "$binary" -c 2 \
+        -l /tmp/leo-radio-probe/lib/libril-qc-qmi-1.so > /tmp/leo-radio-rild2.log 2>&1 &
+    echo $! > /tmp/leo-radio-rild2.pid
+fi
 echo 'Bounded modem and radio trial started; legacy qmuxd is skipped in IPC mode.'

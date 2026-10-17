@@ -17,6 +17,7 @@
 !/android81/device/
 !/android81/shell/
 !/android81/screenshots/
+!/android81/radio-runtime/
 /android81/device/**/local/
 /android81/device/**/prebuilt/
 

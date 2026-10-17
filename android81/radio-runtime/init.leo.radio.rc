@@ -1,0 +1,45 @@
+# Experimental stock Qualcomm transport for the validated internal Leo build.
+service leo_radio_setup /system/bin/sh /system/vendor/leo-radio/start.sh
+    class late_start
+    user root
+    group root radio system
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+service leo_rmt_storage /system/vendor/leo-radio/bin/rmt_storage
+    class late_start
+    user root
+    group root radio system net_raw
+    setenv LD_LIBRARY_PATH /system/vendor/leo-radio/lib:/system/vendor/lib:/system/lib
+    seclabel u:r:init:s0
+    disabled
+
+service leo_per_mgr /system/vendor/leo-radio/bin/pm-service
+    class late_start
+    user root
+    group root system net_raw
+    setenv LD_LIBRARY_PATH /system/vendor/leo-radio/lib:/system/vendor/lib:/system/lib
+    seclabel u:r:init:s0
+    disabled
+
+service leo_rild1 /system/vendor/bin/hw/rild -l /system/vendor/leo-radio/lib/libril-qc-qmi-1.so
+    class late_start
+    user root
+    group root radio system inet net_raw
+    setenv LD_LIBRARY_PATH /system/vendor/leo-radio/lib:/system/vendor/lib:/system/lib
+    setenv LD_PRELOAD /system/vendor/leo-radio/shim.so
+    seclabel u:r:init:s0
+    disabled
+
+service leo_rild2 /system/vendor/bin/hw/rild -c 2 -l /system/vendor/leo-radio/lib/libril-qc-qmi-1.so
+    class late_start
+    user root
+    group root radio system inet net_raw
+    setenv LD_LIBRARY_PATH /system/vendor/leo-radio/lib:/system/vendor/lib:/system/lib
+    setenv LD_PRELOAD /system/vendor/leo-radio/shim.so
+    seclabel u:r:init:s0
+    disabled
+
+on property:sys.boot_completed=1
+    start leo_radio_setup

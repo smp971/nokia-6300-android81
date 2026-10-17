@@ -5,6 +5,16 @@ extern void *dlsym(void *, const char *);
 extern int __android_log_print(int, const char *, const char *, ...);
 extern void *malloc(unsigned);
 extern void free(void *);
+extern int __system_property_get(const char *, char *);
+static int tracing(void) {
+    static int enabled = -1;
+    if (enabled < 0) {
+        char value[128] = {0};
+        __system_property_get("persist.leo.radio.trace", value);
+        enabled = value[0] == '1';
+    }
+    return enabled;
+}
 typedef void (*indication_fn)(void *, unsigned, void *, unsigned, void *);
 struct indication_context { indication_fn callback; void *data; unsigned service; };
 static void indication(void *client, unsigned message, void *buffer, unsigned length, void *data) {
@@ -15,7 +25,7 @@ static void indication(void *client, unsigned message, void *buffer, unsigned le
 }
 static unsigned mapped(unsigned instance) {
     if (instance == 128) {
-        __android_log_print(4, "LeoRadio", "QMI instance 128 -> IPC instance 0");
+        if (tracing()) __android_log_print(4, "LeoRadio", "QMI instance 128 -> IPC instance 0");
         return 0;
     }
     return instance;
@@ -32,8 +42,9 @@ int qmi_client_init_instance(void *object, unsigned instance, void *callback,
     int (*original)(void *, unsigned, void *, void *, void *, unsigned, void **) =
         library ? dlsym(library, "qmi_client_init_instance") : 0;
     if (!original) return -2;
-    struct indication_context *context = callback ? malloc(sizeof(*context)) : 0;
-    if (callback && !context) return -2;
+    int trace = tracing();
+    struct indication_context *context = trace && callback ? malloc(sizeof(*context)) : 0;
+    if (trace && callback && !context) return -2;
     if (context) {
         int (*service_id)(void *, unsigned *) = dlsym(library, "qmi_idl_get_service_id");
         context->callback = (indication_fn)callback;
@@ -43,8 +54,8 @@ int qmi_client_init_instance(void *object, unsigned instance, void *callback,
     }
     int result = original(object, mapped(instance), context ? (void *)indication : callback,
                           context ? context : data, os, timeout, client);
-    __android_log_print(4, "LeoRadio", "QMI init service=%u instance=%u result=%d",
-                        context ? context->service : 0, instance, result);
+    if (trace) __android_log_print(4, "LeoRadio", "QMI init service=%u instance=%u result=%d",
+                                   context ? context->service : 0, instance, result);
     if (result && context) free(context);
     /* Successful callback contexts live until this bounded trial process exits. */
     return result;

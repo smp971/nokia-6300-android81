@@ -1,5 +1,38 @@
 # Radio bring-up: work in progress
 
+## Current validated result
+
+On 17 October 2026, starting both stock-style single-ABI rild processes together
+resolved WAITING_FOR_MULTIPLE_RILD_SYNC. Both SIMs reached READY and both voice
+slots IN_SERVICE (Vodafone RO and DIGI RO). The first slot reported GPRS data
+registration, but no active data connection; this is not working internet proof.
+
+`install-radio-runtime.py --install` installed 39 hash-verified private runtime
+files under `/system/vendor/leo-radio` plus `/system/etc/init/leo-radio.rc`.
+It preserved boot/recovery and userdata and returned system to read-only.
+After a real reboot, `verify-radio-runtime.py` confirmed all four init-managed
+services running, both SIMs READY and both voice slots IN_SERVICE. The setup
+log records LEO_RADIO_SERVICES_STARTED. No temporary /tmp radio processes or
+direct DMS ONLINE override were needed for this boot validation.
+
+The persistent chain mounts the original firmware partition read-only, loads
+the original IPC security configuration, starts rmt_storage and pm-service,
+then starts RIL instances 0 and 1 (`-c 2`). Init supervises these services;
+they are not bounded by the earlier trial timeouts. Verbose tracing is off by
+default, and the shim forwards callbacks directly without trace allocations.
+
+Reproduction: prepare private dependencies as described below; build probes;
+run `python android81/install-radio-runtime.py` to prepare the private archive,
+then add `--install` for the validated internal device (serial 695d, hwid 0x0).
+The installer refuses an existing runtime; it is not an update/uninstall tool.
+Reboot through Android init, then run `python android81/verify-radio-runtime.py`.
+The runtime is installed by this tool, not automatically included in a future
+full AOSP system image. Keep the local firmware backups and private dependencies.
+
+Calls, audio routing, SMS delivery, LTE and internet sessions remain untested.
+The existing startup/UI ANRs and software-rendering performance limits remain.
+The following sections retain the diagnostic history that led to this result.
+
 Target: Nokia 6300 TA-1286, serial `695d`, internal Android 8.1.
 
 The installed AOSP reference RIL does not publish a working radio interface.

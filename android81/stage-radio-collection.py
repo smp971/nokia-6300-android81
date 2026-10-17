@@ -49,8 +49,9 @@ if __name__ == '__main__':
         processes = shell('/system/bin/ps', '-A', '-o', 'PID,ARGS').decode()
         for line in processes.splitlines():
             fields = line.split(None, 1)
-            if len(fields) == 2 and fields[1].startswith('rild ') and '/tmp/leo-radio-probe/' in line:
-                raise SystemExit('An earlier radio trial is still active; do not overlap trials.')
+            vendor = any(path in line for path in ('/tmp/leo-radio-probe/', '/system/vendor/leo-radio/'))
+            if len(fields) == 2 and fields[1].startswith('rild ') and vendor:
+                raise SystemExit('Vendor radio services are already active; do not overlap trials.')
             if len(fields) == 2 and fields[1].startswith(('sh ', '/system/bin/sh ')) and '/tmp/leo-radio-collect.sh' in fields[1]:
                 raise SystemExit('A collector is already active; retrieve its evidence first.')
         subprocess.run(ADB+['push', str(bundle), '/tmp/leo-radio-collection.tar'], check=True)

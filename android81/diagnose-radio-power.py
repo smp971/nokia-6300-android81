@@ -37,7 +37,8 @@ if __name__ == '__main__':
         if len(fields) != 2 or not fields[0].isdigit():
             continue
         pid, command = fields
-        if not command.startswith('rild ') or '/tmp/leo-radio-probe/lib/' not in command:
+        vendor = any(path in command for path in ('/tmp/leo-radio-probe/lib/', '/system/vendor/leo-radio/lib/'))
+        if not command.startswith('rild ') or not vendor:
             continue
         script = (f'for d in /proc/{pid}/task/*; do echo "$d"; '
                   'cat "$d/comm" "$d/wchan"; echo; done')

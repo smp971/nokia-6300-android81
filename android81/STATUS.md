@@ -1,4 +1,18 @@
-# Etapa initiala Android 8.1 â€” actualizat 16 octombrie 2026
+# Etapa initiala Android 8.1 â€” actualizat 17 octombrie 2026
+
+RADIO VALIDAT DUPA REBOOT (17 octombrie): doua instante RIL stock separate
+rezolva WAITING_FOR_MULTIPLE_RILD_SYNC. Ambele SIM-uri READY; voce IN_SERVICE
+pe Vodafone RO si DIGI RO. Primul slot are inregistrare GPRS, fara conexiune
+PDP activa; internetul, apelurile/audio si SMS-urile nu sunt validate.
+Runtime permanent instalat prin install-radio-runtime.py: 39 fisiere verificate
+SHA256, /system/vendor/leo-radio + init RC. Firmware montat RO, irsc_util,
+rmt_storage, pm-service si doua rild supravegheate de init dupa boot_completed.
+Verificarea dupa reboot confirma serviciile running si doua sloturi in serviciu,
+fara binare /tmp, timeout-uri de proba sau comanda DMS ONLINE manuala.
+/system a revenit RO; boot/recovery si userdata nu au fost rescrise/formatate.
+Traseul privat IPC QMI si shim-ul raman adaptari experimentale pentru acest
+hwid 0x0. Documentatie RADIO-BRINGUP.md. Captura selectata:
+screenshots/network-registered.png. ANR/UI si randarea software raman limite.
 
 SETARI REPARATE: WifiDisplaySettings.isAvailable interoga wifip2p absent,
 producand system_app_wtf si inchidere fatala in build eng (UID system).
