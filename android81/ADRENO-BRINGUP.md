@@ -1,5 +1,13 @@
 # Stock Adreno investigation, 17 October 2026
 
+**Latest result: hardware off-screen rendering succeeded.** After fixing the
+firmware-path newline and redirecting stock EGL's absolute vendor-library paths
+inside a temporary copy, the probe reported Qualcomm EGL 1.4, Adreno 304,
+OpenGL ES 3.0, pixel `64,128,191,255`, GL error 0 and
+`LEO_ADRENO_PBUFFER_OK`. The phone did not reboot and both SIM registrations
+remained valid. Android's installed compositor still uses SwiftShader.
+Earlier failed trials below are historical, not the current result.
+
 ## Confirmed
 
 The running kernel exposes `/dev/kgsl-3d0` and `/dev/ion`.
@@ -228,6 +236,59 @@ without restarting services. Both SIMs/voice registrations passed verification.
 No GPU device was opened, no kernel/boot/recovery was changed, and no new
 unguarded EGL test was performed during this analysis. A future GPU trial must
 verify the exact parameter bytes and capture live kernel output first.
+
+## Successful corrected GPU trial
+
+`adreno-trial.sh` now verifies the bytes read from the sysfs parameter: the
+14-byte `/tmp/adreno-fw` string plus one sysfs display newline, exactly 15 bytes.
+Use `cat "$path" | wc -c`: this device's `wc -c < sysfs-file` shortcuts to the
+virtual 4096-byte stat size and incorrectly rejected the first preflight. That
+preflight exited before touching the GPU. An EXIT marker and restoration trap
+now report failures occurring before the probe too.
+
+With the correct path, the unmodified EGL library stopped crashing. It returned
+EGL_NOT_INITIALIZED because it tried to load the absent absolute path
+`/vendor/lib/egl/eglsubAndroid.so`. Kernel reset_count had increased from 0 to 1,
+showing that the GPU start path had completed. Logcat identified the missing
+subdriver directly.
+
+`patch-adreno-private-path.py` hash-checks stock `libEGL_adreno.so` and replaces
+its two NUL-terminated `/vendor/lib/` directory strings with `/tmp/leog/`, padded
+to preserve file length. This changes only the probe's private library copy,
+not ELF code or the installed EGL dispatcher. Stage `eglsubAndroid.so` under
+`/tmp/leog/egl/` and link the staged GLES1/GLES2/q3dtools libraries there too.
+The first path-adapted attempt reached EGL 1.4 but could not create its GLES2
+context until the GLES2 library was supplied at that absolute private path.
+This was a missing-library error, not an established memory-allocation failure.
+
+The completed probe then returned:
+
+```
+EGL 1.4 vendor=Qualcomm, Inc version=1.4
+GL vendor=Qualcomm renderer=Adreno (TM) 304 version=OpenGL ES 3.0 V@140.0 AU@
+pixel=64,128,191,255 gl_error=0x0
+LEO_ADRENO_PBUFFER_OK
+probe_exit=0
+trial_exit=0
+```
+
+The boot ID remained unchanged throughout. Firmware path was restored to
+`/firmware/image` without a stored newline, GPU governor to `msm-adreno-tz`,
+and both SIMs/voice slots passed verification. This strongly supports the
+firmware lookup defect as the reason the previous initialization attempts
+crashed; a previous fault trace was never recovered.
+
+`run-adreno-trial.py` starts a bounded live dmesg capture on the PC before the
+single staged trial, polls its persistent log, then stops only its observer.
+Private success transcript is `output/adreno-success.log`. Kernel logs and
+binary libraries remain ignored by Git. No boot, recovery or installed graphics
+library was written in this trial.
+
+This validates GPU context creation and a clear/readback on an off-screen
+pbuffer. It does not benchmark frame rate, exercise shader compilation/drawing,
+or establish gralloc buffer sharing, SurfaceFlinger integration, app access
+permissions or Android linker-namespace compatibility. Those are the next
+integration problems; do not switch the whole system based on pbuffer alone.
 
 ## Next evidence needed
 
