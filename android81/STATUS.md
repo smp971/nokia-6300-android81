@@ -1,3 +1,10 @@
+FUNCTION AUDIT, 18 OCT 2026
+Current verified function matrix: FUNCTION-AUDIT-2026-10-18.md.
+Core UI/Adreno and dual SIM registration pass. Audio is still the AOSP dummy
+HAL; Wi-Fi/Bluetooth/camera/GPS are not operational. Email crashes; local
+WebView renders HTML but later crashes in its GPU thread. Calls/SMS are not
+validated. Historical entries below describe earlier bring-up stages.
+
 UI SCHEDULER FIX, 17 OCT 2026
 Legacy HWC1 now initializes DispSync; keypad-to-onDraw median fell from
 1005.12 ms to 17.68 ms across 16 samples in each run. Physical presentation
