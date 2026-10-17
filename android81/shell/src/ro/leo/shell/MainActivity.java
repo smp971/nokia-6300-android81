@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -68,6 +69,7 @@ public class MainActivity extends Activity {
     private class ShellView extends View {
         final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         final List<ResolveInfo> entries = new ArrayList<ResolveInfo>();
+        final HashMap<String, String> labels = new HashMap<String, String>();
         final int background = Color.rgb(12, 20, 30);
         final int accent = Color.rgb(107, 224, 176);
         boolean apps;
@@ -83,15 +85,19 @@ public class MainActivity extends Activity {
         void refreshApps() {
             String previous = entries.isEmpty() ? "" : component(entries.get(selected)).flattenToString();
             entries.clear();
+            labels.clear();
             Intent query = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
             for (ResolveInfo info : getPackageManager().queryIntentActivities(query, 0)) {
                 String pkg = info.activityInfo.packageName;
-                if (!pkg.equals(getPackageName()) && !pkg.equals("com.android.launcher3")) entries.add(info);
+                if (!pkg.equals(getPackageName()) && !pkg.equals("com.android.launcher3")) {
+                    entries.add(info);
+                    labels.put(component(info).flattenToString(), info.loadLabel(getPackageManager()).toString());
+                }
             }
             Collections.sort(entries, new Comparator<ResolveInfo>() {
                 public int compare(ResolveInfo a, ResolveInfo b) {
-                    return a.loadLabel(getPackageManager()).toString().compareToIgnoreCase(
-                            b.loadLabel(getPackageManager()).toString());
+                    return labels.get(component(a).flattenToString()).compareToIgnoreCase(
+                            labels.get(component(b).flattenToString()));
                 }
             });
             selected = Math.min(selected, Math.max(0, entries.size() - 1));
@@ -174,7 +180,7 @@ public class MainActivity extends Activity {
                     boolean active = index == selected;
                     paint.setColor(active ? accent : Color.rgb(29, 42, 55));
                     output.drawRoundRect(new RectF(left, top, left + 105, top + 53), 5, 5, paint);
-                    String label = entries.get(index).loadLabel(getPackageManager()).toString();
+                    String label = labels.get(component(entries.get(index)).flattenToString());
                     text(output, fit(label, 93, 13), left + 52.5f, top + 32, 13,
                             active ? background : Color.WHITE, Paint.Align.CENTER);
                 }
