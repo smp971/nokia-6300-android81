@@ -1,7 +1,9 @@
 /* HWC 1.3 framebuffer bridge for the diagnostic RGB565 SPI display.
- * All layers are client-composed; no proprietary GPU or overlay ABI is used.
+ * All layers are client-composed; the bridge presents through the SPI framebuffer.
  */
 #include <errno.h>
+#include <cutils/properties.h>
+#include <log/log.h>
 #include <fcntl.h>
 #include <hardware/gralloc.h>
 #include <hardware/hwcomposer.h>
@@ -28,10 +30,12 @@ struct LeoHwc {
     fb_var_screeninfo var;
     fb_fix_screeninfo fix;
     uint8_t *mapped;
-    unsigned page,frames;
+    unsigned page,frames,vsyncRequests,vsyncCallbacks;
+    int64_t lastVsyncNs;
 };
 static LeoHwc *context(hwc_composer_device_1_t *d){return reinterpret_cast<LeoHwc*>(d);}
 static constexpr int64_t period=1000000000LL/29;
+static int64_t monoNs(){timespec t;clock_gettime(CLOCK_MONOTONIC,&t);return int64_t(t.tv_sec)*1000000000LL+t.tv_nsec;}
 static void *vsyncLoop(void *arg){
     LeoHwc *c=static_cast<LeoHwc*>(arg);
     for(;;){
@@ -40,7 +44,11 @@ static void *vsyncLoop(void *arg){
         bool run=c->running,active=c->vsync&&c->powered;
         const hwc_procs_t *p=c->procs;pthread_mutex_unlock(&c->mutex);
         if(!run)break;
-        if(active&&p&&p->vsync){timespec now;clock_gettime(CLOCK_MONOTONIC,&now);p->vsync(p,HWC_DISPLAY_PRIMARY,static_cast<int64_t>(now.tv_sec)*1000000000LL+now.tv_nsec);}
+        if(active&&p&&p->vsync){
+            const int64_t now=monoNs();
+            pthread_mutex_lock(&c->mutex);c->vsyncCallbacks++;c->lastVsyncNs=now;pthread_mutex_unlock(&c->mutex);
+            p->vsync(p,HWC_DISPLAY_PRIMARY,now);
+        }
     }
     return nullptr;
 }
@@ -54,6 +62,8 @@ static int prepare(hwc_composer_device_1_t*,size_t count,hwc_display_contents_1_
 }
 static int present(hwc_composer_device_1_t *dev,size_t count,hwc_display_contents_1_t **displays){
     LeoHwc *c=context(dev);buffer_handle_t target=nullptr;
+    const bool trace=property_get_bool("debug.leo.ui_latency",false);
+    const int64_t begin=trace?monoNs():0;
     if(!count||!displays||!displays[0])return 0;
     hwc_display_contents_1_t *display=displays[0];
     for(size_t i=0;i<display->numHwLayers;i++){
@@ -69,6 +79,7 @@ static int present(hwc_composer_device_1_t *dev,size_t count,hwc_display_content
     void *source=nullptr;
     int rc=c->gralloc->lock(c->gralloc,target,GRALLOC_USAGE_SW_READ_OFTEN,0,0,c->fb->width,c->fb->height,&source);
     if(rc)return rc;
+    const int64_t locked=trace?monoNs():0;
     c->page^=1;
     size_t sourceStride=(c->fb->width+1)&~size_t(1); // Software gralloc tileWidth=2.
     if(c->gralloc->perform){
@@ -86,14 +97,19 @@ static int present(hwc_composer_device_1_t *dev,size_t count,hwc_display_content
         for(unsigned x=0;x<c->fb->width;x++)out[x]=static_cast<uint16_t>(((row[x*4]>>3)<<11)|((row[x*4+1]>>2)<<5)|(row[x*4+2]>>3));
     }
     c->gralloc->unlock(c->gralloc,target);
+    const int64_t converted=trace?monoNs():0;
     c->var.yoffset=c->page*c->fb->height;c->var.activate=FB_ACTIVATE_VBL|FB_ACTIVATE_FORCE;
     rc=ioctl(c->fbfd,FBIOPAN_DISPLAY,&c->var);
     if(rc<0)return -errno;
-    c->frames++;return 0;
+    c->frames++;
+    if(trace) ALOGI("LeoPresent frame=%u begin_ns=%lld done_ns=%lld lock_us=%lld convert_us=%lld pan_us=%lld",c->frames,
+        (long long)begin,(long long)monoNs(),(long long)((locked-begin)/1000),
+        (long long)((converted-locked)/1000),(long long)((monoNs()-converted)/1000));
+    return 0;
 }
 static int event(hwc_composer_device_1_t *dev,int display,int eventId,int enabled){
     if(display!=HWC_DISPLAY_PRIMARY||eventId!=HWC_EVENT_VSYNC)return -EINVAL;
-    LeoHwc *c=context(dev);pthread_mutex_lock(&c->mutex);c->vsync=enabled!=0;pthread_mutex_unlock(&c->mutex);return 0;
+    LeoHwc *c=context(dev);pthread_mutex_lock(&c->mutex);c->vsync=enabled!=0;c->vsyncRequests++;pthread_mutex_unlock(&c->mutex);return 0;
 }
 static int blank(hwc_composer_device_1_t *dev,int display,int value){
     if(display!=HWC_DISPLAY_PRIMARY)return -EINVAL;
@@ -133,6 +149,13 @@ static int active(hwc_composer_device_1_t*,int display){return display==HWC_DISP
 static int setActive(hwc_composer_device_1_t*,int display,int index){return display==HWC_DISPLAY_PRIMARY&&index==0?0:-EINVAL;}
 static void dump(hwc_composer_device_1_t *dev,char *buffer,int length){
     LeoHwc *c=context(dev);if(buffer&&length>0)snprintf(buffer,static_cast<size_t>(length),"Leo software HWC: %ux%u RGBA8888 to RGB565, client composition, software vsync 29Hz, frames=%u\n",c->fb->width,c->fb->height,c->frames);
+    if(buffer&&length>0){
+        const size_t used=strlen(buffer);pthread_mutex_lock(&c->mutex);
+        if(used<static_cast<size_t>(length))snprintf(buffer+used,static_cast<size_t>(length)-used,
+            "vsync_enabled=%d powered=%d procs=%d requests=%u callbacks=%u last_ns=%lld\n",
+            c->vsync,c->powered,c->procs&&c->procs->vsync,c->vsyncRequests,c->vsyncCallbacks,(long long)c->lastVsyncNs);
+        pthread_mutex_unlock(&c->mutex);
+    }
 }
 static int closeDevice(hw_device_t *device){
     LeoHwc *c=reinterpret_cast<LeoHwc*>(device);pthread_mutex_lock(&c->mutex);c->running=false;pthread_mutex_unlock(&c->mutex);

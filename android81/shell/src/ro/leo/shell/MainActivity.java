@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.telephony.TelephonyManager;
 import android.view.KeyEvent;
 import android.view.View;
@@ -25,6 +26,8 @@ import java.util.Locale;
 /** A keypad-first HOME. No WebView, image wallpaper or continuous redraw. */
 public class MainActivity extends Activity {
     private ShellView shell;
+    private boolean traceInput;
+    private long traceSequence, pendingInput;
     private final Handler handler = new Handler();
     private final Runnable tick = new Runnable() {
         public void run() {
@@ -35,6 +38,7 @@ public class MainActivity extends Activity {
 
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        traceInput = getIntent().getBooleanExtra("trace_input", false);
         // Keep Android's compact SystemUI status bar (battery, radio, clock).
         getWindow().setStatusBarColor(Color.rgb(12, 20, 30));
         shell = new ShellView();
@@ -52,6 +56,7 @@ public class MainActivity extends Activity {
     }
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        traceInput = intent.getBooleanExtra("trace_input", false);
         shell.apps = false;
         shell.message = "";
         shell.invalidate();
@@ -62,6 +67,11 @@ public class MainActivity extends Activity {
         shell.invalidate();
     }
     public boolean onKeyDown(int key, KeyEvent event) {
+        if (traceInput && (key >= KeyEvent.KEYCODE_DPAD_UP && key <= KeyEvent.KEYCODE_DPAD_CENTER)) {
+            pendingInput = ++traceSequence;
+            Log.i("LeoInputTrace", "key seq=" + pendingInput + " event_ms=" + event.getEventTime()
+                    + " dispatch_ns=" + System.nanoTime());
+        }
         if (shell.handle(key)) return true;
         return super.onKeyDown(key, event);
     }
@@ -165,6 +175,10 @@ public class MainActivity extends Activity {
         }
         protected void onDraw(Canvas output) {
             super.onDraw(output);
+            if (traceInput && pendingInput != 0) {
+                Log.i("LeoInputTrace", "draw seq=" + pendingInput + " draw_ns=" + System.nanoTime());
+                pendingInput = 0;
+            }
             // Layout in the panel's physical 240x320 coordinates; density-independent.
             output.save(); output.scale(getWidth() / 240f, getHeight() / 320f);
             output.drawColor(background);

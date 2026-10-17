@@ -49,3 +49,5 @@ Capturile initiale au ceasul nesincronizat.
 
 Acesta este un prototip de diagnostic, nu un ROM pregatit pentru utilizare zilnica.
 Scripturile de flash valideaza tinta; consultati sursele inainte de executare.
+
+Corectia de sincronizare HWC1 reduce mediana tasta → inceputul desenarii de la 1005 ms la 18 ms in proba cu 16 apasari; nu reprezinta latenta optica completa. Detalii si limite: [UI-LATENCY](android81/UI-LATENCY.md).

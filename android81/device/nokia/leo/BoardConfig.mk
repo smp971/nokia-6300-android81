@@ -32,3 +32,7 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 # Userdata size/encryption policy deliberately require target validation.
 # TODO: validate init/USB and Binder ABI, SELinux/VINTF, graphics HAL linkage,
 # proprietary dependencies and Android input behavior.
+
+# The framebuffer HWC completes presentation synchronously and returns no retire fences.
+# Keep DispSync sampling vsync instead of waiting for absent present fences.
+TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true

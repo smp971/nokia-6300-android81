@@ -1,3 +1,10 @@
+UI SCHEDULER FIX, 17 OCT 2026
+Legacy HWC1 now initializes DispSync; keypad-to-onDraw median fell from
+1005.12 ms to 17.68 ms across 16 samples in each run. Physical presentation
+still adds work; this is not optical latency. See UI-LATENCY.md for results,
+source patch, verified installation and rollback. NetworkPolicy startup ANR
+remains separate and unfixed.
+
 # Etapa initiala Android 8.1 â€” actualizat 17 octombrie 2026
 
 ADRENO INTEGRAT (17 octombrie): SurfaceFlinger foloseste Qualcomm Adreno 304,
