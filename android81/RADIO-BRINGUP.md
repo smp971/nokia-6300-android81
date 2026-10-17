@@ -85,3 +85,29 @@ rild was launched and no radio-power compatibility patch was installed.
 `diagnose-radio-power.py` captures the queue logs and native worker stacks of
 the staged RIL once serial 695d is available. Its output stays excluded from Git
 because radio diagnostics may contain SIM and subscriber details.
+
+After USB reconnection, native stacks captured the pending power worker in
+qcril_qmi_nas_request_power -> internal helpers ->
+qcril_qmi_nas_radio_power_process_condition_wait_helper -> pthread_cond_timedwait.
+Starting the stock-style second rild (`-c 2`) and restarting com.android.phone
+initialized two Android phone slots but did not establish working registration.
+The user confirmed the phone stayed powered on across USB disconnects.
+
+`radio-dms-probe.c` queries DMS directly, without publishing a fake Android
+radio state. It observed operating mode 1 (LOW_POWER). An explicit --online
+request returned a successful QMI result; a later query confirmed mode 0
+(ONLINE), while Android still reported POWER_OFF. This narrows the remaining
+fault to state/event integration; it does not establish a working network.
+
+The DMS message identifiers and TLVs follow the upstream
+[libqmi DMS definitions](https://github.com/linux-mobile-broadband/libqmi/blob/main/data/qmi-service-dms.json);
+QCCI function signatures are described by
+[Qualcomm's QMI framework](https://github.com/qualcomm/qmi-framework/blob/main/include/qmi_cci.h).
+The probe prints operating-mode/result fields only, never SIM identifiers.
+
+`radio-collect-trial.sh` prepares an on-device capture independent of the ADB
+connection. Stage it together with the compiled DMS probe and existing radio
+trial prerequisites, then launch it detached with stdin/stdout/stderr redirected.
+It must run in PID 1's mount namespace, without overlapping previous trials.
+Evidence under `/tmp/leo-radio-evidence` is private and disappears on reboot.
+This collector is prepared but has not yet been validated on the device.
