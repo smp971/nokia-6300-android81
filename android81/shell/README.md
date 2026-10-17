@@ -2,7 +2,7 @@
 
 Launcher Android 8.1 pentru ecranul 240x320 si taste fizice. O singura View
 deseneaza interfata 2D, fara WebView, imagini de fundal sau animatii. Manifestul
-dezactiveaza accelerarea HWUI. SurfaceFlinger ramane necesar pentru afisare.
+activeaza accelerarea HWUI pentru Adreno integrat. SurfaceFlinger ramane necesar pentru afisare.
 
 - Ecran principal cu ceasul/data telefonului si numele operatorului cand este disponibil.
 - Meniu de aplicatii instalate, sase pozitii pe pagina, selectie cu D-pad.
@@ -12,8 +12,7 @@ dezactiveaza accelerarea HWUI. SurfaceFlinger ramane necesar pentru afisare.
 
 Bara de stare SystemUI Android este vizibila deasupra shellului. Bara tastelor
 apartine launcherului. Nu se suprapune peste aplicatiile deschise si nu
-pretinde ca acestea sunt adaptate la taste. Aplicatiile pot ramane lente pe
-SwiftShader. Nu furnizeaza T9, modem, browser propriu sau servicii KaiOS.
+pretinde ca acestea sunt adaptate la taste. Viteza celorlalte aplicatii depinde de propriile operatii si de serviciile sistemului. Nu furnizeaza T9, modem, browser propriu sau servicii KaiOS.
 Ceasul foloseste data sistemului: fara sincronizare, aceasta poate fi incorecta.
 
 ## Compilare si instalare pe dispozitivul de test
@@ -39,3 +38,18 @@ Launcher3 este pastrat. Revenire la el:
 & D:/ROMS/platform-tools/adb.exe -s 695d shell '/sbin/leo-framework-exec /system/bin/cmd package set-home-activity --user 0 com.android.launcher3/.Launcher'
 & D:/ROMS/platform-tools/adb.exe -s 695d shell '/sbin/leo-framework-exec /system/bin/cmd activity start-activity -n com.android.launcher3/.Launcher'
 ```
+
+## Optimizare UI, 17 octombrie 2026
+
+HWUI activat in launcher dupa integrarea Adreno. Formatarea orei/datei si
+citirea operatorului sunt mutate in actualizarea la revenire/minut, in afara
+onDraw. Dreptunghiul temporar al celulelor este reutilizat. Animațiile globale
+erau deja 0; nu au fost schimbate. APK compilat, instalat cu pastrarea datelor,
+meniu verificat prin captura reala si navigare D-pad. Aceste schimbari nu
+repara intarzierea NetworkPolicy la pornire si nu demonstreaza o accelerare
+procentuala fata de vechiul renderer software, care nu raporta cadre HWUI.
+
+Dupa incalzire, 20 comenzi D-pad alternante la intervale separate au produs
+19 cadre raportate: p50 5 ms, p95 6 ms, 0 cadre janky, acelasi proces launcher.
+Aceste valori sunt timpi HWUI, nu latenta completa tasta-ecran sau FPS fizic.
+Prima afisare a incalzit cache-urile si a inclus un cadru lent (~150 ms).

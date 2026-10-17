@@ -22,13 +22,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-/** A keypad-first HOME. No WebView, image wallpaper, continuous redraw or GPU UI. */
+/** A keypad-first HOME. No WebView, image wallpaper or continuous redraw. */
 public class MainActivity extends Activity {
     private ShellView shell;
     private final Handler handler = new Handler();
     private final Runnable tick = new Runnable() {
         public void run() {
-            if (shell != null) shell.invalidate();
+            if (shell != null) { shell.refreshStatus(); shell.invalidate(); }
             handler.postDelayed(this, 60000 - System.currentTimeMillis() % 60000);
         }
     };
@@ -75,12 +75,26 @@ public class MainActivity extends Activity {
         boolean apps;
         int selected;
         String message = "";
+        String clockText = "", dateText = "", networkText = "";
+        final SimpleDateFormat clockFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM", new Locale("ro"));
+        final RectF cellBounds = new RectF();
 
         ShellView() {
             super(MainActivity.this);
             setFocusable(true);
             setFocusableInTouchMode(true);
             requestFocus();
+        }
+        void refreshStatus() {
+            Date now = new Date();
+            clockText = clockFormat.format(now);
+            dateText = dateFormat.format(now);
+            networkText = "Rețea indisponibilă";
+            try {
+                String name = ((TelephonyManager)getSystemService(TELEPHONY_SERVICE)).getNetworkOperatorName();
+                if (name != null && !name.isEmpty()) networkText = name;
+            } catch (RuntimeException ignored) { }
         }
         void refreshApps() {
             String previous = entries.isEmpty() ? "" : component(entries.get(selected)).flattenToString();
@@ -154,20 +168,14 @@ public class MainActivity extends Activity {
             // Layout in the panel's physical 240x320 coordinates; density-independent.
             output.save(); output.scale(getWidth() / 240f, getHeight() / 320f);
             output.drawColor(background);
-            String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+            String time = clockText;
             text(output, "LEO", 12, 22, 13, accent, Paint.Align.LEFT);
             text(output, time, 228, 22, 13, Color.WHITE, Paint.Align.RIGHT);
             paint.setColor(Color.rgb(38, 52, 64)); output.drawRect(12, 31, 228, 32, paint);
             if (!apps) {
                 text(output, time, 120, 128, 51, Color.WHITE, Paint.Align.CENTER);
-                text(output, new SimpleDateFormat("EEE, d MMM", new Locale("ro")).format(new Date()),
-                        120, 155, 15, Color.LTGRAY, Paint.Align.CENTER);
-                String network = "Rețea indisponibilă";
-                try {
-                    String name = ((TelephonyManager)getSystemService(TELEPHONY_SERVICE)).getNetworkOperatorName();
-                    if (name != null && !name.isEmpty()) network = name;
-                } catch (RuntimeException ignored) { }
-                text(output, fit(network, 216, 13), 120, 201, 13, accent, Paint.Align.CENTER);
+                text(output, dateText, 120, 155, 15, Color.LTGRAY, Paint.Align.CENTER);
+                text(output, fit(networkText, 216, 13), 120, 201, 13, accent, Paint.Align.CENTER);
                 text(output, "OK pentru aplicații", 120, 249, 15, Color.WHITE, Paint.Align.CENTER);
             } else {
                 text(output, "Aplicații", 12, 55, 18, Color.WHITE, Paint.Align.LEFT);
@@ -179,7 +187,8 @@ public class MainActivity extends Activity {
                     float top = 70 + cell / 2 * 62;
                     boolean active = index == selected;
                     paint.setColor(active ? accent : Color.rgb(29, 42, 55));
-                    output.drawRoundRect(new RectF(left, top, left + 105, top + 53), 5, 5, paint);
+                    cellBounds.set(left, top, left + 105, top + 53);
+                    output.drawRoundRect(cellBounds, 5, 5, paint);
                     String label = labels.get(component(entries.get(index)).flattenToString());
                     text(output, fit(label, 93, 13), left + 52.5f, top + 32, 13,
                             active ? background : Color.WHITE, Paint.Align.CENTER);
