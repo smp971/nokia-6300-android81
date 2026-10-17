@@ -33,6 +33,22 @@ and the revised executable was build-checked, but has not been run on the phone.
 The installed compositor, graphics drivers, boot and recovery were untouched.
 The temporary driver directory does not alter the normal graphics selection.
 
+## Recovery check
+
+The user confirmed a black screen. Windows detected Qualcomm HS-USB Diagnostics
+900E instead of ADB. After the user removed power and restarted the phone,
+Android boot completed normally with a new boot ID. Both persistent RIL services
+and their supporting services were running, both SIMs READY, and both voice
+slots IN_SERVICE. SurfaceFlinger still reported SwiftShader and the original
+Leo software HWC.
+
+Neither `/sys/fs/pstore` nor `/proc/last_kmsg` exists, and `/proc/filesystems`
+does not advertise pstore. The newest tombstone is an older temporary RIL probe
+crash, not an Adreno crash. Current-boot dmesg shows GPU initialization but does
+not preserve the previous failure. A severe failure during the trial is therefore
+supported by observation; its exact kernel fault and the stage reached remain
+unknown. Do not repeat the EGL initialization trial on this evidence.
+
 ## Next evidence needed
 
 Check the phone's actual state and reconnect ADB. Compare boot ID/uptime and
