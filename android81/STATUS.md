@@ -1,3 +1,11 @@
+AUDIO RUNTIME TRIAL, 18 OCT 2026
+Stock sound card now detected after staged loading of matching stock modules;
+private Qualcomm audio HAL open/init_check pass. Direct PCM speaker playback
+accepted; physical audibility confirmation pending. AudioFlinger still uses the
+generic HAL. First rapid module trial reached 900E; software Sahara reset restored
+ADB and Android without battery removal. Final Adreno and dual-radio checks pass.
+See AUDIO-BRINGUP.md; no automatic audio module loading installed yet.
+
 FUNCTION AUDIT, 18 OCT 2026
 Current verified function matrix: FUNCTION-AUDIT-2026-10-18.md.
 Core UI/Adreno and dual SIM registration pass. Audio is still the AOSP dummy

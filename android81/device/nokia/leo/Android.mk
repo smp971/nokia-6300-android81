@@ -62,3 +62,11 @@ LOCAL_SRC_FILES := surface-test.cpp
 LOCAL_SHARED_LIBRARIES := libgui libui libutils libbinder libnativewindow liblog
 LOCAL_CFLAGS := -Wall -Wextra -Werror
 include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := leo_audio_probe
+LOCAL_SRC_FILES := audio-hal-probe.c
+LOCAL_SHARED_LIBRARIES := libdl
+LOCAL_HEADER_LIBRARIES := libhardware_headers
+LOCAL_CFLAGS := -Wall -Wextra -Werror
+include $(BUILD_EXECUTABLE)
