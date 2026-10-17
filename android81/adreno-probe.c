@@ -7,16 +7,18 @@ extern int puts(const char *);
 extern void *stdout;
 extern void setbuf(void *, char *);
 extern unsigned alarm(unsigned);
+extern int fsync(int);
+static void stage(const char *name) { puts(name); fsync(1); }
 #define LOAD(lib, result, name, args) \
     result (*name) args = dlsym(lib, #name); \
     if (!name) { printf("Missing %s: %s\n", #name, dlerror()); return 2; }
 int main(void) {
     setbuf(stdout, 0);
     alarm(20);
-    puts("stage=load-egl");
+    stage("stage=load-egl");
     void *egl = dlopen("libEGL_adreno.so", 2);
     if (!egl) { printf("EGL load: %s\n", dlerror()); return 1; }
-    puts("stage=load-gles");
+    stage("stage=load-gles");
     void *gl = dlopen("libGLESv2_adreno.so", 2);
     if (!gl) { printf("GLES load: %s\n", dlerror()); return 1; }
     LOAD(egl, void *, eglGetDisplay, (void *));
@@ -36,10 +38,10 @@ int main(void) {
     LOAD(gl, void, glFinish, (void));
     LOAD(gl, void, glReadPixels, (int, int, int, int, unsigned, unsigned, void *));
     LOAD(gl, unsigned, glGetError, (void));
-    puts("stage=get-display");
+    stage("stage=get-display");
     void *display = eglGetDisplay(0);
     int major = 0, minor = 0;
-    puts("stage=initialize");
+    stage("stage=initialize");
     if (!eglInitialize(display, &major, &minor)) {
         printf("eglInitialize failed 0x%x\n", eglGetError()); return 3;
     }
@@ -48,18 +50,23 @@ int main(void) {
     const int attrs[] = {0x3033, 1, 0x3040, 4, 0x3024, 8, 0x3023, 8,
                          0x3022, 8, 0x3038};
     void *config = 0; int count = 0;
+    stage("stage=choose-config");
     if (!eglChooseConfig(display, attrs, &config, 1, &count) || count < 1) {
         printf("Config failed 0x%x\n", eglGetError()); return 4;
     }
     const int size[] = {0x3057, 16, 0x3056, 16, 0x3038};
     const int contextAttrs[] = {0x3098, 2, 0x3038};
+    stage("stage=create-pbuffer");
     void *surface = eglCreatePbufferSurface(display, config, size);
+    stage("stage=create-context");
     void *context = eglCreateContext(display, config, 0, contextAttrs);
+    stage("stage=make-current");
     if (!surface || !context || !eglMakeCurrent(display, surface, surface, context)) {
         printf("Context failed 0x%x\n", eglGetError()); return 5;
     }
     printf("GL vendor=%s renderer=%s version=%s\n", glGetString(0x1f00),
            glGetString(0x1f01), glGetString(0x1f02));
+    stage("stage=clear-readback");
     glClearColor(0.25f, 0.5f, 0.75f, 1.0f);
     glClear(0x4000); glFinish();
     unsigned char pixel[4] = {0};

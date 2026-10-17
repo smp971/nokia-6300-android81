@@ -49,6 +49,27 @@ not preserve the previous failure. A severe failure during the trial is therefor
 supported by observation; its exact kernel fault and the stage reached remain
 unknown. Do not repeat the EGL initialization trial on this evidence.
 
+## Adapted retry requested by the user
+
+Read-only inspection then found that stock `a300_pfp.fw` (1156 bytes) and
+`a300_pm4.fw` (9220 bytes) were absent from Android's firmware lookup locations.
+Stock `init.project.rc` also explicitly selects GPU devfreq `performance` during
+early init, while Android was using `msm-adreno-tz`.
+
+A second, user-requested trial supplied those two stock firmware files in
+`/tmp/adreno-fw` (device SHA256 matched the source), temporarily pointed the
+kernel firmware search path there, and selected stock's `performance` governor.
+No clock frequencies were raised. `adreno-trial.sh` restores both settings if
+userspace returns, and a reboot drops the temporary configuration. The normal
+ueventd firmware fallback `/firmware/image` remains available for modem firmware.
+The revised probe fsyncs stage markers to `/data/local/tmp/leo-adreno-trial.log`
+before each critical EGL step, so an external power cycle need not erase them.
+
+This retry again caused ADB loss and Windows Qualcomm Diagnostics 900E. A
+missing firmware file therefore does not explain the whole failure. The precise
+stage must be read after recovery; no further initialization trial should run
+until that evidence has been inspected. The installed graphics stack is unchanged.
+
 ## Next evidence needed
 
 Check the phone's actual state and reconnect ADB. Compare boot ID/uptime and
