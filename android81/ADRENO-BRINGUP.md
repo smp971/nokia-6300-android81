@@ -141,6 +141,44 @@ runs the guarded probe after staging. Private transcripts were copied to
 still passed afterwards. The next useful evidence is a preserved kernel fault
 trace or matching kernel KGSL source, rather than another unguarded EGL call.
 
+## Kernel sources obtained
+
+Downloaded the published Nokia Leo v20 source mirror:
+https://github.com/bmndc/nokia-leo/tree/leo-v20/kernel/msm-4.9
+
+Pinned repository commit: `949a9f7b2c109f307e72b25fec2dc5cb4d119dec`.
+Local WSL checkout: `/root/android81-leo/kernel-leo-v20/kernel/msm-4.9`.
+`fetch-leo-kernel.sh` reproduces the sparse checkout and refuses an unexpected
+existing origin/revision. The external source and its licenses remain in that
+separate checkout rather than being copied into this engineering repository.
+
+The Makefile reports 4.9.240, matching the running release version. This does
+not prove that it reproduces the installed `g4f9e270fd77f` kernel build exactly.
+The repository describes this branch as HMD's published kernel/B2G release.
+
+Inspection adds a concrete finding: in `drivers/gpu/msm/kgsl.c`,
+`kgsl_open` calls `kgsl_open_device` (line 1205). On the first open, that function
+calls the device's `init` and `start` methods (lines 1151 and 1155). Thus opening
+the real KGSL node already initializes and starts the GPU before userspace's
+first ioctl. In `adreno.c`, `adreno_init` reads microcode and initializes power
+and IOMMU state. A failure observed during EGL initialization need not be an
+ioctl ABI mismatch or an application gralloc failure. The fatal operation is
+still not proven without a real kernel fault trace.
+
+Saved the running `/proc/config.gz`, current-boot dmesg, and kallsyms names to
+ignored `output/leo-running-*` files. Kallsyms addresses are redacted because
+`kptr_restrict=2`; this setting was not changed. The kernel has QCOM memory-dump
+and download-mode support, but no pstore, kexec or crash-dump support. Live
+download_mode is 1 and subsystem full/mini ramdumps are disabled. These values
+were only read, not changed. Entering USB 900E alone does not establish that a
+usable dump can be downloaded with the tools currently available.
+
+The old failure log was not recovered. For a future fault, possible approaches
+are a live kernel-log capture (which can still lose the final messages when USB
+stops) or a separately built diagnostic kernel with a verified persistent-log
+memory reservation. No kernel rebuild was flashed and no memory reservation
+was guessed or added to the installed boot image.
+
 ## Next evidence needed
 
 Check the phone's actual state and reconnect ADB. Compare boot ID/uptime and
