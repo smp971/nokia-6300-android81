@@ -28,7 +28,7 @@ if [ ! -r /firmware/image/modem.mdt ]; then
     mount -o remount,ro /
     mount -t vfat -o ro /dev/block/bootdevice/by-name/modem /firmware
 fi
-echo /firmware/image > /sys/module/firmware_class/parameters/path
+printf '%s' /firmware/image > /sys/module/firmware_class/parameters/path
 "$base/bin/irsc_util" "$base/sec_config"
 mkdir -p /data/misc/radio /dev/socket/qmux_radio
 chown radio:radio /data/misc/radio /dev/socket/qmux_radio

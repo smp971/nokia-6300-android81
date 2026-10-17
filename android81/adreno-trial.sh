@@ -6,7 +6,7 @@ governor=/sys/class/kgsl/kgsl-3d0/devfreq/governor
 oldpath=$(cat "$path")
 oldgovernor=$(cat "$governor")
 restore() {
-    echo "$oldpath" > "$path"
+    printf '%s' "$oldpath" > "$path"
     echo "$oldgovernor" > "$governor"
     sync
 }
@@ -15,7 +15,7 @@ cat /proc/sys/kernel/random/boot_id
 echo "old_firmware_path=$oldpath old_gpu_governor=$oldgovernor"
 sha256sum /tmp/adreno-fw/a300_pfp.fw /tmp/adreno-fw/a300_pm4.fw
 dmesg > /data/local/tmp/leo-adreno-kernel-before.log
-echo /tmp/adreno-fw > "$path"
+printf '%s' /tmp/adreno-fw > "$path"
 echo performance > "$governor"
 echo stage=prepared
 sync

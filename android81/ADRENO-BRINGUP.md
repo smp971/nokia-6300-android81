@@ -179,6 +179,56 @@ stops) or a separately built diagnostic kernel with a verified persistent-log
 memory reservation. No kernel rebuild was flashed and no memory reservation
 was guessed or added to the installed boot image.
 
+## Initialization analysis: concrete firmware-path defect found
+
+The running device-tree chip ID is `03 00 04 00`, matching the A304 entry in
+`adreno-gpulist.h`. That entry requests `a300_pm4.fw` and `a300_pfp.fw`, the
+files staged previously. Their lengths pass `a3xx_microcode_read`'s checks:
+PM4 9220 modulo 12 = 4, and PFP 1156 modulo 4 = 0. These are format/length
+checks, not proof that the GPU successfully executed the firmware.
+
+The first-open sequence is:
+
+1. `kgsl_open`: runtime PM, device-private allocation.
+2. `kgsl_open_device`: clear memstore; call `adreno_init`.
+3. `adreno_init`: request microcode; transition to AWARE; initialize IOMMU
+   metadata, performance counters and fault detection; return to SLUMBER.
+4. `_adreno_start`: power to AWARE, start MMU, program GPU registers, enable
+   interrupts, start the command ringbuffer and dispatcher.
+5. Only after this does `kgsl_open` create per-process pagetable state and return
+   the descriptor to userspace. Userspace's first ioctl is later.
+
+Critically, `_load_firmware` errors reach `KGSL_DRV_FATAL` in
+`a3xx_microcode_read`. Despite its logging-like name, `KGSL_LOG_FATAL` in
+`kgsl_log.h:45` explicitly calls `BUG()`. A missing firmware file can therefore
+cause a kernel fault on this first open. Other fatal candidates include IOMMU
+clock-enable retries (`kgsl_iommu.c:973`) and an already-started invariant in
+`_adreno_start`; their presence is not evidence they were triggered.
+
+**A real configuration bug was found in our scripts:** both radio setup and
+the previous adapted trial used `echo` to set `firmware_class.path`. In this
+kernel, `param_set_copystring` (`kernel/params.c:545`) copies the trailing
+newline unchanged. `fw_get_filesystem_firmware` joins the entire parameter with
+`/filename`, so it tries a directory containing a newline. Additionally,
+`param_attr_show` appends a display newline. On the actual phone the old value
+ended in two `0a` bytes; setting it with newline-free `printf` reduced that to
+one display newline. This directly confirms the malformed parameter, not just
+a hypothetical shell issue.
+
+The earlier temporary GPU firmware directory was thus not configured correctly.
+That undermines the earlier conclusion that a properly supplied firmware pair
+had already been ruled out. The newline plus firmware-load `BUG()` is a concrete
+explanation consistent with the observed crash, but not a proven root cause
+without the fault trace or a corrected successful trial.
+
+Both scripts now use `printf '%s'`. The installed radio setup script was backed
+up, hash-checked and updated atomically by `fix-firmware-path.py`; `/system`
+returned read-only. The live firmware path was corrected to `/firmware/image`
+without restarting services. Both SIMs/voice registrations passed verification.
+No GPU device was opened, no kernel/boot/recovery was changed, and no new
+unguarded EGL test was performed during this analysis. A future GPU trial must
+verify the exact parameter bytes and capture live kernel output first.
+
 ## Next evidence needed
 
 Check the phone's actual state and reconnect ADB. Compare boot ID/uptime and
