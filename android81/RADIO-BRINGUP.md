@@ -69,3 +69,19 @@ and library staging remains temporary. Legacy qmuxd is skipped in IPC mode.
 No boot/system/recovery image was flashed for these radio trials. The temporary
 mounts and `/tmp` binaries do not survive a reboot. Calls, SMS, network
 registration and mobile data are not validated; no test calls or SMS were sent.
+
+## Radio-power queue diagnosis
+
+A repeated trial again reached SIM READY / modem ONLINE. Toggling airplane
+mode through Android (ending with airplane_mode_on=0) confirmed the framework's
+mDesiredPowerState=true and a new RADIO_POWER on=true request arriving in RIL.
+Vendor logging then reported `defer exec FC cmd 23`: an older RADIO_POWER
+request still owns that flow-control queue. This establishes where the new
+request is held, not why the older request is stuck. One older power-off request
+eventually completed; a general radio-power fix has not been established.
+
+ADB disappeared again before the worker stack could be captured. No second
+rild was launched and no radio-power compatibility patch was installed.
+`diagnose-radio-power.py` captures the queue logs and native worker stacks of
+the staged RIL once serial 695d is available. Its output stays excluded from Git
+because radio diagnostics may contain SIM and subscriber details.
