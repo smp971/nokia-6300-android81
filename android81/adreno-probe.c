@@ -8,13 +8,25 @@ extern void *stdout;
 extern void setbuf(void *, char *);
 extern unsigned alarm(unsigned);
 extern int fsync(int);
+extern int open(const char *, int, ...);
+extern int *__errno(void);
+extern int strcmp(const char *, const char *);
 static void stage(const char *name) { puts(name); fsync(1); }
 #define LOAD(lib, result, name, args) \
     result (*name) args = dlsym(lib, #name); \
     if (!name) { printf("Missing %s: %s\n", #name, dlerror()); return 2; }
-int main(void) {
+int main(int argc, char **argv) {
     setbuf(stdout, 0);
     alarm(20);
+    if (argc > 1) {
+        if (argc != 2 || strcmp(argv[1], "--guarded")) return 8;
+        /* This path does not exist: testing interposition cannot open real KGSL. */
+        int fd = open("/dev/leo-adreno-denied-selftest", 2);
+        if (fd != -1 || *__errno() != 19) {
+            puts("GUARD_SELFTEST_FAILED: refusing EGL"); return 8;
+        }
+        stage("GUARD_SELFTEST_OK");
+    }
     stage("stage=load-egl");
     void *egl = dlopen("libEGL_adreno.so", 2);
     if (!egl) { printf("EGL load: %s\n", dlerror()); return 1; }

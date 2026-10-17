@@ -8,3 +8,6 @@ crt="$src/prebuilts/ndk/r13/platforms/android-21/arch-arm/usr/lib"
     "$crt/crtbegin_dynamic.o" "$project/adreno-probe.c" \
     -L"$src/out/target/product/leo/obj/lib" -lc -ldl \
     "$crt/crtend_android.o" -o "$project/output/adreno-probe"
+"$src/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-gcc" \
+    -std=c99 -Wall -Wextra -Werror -shared -fPIC -nostdlib "$project/adreno-guard.c" \
+    -L"$src/out/target/product/leo/obj/lib" -lc -ldl -o "$project/output/adreno-guard.so"

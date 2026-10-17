@@ -85,6 +85,62 @@ compositor remained active. Both SIMs and voice registrations passed verificatio
 Further adaptation should first inspect initialization's allocator and KGSL ABI
 interactions offline; do not treat another identical pbuffer run as new evidence.
 
+## Guarded investigation without GPU access
+
+Disassembly of the stock binaries establishes this early initialization chain:
+
+`qeglDrvAPI_eglInitialize` -> `egliInitState` -> `gsl_library_open` ->
+`ioctl_kgsl_driver_entry` -> device opens and KGSL ioctls.
+
+In `libEGL_adreno.so`, `egliInitState` calls `gsl_library_open` at 0x210a4
+and `gsl_device_open` at 0x210c4/0x210d4/0x210e4. In `libgsl.so`,
+`gsl_library_open` calls `ioctl_kgsl_driver_entry` at 0x6588. That function
+opens `/dev/kgsl-3d0`, optionally the two 2D nodes, and `/dev/ion`.
+The Android subdriver mapping occurs later in `qeglDrvAPI_eglInitialize`
+at 0xbf54. This orders the operations; it does not locate the previous panic
+within them.
+
+`adreno-guard.c` is a process-local diagnostic preload which denies device opens
+and **all** ioctls. Its optional fake mode substitutes a regular file only for
+KGSL-3D and ION; it never forwards GPU commands. The probe first verifies that
+opening a nonexistent self-test device returns the guard's ENODEV, and refuses
+EGL execution if that check fails. Static imported-symbol inspection of all
+eight staged libraries found device operations through `open`, `fopen`, and
+`ioctl`, covered by the guard. This is narrowly scoped diagnostic interposition,
+not a security sandbox and not a working GPU compatibility shim.
+
+Two guarded trials completed without a reboot, firmware/governor changes, or
+interruption of the installed graphics stack:
+
+- Deny mode: attempted KGSL-3D open was intercepted, then EGL returned 0x3001
+  (EGL_NOT_INITIALIZED).
+- Fake mode: KGSL-3D and ION were replaced by regular-file descriptors, 2D
+  device opens were refused, and these commands were intercepted/refused:
+
+| Request | Qualcomm header name |
+| --- | --- |
+| 0xc0100940 | IOCTL_KGSL_SYNCSOURCE_CREATE |
+| 0xc0100941 | IOCTL_KGSL_SYNCSOURCE_DESTROY |
+| 0xc00c0902 | IOCTL_KGSL_DEVICE_GETPROPERTY |
+
+EGL again returned 0x3001. These command encodings match the 32-bit definitions
+in the local AOSP `hardware/qcom/msm8996/kernel-headers/linux/msm_kgsl.h`.
+Those headers are reference material, not proof of the running kernel ABI.
+There is no demonstrated command-number mismatch to patch at this point.
+Likewise, these tests do not distinguish a fault in opening the real KGSL node
+from one in a subsequent real ioctl.
+
+The kernel config confirms `CONFIG_PSTORE` is unset. The config's default
+panic-on-oops value is 0 but the live sysctl is 1; neither was changed. Thus an
+oops can become fatal under the running configuration, but no oops text was
+recovered and the earlier 900E failure must not be assigned a specific cause.
+
+Build with `build-adreno-probe.sh`; `adreno-guarded-trial.sh deny` or `fake`
+runs the guarded probe after staging. Private transcripts were copied to
+`output/adreno-guarded.log` and `output/adreno-fake.log`. Radio verification
+still passed afterwards. The next useful evidence is a preserved kernel fault
+trace or matching kernel KGSL source, rather than another unguarded EGL call.
+
 ## Next evidence needed
 
 Check the phone's actual state and reconnect ADB. Compare boot ID/uptime and
