@@ -13,6 +13,7 @@ class Handler(BaseHTTPRequestHandler):
                 candidates = [Path(LOG), Path(LOG).with_name('keymaster-build.log'),
                               Path(LOG).with_name('settings-fix-build.log'),
                               Path(LOG).with_name('radio-compat-build.log'),
+                              Path(LOG).with_name('radio-dualsim-build.log'),
                               Path(__file__).parent/'output/radio-audit/linker-probe.txt',
                               Path(__file__).parent/'output/internal-install.json']
                 current = max((p for p in candidates if p.exists()), key=lambda p: p.stat().st_mtime)

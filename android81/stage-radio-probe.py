@@ -24,6 +24,9 @@ for relative in graph:
         shutil.copy2(path, stage/'lib'/path.name)
         copied.append(relative)
 shutil.copy2(OUT/'radio-library-probe', stage/'probe')
+for name in ('rmt_storage', 'qmuxd', 'irsc_util', 'pm-service'):
+    shutil.copy2(ROOT/'analysis/system/bin'/name, stage/name)
+shutil.copy2(ROOT/'analysis/system/etc/sec_config', stage/'sec_config')
 modern_xml = Path('//wsl.localhost/kaios/root/android81-leo/src/out/target/product/leo/system/lib/libxml2.so')
 if modern_xml.exists():
     shutil.copy2(modern_xml, stage/'lib/libxml2.so')
@@ -33,6 +36,9 @@ subprocess.run(ADB+['shell', '/sbin/leo-framework-exec /system/bin/mkdir -p '
 subprocess.run(ADB+['push', *map(str, sorted((stage/'lib').glob('*.so'))),
                    '/tmp/leo-radio-probe/lib/'], check=True)
 subprocess.run(ADB+['push', str(stage/'probe'), '/tmp/leo-radio-probe/probe'], check=True)
+subprocess.run(ADB+['push', *[str(stage/name) for name in
+    ('rmt_storage', 'qmuxd', 'irsc_util', 'pm-service', 'sec_config')],
+    '/tmp/leo-radio-probe/'], check=True)
 for name in ('libril.so', 'librilutils.so'):
     subprocess.run(ADB+['shell', '/sbin/leo-framework-exec /system/bin/rm -f '
                        '/tmp/leo-radio-probe/lib/'+name], check=True)
