@@ -5,7 +5,9 @@ firmware-path newline and redirecting stock EGL's absolute vendor-library paths
 inside a temporary copy, the probe reported Qualcomm EGL 1.4, Adreno 304,
 OpenGL ES 3.0, pixel `64,128,191,255`, GL error 0 and
 `LEO_ADRENO_PBUFFER_OK`. The phone did not reboot and both SIM registrations
-remained valid. Android's installed compositor still uses SwiftShader.
+remained valid. The subsequent [Android integration](ADRENO-INTEGRATION.md)
+now uses Adreno in the installed compositor, with an ION/framebuffer bridge
+and a scoped HWUI synchronization adaptation.
 Earlier failed trials below are historical, not the current result.
 
 ## Confirmed

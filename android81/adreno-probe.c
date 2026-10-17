@@ -50,6 +50,9 @@ int main(int argc, char **argv) {
     LOAD(gl, void, glFinish, (void));
     LOAD(gl, void, glReadPixels, (int, int, int, int, unsigned, unsigned, void *));
     LOAD(gl, unsigned, glGetError, (void));
+    LOAD(egl, void *, eglCreateSyncKHR, (void *, unsigned, const int *));
+    LOAD(egl, int, eglClientWaitSyncKHR, (void *, void *, int, unsigned long long));
+    LOAD(egl, unsigned, eglDestroySyncKHR, (void *, void *));
     stage("stage=get-display");
     void *display = eglGetDisplay(0);
     int major = 0, minor = 0;
@@ -85,6 +88,15 @@ int main(int argc, char **argv) {
     glReadPixels(8, 8, 1, 1, 0x1908, 0x1401, pixel);
     unsigned error = glGetError();
     printf("pixel=%u,%u,%u,%u gl_error=0x%x\n", pixel[0], pixel[1], pixel[2], pixel[3], error);
+    void *fence=eglCreateSyncKHR(display,0x30f9,0);
+    printf("fence=%p error=0x%x\n",fence,eglGetError());
+    if(fence){
+        int finite=eglClientWaitSyncKHR(display,fence,1,2000000000ULL);
+        printf("fence_finite=0x%x error=0x%x\n",finite,eglGetError());
+        int infinite=eglClientWaitSyncKHR(display,fence,0,~0ULL);
+        printf("fence_forever=0x%x error=0x%x\n",infinite,eglGetError());
+        eglDestroySyncKHR(display,fence);
+    }
     int ok = !error && pixel[0] >= 62 && pixel[0] <= 65 && pixel[1] >= 126 &&
              pixel[1] <= 129 && pixel[2] >= 189 && pixel[2] <= 193;
     eglMakeCurrent(display, 0, 0, 0);

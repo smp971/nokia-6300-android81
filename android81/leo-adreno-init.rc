@@ -1,0 +1,20 @@
+# Stock KaiOS node access and a newline-free firmware path before graphics start.
+service leo_adreno_guard /system/bin/sh /system/vendor/lib/leo-adreno/switch.sh watch
+    class core
+    user root
+    group root system graphics
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+on post-fs-data
+    chown system system /dev/kgsl-3d0
+    chmod 0666 /dev/kgsl-3d0
+    chown system system /dev/ion
+    chmod 0664 /dev/ion
+    write /sys/module/firmware_class/parameters/path /vendor/firmware
+    write /sys/class/kgsl/kgsl-3d0/devfreq/governor performance
+    start leo_adreno_guard
+
+on property:sys.boot_completed=1
+    write /sys/class/kgsl/kgsl-3d0/devfreq/governor msm-adreno-tz

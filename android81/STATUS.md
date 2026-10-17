@@ -1,5 +1,16 @@
 # Etapa initiala Android 8.1 â€” actualizat 17 octombrie 2026
 
+ADRENO INTEGRAT (17 octombrie): SurfaceFlinger foloseste Qualcomm Adreno 304,
+GLES 3.0. Gralloc ION stock + bridge pastreaza afisarea pe panoul SPI RGB565;
+HWC citeste stride-ul real (288 pentru latime 240). Verificat import EGLImage,
+randare GPU, readback CPU si inregistrare buffer intre procese. Stiva GPU s-a
+incarcat dupa reboot complet; utilizatorul a confirmat meniul/tastele. Corectia
+HWUI pentru fence EGL_BAD_PARAMETER a trecut testul explicit HARDWARE bitmap
+dupa restart Java. Calculator si Setari deschise; ambele SIM-uri in serviciu.
+Ramane ANR-ul de pornire NetworkPolicyManagerService (latch 30s), diagnosticat
+separat; nu afirmam stabilitate generala sau FPS masurat. Boot/recovery/date
+nescrise/neformatate. Detalii: ADRENO-INTEGRATION.md.
+
 RADIO VALIDAT DUPA REBOOT (17 octombrie): doua instante RIL stock separate
 rezolva WAITING_FOR_MULTIPLE_RILD_SYNC. Ambele SIM-uri READY; voce IN_SERVICE
 pe Vodafone RO si DIGI RO. Primul slot are inregistrare GPRS, fara conexiune
@@ -12,7 +23,7 @@ fara binare /tmp, timeout-uri de proba sau comanda DMS ONLINE manuala.
 /system a revenit RO; boot/recovery si userdata nu au fost rescrise/formatate.
 Traseul privat IPC QMI si shim-ul raman adaptari experimentale pentru acest
 hwid 0x0. Documentatie RADIO-BRINGUP.md. Captura selectata:
-screenshots/network-registered.png. ANR/UI si randarea software raman limite.
+screenshots/network-registered.png. ANR/UI raman limite; integrarea GPU actuala este descrisa mai sus.
 
 SETARI REPARATE: WifiDisplaySettings.isAvailable interoga wifip2p absent,
 producand system_app_wtf si inchidere fatala in build eng (UID system).

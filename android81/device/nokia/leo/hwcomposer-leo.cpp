@@ -70,7 +70,16 @@ static int present(hwc_composer_device_1_t *dev,size_t count,hwc_display_content
     int rc=c->gralloc->lock(c->gralloc,target,GRALLOC_USAGE_SW_READ_OFTEN,0,0,c->fb->width,c->fb->height,&source);
     if(rc)return rc;
     c->page^=1;
-    const size_t sourceStride=(c->fb->width+1)&~size_t(1); // AOSP gralloc.default tileWidth=2.
+    size_t sourceStride=(c->fb->width+1)&~size_t(1); // Software gralloc tileWidth=2.
+    if(c->gralloc->perform){
+        int stride=0;
+        // Stock Qualcomm GET_CUSTOM_STRIDE_FROM_HANDLE; never infer ION padding.
+        rc=c->gralloc->perform(c->gralloc,3,target,&stride);
+        if(rc||stride<static_cast<int>(c->fb->width)||stride>4096){
+            c->gralloc->unlock(c->gralloc,target);return -EINVAL;
+        }
+        sourceStride=static_cast<size_t>(stride);
+    }
     for(unsigned y=0;y<c->fb->height;y++){
         const uint8_t *row=static_cast<const uint8_t*>(source)+y*sourceStride*4;
         uint16_t *out=reinterpret_cast<uint16_t*>(c->mapped+(y+c->page*c->fb->height)*c->fix.line_length);

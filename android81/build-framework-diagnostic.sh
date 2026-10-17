@@ -7,6 +7,7 @@ python3 "$TASK_DIR/patch-art-host-mmap.py"
 python3 "$TASK_DIR/patch-leo-gralloc.py"
 python3 "$TASK_DIR/patch-settings-optional-wifi.py"
 python3 "$TASK_DIR/patch-settings-rendering.py"
+python3 "$TASK_DIR/patch-adreno-hwui-fence.py"
 bash "$TASK_DIR/stage-device.sh"
 cd /root/android81-leo/src
 source build/envsetup.sh

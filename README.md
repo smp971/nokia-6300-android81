@@ -21,6 +21,12 @@ Modificarile viitoare se salveaza in commit-uri distincte, cu verificarea efectu
 si limitarile cunoscute. Sursele sunt sincronizate in repository-ul privat GitHub
 `smp971/nokia-6300-android81`.
 
+Grafica foloseste acum driverul Qualcomm Adreno 304 din KaiOS, cu allocator ION
+adaptat si pastrarea iesirii SPI RGB565. Incarcarea GPU dupa reboot si testul
+Android HARDWARE bitmap au fost verificate. Mai exista intarzieri/ANR la pornirea
+serviciilor de retea; integrarea nu este o certificare de stabilitate generala.
+Detalii si revenire la SwiftShader: [ADRENO-INTEGRATION.md](android81/ADRENO-INTEGRATION.md).
+
 ## Capturi de pe telefon
 
 Android 8.1 ruleaza de pe memoria interna. Leo Shell afiseaza aplicatiile,
@@ -36,6 +42,10 @@ si dupa repornire. Apelurile, SMS-urile si conexiunea de internet nu sunt testat
 
 Capturi reale la 240 x 320, obtinute prin ADB pe 16–17 octombrie 2026.
 Capturile initiale au ceasul nesincronizat.
+
+| Meniu cu Adreno activ | Test HARDWARE bitmap |
+| --- | --- |
+| ![Leo Shell cu renderer Adreno](android81/screenshots/adreno-menu.png) | ![Testul bitmapului GPU](android81/screenshots/adreno-hardware-bitmap.png) |
 
 Acesta este un prototip de diagnostic, nu un ROM pregatit pentru utilizare zilnica.
 Scripturile de flash valideaza tinta; consultati sursele inainte de executare.

@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.gputest">
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
+    <application android:label="GPU diagnostic" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity android:name=".HardwareBitmapProbe" android:exported="true" />
+    </application>
+</manifest>
