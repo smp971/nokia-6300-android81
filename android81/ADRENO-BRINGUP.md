@@ -70,6 +70,21 @@ missing firmware file therefore does not explain the whole failure. The precise
 stage must be read after recovery; no further initialization trial should run
 until that evidence has been inspected. The installed graphics stack is unchanged.
 
+After the second power-cycle recovery, the persistent log was successfully read
+and copied to the PC. Its last markers are `stage=load-egl`, `stage=load-gles`,
+`stage=get-display`, and `stage=initialize`. There is no EGL version output or
+`stage=choose-config`. Thus the process reached the call to vendor
+`eglInitialize` and did not return from it before the observed 900E failure.
+Context creation and the pixel readback were never reached. This localizes the
+failure but does not identify which kernel ioctl, firmware operation, allocator
+interaction or power-management call inside initialization caused it.
+
+The current boot completed normally. Firmware path was restored by normal boot
+to `/firmware/image`, governor to `msm-adreno-tz`, and the original SwiftShader
+compositor remained active. Both SIMs and voice registrations passed verification.
+Further adaptation should first inspect initialization's allocator and KGSL ABI
+interactions offline; do not treat another identical pbuffer run as new evidence.
+
 ## Next evidence needed
 
 Check the phone's actual state and reconnect ADB. Compare boot ID/uptime and
