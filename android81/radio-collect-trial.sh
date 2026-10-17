@@ -6,6 +6,7 @@ export PATH=/system/bin
 export LD_LIBRARY_PATH=/tmp/leo-radio-ipc:/tmp/leo-radio-probe/lib:/system/vendor/lib
 out=/tmp/leo-radio-evidence
 mkdir -p "$out"
+echo RUNNING > "$out/status"
 timeout 145 logcat -b all -v threadtime > "$out/live-log.txt" 2>&1 &
 logger=$!
 sh /tmp/leo-radio-start.sh --ipc

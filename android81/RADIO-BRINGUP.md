@@ -110,4 +110,14 @@ connection. Stage it together with the compiled DMS probe and existing radio
 trial prerequisites, then launch it detached with stdin/stdout/stderr redirected.
 It must run in PID 1's mount namespace, without overlapping previous trials.
 Evidence under `/tmp/leo-radio-evidence` is private and disappears on reboot.
-This collector is prepared but has not yet been validated on the device.
+The private bundle is prepared with `python android81/stage-radio-collection.py`.
+Add `--start` to transfer it in one ADB push and launch the detached collector.
+The launcher verified RUNNING on the phone; completion/evidence retrieval still
+needs validation. ADB disconnected again after launch, so no result is assumed.
+
+The Windows USB device was at one point bound to generic winusb.inf rather
+than the Android ADB interface class. Restarting the ADB server with the
+process-local ADB_LIBUSB=1 setting made it enumerate as offline, and a later
+reconnection restored a usable transport. This has not established a durable
+USB fix. A PnP interface restart was denied by Windows without administrator
+rights; no driver was replaced.
