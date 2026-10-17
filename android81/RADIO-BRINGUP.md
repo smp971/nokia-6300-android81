@@ -44,16 +44,27 @@ copies when staging.
 - With that combination, Android reads the baseband version and receives
   CARDSTATE_PRESENT / APPTYPE_USIM. SIM state remains NOT_READY, with no network.
 
-The engineering AOSP RIL was compiled with SIM_COUNT=1, whereas this hardware
-reports hwid 0x0 (stock dual-SIM configuration). Its vendor RIL uses callbacks
-with a socket_id parameter; the single-SIM callback ABI lacks that parameter.
-The next validation is a private AOSP libril/rild build with SIM_COUNT=2.
+The hardware reports hwid 0x0 (stock dual-SIM configuration). A private AOSP
+SIM_COUNT=2 trial compiled successfully but crashed handling an OEM unsolicited
+message: the stock vendor's callback ABI does not supply the extra socket_id.
+The SIM_COUNT=2 hypothesis was rejected and the BoardConfig change reverted.
+Stock init instead uses separate rild processes (`-c 2` for the second one).
+Keep the installed single-SIM-ABI AOSP libril; do not stage the rejected private
+multi-SIM libril.so in the library search path.
+
+With the original AOSP RIL ABI, the IPC adaptation and
+`persist.radio.multisim.config=dsds`, Android reported SIM READY. Voice/data
+registration remained POWER_OFF / Unknown, with radio-power requests pending.
+The second rild trial could not start because USB/ADB serial 695d disappeared.
+Its cause (USB disconnect, reboot or fault) has not yet been established.
 
 `radio-start-probe.sh --ipc` starts bounded temporary trials in PID 1's mount
 namespace. Stage the binaries and libraries first; run backup-radio-state.py
 before the first modem activation. It requires the privately generated IPC
-library and shim under `/tmp/leo-radio-ipc`. If a test rild exists there, the
-script uses it instead of the installed one. Do not run overlapping trials.
+library and shim under `/tmp/leo-radio-ipc`. It deliberately uses the installed
+single-SIM-ABI rild and refuses an experimental libril.so in that directory.
+Do not run overlapping trials. The dsds property persists in userdata; service
+and library staging remains temporary. Legacy qmuxd is skipped in IPC mode.
 
 No boot/system/recovery image was flashed for these radio trials. The temporary
 mounts and `/tmp` binaries do not survive a reboot. Calls, SMS, network

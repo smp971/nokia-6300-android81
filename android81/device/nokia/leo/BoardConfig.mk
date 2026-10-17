@@ -6,8 +6,6 @@ TARGET_CPU_VARIANT := cortex-a7
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
 TARGET_BOARD_PLATFORM := msm8909
-# Qualcomm's stock RIL uses the multi-SIM callback ABI, including socket_id.
-SIM_COUNT := 2
 TARGET_BOOTLOADER_BOARD_NAME := msm8909
 TARGET_NO_BOOTLOADER := true
 TARGET_NO_RECOVERY := true

@@ -6,6 +6,9 @@ export LD_LIBRARY_PATH=/tmp/leo-radio-probe/lib:/system/vendor/lib
 chmod 0755 /tmp/leo-radio-probe/probe /tmp/leo-radio-probe/rmt_storage /tmp/leo-radio-probe/qmuxd /tmp/leo-radio-probe/irsc_util /tmp/leo-radio-probe/pm-service
 if [ "${1:-}" = --ipc ]; then
     export LD_LIBRARY_PATH=/tmp/leo-radio-ipc:/tmp/leo-radio-probe/lib:/system/vendor/lib
+    # Stock uses separate rild instances, not AOSP's multi-SIM callback ABI.
+    [ ! -f /tmp/leo-radio-ipc/libril.so ]
+    setprop persist.radio.multisim.config dsds
 fi
 mkdir -p /dev/block/bootdevice/by-name
 for entry in /sys/class/block/mmcblk0p*; do
@@ -48,10 +51,6 @@ fi
 timeout 200 /tmp/leo-radio-probe/probe --boot-modem > /tmp/leo-radio-boot.log 2>&1 &
 echo $! > /tmp/leo-radio-boot.pid
 binary=/system/vendor/bin/hw/rild
-if [ -f /tmp/leo-radio-ipc/rild ]; then
-    chmod 0755 /tmp/leo-radio-ipc/rild
-    binary=/tmp/leo-radio-ipc/rild
-fi
 if [ "${1:-}" = --ipc ]; then
     timeout 180 env LD_PRELOAD=/tmp/leo-radio-ipc/shim.so "$binary" \
         -l /tmp/leo-radio-probe/lib/libril-qc-qmi-1.so > /tmp/leo-radio-rild.log 2>&1 &
@@ -60,4 +59,4 @@ else
         > /tmp/leo-radio-rild.log 2>&1 &
 fi
 echo $! > /tmp/leo-radio-rild.pid
-echo 'Bounded modem, rmt_storage, qmuxd and AOSP RIL trial started.'
+echo 'Bounded modem and radio trial started; legacy qmuxd is skipped in IPC mode.'
