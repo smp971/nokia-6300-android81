@@ -9,8 +9,33 @@ import android.util.Log;
 import android.widget.TextView;
 public class AudioTest extends Activity {
     AudioTrack track;
+    android.media.MediaPlayer player;
     public void onCreate(Bundle b){
         super.onCreate(b);final TextView label=new TextView(this);label.setText("Android AudioTrack test");setContentView(label);
+        final String source=getIntent().getStringExtra("source");
+        if(source!=null){
+            label.setText("MediaPlayer: "+source);
+            try {
+                player=new android.media.MediaPlayer();
+                player.setAudioStreamType(AudioManager.STREAM_RING);
+                player.setVolume(0.25f,0.25f);
+                player.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener(){
+                    public boolean onError(android.media.MediaPlayer p,int what,int extra){
+                        Log.e("LeoAudioTest","MEDIA_ERROR source="+source+" what="+what+" extra="+extra);return true;
+                    }});
+                player.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener(){
+                    public void onPrepared(android.media.MediaPlayer p){
+                        Log.i("LeoAudioTest","MEDIA_PREPARED duration="+p.getDuration());p.start();
+                        new Handler().postDelayed(new Runnable(){public void run(){
+                            if(player!=null){Log.i("LeoAudioTest","MEDIA_POSITION="+player.getCurrentPosition());player.release();player=null;}
+                        }},3000);
+                    }});
+                if(source.startsWith("content:"))player.setDataSource(this,android.net.Uri.parse(source));
+                else player.setDataSource(source);
+                player.prepareAsync();
+            } catch(Exception e){Log.e("LeoAudioTest","MEDIA_FAILURE",e);label.setText(e.toString());}
+            return;
+        }
         try {
             short[] pcm=new short[48000*2*2];
             for(int i=0;i<96000;i++){
@@ -29,5 +54,5 @@ public class AudioTest extends Activity {
             }},3000);
         } catch(Exception e){Log.e("LeoAudioTest","Playback failed",e);label.setText(e.toString());}
     }
-    public void onDestroy(){if(track!=null){track.release();track=null;}super.onDestroy();}
+    public void onDestroy(){if(player!=null){player.release();player=null;}if(track!=null){track.release();track=null;}super.onDestroy();}
 }

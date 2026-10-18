@@ -1,5 +1,9 @@
 # Audio bring-up — 18 October 2026
 
+Follow-up: ordinary OGG sounds also required the missing MediaCodec XML registry.
+After installing it and restarting codec/media services, MediaPlayer playback
+was audible and confirmed by the user. See PHONE-AUDIO-FOLLOWUP.md.
+
 Current result: **speaker output works through Android's AudioFlinger and the
 stock Qualcomm HAL, including after a full reboot.** The user confirmed both
 the private HAL tones and Android AudioTrack tones, and confirmed them again

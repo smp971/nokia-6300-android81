@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Register AOSP software audio codecs; no unvalidated hardware video codecs. -->
+<MediaCodecs>
+    <Include href="media_codecs_google_audio.xml" />
+</MediaCodecs>

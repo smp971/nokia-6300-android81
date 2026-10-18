@@ -11,6 +11,9 @@ PRODUCT_MANUFACTURER := HMD Global
 PRODUCT_CHARACTERISTICS := nosdcard
 PRODUCT_AAPT_CONFIG := normal ldpi
 PRODUCT_AAPT_PREF_CONFIG := ldpi
+PRODUCT_COPY_FILES += \
+    device/nokia/leo/media_codecs.xml:system/etc/media_codecs.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml
 
 # First framework bring-up uses the software display stack verified on this phone.
 PRODUCT_PACKAGES += \
