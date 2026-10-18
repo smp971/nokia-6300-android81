@@ -1,12 +1,16 @@
 KEYPAD CALL UI, 19 OCT 2026
 First real incoming trial showed only a touch-oriented notification. Follow-up
 patch now explicitly opens the keypad call activity on an incoming transition;
-rebuilt and installed without reboot. Real-call retest is pending.
+rebuilt and installed without reboot. Real-call retest PASSED: user confirmed
+the full call screen, physical-key answer/hangup, and audio in both directions.
+Recorded ringing -> off-hook -> idle with the real InCallActivity focused during
+the call, no fatal exceptions, and both SIMs idle afterward. VoLTE/VoWiFi,
+outgoing calls and other call/audio scenarios remain unverified by this trial.
 The existing Dialer/InCallUI now has native softkey labels and hardware-key
 answer/reject/end, microphone, speaker, volume and DTMF controls. Updated APK
 installed without deleting app data; all ten offline shared-control tests pass.
-No live calls were placed. Call audio and real call-state transitions remain
-unverified. Red key is mapped to ENDCALL with HOME behavior while idle.
+One real incoming call now passes; the earlier offline tests alone did not cover
+its launch path. Red key is mapped to ENDCALL with HOME behavior while idle.
 See CALL-KEYPAD.md for build/install steps and exact validation scope.
 
 LTE DATA INTEGRATED, 18 OCT 2026

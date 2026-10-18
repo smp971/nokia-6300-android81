@@ -9,14 +9,24 @@ not covered by the offline control preview: the real incoming launch path.
 full-screen keypad activity once when entering INCOMING with its main UI hidden.
 The existing notification is retained; notification settings for other apps are
 unchanged. This does not answer a call automatically. Repeated INCOMING updates
-do not repeatedly launch the activity. A second real incoming trial is required
-to confirm the complete path and call audio.
+do not repeatedly launch the activity. The second real incoming trial passed:
+the user confirmed the complete call screen, physical-key controls, and audible
+conversation in both directions, followed by hangup with Right soft.
 The follow-up APK compiled and installed successfully as a data update without a
 reboot. SHA-256: `bbaaf237da69c129f69bd3ff874cac8cdf6e53241970f48842da67e1015c8f44`.
 `capture-call-trial.py` observes up to ten minutes of call states and whether the
 real InCallActivity has focus. It performs no call actions. Detailed logcat stays
 under ignored local `output/call-fullscreen-trial/`; console state reports contain
-no caller numbers. Real-call confirmation of this follow-up is pending.
+no caller numbers. The successful trial recorded ringing on SIM 1 with the real
+InCallActivity focused at 39 seconds, off-hook with that activity focused at 46
+seconds, then both SIMs idle and the call activity dismissed at 85 seconds. There
+was a brief USB interruption before the ringing sample; capture resumed. No
+fatal exceptions were recorded, and the final live check found both SIMs idle.
+Capture was stopped after the trial. Raw logs remain local and untracked.
+
+This validates one real incoming call, keypad answer/hangup and two-way call
+audio. It does not establish VoLTE/VoWiFi operation, outgoing calls, DTMF delivery,
+call waiting, or all audio routes.
 
 ## Device validation, 19 October 2026
 
