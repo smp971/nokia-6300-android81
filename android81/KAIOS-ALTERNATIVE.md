@@ -1,6 +1,12 @@
 # Alternativă KaiOS peste Android: rezultate și plan
 
-**19 octombrie 2026 — etapă de analiză, fără modificări pe telefon.**
+**19 octombrie 2026 — analiză inițială, completată cu implementarea Leo.**
+
+Leo Visual este acum HOME implicit, iar Leo Multi-tap este metoda de text implicită.
+Avem meniu global, notificări, stare dual SIM și vizualizări listă/grilă.
+Acestea sunt implementări Android proprii, nu aplicațiile originale KaiOS.
+Planul actual, criteriile de testare și adaptările următoare sunt în
+[PROJECT.md](PROJECT.md). Propunerile de mai jos păstrează contextul analizei inițiale.
 
 ## Ce avem efectiv în dump
 

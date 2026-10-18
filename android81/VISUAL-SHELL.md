@@ -7,6 +7,18 @@ din meniu. Nu sunt înlocuite serviciile de telefonie sau imaginile boot/recover
 
 ## HOME, notificări și cursor din taste
 
+### Listă, grilă și preferințe
+
+Din Opțiuni se poate alege **Afișare listă / Afișare grilă**. Lista afișează până
+la cinci rânduri și se parcurge cu sus/jos. Alegerea și culoarea fundalului sunt
+salvate în preferințe private. Persistența listei a fost verificată după oprirea
+și relansarea procesului; Calculatorul s-a deschis din lista navigată cu tastele.
+Nu s-a efectuat un reboot nou pentru acest test.
+
+![Listă de aplicații](screenshots/visual-shell-list.png)
+
+Planul comun al interfeței și aplicațiilor: [PROJECT.md](PROJECT.md).
+
 - Soft stânga din prima pagină deschide panoul real de notificări Android.
 - Tasta **Meniu dedicată** deschide global „Meniu Leo”: Notificări, Mouse din
   taste / Oprește mouse-ul, Acasă și Închide. Funcționează și peste alte aplicații.

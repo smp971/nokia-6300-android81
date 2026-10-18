@@ -6,6 +6,13 @@ nu este un editor integrat doar în launcher și nu necesită WebView.
 
 ## Ce implementează prima versiune
 
+IME este acum selectat implicit pe telefon. `activate-keypad-ime.py` adaugă
+în scriptul existent de configurare un hook care îl activează/selectează numai
+dacă pachetul este instalat. Actualizarea este atomică, iar `/system` revine
+read-only. Împachetarea internă include acum `LeoKeypad.apk` și cere existența
+APK-ului construit. Hook-ul nou nu a fost verificat printr-un reboot suplimentar;
+imaginea completă nu a fost reconstruită în această etapă.
+
 - Multi-tap: apăsări repetate pe aceeași tastă aleg litera, cu confirmare automată după 850 ms.
 - Moduri `abc`, `ABC`, `123`, schimbate cu `#` în câmpurile de text.
 - Diacritice românești: ă, â, î, ș, ț și formele majuscule.

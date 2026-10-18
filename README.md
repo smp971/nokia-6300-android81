@@ -212,3 +212,8 @@ Nu sunt incluse dump-uri complete, kernelul precompilat, binare proprietare, ima
 6. Continuarea IMS, cu probe separate pentru VoLTE și VoWiFi după îndeplinirea dependențelor.
 
 Tabelul de mai sus este rezumatul curent. Documentele mai vechi păstrează rezultatele etapelor respective și pot descrie blocaje rezolvate ulterior. Istoricul Git începe de la inițializarea repository-ului; experimentele anterioare nu au commit-uri retroactive.
+## Planul interfeței Leo
+
+[Componente, adaptări din KaiOS și etape de dezvoltare](android81/PROJECT.md).
+Leo Multi-tap este metoda de text implicită; Leo Visual oferă listă/grilă și
+preferințe de aspect salvate. [Captură listă](android81/screenshots/visual-shell-list.png).

@@ -111,9 +111,14 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new AlertDialog.Builder(this).setTitle("Leo Visual")
-            .setItems(new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre"}, new DialogInterface.OnClickListener() {
+            .setItems(new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
+                screen.list?"Afișare grilă":"Afișare listă"}, new DialogInterface.OnClickListener() {
               public void onClick(DialogInterface dialog, int which) {
-                if (which == 0) { screen.warm = !screen.warm; screen.invalidate(); }
+                if (which == 0) {
+                    screen.warm = !screen.warm;
+                    getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("warm",screen.warm).apply();
+                    screen.invalidate();
+                }
                 else if (which == 1) {
                     if (!LeoPointerService.toggle()) new AlertDialog.Builder(MainActivity.this)
                         .setMessage("Serviciul de cursor nu este activat.").setPositiveButton("OK", null).show();
@@ -122,6 +127,11 @@ public final class MainActivity extends Activity {
                 else if (which == 3) new AlertDialog.Builder(MainActivity.this).setTitle("Leo Visual")
                     .setMessage("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare.")
                     .setPositiveButton("OK", null).show();
+                else if (which == 4) {
+                    screen.list=!screen.list;
+                    getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("list",screen.list).apply();
+                    screen.invalidate();
+                }
               }
             }).show();
     }
@@ -144,7 +154,9 @@ public final class MainActivity extends Activity {
         final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab};
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
-        boolean grid, warm;
+        boolean grid;
+        boolean warm=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("warm",false);
+        boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
         String time = "", date = "", message = "";
         final String[] simLabels = {"SIM 1: se verifică", "SIM 2: se verifică"};
@@ -210,6 +222,10 @@ public final class MainActivity extends Activity {
                 : key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : key == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
             if (delta != 0) {
                 if (!grid) grid = true;
+                else if(list) {
+                    if(key==KeyEvent.KEYCODE_DPAD_UP) selected=Math.max(0,selected-1);
+                    if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=Math.min(8,selected+1);
+                }
                 else if ((delta == -1 && selected % 3 != 0) || (delta == 1 && selected % 3 != 2)
                          || (delta == -3 && selected >= 3) || (delta == 3 && selected < 6)) selected += delta;
                 message = ""; invalidate(); return true;
@@ -289,6 +305,16 @@ public final class MainActivity extends Activity {
             } else {
                 p.setColor(0xc7161428); output.drawRect(0,0,240,276,p);
                 text(output,names[selected],120,25,18,Color.WHITE,Paint.Align.CENTER);
+                if(list) {
+                    int first=Math.max(0,Math.min(4,selected-2));
+                    for(int row=0;row<5;row++) {
+                        int i=first+row; float y=60+row*42;
+                        if(i==selected) round(output,7,y-19,233,y+19,7,0xfff5eefb);
+                        output.save(); output.translate(32,y); output.scale(.65f,.65f); icon(output,i,0,0); output.restore();
+                        text(output,names[i],57,y+5,14,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.LEFT);
+                    }
+                    text(output,(selected+1)+" / 9",120,267,10,0xffd3bddf,Paint.Align.CENTER);
+                } else {
                 for(int i=0;i<9;i++) {
                     float x=40+(i%3)*80, y=67+(i/3)*76;
                     if(i==selected) round(output,x-34,y-29,x+34,y+39,10,0xfff5eefb);
@@ -296,6 +322,7 @@ public final class MainActivity extends Activity {
                     text(output,names[i],x,y+33,10,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.CENTER);
                 }
                 for(int i=0;i<3;i++) {p.setColor(i==selected/3?0xffe0b8ff:0xff64536f); output.drawCircle(110+i*10,267,2,p);}
+                }
             }
             if(!message.isEmpty()) {
                 round(output,5,240,235,274,6,0xff302339);

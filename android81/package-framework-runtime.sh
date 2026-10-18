@@ -26,6 +26,9 @@ if [ "${LEO_INTERNAL_PACKAGE:-0}" = 1 ]; then
     rm -f "$STAGE/system/app/LeoShell/LeoShell.apk"
     mkdir -p "$STAGE/system/app/LeoVisual"
     cp "$DEST/leo-visual.apk" "$STAGE/system/app/LeoVisual/LeoVisual.apk"
+    test -s "$DEST/leo-keypad-ime.apk"
+    mkdir -p "$STAGE/system/app/LeoKeypad"
+    cp "$DEST/leo-keypad-ime.apk" "$STAGE/system/app/LeoKeypad/LeoKeypad.apk"
     cp "$TASK_DIR/leo-first-setup.sh" "$STAGE/system/etc/leo-first-setup.sh"
     chmod 644 "$STAGE/system/etc/leo-first-setup.sh"
 fi

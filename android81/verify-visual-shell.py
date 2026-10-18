@@ -44,7 +44,16 @@ java('/system/bin/am', 'start', '-W', '-f', '0x14000000', '-n', 'ro.leo.visual/.
 capture('home')
 key(23)
 capture('grid')
-key(22, 20)
+try:
+    preferences = native('/system/bin/cat', '/data/data/ro.leo.visual/shared_prefs/appearance.xml')
+except subprocess.CalledProcessError:
+    preferences = ''  # Fresh installation uses the default grid.
+if 'name="list" value="true"' in preferences:
+    key(*([19] * 9))
+    key(20, 20, 20, 20)
+else:
+    key(19, 19, 21, 21)
+    key(22, 20)
 capture('calculator-selected')
 key(23)
 wait_focus('calculator')

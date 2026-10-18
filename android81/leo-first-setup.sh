@@ -19,3 +19,8 @@ if cmd package list packages ro.leo.visual | grep -qx 'package:ro.leo.visual'; t
 else
     cmd activity start-activity -a android.intent.action.MAIN -c android.intent.category.HOME
 fi
+# Default physical-key text input, only when the IME is installed.
+if cmd package list packages ro.leo.keypad | grep -qx 'package:ro.leo.keypad'; then
+    /system/bin/ime enable ro.leo.keypad/.KeypadIme
+    /system/bin/ime set ro.leo.keypad/.KeypadIme
+fi
