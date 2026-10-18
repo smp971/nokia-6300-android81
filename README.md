@@ -120,7 +120,9 @@ Analiza nu a modificat sistemul de pe telefon.
 Primul [prototip Leo Visual](android81/VISUAL-SHELL.md) este acum instalat separat:
 home, stare pentru ambele SIM-uri și grilă 3×3 controlată din taste. Deschide
 aplicațiile Android existente; nu reprezintă încă portarea aplicațiilor KaiOS.
-Leo Shell rămâne HOME implicit.
+Leo Visual este acum HOME implicit, cu acces la notificări din prima pagină și
+mouse opțional din taste. Tasta dedicată Meniu deschide comenzile globale și
+din alte aplicații. Leo clasic a fost dezinstalat pentru utilizatorul activ.
 
 ## Ce am adaptat
 

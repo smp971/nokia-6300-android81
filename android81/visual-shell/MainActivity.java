@@ -92,26 +92,46 @@ public final class MainActivity extends Activity {
         state.putBoolean("grid", screen.grid); state.putInt("selected", screen.selected);
         super.onSaveInstanceState(state);
     }
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent); setIntent(intent);
+        screen.grid = false; screen.message = ""; screen.refresh();
+    }
     public void onBackPressed() {
         if (screen.grid || !screen.message.isEmpty()) {
             screen.grid = false; screen.message = ""; screen.invalidate();
-        } else finish();
+        }
     }
     public boolean onKeyDown(int key, KeyEvent event) {
+        if(key==KeyEvent.KEYCODE_MENU && event.getScanCode()==212) {
+            if(event.getRepeatCount()==0) options();
+            return true;
+        }
         if (screen.key(key, event.getRepeatCount())) return true;
         return super.onKeyDown(key, event);
     }
     private void options() {
         new AlertDialog.Builder(this).setTitle("Leo Visual")
-            .setItems(new String[]{"Schimbă fundalul", "Despre", "Ieși în Leo"}, new DialogInterface.OnClickListener() {
+            .setItems(new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre"}, new DialogInterface.OnClickListener() {
               public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) { screen.warm = !screen.warm; screen.invalidate(); }
-                else if (which == 1) new AlertDialog.Builder(MainActivity.this).setTitle("Prototip vizual")
-                    .setMessage("Navigare din taste. OK deschide meniul și aplicațiile. Tasta roșie revine în Leo.")
+                else if (which == 1) {
+                    if (!LeoPointerService.toggle()) new AlertDialog.Builder(MainActivity.this)
+                        .setMessage("Serviciul de cursor nu este activat.").setPositiveButton("OK", null).show();
+                }
+                else if (which == 2) notifications();
+                else if (which == 3) new AlertDialog.Builder(MainActivity.this).setTitle("Leo Visual")
+                    .setMessage("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare.")
                     .setPositiveButton("OK", null).show();
-                else finish();
               }
             }).show();
+    }
+    private void notifications() {
+        try {
+            Object bar = getSystemService("statusbar");
+            bar.getClass().getMethod("expandNotificationsPanel").invoke(bar);
+        } catch(Exception ignored) {
+            screen.message = "Notificări indisponibile"; screen.invalidate();
+        }
     }
     private final class Screen extends View {
         final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -174,8 +194,8 @@ public final class MainActivity extends Activity {
             }
         }
         boolean key(int key, int repeat) {
-            if (key == KeyEvent.KEYCODE_BACK) { if (repeat == 0) onBackPressed(); return true; }
-            if (key == KeyEvent.KEYCODE_MENU) { if (repeat == 0) options(); return true; }
+            if (key == KeyEvent.KEYCODE_BACK) { if (repeat == 0) { if(grid) onBackPressed(); else open(1); } return true; }
+            if (key == KeyEvent.KEYCODE_MENU) { if (repeat == 0) { if(grid) options(); else notifications(); } return true; }
             if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
                 if (repeat == 0) { if (grid) open(selected); else { grid = true; message = ""; invalidate(); } }
                 return true;
@@ -282,9 +302,9 @@ public final class MainActivity extends Activity {
                 text(output,message,120,261,12,Color.WHITE,Paint.Align.CENTER);
             }
             p.setColor(0xff100f1d); output.drawRect(0,276,240,302,p);
-            text(output,"Opțiuni",8,293,11,Color.WHITE,Paint.Align.LEFT);
+            text(output,grid?"Opțiuni":"Notificări",8,293,11,Color.WHITE,Paint.Align.LEFT);
             text(output,grid?"Deschide":"Meniu",120,293,12,0xffdfbdff,Paint.Align.CENTER);
-            text(output,grid?"Înapoi":"Ieșire",232,293,11,Color.WHITE,Paint.Align.RIGHT);
+            text(output,grid?"Înapoi":"Contacte",232,293,11,Color.WHITE,Paint.Align.RIGHT);
             output.restore();
         }
     }

@@ -1,8 +1,57 @@
 # Leo Visual — primul prototip de interfață
 
-**19 octombrie 2026.** Aplicație Android separată, `ro.leo.visual`, inspirată de
-navigarea KaiOS. Nu înregistrează HOME, servicii de telefonie sau modificări de
-boot. Leo Shell rămâne interfața HOME implicită.
+**19 octombrie 2026.** `ro.leo.visual` este acum interfața HOME implicită,
+inspirată de navigarea KaiOS. La cererea utilizatorului, Leo clasic a fost
+dezinstalat pentru utilizatorul Android activ, iar opțiunea lui a fost eliminată
+din meniu. Nu sunt înlocuite serviciile de telefonie sau imaginile boot/recovery.
+
+## HOME, notificări și cursor din taste
+
+- Soft stânga din prima pagină deschide panoul real de notificări Android.
+- Tasta **Meniu dedicată** deschide global „Meniu Leo”: Notificări, Mouse din
+  taste / Oprește mouse-ul, Acasă și Închide. Funcționează și peste alte aplicații.
+- Scan code 212 identifică tasta Meniu, separat de soft stânga (139). În meniu,
+  D-pad și OK navighează normal, inclusiv dacă mouse-ul era pornit.
+- Soft dreapta din prima pagină deschide Contacte; în grilă revine la Home.
+- În grilă: soft stânga → **Mouse din taste** activează cursorul global.
+- În modul mouse: săgeți = deplasare, OK = clic, `#` = oprire.
+- `*` comută între deplasare și derulare; în derulare, sus/jos injectează un swipe.
+- Tasta roșie, când nu există un apel, revine în Leo Visual. În apel păstrează
+  politica Android de închidere a apelului.
+
+Serviciul de accesibilitate solicită filtrarea tastelor și injectarea gesturilor;
+nu solicită citirea conținutului ferestrelor. Folosește un overlay de accesibilitate,
+nu permisiunea generală de desenare peste aplicații. Când modul este oprit,
+serviciul nu consumă tastele. Activarea nu se reia automat după restartul serviciului.
+
+`activate-visual-home.py` salvează setările anterioare local, păstrează celelalte
+servicii de accesibilitate activate și setează HOME. Actualizează doar selecția
+shell-ului din scriptul de configurare existent. Când Leo Visual este instalat,
+îl selectează la boot; altfel lasă Android să rezolve un HOME disponibil, fără
+referință la Leo clasic. Scriptul `/system` a fost instalat
+atomic și sistemul remontat read-only. Alegerea pentru următorul boot este
+configurată; nu s-a efectuat un reboot nou pentru această verificare.
+
+Verificări noi: rezolvarea HOME indică Leo Visual; scan code 107 a revenit din
+Leo clasic în noul HOME cu ambele SIM-uri în repaus. Panoul de notificări a primit
+focusul `StatusBar`. În ecranul privat `PointerTestActivity`, OK injectat la nivel
+de tastatură a produs atât `clicks=1`, cât și confirmarea gestului de accesibilitate.
+Mișcările cursorului au fost observate în jurnal. Derularea și compatibilitatea
+cu toate aplicațiile nu sunt încă validate. Captura de clic nu conține notificări
+sau date personale.
+
+Meniul global a fost verificat prin scan code 212 din Calculator, cu captură
+„Meniu Leo”. Alegerea Notificări a transferat focusul la `StatusBar`.
+Dezinstalarea `ro.leo.shell` pentru utilizatorul 0 a returnat Success; lista
+pachetelor instalate pentru acel utilizator nu îl mai conține, iar HOME se
+rezolvă în continuare la `ro.leo.visual/.MainActivity`. Fiind anterior o aplicație
+de sistem actualizată, această dezinstalare nu șterge APK-ul de bază din imaginea
+system. Împachetarea viitoare include Leo Visual în locul LeoShell; nu s-a generat
+sau scris o imagine nouă în această probă.
+
+| Meniu global peste Calculator | Clic prin cursor în ecranul de test |
+| --- | --- |
+| ![Meniu global](screenshots/visual-global-menu.png) | ![Clic confirmat](screenshots/visual-pointer-test.png) |
 
 ## Implementat
 
@@ -24,13 +73,13 @@ interfețele existente și nu devin automat adaptate complet la taste.
 | --- | --- | --- |
 | OK | Deschide grila | Deschide aplicația selectată |
 | Săgeți | Deschide grila | Deplasează selecția, cu limite la margini |
-| Soft stânga / Meniu | Opțiuni | Opțiuni |
-| Soft dreapta / Înapoi | Iese din prototip | Revine la Home-ul prototipului |
+| Soft stânga / Meniu | Notificări | Opțiuni |
+| Soft dreapta / Înapoi | Contacte | Revine la Home |
 | Verde | Deschide Dialer, fără a efectua un apel | La fel |
 | 1–9 | Fără acțiune specială | Selectează tile-ul corespunzător; OK îl deschide |
-| Roșu | Politica Android ENDCALL; revine în Leo în repaus | La fel |
+| Roșu | Politica Android ENDCALL; revine în Leo Visual în repaus | La fel |
 
-Opțiunile includ schimbarea fundalului, explicația comenzilor și ieșirea în Leo.
+Opțiunile din grilă includ schimbarea fundalului, mouse, notificări și explicația comenzilor.
 În timpul unui apel, tasta roșie păstrează comportamentul global de închidere a
 apelului. Prototipul nu interceptează această tastă.
 
@@ -55,7 +104,7 @@ inclusiv ambele rânduri SIM. Scriptul de probă a verificat:
 - Deschiderea grilei cu OK și selecția Calculatorului prin D-pad.
 - Lansarea Calculatorului instalat și revenirea în prototip prin Înapoi.
 - Revenirea din grilă la Home și deschiderea/închiderea opțiunilor.
-- Păstrarea `ro.leo.shell` ca HOME implicit; nu au fost efectuate apeluri.
+- Inițial, păstrarea `ro.leo.shell` ca HOME; ulterior, selectarea Leo Visual, descrisă mai sus. Nu au fost efectuate apeluri în aceste probe.
 
 O primă probă a fost întreruptă de pierderea conexiunii și repornirea telefonului,
 nesolicitată de aceste scripturi. Proba completă a trecut după revenirea sistemului.
@@ -71,14 +120,15 @@ de Leo sau funcționarea completă a fiecărei aplicații deschise. Nu au fost
 
 ## Compilare și instalare în mediul proiectului
 
-Surse: `visual-shell/MainActivity.java` și `visual-shell/AndroidManifest.xml`.
+Surse: `visual-shell/`, inclusiv serviciul de accesibilitate, resursa XML și ecranul privat de test.
 În WSL rulează `build-visual-shell.sh`; rezultatul este APK-ul local ignorat
 `output/leo-visual.apk`. Folosește un director nou de compilare pentru a evita
 clase rămase din build-uri precedente. Arborele AOSP și Java 8 trebuie pregătite.
 
 Instalarea folosește fluxul existent ADB + `framework-command.py`: transfer APK,
 `pm install -r`, apoi `pm grant ro.leo.visual android.permission.READ_PHONE_STATE`.
-Se lansează explicit `ro.leo.visual/.MainActivity`. Permisiunea a fost acordată
+`activate-visual-home.py` aplică selecția HOME și activarea serviciului de cursor.
+Se poate lansa și explicit `ro.leo.visual/.MainActivity`. Permisiunea a fost acordată
 prin ADB pentru a evita un dialog tactil pe telefonul cu taste.
 
 `verify-visual-shell.py` păstrează capturi locale în `output/visual-shell-test/`

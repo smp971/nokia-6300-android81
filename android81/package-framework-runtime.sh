@@ -22,8 +22,10 @@ if [ "${LEO_INTERNAL_PACKAGE:-0}" = 1 ]; then
         cp "$TASK_DIR/device/nokia/leo/$layout.kl" "$STAGE/system/usr/keylayout/$layout.kl"
     done
     test -s "$STAGE/system/vendor/lib/hw/android.hardware.keymaster@3.0-impl.so"
-    mkdir -p "$STAGE/system/app/LeoShell"
-    cp "$DEST/leo-shell.apk" "$STAGE/system/app/LeoShell/LeoShell.apk"
+    test -s "$DEST/leo-visual.apk"
+    rm -f "$STAGE/system/app/LeoShell/LeoShell.apk"
+    mkdir -p "$STAGE/system/app/LeoVisual"
+    cp "$DEST/leo-visual.apk" "$STAGE/system/app/LeoVisual/LeoVisual.apk"
     cp "$TASK_DIR/leo-first-setup.sh" "$STAGE/system/etc/leo-first-setup.sh"
     chmod 644 "$STAGE/system/etc/leo-first-setup.sh"
 fi

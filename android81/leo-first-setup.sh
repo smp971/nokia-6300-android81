@@ -12,5 +12,10 @@ cmd settings put global bluetooth_on 0
 cmd settings put global ble_scan_always_enabled 0
 sh /system/bin/svc bluetooth disable
 cmd lock_settings set-disabled true
-cmd package set-home-activity --user 0 ro.leo.shell/.MainActivity
-cmd activity start-activity -n ro.leo.shell/.MainActivity
+# Use Leo Visual when installed; otherwise let Android resolve an available HOME.
+if cmd package list packages ro.leo.visual | grep -qx 'package:ro.leo.visual'; then
+    cmd package set-home-activity --user 0 ro.leo.visual/.MainActivity
+    cmd activity start-activity -n ro.leo.visual/.MainActivity
+else
+    cmd activity start-activity -a android.intent.action.MAIN -c android.intent.category.HOME
+fi
