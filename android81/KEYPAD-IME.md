@@ -53,7 +53,9 @@ introducerea textului, deoarece acel mod rezervă tasta pentru oprirea cursorulu
 
 **Rezultat pe telefon: toate cele 11 cazuri automate au trecut.** Android
 raportează Leo Multi-tap ca IME selectat, conectat și cu bara de introducere
-vizibilă. Confirmarea manuală a utilizatorului este separată de aceste probe.
+vizibilă. Utilizatorul a confirmat ulterior, pe tastatura fizică, scrierea
+literelor și ștergerea corectă în editorul local. Această confirmare nu validează
+predicția T9 sau compatibilitatea tuturor aplicațiilor.
 
 | Cuvânt introdus din taste | Diacritice românești |
 | --- | --- |

@@ -5,6 +5,7 @@ word input, Romanian diacritics, uppercase, numeric text mode, pending/committed
 deletion, Phone-field digits/star/pound and Phone-field deletion. Compact status
 strip only, no full virtual key grid. T9 prediction and broad app compatibility
 remain unverified/unimplemented as described in KEYPAD-IME.md.
+User also confirmed physical-key letter entry and deletion in the local editor.
 
 KEYPAD CALL UI, 19 OCT 2026
 First real incoming trial showed only a touch-oriented notification. Follow-up
