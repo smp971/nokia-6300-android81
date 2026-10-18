@@ -1,5 +1,10 @@
 # Android 8.1 pentru Nokia Leo: pregatire
 
+> **Document istoric — pregătirea inițială din 15–16 octombrie 2026.**
+> Pentru starea actuală și tabelul funcțiilor, vezi [README-ul proiectului](../README.md#tabelul-funcțiilor).
+> Etapele de mai jos includ probele pe microSD și rendererul software; configurația
+> curentă rulează din memoria internă, cu Adreno, LTE și un apel primit real validat.
+
 **Stare actuala (16 octombrie 2026):** init, ADB, meniul nativ si stiva grafica
 SurfaceFlinger/SwiftShader sunt deja verificate pe telefon si integrate in recovery.
 Detaliile actuale si hash-urile sunt in `STATUS.md`; descrierea initiala de mai jos

@@ -1,3 +1,8 @@
+> **Audit istoric.** Audio, LTE și interfața de apel au evoluat după această probă.
+> Tabelul actualizat la 19 octombrie 2026 este în [README-ul proiectului](../README.md#tabelul-funcțiilor).
+> Un apel primit real, răspunsul/închiderea din taste și audio în ambele sensuri
+> au fost confirmate ulterior; vezi [CALL-KEYPAD.md](CALL-KEYPAD.md).
+
 # LTE follow-up
 
 SIM 1 LTE data now passes after reboot: netmgr automatic, Android connection
