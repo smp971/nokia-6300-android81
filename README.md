@@ -117,6 +117,11 @@ Vezi [inventarul complet](android81/KAIOS-UI-INVENTORY.md) și
 [planul pentru interfață și aplicații](android81/KAIOS-ALTERNATIVE.md).
 Analiza nu a modificat sistemul de pe telefon.
 
+Primul [prototip Leo Visual](android81/VISUAL-SHELL.md) este acum instalat separat:
+home, stare pentru ambele SIM-uri și grilă 3×3 controlată din taste. Deschide
+aplicațiile Android existente; nu reprezintă încă portarea aplicațiilor KaiOS.
+Leo Shell rămâne HOME implicit.
+
 ## Ce am adaptat
 
 - **Pornire și stocare:** trecerea de la probele inițiale la rularea din memoria internă.
