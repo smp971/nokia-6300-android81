@@ -1,5 +1,5 @@
 #!/bin/bash
-# Compatibility build only. Does not install or start the downloaded client.
+# Build the isolated primary-SIM IMS port; does not install or start it.
 set -eo pipefail
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$TASK_DIR/environment.sh"
@@ -11,6 +11,7 @@ mkdir -p "$target"
 touch "$target/leo-study-marker"
 trap 'if [ -f "$target/Android.mk" ]; then mv "$target/Android.mk" "$target/Android.mk.leo-study-disabled"; fi' EXIT
 cp -r "$reference/src" "$reference/res" "$reference/AndroidManifest.xml" "$target/"
+python3 "$TASK_DIR/port-ims-client.py"
 cat > "$target/Android.mk" <<'EOF'
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
@@ -27,4 +28,5 @@ cd /root/android81-leo/src
 source build/envsetup.sh
 lunch aosp_leo_go-eng
 export ANDROID_DATA=/root/android81-leo/host-android-data
-make -j4 out/target/common/obj/APPS/LeoImsCandidate_intermediates/package.apk
+make -j4 out/target/product/leo/obj/APPS/LeoImsCandidate_intermediates/package.apk
+cp out/target/product/leo/obj/APPS/LeoImsCandidate_intermediates/package.apk "$TASK_DIR/output/ims-reference/ported-ims.apk"

@@ -1,6 +1,11 @@
 # IMS / VoLTE investigation — 18 October 2026
 
-LTE data remains validated. IMS voice is **not registered or integrated** yet.
+Follow-up: the Android 8.1 client port now compiles and has registered real IMS
+voice on the primary SIM in a controlled device trial. The unmodified-client
+failures below are historical. See IMS-PORT.md for changes, proof and limitations.
+
+Initial investigation state: LTE data validated; IMS voice was **not registered
+or integrated**. The controlled port trial is documented separately above.
 
 ## Direct modem observations
 

@@ -1,5 +1,11 @@
 LTE DATA INTEGRATED, 18 OCT 2026
-IMS follow-up: read-only socket queries work on slot 0 but report NOT_REGISTERED.
+IMS client port follow-up: Android 8.1 build and device binding pass. A controlled
+primary-SIM trial reached real IMS registration and enabled LTE voice, also
+reported by Android telephony. No calls/audio were tested. Trial activation was
+reverted; APK remains installed but inactive, with no automatic IMS startup.
+LTE data and dual-SIM registration pass after radio reinitialization. See IMS-PORT.md.
+
+Earlier IMS investigation: read-only socket queries worked on slot 0 but reported NOT_REGISTERED.
 Original IMS QMI/data daemons pass bounded startup trials. The legacy Android
 client fails 8.1 API compatibility; it was not installed or boot-enabled.
 See IMS-BRINGUP.md for protocol observations and porting requirements.

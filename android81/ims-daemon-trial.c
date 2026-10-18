@@ -12,8 +12,11 @@ extern unsigned sleep(unsigned);
 extern void *memset(void *,int,unsigned);
 extern int snprintf(char *,unsigned,const char *,...),printf(const char *,...);
 extern void perror(const char *),_exit(int);
+extern int atoi(const char *);
 int main(int argc,char **argv){
-    if(argc!=2)return 2;
+    if(argc!=2 && argc!=3)return 2;
+    unsigned duration=argc==3?(unsigned)atoi(argv[2]):20;
+    if(duration<1 || duration>180)return 2;
     const char *name,*binary;
     if(!strcmp(argv[1],"qmi")){name="ims_qmid";binary="/tmp/leo-ims/imsqmidaemon";}
     else if(!strcmp(argv[1],"data")){name="ims_datad";binary="/tmp/leo-ims/imsdatadaemon";}
@@ -36,11 +39,11 @@ int main(int argc,char **argv){
     }
     if(child>0){
         int stopped=0;
-        for(unsigned n=0;n<20;n++){
+        for(unsigned n=0;n<duration;n++){
             if(waitpid(child,&status,1)==child){stopped=1;break;}sleep(1);
         }
         if(!stopped){
-            printf("TRIAL_ALIVE_AFTER_20S %s\n",name);result=0;kill(child,15);
+            printf("TRIAL_ALIVE_AFTER_%uS %s\n",duration,name);result=0;kill(child,15);
             sleep(1);if(waitpid(child,&status,1)!=child){kill(child,9);waitpid(child,&status,0);}
         }else printf("TRIAL_EARLY_EXIT %s wait_status=%d\n",name,status);
     }else perror("fork");
