@@ -48,7 +48,8 @@ key 231     CALL
 
 # Dedicated back-arrow key: physically verified through EV_KEY capture.
 key 14      BACK
-key 107     HOME
+# Android policy ends/rejects calls; end_button_behavior=1 keeps HOME while idle.
+key 107     ENDCALL
 key 212     MENU
 key 522     STAR
 key 523     POUND

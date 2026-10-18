@@ -1,4 +1,5 @@
 # Shared Nokia hardware bring-up configuration.
+DEVICE_PACKAGE_OVERLAYS += device/nokia/leo/overlay
 PRODUCT_COPY_FILES += \
     device/nokia/leo/prebuilt/kernel:kernel \
     device/nokia/leo/rootdir/init.qcom.rc:root/init.qcom.rc \

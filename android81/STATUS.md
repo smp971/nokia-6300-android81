@@ -1,3 +1,11 @@
+KEYPAD CALL UI, 19 OCT 2026
+The existing Dialer/InCallUI now has native softkey labels and hardware-key
+answer/reject/end, microphone, speaker, volume and DTMF controls. Updated APK
+installed without deleting app data; all ten offline shared-control tests pass.
+No live calls were placed. Call audio and real call-state transitions remain
+unverified. Red key is mapped to ENDCALL with HOME behavior while idle.
+See CALL-KEYPAD.md for build/install steps and exact validation scope.
+
 LTE DATA INTEGRATED, 18 OCT 2026
 IMS client port follow-up: Android 8.1 build and device binding pass. A controlled
 primary-SIM trial reached real IMS registration and enabled LTE voice, also
