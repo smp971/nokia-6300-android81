@@ -9,6 +9,10 @@ din meniu. Nu sunt înlocuite serviciile de telefonie sau imaginile boot/recover
 
 ### Aplicații Android
 
+Intrarea **Ceas** din meniul principal deschide acum Ceas Leo (oră/cronometru).
+Clock Android rămâne în lista de mai jos. Detalii și limite:
+[Portarea aplicațiilor KaiOS](KAIOS-APP-PORTS.md).
+
 Meniul principal are o a zecea intrare, **Aplicații Android**. În grilă este pe
 a doua pagină (jos din ultimul rând sau dreapta de la Setări); în listă este
 ultima intrare. Tasta `0` o selectează direct, apoi OK o deschide.

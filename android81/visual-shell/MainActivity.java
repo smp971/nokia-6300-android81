@@ -236,6 +236,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==3) { startActivity(new Intent(MainActivity.this,ClockActivity.class)); return; }
             if(index==9) { startActivity(new Intent(MainActivity.this,AndroidAppsActivity.class)); return; }
             Intent intent;
             if (index == 0) intent = new Intent(Intent.ACTION_DIAL);

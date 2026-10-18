@@ -215,5 +215,7 @@ Tabelul de mai sus este rezumatul curent. Documentele mai vechi păstrează rezu
 ## Planul interfeței Leo
 
 [Componente, adaptări din KaiOS și etape de dezvoltare](android81/PROJECT.md).
+[Portarea aplicațiilor implicite și copia de referință KaiOS](android81/KAIOS-APP-PORTS.md):
+primul port parțial este Ceas Leo, cu oră și cronometru native.
 Leo Multi-tap este metoda de text implicită; Leo Visual oferă listă/grilă și
 preferințe de aspect salvate. [Captură listă](android81/screenshots/visual-shell-list.png).

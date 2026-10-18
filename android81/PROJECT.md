@@ -55,6 +55,9 @@ Inventarul reproductibil este în [KAIOS-UI-INVENTORY](KAIOS-UI-INVENTORY.md).
 3. **Aplicații esențiale:** Contacte și Mesaje adaptate pentru tastatură, apoi Ceas,
    Fișiere și profiluri audio. Acceptare: scenarii reale documentate individual;
    trimiterea mesajelor/apelurile de probă se fac doar cu instrucțiunea utilizatorului.
+   Copia locală a aplicațiilor KaiOS este verificată; primul ecran propriu este Ceas
+   (oră și cronometru). Matricea completă și limitele sunt în
+   [KAIOS-APP-PORTS.md](KAIOS-APP-PORTS.md).
 4. **Predicție T9:** alegerea unui motor redistribuibil, integrare în IME și teste
    românești. Acceptare: candidați, selecție, corectare și revenire sigură la multi-tap.
 5. **Stabilitate și performanță:** măsurători pe aceleași ecrane, pornire repetabilă,
