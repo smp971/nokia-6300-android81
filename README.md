@@ -107,6 +107,16 @@ Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
 
 Capturi reale ale ecranului de 240 × 320. Cele două capturi de apel provin din **simularea locală**, nu din conversația reală; validarea apelului real este documentată separat. Capturile inițiale pot avea ceasul nesincronizat.
 
+## Investigație: interfață alternativă inspirată de KaiOS
+
+Dump-ul KaiOS 2.5.4 conține 64 de intrări de aplicații și 63 de pachete locale.
+Am inventariat shell-ul, permisiunile, API-urile specifice și declarațiile de
+servicii. Acestea nu sunt încă portate ca ansamblu în Android.
+
+Vezi [inventarul complet](android81/KAIOS-UI-INVENTORY.md) și
+[planul pentru interfață și aplicații](android81/KAIOS-ALTERNATIVE.md).
+Analiza nu a modificat sistemul de pe telefon.
+
 ## Ce am adaptat
 
 - **Pornire și stocare:** trecerea de la probele inițiale la rularea din memoria internă.
