@@ -1,5 +1,23 @@
 # Keypad call controls
 
+## Incoming-notification follow-up
+
+The first physical incoming-call trial reached the phone but showed only the
+heads-up notification with touch-only Accept/Reject actions. This revealed a gap
+not covered by the offline control preview: the real incoming launch path.
+`patch-call-keypad.py` now also patches InCallPresenter to explicitly start the
+full-screen keypad activity once when entering INCOMING with its main UI hidden.
+The existing notification is retained; notification settings for other apps are
+unchanged. This does not answer a call automatically. Repeated INCOMING updates
+do not repeatedly launch the activity. A second real incoming trial is required
+to confirm the complete path and call audio.
+The follow-up APK compiled and installed successfully as a data update without a
+reboot. SHA-256: `bbaaf237da69c129f69bd3ff874cac8cdf6e53241970f48842da67e1015c8f44`.
+`capture-call-trial.py` observes up to ten minutes of call states and whether the
+real InCallActivity has focus. It performs no call actions. Detailed logcat stays
+under ignored local `output/call-fullscreen-trial/`; console state reports contain
+no caller numbers. Real-call confirmation of this follow-up is pending.
+
 ## Device validation, 19 October 2026
 
 The updated Dialer APK compiled and installed on 695d, retaining app data.
@@ -9,6 +27,8 @@ and a fresh incoming preview. UI hierarchy assertions and device screenshots
 were used; the phone display was explicitly awakened before the run.
 The APK SHA-256 is `a72b358ee5a1c5ee8acfca1a3353d782a4228608af1e4afac443d9fdad925f79`.
 These are simulated call-state tests, not a live call or microphone test.
+The user also confirmed OK and Right soft on the physical keypad in the offline
+preview. That confirmation does not cover the notification-to-call-screen path.
 After one reboot, the installed preview still launches and Android policy reports
 `mEndcallBehavior=1`. Injecting the physical matrix scan code 107 through the input
 device while both SIMs were idle returned to Leo HOME, confirming the new layout

@@ -1,4 +1,7 @@
 KEYPAD CALL UI, 19 OCT 2026
+First real incoming trial showed only a touch-oriented notification. Follow-up
+patch now explicitly opens the keypad call activity on an incoming transition;
+rebuilt and installed without reboot. Real-call retest is pending.
 The existing Dialer/InCallUI now has native softkey labels and hardware-key
 answer/reject/end, microphone, speaker, volume and DTMF controls. Updated APK
 installed without deleting app data; all ten offline shared-control tests pass.

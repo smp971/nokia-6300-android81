@@ -68,6 +68,23 @@ if '// LEO_CALL_KEYS' not in text:
 
 ''' + needle)
     path.write_text(text)
+path = target / 'InCallPresenter.java'
+text = path.read_text()
+if '// LEO_INCOMING_KEYPAD_SCREEN' not in text:
+    needle = '''      LogUtil.i("InCallPresenter.startOrFinishUi", "Start Full Screen in call UI");
+
+      mStatusBarNotifier.updateNotification(mCallList);'''
+    assert text.count(needle) == 1
+    text = text.replace(needle, needle + '''
+      // LEO_INCOMING_KEYPAD_SCREEN: an unlocked Oreo device may display only
+      // a heads-up notification. Its touch actions are inaccessible on Leo.
+      // Open the keypad activity once per transition to a ringing call.
+      if (mainUiNotVisible && mInCallState != InCallState.INCOMING) {
+        mContext.startActivity(InCallActivity.getIntent(
+            mContext, false /* showDialpad */, false /* newOutgoingCall */,
+            true /* isForFullScreen */));
+      }''')
+    path.write_text(text)
 path = root / 'AndroidManifest.xml'
 text = path.read_text()
 if 'com.android.incallui.LeoCallPreview' not in text:
