@@ -42,7 +42,8 @@ Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
 | USB / ADB / root | **Funcțional** | Diagnostic, instalare și control din PC; s-au observat și întreruperi USB temporare. |
 | Leo Shell | **Funcțional** | Meniu nativ, listă de aplicații, navigare și etichete pentru tastele soft. |
 | Tastatură fizică / D-pad | **Funcțional** | Mapare adaptată și confirmări pe telefon; aplicațiile Android nu sunt toate adaptate la taste. |
-| Introducere text T9 / multi-tap completă | **Nefuncțional** | Nu există încă o implementare completă pentru utilizare generală. |
+| Introducere multi-tap din taste | **Funcțional** | IME Android selectat; 11 probe în editor local: litere, diacritice, majuscule, ștergere și câmp numeric. Compatibilitatea tuturor aplicațiilor nu este încă verificată. |
+| Predicție T9 | **Nefuncțional** | Motorul predictiv nu este încă integrat; dicționarul românesc și integrarea IMEConnect din dump sunt identificate pentru analiză. |
 | Bară de stare Android | **Funcțional** | Vizibilă împreună cu Leo Shell; nu confirmă singură funcționarea fiecărui serviciu afișat. |
 | Accelerare Adreno | **Funcțional** | Renderer Qualcomm și test Android HARDWARE bitmap verificate, inclusiv după reboot. |
 | Fluiditate generală | **Parțial** | Sincronizarea HWC1 a fost corectată; limitele panoului SPI și întârzierile unor aplicații rămân. |
@@ -108,7 +109,17 @@ arată un **ecran local de test**, unde apăsarea OK a activat butonul o dată.
 Grila deschide aplicații Android existente; prezența unei iconițe nu confirmă
 instalarea sau funcționarea completă a aplicației respective.
 
+### Introducere text din taste
+
+| Introducere multi-tap în Android | Diacritice românești |
+| --- | --- |
+| ![Cuvânt introdus din taste](android81/screenshots/keypad-ime-word.png) | ![Diacritice în editorul de test](android81/screenshots/keypad-ime-romanian.png) |
+
+Aceste două capturi sunt din editorul local folosit pentru verificarea IME,
+nu dintr-o aplicație de mesagerie și nu reprezintă predicție T9.
+
 ### Capturi din etapele anterioare
+
 
 | Leo Shell | Setări | Înregistrare în rețea |
 | --- | --- | --- |
@@ -142,6 +153,10 @@ mouse opțional din taste. Tasta dedicată Meniu deschide comenzile globale și
 din alte aplicații. Leo clasic a fost dezinstalat pentru utilizatorul activ.
 
 ## Ce am adaptat
+
+Pentru introducere text există acum [Leo Multi-tap](android81/KEYPAD-IME.md),
+o metodă Android pentru tastatura fizică, cu bară compactă și diacritice.
+Predicția T9 este o etapă separată, încă neimplementată.
 
 - **Pornire și stocare:** trecerea de la probele inițiale la rularea din memoria internă.
 - **Grafică:** integrarea Adreno/ION/HWC1, păstrând afișarea SPI RGB565.
@@ -191,7 +206,7 @@ Nu sunt incluse dump-uri complete, kernelul precompilat, binare proprietare, ima
 
 1. Apeluri inițiate de pe Nokia, respingere reală, ambele SIM-uri și repetarea probelor audio.
 2. DTMF către rețea, microfon mut, difuzor și accesorii în convorbire reală.
-3. SMS și introducere text T9 / multi-tap potrivită tastaturii fizice.
+3. SMS, predicție T9 și extinderea probelor multi-tap în aplicațiile reale.
 4. Rezolvarea ANR-ului de pornire și stabilizarea aplicațiilor/WebView.
 5. Integrarea Wi-Fi, Bluetooth, camerei și localizării.
 6. Continuarea IMS, cu probe separate pentru VoLTE și VoWiFi după îndeplinirea dependențelor.

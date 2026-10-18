@@ -1,3 +1,11 @@
+KEYPAD TEXT IME, 19 OCT 2026
+Leo Multi-tap is installed and selected as the Android IME. Eleven physical-key
+cases pass in a private native editor: cycling, same-key separation, timeout,
+word input, Romanian diacritics, uppercase, numeric text mode, pending/committed
+deletion, Phone-field digits/star/pound and Phone-field deletion. Compact status
+strip only, no full virtual key grid. T9 prediction and broad app compatibility
+remain unverified/unimplemented as described in KEYPAD-IME.md.
+
 KEYPAD CALL UI, 19 OCT 2026
 First real incoming trial showed only a touch-oriented notification. Follow-up
 patch now explicitly opens the keypad call activity on an incoming transition;

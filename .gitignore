@@ -24,6 +24,7 @@
 !/android81/radio-test/
 !/android81/call-ui/
 !/android81/visual-shell/
+!/android81/keypad-ime/
 /android81/device/**/local/
 /android81/device/**/prebuilt/
 
