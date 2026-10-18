@@ -17,6 +17,29 @@ public final class LeoPointerService extends AccessibilityService {
     private boolean active, scroll, gesturePending, consumePoundUp;
     private int x, y, width, height;
     private KeypadDialog menu;
+    private final android.os.Handler movement=new android.os.Handler();
+    private int heldDirection;
+    private long heldSince;
+    private final Runnable repeatMovement=new Runnable() {
+        public void run() {
+            if(!active || scroll || heldDirection==0) return;
+            long elapsed=android.os.SystemClock.uptimeMillis()-heldSince;
+            movePointer(heldDirection,elapsed>=700?14:elapsed>=350?8:4);
+            movement.postDelayed(this,40);
+        }
+    };
+    private void stopMovement() {
+        heldDirection=0; movement.removeCallbacks(repeatMovement);
+    }
+    private void movePointer(int key,int step) {
+        if(key==KeyEvent.KEYCODE_DPAD_LEFT) x-=step;
+        if(key==KeyEvent.KEYCODE_DPAD_RIGHT) x+=step;
+        if(key==KeyEvent.KEYCODE_DPAD_UP) y-=step;
+        if(key==KeyEvent.KEYCODE_DPAD_DOWN) y+=step;
+        x=Math.max(0,Math.min(width-2,x)); y=Math.max(0,Math.min(height-2,y));
+        layout.x=x; layout.y=y; manager.updateViewLayout(pointer,layout);
+        Log.i("LeoPointer","move x="+x+" y="+y);
+    }
     protected void onServiceConnected() {
         instance=this;
         manager=(WindowManager)getSystemService(WINDOW_SERVICE);
@@ -30,6 +53,7 @@ public final class LeoPointerService extends AccessibilityService {
         instance.setActive(false); instance.setActive(true); return instance.active;
     }
     private void globalMenu() {
+        stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
             "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Închide"},new KeypadDialog.Action() {
@@ -44,6 +68,7 @@ public final class LeoPointerService extends AccessibilityService {
         Log.i("LeoPointer","global menu opened");
     }
     private void setActive(boolean enable) {
+        stopMovement();
         if(enable==active) return;
         if(enable) {
             android.util.DisplayMetrics metrics=new android.util.DisplayMetrics();
@@ -74,6 +99,7 @@ public final class LeoPointerService extends AccessibilityService {
     }
     protected boolean onKeyEvent(KeyEvent event) {
         int key=event.getKeyCode();
+        if(event.getAction()==KeyEvent.ACTION_UP && key==heldDirection) stopMovement();
         // Scan 212 is the dedicated Menu key; scan 139 is the left softkey.
         // Keep the softkey's context-specific actions intact.
         if(key==KeyEvent.KEYCODE_MENU && event.getScanCode()==212) {
@@ -91,10 +117,12 @@ public final class LeoPointerService extends AccessibilityService {
         if(event.getAction()!=KeyEvent.ACTION_DOWN) return true;
         if(key==KeyEvent.KEYCODE_POUND) { consumePoundUp=true; setActive(false); return true; }
         if(key==KeyEvent.KEYCODE_STAR) {
+            stopMovement();
             if(event.getRepeatCount()==0) { scroll=!scroll; pointer.invalidate(); Toast.makeText(this,scroll?"Derulare: sus / jos":"Deplasare cursor",Toast.LENGTH_SHORT).show(); }
             return true;
         }
         if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {
+            stopMovement();
             if(event.getRepeatCount()==0) gesture(x,y,x,y,80);
             return true;
         }
@@ -102,14 +130,12 @@ public final class LeoPointerService extends AccessibilityService {
             if(event.getRepeatCount()==0) gesture(width/2,height*0.6f,width/2,
                 key==KeyEvent.KEYCODE_DPAD_DOWN?height*0.25f:height*0.9f,300);
         } else {
-            int step=event.getRepeatCount()>4?18:8;
-            if(key==KeyEvent.KEYCODE_DPAD_LEFT) x-=step;
-            if(key==KeyEvent.KEYCODE_DPAD_RIGHT) x+=step;
-            if(key==KeyEvent.KEYCODE_DPAD_UP) y-=step;
-            if(key==KeyEvent.KEYCODE_DPAD_DOWN) y+=step;
-            x=Math.max(0,Math.min(width-2,x)); y=Math.max(0,Math.min(height-2,y));
-            layout.x=x; layout.y=y; manager.updateViewLayout(pointer,layout);
-            Log.i("LeoPointer","move x="+x+" y="+y);
+            if(event.getRepeatCount()==0) {
+                stopMovement(); heldDirection=key;
+                heldSince=android.os.SystemClock.uptimeMillis();
+                movePointer(key,8);
+                movement.postDelayed(repeatMovement,180);
+            }
         }
         return true;
     }

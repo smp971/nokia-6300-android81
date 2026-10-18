@@ -47,6 +47,12 @@ Planul comun al interfeței și aplicațiilor: [PROJECT.md](PROJECT.md).
 - Soft dreapta din prima pagină deschide Contacte; în grilă revine la Home.
 - În grilă: soft stânga → **Mouse din taste** activează cursorul global.
 - În modul mouse: săgeți = deplasare, OK = clic, `#` = oprire.
+- Apăsare scurtă: 8 pixeli. La menținerea D-pad-ului, repetarea proprie începe
+  după 180 ms, la fiecare 40 ms: 4 pixeli inițial, 8 după 350 ms, 14 după 700 ms.
+  Nu depinde de întârzierea de autorepetare Android. Eliberarea direcției, meniul,
+  clicul, schimbarea modului și oprirea cursorului anulează repetarea.
+  Verificat prin evenimente fizice: treptele de accelerare, oprirea după eliberare
+  și un singur pas de 8 pixeli pentru o apăsare scurtă. Derularea păstrează logica anterioară.
 - `*` comută între deplasare și derulare; în derulare, sus/jos injectează un swipe.
 - Tasta roșie, când nu există un apel, revine în Leo Visual. În apel păstrează
   politica Android de închidere a apelului.
