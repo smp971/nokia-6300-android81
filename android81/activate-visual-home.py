@@ -50,6 +50,10 @@ java('/system/bin/pm', 'grant', 'ro.leo.visual', 'android.permission.READ_PHONE_
 services=java('/system/bin/settings', 'get', 'secure', 'enabled_accessibility_services').strip()
 enabled=[] if services in ('', 'null') else services.split(':')
 component='ro.leo.visual/ro.leo.visual.LeoPointerService'
+if component in enabled:
+    # Rebind our service after APK replacement; preserve every other service.
+    others=[entry for entry in enabled if entry != component]
+    java('/system/bin/settings', 'put', 'secure', 'enabled_accessibility_services', ':'.join(others))
 if component not in enabled:
     enabled.append(component)
 java('/system/bin/settings', 'put', 'secure', 'enabled_accessibility_services', ':'.join(enabled))

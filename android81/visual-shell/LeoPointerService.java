@@ -7,8 +7,6 @@ import android.util.Log;
 import android.view.*;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 
 /** Opt-in global keypad pointer. No window contents, screenshots or network access. */
 public final class LeoPointerService extends AccessibilityService {
@@ -18,7 +16,7 @@ public final class LeoPointerService extends AccessibilityService {
     private View pointer;
     private boolean active, scroll, gesturePending, consumePoundUp;
     private int x, y, width, height;
-    private AlertDialog menu;
+    private KeypadDialog menu;
     protected void onServiceConnected() {
         instance=this;
         manager=(WindowManager)getSystemService(WINDOW_SERVICE);
@@ -33,15 +31,14 @@ public final class LeoPointerService extends AccessibilityService {
     }
     private void globalMenu() {
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
-        menu=new AlertDialog.Builder(new ContextThemeWrapper(this,android.R.style.Theme_Material_Dialog_Alert))
-            .setTitle("Meniu Leo")
-            .setItems(new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Închide"},new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog,int which) {
+        menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
+            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Închide"},new KeypadDialog.Action() {
+                public void select(int which) {
                     if(which==0) performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
                     else if(which==1) setActive(!active);
                     else if(which==2) performGlobalAction(GLOBAL_ACTION_HOME);
                 }
-            }).create();
+            });
         menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
         menu.show();
         Log.i("LeoPointer","global menu opened");

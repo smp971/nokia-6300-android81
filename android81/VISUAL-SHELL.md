@@ -12,8 +12,16 @@ din meniu. Nu sunt înlocuite serviciile de telefonie sau imaginile boot/recover
 Meniul Opțiuni folosește acum componenta nativă reutilizabilă `KeypadDialog`:
 focus vizibil, sus/jos pentru deplasare, OK pentru alegere și Înapoi pentru anulare.
 Bara inferioară indică permanent „Alege / Înapoi”. Meniul este desenat pentru
-240×320, fără animații și fără WebView. Dialogurile informative și meniul global
-de accesibilitate păstrează momentan implementările anterioare.
+240×320, fără animații și fără WebView. Și meniul global de pe tasta fizică
+Meniu folosește acum aceeași componentă și bara „Alege / Înapoi”. El păstrează
+Notificări, Mouse, Acasă și Închide și funcționează peste alte aplicații.
+Dialogurile informative păstrează momentan implementarea anterioară.
+
+Meniul global a fost deschis prin scan code 212 peste Calculator și captura
+a fost inspectată. Scriptul de activare reface legătura cu serviciul propriu
+după înlocuirea APK-ului, păstrând celelalte servicii de accesibilitate.
+
+![Meniu global din tasta fizică](screenshots/visual-shell-global-menu.png)
 
 Verificare pe telefon: captură reală inspectată, deschidere/închidere din taste,
 Calculator și revenire, notificări și rezolvarea HOME. Alegerea listă/grilă din

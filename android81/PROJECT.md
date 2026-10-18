@@ -46,8 +46,9 @@ Inventarul reproductibil este în [KAIOS-UI-INVENTORY](KAIOS-UI-INVENTORY.md).
    Implementat; urmează confirmarea hook-ului IME la un reboot planificat.
 2. **Componente UI comune:** antet, focus vizibil, listă, dialog și bară softkey.
    Prima componentă este implementată: meniul Opțiuni folosește `KeypadDialog`,
-   cu selecție și bară de acțiuni explicite. Dialogurile informative și meniul
-   global urmează să fie uniformizate; etapa nu este încă încheiată.
+   cu selecție și bară de acțiuni explicite. Meniul global de accesibilitate
+   folosește aceeași componentă. Dialogurile informative urmează să fie
+   uniformizate; etapa nu este încă încheiată.
    Acceptare: deschidere, selecție, confirmare, anulare și revenire exclusiv din taste,
    fără focus ascuns sau pierderea selecției la întoarcere.
 3. **Aplicații esențiale:** Contacte și Mesaje adaptate pentru tastatură, apoi Ceas,
