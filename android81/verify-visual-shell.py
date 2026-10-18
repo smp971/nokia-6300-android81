@@ -49,10 +49,10 @@ try:
 except subprocess.CalledProcessError:
     preferences = ''  # Fresh installation uses the default grid.
 if 'name="list" value="true"' in preferences:
-    key(*([19] * 9))
+    key(8)  # Digit 1 selects the first main entry in both layouts.
     key(20, 20, 20, 20)
 else:
-    key(19, 19, 21, 21)
+    key(8)
     key(22, 20)
 capture('calculator-selected')
 key(23)

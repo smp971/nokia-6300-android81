@@ -45,7 +45,7 @@ public final class MainActivity extends Activity {
         screen = new Screen();
         if (state != null) {
             screen.grid = state.getBoolean("grid");
-            screen.selected = Math.max(0, Math.min(8, state.getInt("selected")));
+            screen.selected = Math.max(0, Math.min(9, state.getInt("selected")));
         }
         setContentView(screen);
     }
@@ -147,9 +147,9 @@ public final class MainActivity extends Activity {
         final Path path = new Path();
         final Typeface regular = Typeface.create("sans-serif", Typeface.NORMAL);
         final Typeface light = Typeface.create("sans-serif-light", Typeface.NORMAL);
-        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări"};
+        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android"};
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
-        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab};
+        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a};
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
         boolean grid;
@@ -213,6 +213,7 @@ public final class MainActivity extends Activity {
             // Green opens the dialer only; this app never places a call.
             if (key == KeyEvent.KEYCODE_CALL) { if (repeat == 0) open(0); return true; }
             int digit = key - KeyEvent.KEYCODE_1;
+            if(grid && key==KeyEvent.KEYCODE_0) { selected=9; invalidate(); return true; }
             if (grid && digit >= 0 && digit < 9) {
                 selected = digit; invalidate(); return true;
             }
@@ -222,8 +223,12 @@ public final class MainActivity extends Activity {
                 if (!grid) grid = true;
                 else if(list) {
                     if(key==KeyEvent.KEYCODE_DPAD_UP) selected=Math.max(0,selected-1);
-                    if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=Math.min(8,selected+1);
+                    if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=Math.min(names.length-1,selected+1);
                 }
+                else if(selected==9) {
+                    if(delta==-3) selected=6;
+                    else if(delta==-1) selected=8;
+                } else if((delta==3 && selected>=6) || (delta==1 && selected==8)) selected=9;
                 else if ((delta == -1 && selected % 3 != 0) || (delta == 1 && selected % 3 != 2)
                          || (delta == -3 && selected >= 3) || (delta == 3 && selected < 6)) selected += delta;
                 message = ""; invalidate(); return true;
@@ -231,6 +236,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==9) { startActivity(new Intent(MainActivity.this,AndroidAppsActivity.class)); return; }
             Intent intent;
             if (index == 0) intent = new Intent(Intent.ACTION_DIAL);
             else if (index == 1) intent = new Intent(Intent.ACTION_VIEW, android.provider.ContactsContract.Contacts.CONTENT_URI);
@@ -277,6 +283,7 @@ public final class MainActivity extends Activity {
                 case 6: line(c,0,-9,0,8); line(c,0,-9,10,-12); line(c,10,-12,10,5); c.drawOval(-7,5,0,11,p); c.drawOval(3,2,10,8,p); break;
                 case 7: path.reset(); path.moveTo(-13,-8); path.lineTo(-3,-8); path.lineTo(0,-4); path.lineTo(13,-4); path.lineTo(13,10); path.lineTo(-13,10); path.close(); c.drawPath(path,p); break;
                 case 8: c.drawCircle(0,0,9,p); c.drawCircle(0,0,3,p); for(int k=0;k<8;k++){c.save();c.rotate(k*45);line(c,0,-10,0,-14);c.restore();} break;
+                case 9: for(int row=0;row<2;row++) for(int col=0;col<2;col++) c.drawRect(-10+col*12,-10+row*12,-3+col*12,-3+row*12,p); break;
             }
             p.setStyle(Paint.Style.FILL); c.restore();
         }
@@ -304,22 +311,24 @@ public final class MainActivity extends Activity {
                 p.setColor(0xc7161428); output.drawRect(0,0,240,276,p);
                 text(output,names[selected],120,25,18,Color.WHITE,Paint.Align.CENTER);
                 if(list) {
-                    int first=Math.max(0,Math.min(4,selected-2));
+                    int first=Math.max(0,Math.min(names.length-5,selected-2));
                     for(int row=0;row<5;row++) {
                         int i=first+row; float y=60+row*42;
                         if(i==selected) round(output,7,y-19,233,y+19,7,0xfff5eefb);
                         output.save(); output.translate(32,y); output.scale(.65f,.65f); icon(output,i,0,0); output.restore();
                         text(output,names[i],57,y+5,14,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.LEFT);
                     }
-                    text(output,(selected+1)+" / 9",120,267,10,0xffd3bddf,Paint.Align.CENTER);
+                    text(output,(selected+1)+" / "+names.length,120,267,10,0xffd3bddf,Paint.Align.CENTER);
                 } else {
-                for(int i=0;i<9;i++) {
-                    float x=40+(i%3)*80, y=67+(i/3)*76;
+                int page=selected/9;
+                for(int i=page*9;i<Math.min(names.length,page*9+9);i++) {
+                    int cell=i%9;
+                    float x=40+(cell%3)*80, y=67+(cell/3)*76;
                     if(i==selected) round(output,x-34,y-29,x+34,y+39,10,0xfff5eefb);
                     icon(output,i,x,y);
-                    text(output,names[i],x,y+33,10,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.CENTER);
+                    text(output,i==9?"Android":names[i],x,y+33,10,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.CENTER);
                 }
-                for(int i=0;i<3;i++) {p.setColor(i==selected/3?0xffe0b8ff:0xff64536f); output.drawCircle(110+i*10,267,2,p);}
+                for(int i=0;i<2;i++) {p.setColor(i==page?0xffe0b8ff:0xff64536f); output.drawCircle(115+i*10,267,2,p);}
                 }
             }
             if(!message.isEmpty()) {

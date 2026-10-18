@@ -9,6 +9,7 @@ inspirată de comportamentul KaiOS și construită peste serviciile Android.
 | Componentă | Stare demonstrată | Limită / următoarea verificare |
 | --- | --- | --- |
 | Leo Visual HOME | Selectat implicit; grilă și listă native | Nu toate aplicațiile externe acceptă navigare completă din taste |
+| Aplicații Android | Listă alfabetică cu iconuri; 12 intrări detectate pe telefon; lansare Calculator și revenire verificate | Lista include activități lansabile, nu servicii; fiecare aplicație necesită probe proprii |
 | Aspect | Listă/grilă și culoarea fundalului se salvează | Persistența listei verificată după restartul procesului, fără reboot nou |
 | Notificări și meniu global | Acces din Home și tasta Meniu dedicată | Adaptarea conținutului notificărilor rămâne separată |
 | Mouse din taste | Deplasare și clic verificate | Compatibilitatea cu toate aplicațiile / derularea nu este complet validată |

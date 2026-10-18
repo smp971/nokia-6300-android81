@@ -7,6 +7,24 @@ din meniu. Nu sunt înlocuite serviciile de telefonie sau imaginile boot/recover
 
 ## HOME, notificări și cursor din taste
 
+### Aplicații Android
+
+Meniul principal are o a zecea intrare, **Aplicații Android**. În grilă este pe
+a doua pagină (jos din ultimul rând sau dreapta de la Setări); în listă este
+ultima intrare. Tasta `0` o selectează direct, apoi OK o deschide.
+
+Ecranul nativ afișează activitățile Android cu `MAIN`/`LAUNCHER`, exportate și
+activate, sortate alfabetic, cu iconuri și nume reale. Nu afișează toate serviciile
+sistemului. Leo Visual este exclus pentru a evita deschiderea shell-ului în el însuși.
+Sus/jos mută selecția, OK lansează aplicația, iar Înapoi revine în meniul principal.
+Lista este actualizată la revenire și păstrează componenta selectată dacă mai există.
+Nu sunt adăugate permisiuni și nu sunt lansate aplicații doar prin deschiderea listei.
+
+Verificat pe telefon: 12 intrări, deschidere Calculator, revenire în listă și
+derulare până la 12/12. Aceasta verifică lansarea, nu funcționalitatea fiecărei aplicații.
+
+![Aplicații Android](screenshots/visual-shell-android-apps.png)
+
 ### Listă, grilă și preferințe
 
 Meniul Opțiuni folosește acum componenta nativă reutilizabilă `KeypadDialog`:
