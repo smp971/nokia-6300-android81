@@ -3,7 +3,6 @@ package ro.leo.visual;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.*;
@@ -23,7 +22,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
 
-/** Original native artwork and keypad layout. Never registers as HOME or a phone service. */
+/** Native HOME artwork and keypad layout; uses Android phone services. */
 public final class MainActivity extends Activity {
     private Screen screen;
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
@@ -110,10 +109,9 @@ public final class MainActivity extends Activity {
         return super.onKeyDown(key, event);
     }
     private void options() {
-        new AlertDialog.Builder(this).setTitle("Leo Visual")
-            .setItems(new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă"}, new DialogInterface.OnClickListener() {
-              public void onClick(DialogInterface dialog, int which) {
+        new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
+                screen.list?"Afișare grilă":"Afișare listă"}, new KeypadDialog.Action() {
+              public void select(int which) {
                 if (which == 0) {
                     screen.warm = !screen.warm;
                     getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("warm",screen.warm).apply();

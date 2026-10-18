@@ -9,6 +9,18 @@ din meniu. Nu sunt înlocuite serviciile de telefonie sau imaginile boot/recover
 
 ### Listă, grilă și preferințe
 
+Meniul Opțiuni folosește acum componenta nativă reutilizabilă `KeypadDialog`:
+focus vizibil, sus/jos pentru deplasare, OK pentru alegere și Înapoi pentru anulare.
+Bara inferioară indică permanent „Alege / Înapoi”. Meniul este desenat pentru
+240×320, fără animații și fără WebView. Dialogurile informative și meniul global
+de accesibilitate păstrează momentan implementările anterioare.
+
+Verificare pe telefon: captură reală inspectată, deschidere/închidere din taste,
+Calculator și revenire, notificări și rezolvarea HOME. Alegerea listă/grilă din
+noul meniu a fost verificată prin preferința salvată. Nu s-a efectuat un reboot.
+
+![Meniu Opțiuni din taste](screenshots/visual-shell-options.png)
+
 Din Opțiuni se poate alege **Afișare listă / Afișare grilă**. Lista afișează până
 la cinci rânduri și se parcurge cu sus/jos. Alegerea și culoarea fundalului sunt
 salvate în preferințe private. Persistența listei a fost verificată după oprirea
