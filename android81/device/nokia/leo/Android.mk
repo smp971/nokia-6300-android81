@@ -70,3 +70,13 @@ LOCAL_SHARED_LIBRARIES := libdl
 LOCAL_HEADER_LIBRARIES := libhardware_headers
 LOCAL_CFLAGS := -Wall -Wextra -Werror
 include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := audio.primary.leo_bridge
+LOCAL_SRC_FILES := audio-bridge.c
+LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_PROPRIETARY_MODULE := true
+LOCAL_SHARED_LIBRARIES := libdl liblog libcutils
+LOCAL_HEADER_LIBRARIES := libhardware_headers
+LOCAL_CFLAGS := -Wall -Wextra -Werror -Wno-missing-field-initializers
+include $(BUILD_SHARED_LIBRARY)

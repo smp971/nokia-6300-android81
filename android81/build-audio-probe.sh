@@ -7,5 +7,6 @@ cd /root/android81-leo/src
 source build/envsetup.sh
 lunch aosp_leo_go-eng
 export ANDROID_DATA=/root/android81-leo/host-android-data
-make -j4 leo_audio_probe
+make -j4 leo_audio_probe audio.primary.leo_bridge
 cp out/target/product/leo/system/bin/leo_audio_probe "$TASK_DIR/output/leo-audio-probe"
+cp out/target/product/leo/system/vendor/lib/hw/audio.primary.leo_bridge.so "$TASK_DIR/output/audio-primary-bridge.so"

@@ -1,3 +1,11 @@
+ANDROID SPEAKER AUDIO INTEGRATED, 18 OCT 2026
+Real stock Qualcomm HAL now serves AudioFlinger. User confirmed AudioTrack
+speaker tones before and after full reboot; module loading and HAL activation
+are automatic with a generic fallback and early-load boot guard. All 27 runtime
+files verified; system read-only, Adreno and both SIMs still pass. Setup became
+active around 86 s uptime in the tested boot. Microphone/headset/earpiece/call
+audio are NOT validated. See AUDIO-BRINGUP.md for remaining warnings and rollback.
+
 AUDIO RUNTIME TRIAL, 18 OCT 2026
 Stock sound card now detected after staged loading of matching stock modules;
 private Qualcomm audio HAL open/init_check pass. Direct PCM speaker playback

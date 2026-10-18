@@ -1,0 +1,10 @@
+service leo_audio_setup /system/bin/sh /vendor/leo-audio/start.sh setup
+    class late_start
+    user root
+    group root system audio
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start leo_audio_setup

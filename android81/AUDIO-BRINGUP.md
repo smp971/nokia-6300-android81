@@ -1,10 +1,13 @@
 # Audio bring-up — 18 October 2026
 
-Current state: the stock kernel sound card and PCM path are available in a
-**temporary runtime trial**. The stock Qualcomm userspace HAL opens privately
-and passes init_check. Android AudioFlinger still uses its original dummy HAL.
-Audible output has not yet been confirmed by the user. No microphone recording,
-phone-call audio test or permanent automatic module loading was performed.
+Current result: **speaker output works through Android's AudioFlinger and the
+stock Qualcomm HAL, including after a full reboot.** The user confirmed both
+the private HAL tones and Android AudioTrack tones, and confirmed them again
+after the reboot. Microphone, earpiece, headset and voice-call audio remain
+untested. The initial raw tinyplay test was silent despite returning success.
+
+The following discovery sections describe the initial trials; the installed
+integration, boot guard and final validation are detailed below.
 
 ## Hardware/kernel discovery
 
@@ -34,14 +37,16 @@ MultiMedia1 frontend is connected through PRI_MI2S_RX Audio Mixer MultiMedia1.
 A two-second stereo 48 kHz/16-bit WAV contained two 700 Hz half-second tones
 with short fade ramps and digital amplitude 0.10. RX3 Digital Volume was reduced
 from 84 to 76 for the test. tinyplay reported successful playback. The touched
-route and volume controls were restored in finally. Physical audibility is still
-pending, not inferred from tinyplay's exit status. No microphone samples saved.
+route and volume controls were restored in finally. The user reported no audible sound from this initial raw PCM probe, despite
+tinyplay's successful exit status. No microphone samples saved.
 
 ## Private userspace HAL probe
 
 Added leo_audio_probe opens an explicit path through dlopen, reads HMI, opens
 AUDIO_HARDWARE_INTERFACE and calls init_check before closing the device.
-It does not replace AudioFlinger's driver or open playback/capture streams.
+Its default open-only mode does not replace AudioFlinger's driver or open
+streams. The added --play mode validates a generated PCM16 stereo 48 kHz WAV
+and writes it through a speaker output stream before standby/close.
 Original audio.primary.msm8909.so and audio/calibration dependencies are staged
 under /tmp/leo-audio-hal, with the existing isolated radio libraries supplying
 libperipheral_client and its dependencies. System libc/libbinder are retained.
@@ -86,9 +91,72 @@ or boot partition was rewritten. The battery-removal request became unnecessary.
   verified stock mixer/calibration data, preserving existing different files.
 - reset-900e.py --port COM32 is the verified software recovery command for this
   observed crash-mode device. It refuses ports not matching the crash USB ID.
-- Before integrating into Android, obtain physical speaker confirmation, validate
-  actual HAL playback and microphone routing, then add supervised module/init
-  loading with a recoverable fallback and test a full boot.
+- Speaker playback and guarded boot integration are now completed below.
+  Microphone routing and voice-call audio need separate tests.
 
 Raw traces, binaries, calibration data and dumps remain ignored/private in output
 or the original dump. Only source and this sanitized status are committed.
+
+## Installed Android integration and final verification
+
+- audio-bridge.c replaces only audio.primary.default.so, preserving the verified
+  original generic HAL under /vendor/leo-audio/lib/audio-primary-generic.so.
+  The bridge opens the Qualcomm module only when persist.leo.audio.enabled=1
+  and the exact msm8909sndcard is present. It preloads the stock dependencies
+  from its private library directory; Android system libraries remain in use.
+  Missing hardware, dependency/open failure or a disabled flag selects generic
+  fallback. LEO_AUDIO_QCOM_ACTIVE identifies a successful stock module open.
+- install-audio-runtime.py installed 27 hash-verified files: bridge, preserved
+  generic HAL, private stock libraries, 12 matching modules, runtime script and
+  init RC. The 82 mixer/ACDB files from prepare-stock-audio-config.py remain
+  additive. No system audio policy replacement, boot/recovery rewrite or data
+  format was performed. Native audio services are stopped before replacing
+  the active library so /system can be remounted read-only without a busy inode.
+- The root oneshot leo_audio_setup waits for boot completion and modem ONLINE.
+  It loads the stock modules with one-second gaps, additional ADSP/codec settling
+  delays, and verifies card0 before switching native audio. /dev/msm_audio_cal
+  permissions are restored to the stock 0660 system:audio setting; this late
+  module-created device was previously root-only. /dev/snd permissions are
+  restored too. /dev/ion permissions and the graphics stack are not changed.
+- Before kernel module loading, the setup clears persist.leo.audio.autoload.
+  If the formerly crashing load fails before successful setup, a subsequent
+  boot leaves audio in generic fallback until manually rearmed. The validated
+  successful setup rearms ordinary later boots. This limits the observed early
+  module-load boot-loop risk; it is not a guarantee against every later crash.
+- A temporary APK generated two quiet 700 Hz tones using Android AudioTrack,
+  STREAM_MUSIC, stereo PCM16 at 48 kHz. Both before and after the full reboot,
+  AudioTrack reported 192000 shorts written and 96000 playback frames. The user
+  physically confirmed the tones both times. This tests the application →
+  AudioFlinger → HIDL audio service → stock HAL → DSP/codec → speaker path.
+- After the full reboot, card0 appeared automatically, leo_audio_setup exited 0,
+  state was active, both native audio services were running and the stock HAL
+  was mapped without the generic fallback. Setup finished around uptime 86 s
+  in this trial, after the existing NetworkPolicy startup wait and modem boot.
+  Sound is therefore available late in startup, not immediately at power-on.
+- verify-audio-runtime.py --accept passed and armed normal subsequent boots.
+  Adreno verification and dual-SIM voice registration verification also passed.
+  The test APK was uninstalled and focus returned to Leo Shell. /system is RO.
+
+Optional ANC/MAD calibration and some DAPM-route warnings remain. One AFE
+ADSP_EBADPARAM was logged in the post-boot trial, despite confirmed audible
+speaker playback. Do not treat this as validated microphone/call processing,
+optimal calibration, universal media compatibility or long-term stability.
+The existing NetworkPolicy startup ANR is separate and remains unfixed.
+
+### Build, install and rollback
+
+Build build-audio-probe.sh (private probe and bridge) and
+build-audio-track-test.sh (temporary Android playback APK). First prepare/install
+stock mixer data with prepare-stock-audio-config.py --install. Then use
+install-audio-runtime.py --install --activate on the pinned matching target.
+The installer refuses an unexpected original HAL, kernel or hardware ID. It
+keeps original binaries/calibration data and detailed hash manifests private.
+
+verify-audio-runtime.py --wait checks service/card/driver readiness; --accept
+sets the validation flag and rearms autoload only after the checks pass. Its
+checks are software-only: audible confirmation is recorded separately here.
+
+install-audio-runtime.py --rollback verifies and restores the original generic
+HAL, clears enable/autoload/validation flags, restarts only native audio and
+keeps the private files inactive for later investigation. It does not unload
+live kernel modules; a reboot clears those. Boot/recovery are untouched.

@@ -1,5 +1,9 @@
 # Verificare functii — Nokia 6300, 18 octombrie 2026
 
+Actualizare ulterioara: difuzorul functioneaza acum prin driverul Qualcomm in
+Android si dupa reboot; microfonul/apelurile raman netestate. Vezi
+[AUDIO-BRINGUP](AUDIO-BRINGUP.md). Tabelul de mai jos pastreaza auditul initial.
+
 Verificare pe telefonul conectat, Android 8.1, dupa integrarea Adreno si
 corectia DispSync. Este o fotografie a starii actuale, nu o certificare a
 functionarii complete. Jurnalele si capturile brute raman private in output/.
