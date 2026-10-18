@@ -93,6 +93,23 @@ Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
 
 ## Capturi de pe telefon
 
+### Leo Visual — interfața actuală
+
+| Home și ambele SIM-uri | Grila de aplicații |
+| --- | --- |
+| ![Leo Visual Home cu Vodafone și DIGI](android81/screenshots/visual-shell-home.png) | ![Grilă 3×3 controlată din taste](android81/screenshots/visual-shell-grid.png) |
+
+| Meniul global din tasta Meniu | Cursor controlat din taste |
+| --- | --- |
+| ![Meniu Leo afișat peste Calculator](android81/screenshots/visual-global-menu.png) | ![Cursor și clic confirmat pe butonul local de test](android81/screenshots/visual-pointer-test.png) |
+
+Meniul global oferă Notificări, Mouse din taste și Acasă. Captura cursorului
+arată un **ecran local de test**, unde apăsarea OK a activat butonul o dată.
+Grila deschide aplicații Android existente; prezența unei iconițe nu confirmă
+instalarea sau funcționarea completă a aplicației respective.
+
+### Capturi din etapele anterioare
+
 | Leo Shell | Setări | Înregistrare în rețea |
 | --- | --- | --- |
 | ![Meniul Leo](android81/screenshots/leo-shell.png) | ![Setări Android](android81/screenshots/settings.png) | ![Rețea în Leo Shell](android81/screenshots/network-registered.png) |
