@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.radiotest">
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27"/>
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_APN_SETTINGS"/>
+    <application android:label="Leo radio diagnostic" android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity android:name=".RadioTest" android:exported="true"/>
+    </application>
+</manifest>

@@ -1,3 +1,10 @@
+# LTE follow-up
+
+SIM 1 LTE data now passes after reboot: netmgr automatic, Android connection
+validated, two external packets received. Both SIMs remain READY/voice registered.
+The menu exposes 4G. VoLTE/VoWiFi and call audio remain unverified.
+See LTE-BRINGUP.md; the original audit below predates this integration.
+
 # Verificare functii — Nokia 6300, 18 octombrie 2026
 
 Actualizare ulterioara: difuzorul functioneaza acum prin driverul Qualcomm in

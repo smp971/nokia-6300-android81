@@ -23,6 +23,15 @@ service leo_per_mgr /system/vendor/leo-radio/bin/pm-service
     seclabel u:r:init:s0
     disabled
 
+service leo_netmgrd /system/vendor/leo-radio/bin/netmgrd
+    class late_start
+    user root
+    group root radio system inet net_raw
+    setenv LD_LIBRARY_PATH /system/vendor/leo-radio/lib:/system/vendor/lib:/system/lib
+    setenv LD_PRELOAD /system/vendor/leo-radio/shim.so
+    seclabel u:r:init:s0
+    disabled
+
 service leo_rild1 /system/vendor/bin/hw/rild -l /system/vendor/leo-radio/lib/libril-qc-qmi-1.so
     class late_start
     user root

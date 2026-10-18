@@ -40,6 +40,18 @@ setprop persist.radio.adb_log_on 0
 setprop ctl.stop ril-daemon
 setprop ctl.start leo_rmt_storage
 setprop ctl.start leo_per_mgr
+if [ "$(getprop persist.leo.data.enabled)" = 1 ]; then
+    mkdir -p /dev/socket/netmgr /data/misc/net
+    chown radio:radio /dev/socket/netmgr /data/misc/net
+    chmod 0750 /dev/socket/netmgr /data/misc/net
+    setprop ctl.start leo_netmgrd
+    # DSI initialization needs the netmgr listener before either RIL opens data.
+    count=0
+    while [ ! -S /dev/socket/netmgr/netmgr_connect_socket ] && [ "$count" -lt 30 ]; do
+        sleep 1
+        count=$((count + 1))
+    done
+fi
 sleep 1
 setprop ctl.start leo_rild1
 setprop ctl.start leo_rild2

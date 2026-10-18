@@ -1,3 +1,11 @@
+LTE DATA INTEGRATED, 18 OCT 2026
+SIM 1 registers on LTE with automatic LTE/GSM/WCDMA mode 9. Fixed the hidden
+LTE menu and installed TeleService as the actual persistent system app.
+Added a verified Vodafone trial APN and boot-started stock netmgrd with the
+matching data configurations. After reboot: MOBILE[LTE] VALIDATED, two packets
+received, both SIMs READY/voice registered and system read-only. VoLTE/VoWiFi
+remain unintegrated. See LTE-BRINGUP.md; older entries below are historical.
+
 ANDROID SPEAKER AUDIO INTEGRATED, 18 OCT 2026
 Real stock Qualcomm HAL now serves AudioFlinger. User confirmed AudioTrack
 speaker tones before and after full reboot; module loading and HAL activation

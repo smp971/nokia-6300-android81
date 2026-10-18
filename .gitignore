@@ -21,6 +21,7 @@
 !/android81/radio-runtime/
 !/android81/audio-runtime/
 !/android81/audio-test/
+!/android81/radio-test/
 /android81/device/**/local/
 /android81/device/**/prebuilt/
 
