@@ -1,4 +1,9 @@
 LTE DATA INTEGRATED, 18 OCT 2026
+IMS follow-up: read-only socket queries work on slot 0 but report NOT_REGISTERED.
+Original IMS QMI/data daemons pass bounded startup trials. The legacy Android
+client fails 8.1 API compatibility; it was not installed or boot-enabled.
+See IMS-BRINGUP.md for protocol observations and porting requirements.
+
 SIM 1 registers on LTE with automatic LTE/GSM/WCDMA mode 9. Fixed the hidden
 LTE menu and installed TeleService as the actual persistent system app.
 Added a verified Vodafone trial APN and boot-started stock netmgrd with the
