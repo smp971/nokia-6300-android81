@@ -1,0 +1,24 @@
+# Explicit transfer request only. Native bootstrap retains boot-time ADB.
+service leo_usb_transfer /system/bin/sh /system/etc/leo-usb-mtp.sh request
+    class late_start
+    user root
+    group root system mtp
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+service leo_usb_watchdog /system/bin/sh /system/etc/leo-usb-mtp.sh watchdog
+    class late_start
+    user root
+    group root system
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+on property:sys.leo.usb.request=mtp
+    setprop sys.leo.usb.confirmed 0
+    start leo_usb_watchdog
+    start leo_usb_transfer
+
+on property:sys.leo.usb.request=adb
+    start leo_usb_transfer

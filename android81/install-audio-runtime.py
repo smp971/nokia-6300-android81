@@ -14,7 +14,7 @@ assert shell('cat /leo-framework-internal')=='Validated internal Android partiti
 base='vendor/leo-audio/';target='/system/vendor/lib/hw/audio.primary.default.so'
 if args.rollback:
  assert shell('sha256sum /vendor/leo-audio/lib/audio-primary-generic.so').split()[0]=='9cab0a997b57918d99c3ac7d074e2b4bc201ae0590b7b972ec5322d94ab0cad6'
- shell('setprop persist.leo.audio.autoload 0; setprop persist.leo.audio.enabled 0; setprop persist.leo.audio.validated 0; setprop ctl.stop audioserver; setprop ctl.stop audio-hal-2-0; sleep 1')
+ shell('rm -f /data/leo-audio-trace/early-arm; setprop persist.leo.audio.autoload 0; setprop persist.leo.audio.enabled 0; setprop persist.leo.audio.validated 0; setprop ctl.stop audioserver; setprop ctl.stop audio-hal-2-0; sleep 1')
  shell("set -e; mount -o remount,rw /system; trap 'mount -o remount,ro /system' EXIT; cp /vendor/leo-audio/lib/audio-primary-generic.so "+target+".new; chmod 644 "+target+".new; mv -f "+target+".new "+target+"; restorecon "+target+"; sync")
  shell('setprop ctl.start audio-hal-2-0; setprop ctl.start audioserver; setprop sys.leo.audio.state disabled')
  print('Original generic HAL restored; private files remain inactive.');raise SystemExit(0)
@@ -58,6 +58,5 @@ assert ' /system ext4 ro,' in shell('cat /proc/mounts')
 (out/'audio-runtime-installed.json').write_text(json.dumps(expected,indent=2))
 print('Installed and verified',len(expected),'files; system read-only.',flush=True)
 if args.activate:
- shell('setprop persist.leo.audio.validated 0; setprop persist.leo.audio.autoload 1')
- print(shell('/system/bin/sh /vendor/leo-audio/start.sh setup'),flush=True)
- print('Audio state:',shell('getprop sys.leo.audio.state'),flush=True)
+ shell('mkdir -p /data/leo-audio-trace; chmod 700 /data/leo-audio-trace; touch /data/leo-audio-trace/early-arm; chmod 600 /data/leo-audio-trace/early-arm; sync; setprop persist.leo.audio.validated 0; setprop persist.leo.audio.autoload 1')
+ print('One boot armed. Install current radio hook/policy with install-audio-fix.py, then rearm and reboot; no late module loading.',flush=True)

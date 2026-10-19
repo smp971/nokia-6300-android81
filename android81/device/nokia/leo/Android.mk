@@ -1,5 +1,12 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
+LOCAL_MODULE := leo-keylight
+LOCAL_SRC_FILES := keylight.c
+LOCAL_CFLAGS := -std=c99 -Wall -Wextra -Werror
+LOCAL_SHARED_LIBRARIES := libc
+include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE := leo_framework_exec
 LOCAL_SRC_FILES := framework-exec.c
 LOCAL_FORCE_STATIC_EXECUTABLE := true

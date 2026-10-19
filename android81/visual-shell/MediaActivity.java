@@ -21,6 +21,14 @@ public final class MediaActivity extends LeoActivity {
             final ArrayList<Uri> found=new ArrayList<Uri>();final ArrayList<String> labels=new ArrayList<String>();final Uri base=video?MediaStore.Video.Media.EXTERNAL_CONTENT_URI:MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             try(Cursor c=getContentResolver().query(base,new String[]{"_id","_display_name","duration"},null,null,"_display_name COLLATE NOCASE ASC")){
                 while(c!=null&&c.moveToNext()&&found.size()<500){found.add(ContentUris.withAppendedId(base,c.getLong(0)));labels.add(c.getString(1)+"\n"+format(c.getInt(2)));}
+                // AOSP has no WMA extractor, so these may be indexed only as
+                // generic files. Leo prepares them with its local decoder.
+                if(!video)try(Cursor files=getContentResolver().query(MediaStore.Files.getContentUri("external"),new String[]{"_id","_display_name"},"_display_name LIKE ?",new String[]{"%.wma"},"_display_name COLLATE NOCASE ASC")){
+                    while(files!=null&&files.moveToNext()&&found.size()<500){
+                        long id=files.getLong(0);Uri audioUri=ContentUris.withAppendedId(base,id);
+                        if(!found.contains(audioUri)){found.add(ContentUris.withAppendedId(MediaStore.Files.getContentUri("external"),id));labels.add(files.getString(1)+"\nWMA · pregătire locală");}
+                    }
+                }
                 ui(new Runnable(){public void run(){uris.clear();uris.addAll(found);titles.clear();titles.addAll(labels);library();}});
             }catch(RuntimeException denied){ui(new Runnable(){public void run(){notice("Biblioteca nu poate fi citită");library();}});}
         }});

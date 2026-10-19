@@ -40,6 +40,12 @@ setprop persist.radio.adb_log_on 0
 setprop ctl.stop ril-daemon
 setprop ctl.start leo_rmt_storage
 setprop ctl.start leo_per_mgr
+# The stock loader needs APR's OFFLINE state, before RIL powers the modem.
+# This hook does nothing when the one-shot early audio preload was not armed.
+if [ "$(getprop sys.leo.audio.state)" = core_preloaded ]; then
+    sleep 1
+    /system/bin/sh /vendor/leo-audio/start.sh boot-dsp || true
+fi
 if [ "$(getprop persist.leo.data.enabled)" = 1 ]; then
     mkdir -p /dev/socket/netmgr /data/misc/net
     chown radio:radio /dev/socket/netmgr /data/misc/net

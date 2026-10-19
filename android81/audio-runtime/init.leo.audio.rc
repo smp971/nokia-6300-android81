@@ -1,3 +1,16 @@
+service leo_audio_preload /system/bin/sh /vendor/leo-audio/start.sh preload
+    class core
+    user root
+    group root system audio
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+# Oreo queues zygote-start before loading persist properties and early-boot.
+# Use a consumed /data arm file and complete this stage before zygote-start.
+on post-fs-data
+    exec_start leo_audio_preload
+
 service leo_audio_setup /system/bin/sh /vendor/leo-audio/start.sh setup
     class late_start
     user root

@@ -75,7 +75,9 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Profil pentru memorie redusă | **Funcțional** | `low_ram` și zRAM verificate software; nu înseamnă că orice aplicație rulează fluent. |
 | Baterie / alimentare USB | **Parțial** | Nivel, tensiune, temperatură și alimentare citite; autonomia și ciclul complet de încărcare sunt netestate. |
 | Card microSD FAT32 | **Parțial** | Aproximativ 32 GB, PUBLIC/VISIBLE după reboot; folder și fișier UTF-8 create din Fișiere Leo, citire prin provider verificată. Configurația vold reparată fără formatare; scoaterea la cald și alte carduri sunt netestate. |
-| MTP | **Netestat** | Detectarea SD nu validează transferul MTP prin USB. |
+| MTP | **Experimental** | Suport prezent în kernel; probele de schimbare USB au întrerupt ADB. Transferul nu este încă validat; configurația normală rămâne ADB. |
+| Iluminarea tastelor | **Funcțional** | Pornire la apăsare fizică, nivel 20/40 și timeout de 8 secunde; iluminare confirmată de utilizator. |
+| Vibrații | **Nefuncțional** | HAL-ul lipsă a fost instalat; Android vede vibratorul și driverul raportează activare, dar utilizatorul nu simte motorul. |
 | Animație de pornire LEO | **Funcțional** | Logo original și puncte mov animate, 240×320, 6 cadre/s; confirmate pe telefon la reboot, apoi meniul Leo. |
 
 ### Telefonie, sunet și conectivitate
@@ -86,16 +88,19 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Date mobile LTE / 4G | **Funcțional** | SIM 1: conexiune Android validată și două răspunsuri ping externe după reboot. Nu confirmă datele pe SIM 2 sau toate rețelele/APN-urile. |
 | Setări rețea mobilă / opțiune 4G | **Funcțional** | Pagina și taburile SIM verificate; opțiunea LTE este expusă. Statisticile de trafic indisponibile sunt dezactivate. |
 | Ecran de apel pentru taste | **Funcțional** | Apelul primit deschide interfața completă; răspunsul și închiderea din taste au fost confirmate pe apel real. |
-| Apel primit și audio în ambele sensuri | **Parțial** | Conversație în ambele sensuri confirmată anterior. După recuperare placa audio lipsește, iar audio este dezactivat; funcția nu este disponibilă în starea curentă. |
-| Apel inițiat de pe Nokia | **Parțial** | SIM 1: destinatarul confirmă că a sunat; fără sunet în proba respectivă. După recuperare s-a găsit driverul audio neîncărcat; ruta necesită retestare. |
+| Apel primit și audio în ambele sensuri | **Funcțional** | După repararea inițializării și reboot: sonerie, receptor și conversație în ambele sensuri confirmate pe apel real. Stabilitatea pe termen lung rămâne de urmărit. |
+| Apel inițiat de pe Nokia | **Parțial** | SIM 1: destinatarul a confirmat soneria, fără sunet în vechea probă. Audio este acum reparat pentru apel primit; apelul inițiat necesită retestare. |
 | Respingere apel real / apel în așteptare / conferință | **Netestat** | Respingerea a trecut în simulare; scenariile reale necesită probe separate. |
 | Tasta roșie | **Parțial** | Mapată ENDCALL; revenirea Acasă în repaus a fost verificată prin codul fizic. Apelul real a fost închis cu soft dreapta. |
 | DTMF, microfon mut, difuzor și volum în apel | **Parțial** | Comenzi implementate; DTMF și comutările microfon/difuzor au trecut în simulare. Transportul DTMF și toate efectele audio în apel real sunt netestate. |
 | SMS Leo | **Parțial** | SIM 1: trimitere/recepție confirmate anterior. Conversații cu bule, căutare, redirecționare și copiere verificate pe date fictive. Arhivă locală de ieșire adăugată pentru mesajele trimise lipsă: 20 probe SQLite/receiver și afișare de stări; fără o nouă probă radio completă. SIM 2 încă de validat; fără MMS/raport de livrare. |
 | MMS | **Nefuncțional** | Nu este implementat în Mesaje Leo. |
-| Difuzor / AudioTrack | **Parțial** | Bipuri confirmate anterior înainte/după reboot. După recuperarea din 900E placa audio lipsește; reîncărcarea manuală a produs un nou 900E. Necesită repararea inițializării. |
+| Difuzor / AudioTrack | **Funcțional** | Bipuri PCM și muzică OGG confirmate; modulele sunt preîncărcate înainte de zygote, iar HAL-ul Qualcomm pornește după pregătirea DSP-ului. [Detalii](android81/AUDIO-KEYLIGHT-20261019.md). |
+| Receptor de apel | **Funcțional** | Politică Earpiece și mixer corectate; bipuri fără forțarea manuală a mixerului și apel primit cu sunet confirmate. |
 | MediaPlayer / fișiere OGG | **Parțial** | Decodorul Vorbis și configurația codec corectate; redare OGG confirmată auditiv. Nu validează toate formatele sau aplicațiile media. |
-| Microfon în convorbire | **Parțial** | Confirmat anterior; driverul audio este acum dezactivat după recuperare. Înregistrarea separată rămâne nevalidată. |
+| MP3 / FLAC / AAC | **Parțial** | Fișiere sintetice redate prin MediaPlayer; poziții de 2,8–2,9 secunde verificate. Nu validează toate profilurile, containerele sau fișierele. |
+| WMA în Muzică Leo | **Parțial** | WMA v2 decodat local și redat din Leo, confirmat auditiv. Pregătire în cache cu limite de dimensiune; alte variante și DRM nevalidate/nesuportate. [Formate](android81/MEDIA-RUNTIME.md). |
+| Microfon în convorbire | **Funcțional** | Conversație în ambele sensuri confirmată după corecția audio și reboot; înregistrarea separată rămâne nevalidată. |
 | Căști / alte rute audio | **Netestat** | Fără validare completă pentru accesorii și schimbarea rutelor. |
 | Client IMS | **Experimental** | Port compilat, cu înregistrare IMS voce pe SIM 1 într-o probă controlată. Activarea a fost retrasă; nu pornește automat. |
 | VoLTE | **Netestat** | Înregistrarea IMS nu dovedește un apel VoLTE; apelul primit reușit nu a fost identificat ca VoLTE. |
@@ -121,19 +126,19 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Galerie Leo | **Funcțional** | Miniaturi, vizualizare și zoom verificate cu imagine sintetică. Până la 500 imagini; fără albume/editor foto. |
 | Fundaluri și teme Leo | **Funcțional** | Patru teme, alegere imagine din Galerie, aplicare/eliminare pe HOME verificate. |
 | Convertor Leo | **Funcțional** | Șase categorii; 137 verificări JVM și probă 100 °C → 212 °F pe telefon. |
-| Setări Leo / profiluri | **Parțial** | Patru taburi din D-pad, pagini native de conectivitate, SIM, timp, localizare și aplicații. APN, operator avansat și modificarea permisiunilor folosesc Android. Vibrator nedetectat. |
+| Setări Leo / profiluri | **Parțial** | Patru taburi din D-pad, pagini native de conectivitate, SIM, timp, localizare și aplicații. APN, operator avansat și permisiuni folosesc Android. Vibrator detectat software, fără vibrație fizică. |
 | Preferințe SIM din Leo | **Parțial** | Salvare apeluri/SMS pe SIM 1 verificată fără trafic de probă; schimbarea efectivă a SIM-ului de date și SIM 2 rămân de verificat. |
 | Dată și oră din taste | **Parțial** | Oră automată, format 12/24 și respingerea datei invalide verificate. Aplicarea manuală a unei date valide/altui fus nu a fost testată. |
 | Aplicații / permisiuni din Leo | **Parțial** | Listă uzuală/completă, informații și starea permisiunilor; administrarea completă se deschide în Android. |
 | Favorite | **Funcțional** | Marcaj Android STARRED, listă proprie și probă pe contact sintetic, curățat după verificare. |
 | Ecran de blocare Leo | **Funcțional** | Ceas, dată, baterie și ambele SIM-uri, cu tema/fundalul HOME. Blocare automată la stingere și expirarea combinației verificate. Deblocare: soft stânga → *. Protecție contra apăsărilor accidentale, fără PIN. |
 | Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
-| Muzică / Video Leo | **Parțial** | Biblioteci și controale native implementate; redarea este oprită dacă placa audio lipsește. Decodarea și redarea reale rămân de validat. |
+| Muzică / Video Leo | **Parțial** | Bibliotecă și controale native; WMA redat prin serviciul Muzică Leo. MP3/FLAC/AAC verificate prin MediaPlayer. Redarea video și compatibilitatea tuturor fișierelor rămân de validat. |
 | Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
 | Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
 | Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
-| Cameră | **Nefuncțional** | Serviciul Android raportează zero dispozitive. |
+| Cameră | **Nefuncțional** | Android raportează zero dispozitive. Audit offline: 23 componente originale și 16 biblioteci Android, fără dependențe declarate lipsă; compatibilitatea ABI și captura sunt nevalidate. [Audit](android81/CAMERA-PORT-AUDIT.md). |
 | GPS / localizare reală | **Nefuncțional** | Fără provider GPS funcțional sau fix real confirmat. |
 | Senzori Android | **Nefuncțional** | SensorService nu detectează senzori; descrie integrarea software, nu inventarul fizic. |
 
