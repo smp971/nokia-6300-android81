@@ -25,6 +25,10 @@ import java.util.Locale;
 /** Native HOME artwork and keypad layout; uses Android phone services. */
 public final class MainActivity extends Activity {
     private Screen screen;
+    private boolean offeredSetup;
+    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.invalidate();}};
+    private int speedKey=-1;
+    private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,"Tasta "+slot+" neatribuită · Contacte → Apelare rapidă",1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
     private final ArrayList<PhoneStateListener> phoneListeners = new ArrayList<PhoneStateListener>();
     private SubscriptionManager subscriptions;
@@ -51,6 +55,8 @@ public final class MainActivity extends Activity {
     }
     protected void onResume() {
         super.onResume();
+        UnreadState.watch(this);registerReceiver(badges,new android.content.IntentFilter(UnreadState.CHANGED));UnreadState.refresh(this);
+        if(!offeredSetup&&!KeypadLockActivity.locked(this)&&!getSharedPreferences("setup",0).getBoolean("complete",false)){offeredSetup=true;startActivity(new Intent(this,SetupWizardActivity.class));}
         screen.reloadAppearance();
         if(KeypadLockActivity.locked(this)) startActivity(new Intent(this,KeypadLockActivity.class));
         subscriptions = (SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE);
@@ -60,7 +66,7 @@ public final class MainActivity extends Activity {
         handler.removeCallbacks(clock); handler.post(clock);
     }
     protected void onPause() {
-        handler.removeCallbacks(clock);
+        handler.removeCallbacks(clock);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();
         super.onPause();
@@ -102,7 +108,9 @@ public final class MainActivity extends Activity {
             screen.grid = false; screen.message = ""; screen.invalidate();
         }
     }
+    public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){handler.removeCallbacks(speed);speedKey=-1;return true;}return super.onKeyUp(key,event);}
     public boolean onKeyDown(int key, KeyEvent event) {
+        if(!screen.grid&&key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9){if(event.getRepeatCount()==0){speedKey=key;handler.postDelayed(speed,650);}return true;}
         if(key==KeyEvent.KEYCODE_MENU && event.getScanCode()==212) {
             if(event.getRepeatCount()==0) options();
             return true;
@@ -112,7 +120,7 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă"}, new KeypadDialog.Action() {
+                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide"}, new KeypadDialog.Action() {
               public void select(int which) {
                 if (which == 0) {
                     startActivity(new Intent(MainActivity.this,WallpaperActivity.class));
@@ -125,6 +133,7 @@ public final class MainActivity extends Activity {
                 else if (which == 3) new AlertDialog.Builder(MainActivity.this).setTitle("Leo Visual")
                     .setMessage("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare.")
                     .setPositiveButton("OK", null).show();
+                else if(which==5)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));
                 else if (which == 4) {
                     screen.list=!screen.list;
                     getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("list",screen.list).apply();
@@ -134,12 +143,7 @@ public final class MainActivity extends Activity {
             }).show();
     }
     private void notifications() {
-        try {
-            Object bar = getSystemService("statusbar");
-            bar.getClass().getMethod("expandNotificationsPanel").invoke(bar);
-        } catch(Exception ignored) {
-            screen.message = "Notificări indisponibile"; screen.invalidate();
-        }
+        startActivity(new Intent(this,NotificationsActivity.class));
     }
     private final class Screen extends View {
         final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -147,9 +151,9 @@ public final class MainActivity extends Activity {
         final Path path = new Path();
         final Typeface regular = Typeface.create("sans-serif", Typeface.NORMAL);
         final Typeface light = Typeface.create("sans-serif-light", Typeface.NORMAL);
-        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar", "Video", "Reportofon", "Convertor", "Descărcări", "Fundaluri", "Favorite", "Blocare taste"};
+        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar", "Video", "Reportofon", "Convertor", "Descărcări", "Fundaluri", "Favorite", "Blocare taste", "Browser text", "Configurări rapide", "Configurare"};
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
-        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42,0xff599cde,0xffde656e,0xffd46c9b,0xff55a6b8,0xff7299df,0xffb88cdd,0xffe8ad3a,0xff779e91};
+        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42,0xff599cde,0xffde656e,0xffd46c9b,0xff55a6b8,0xff7299df,0xffb88cdd,0xffe8ad3a,0xff779e91,0xff4fadc4,0xffb489d4,0xff78b994};
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
         Bitmap wallpaper;
@@ -227,6 +231,8 @@ public final class MainActivity extends Activity {
             if (grid && digit >= 0 && digit < 9) {
                 selected = digit; invalidate(); return true;
             }
+            if(!grid&&key==KeyEvent.KEYCODE_DPAD_UP){if(repeat==0)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return true;}
+            if(!grid&&key==KeyEvent.KEYCODE_DPAD_DOWN){if(repeat==0)notifications();return true;}
             int delta = key == KeyEvent.KEYCODE_DPAD_UP ? -3 : key == KeyEvent.KEYCODE_DPAD_DOWN ? 3
                 : key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : key == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
             if (delta != 0) {
@@ -241,6 +247,9 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==19){startActivity(new Intent(MainActivity.this,BrowserActivity.class));return;}
+            if(index==20){startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return;}
+            if(index==21){startActivity(new Intent(MainActivity.this,SetupWizardActivity.class));return;}
             if(index==5) {startActivity(new Intent(MainActivity.this,GalleryActivity.class));return;}
             if(index==6 || index==12) {startActivity(new Intent(MainActivity.this,MediaActivity.class).putExtra("kind",index==12?"video":"audio"));return;}
             if(index==8) {startActivity(new Intent(MainActivity.this,SettingsActivity.class));return;}
@@ -302,6 +311,9 @@ public final class MainActivity extends Activity {
                 case 15: line(c,0,-12,0,4);line(c,-6,-2,0,4);line(c,0,4,6,-2);line(c,-11,10,11,10);break;
                 case 16: c.drawCircle(5,-5,4,p);line(c,-12,10,-2,-2);line(c,-2,-2,11,10);break;
                 case 17: for(int n=0;n<5;n++){c.save();c.rotate(n*72);line(c,0,-13,4,-3);line(c,4,-3,12,-4);c.restore();}break;
+                case 19: c.drawCircle(0,0,13,p);c.drawOval(-6,-13,6,13,p);line(c,-12,0,12,0);break;
+                case 20: for(int n=0;n<3;n++){line(c,-12,-9+n*9,12,-9+n*9);c.drawCircle(-5+n*5,-9+n*9,3,p);}break;
+                case 21: line(c,-10,0,-2,8);line(c,-2,8,12,-10);break;
                 case 18: c.drawRoundRect(new RectF(-9,-2,9,12),2,2,p);c.drawArc(-6,-13,6,4,180,180,false,p);break;
                 case 0: c.drawArc(-11,-12,12,11,25,135,false,p); line(c,-10,-7,-7,-11); line(c,8,8,12,5); break;
                 case 1: c.drawCircle(0,-5,5,p); c.drawArc(-10,3,10,17,190,160,false,p); break;
@@ -338,6 +350,7 @@ public final class MainActivity extends Activity {
                     while(label.length()>1 && p.measureText(label)>220) label=label.substring(0,label.length()-2)+"…";
                     text(output,label,120,128+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
                 }
+                text(output,UnreadState.label(),120,172,12,Color.WHITE,Paint.Align.CENTER);
                 round(output,88,214,152,233,9,0x26ffffff);
                 text(output,"PROTOTIP",120,227,9,0xffe5d7f5,Paint.Align.CENTER);
                 text(output,"OK pentru aplicații",120,256,12,0xffc8bdd9,Paint.Align.CENTER);

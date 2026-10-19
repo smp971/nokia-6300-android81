@@ -18,16 +18,16 @@ public final class ContactsActivity extends LeoActivity {
     protected void onCreate(Bundle state) { super.onCreate(state); favorites=getIntent().getBooleanExtra("favorites",false); load(); }
     private void load() {
         begin("Contacte"); root.addView(text("Se încarcă…",18),new LinearLayout.LayoutParams(-1,0,1)); footer("","", "Înapoi");
-        final String query=filter;
+        final String query=filter;final boolean numeric=query.matches("[0-9]+"),unfiltered=query.isEmpty()||numeric;
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Entry> found=new ArrayList<Entry>();
             try(Cursor cursor=getContentResolver().query(Phone.CONTENT_URI,
                 new String[]{Phone._ID,Phone.RAW_CONTACT_ID,Phone.CONTACT_ID,Phone.DISPLAY_NAME,Phone.NUMBER,Phone.STARRED},
-                (query.isEmpty()?"1":"("+Phone.DISPLAY_NAME+" LIKE ? OR "+Phone.NUMBER+" LIKE ?)")+(favorites?" AND "+Phone.STARRED+"=1":""),
-                query.isEmpty()?null:new String[]{"%"+query+"%","%"+query+"%"},Phone.DISPLAY_NAME+" COLLATE LOCALIZED ASC")) {
+                (unfiltered?"1":"("+Phone.DISPLAY_NAME+" LIKE ? OR "+Phone.NUMBER+" LIKE ?)")+(favorites?" AND "+Phone.STARRED+"=1":""),
+                unfiltered?null:new String[]{"%"+query+"%","%"+query+"%"},Phone.DISPLAY_NAME+" COLLATE LOCALIZED ASC")) {
                 while(cursor!=null && cursor.moveToNext() && found.size()<500) {
                     Entry e=new Entry(); e.data=cursor.getLong(0); e.raw=cursor.getLong(1); e.contact=cursor.getLong(2);
-                    e.name=cursor.getString(3); e.number=cursor.getString(4); e.starred=cursor.getInt(5)!=0; found.add(e);
+                    e.name=cursor.getString(3); e.number=cursor.getString(4); e.starred=cursor.getInt(5)!=0;if(!numeric||ContactKeys.matches(e.name,e.number,query))found.add(e);
                 }
                 ui(new Runnable() { public void run() { entries.clear(); entries.addAll(found); show(); } });
             } catch(RuntimeException denied) { ui(new Runnable() { public void run() { notice("Agenda nu poate fi citită; verifică permisiunile"); entries.clear(); show(); } }); }
@@ -36,14 +36,14 @@ public final class ContactsActivity extends LeoActivity {
     private void show() {
         ArrayList<String> labels=new ArrayList<String>();
         for(Entry e:entries) labels.add((e.starred?"★ ":"")+(e.name==null?"Fără nume":e.name)+"\n"+e.number);
-        list(favorites?"Favorite":filter.isEmpty()?"Contacte":"Rezultate",labels,selected,new Choice() { public void pick(int i) { selected=i; detail(entries.get(i)); } },"Opțiuni",new Runnable() {
-            public void run() { options("Contacte",new String[]{"Contact nou","Caută","Toate contactele","Favorite"},new Choice() {
-                public void pick(int i) { if(i==0) edit(null); else if(i==1) search(); else { filter=""; favorites=i==3; selected=0; load(); } }
+        list(favorites?"Favorite":filter.isEmpty()?"Contacte":"Rezultate",labels,selected,new Choice() { public void pick(int i) { selected=i;int slot=getIntent().getIntExtra("speed_slot",0);Entry e=entries.get(i);if(slot>=2&&slot<=9){getSharedPreferences("speed-dial",0).edit().putString("name"+slot,e.name).putString("number"+slot,e.number).apply();notice("Tasta "+slot+" atribuită");finish();}else detail(e); } },"Opțiuni",new Runnable() {
+            public void run() { options("Contacte",new String[]{"Contact nou","Caută","Toate contactele","Favorite","Import / export VCF","Apelare rapidă"},new Choice() {
+                public void pick(int i) { if(i==0) edit(null); else if(i==1) options("Caută",new String[]{"Nume / număr","Cifre T9"},new Choice(){public void pick(int mode){search(mode==1);}}); else if(i==4)startActivity(new Intent(ContactsActivity.this,VCardActivity.class));else if(i==5)startActivity(new Intent(ContactsActivity.this,SpeedDialActivity.class));else { filter=""; favorites=i==3; selected=0; load(); } }
             }); }
         });
     }
-    private void search() {
-        LinearLayout fields=fields("Caută contact"); final EditText term=field(fields,"Nume sau număr",filter,InputType.TYPE_CLASS_TEXT);
+    private void search(boolean numeric) {
+        LinearLayout fields=fields(numeric?"Caută T9":"Caută contact"); final EditText term=field(fields,numeric?"Cifre pentru literele numelui":"Nume sau număr",numeric&&!filter.matches("[0-9]*")?"":filter,numeric?InputType.TYPE_CLASS_NUMBER:InputType.TYPE_CLASS_TEXT);
         left=new Runnable() { public void run() { filter=term.getText().toString().trim(); selected=0; load(); } };
         back=new Runnable() { public void run() { show(); } }; footer("Caută","","Șterge"); term.requestFocus();
     }

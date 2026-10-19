@@ -78,6 +78,7 @@ public final class MessagesActivity extends LeoActivity {
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
         String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):"SMS în așteptare · fără confirmare";
         if(!status.isEmpty()) root.addView(text(status,14),1);
+        if(!address.isEmpty()) { long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through); }
         if(!address.isEmpty()) back=new Runnable() { public void run() { load(""); } };
     }
     private void saveDraft() {

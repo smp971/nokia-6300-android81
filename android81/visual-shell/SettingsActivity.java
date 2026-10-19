@@ -27,7 +27,7 @@ public final class SettingsActivity extends LeoActivity {
         String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă"},
             {"Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9"},
             {"Blocarea tastelor","Permisiuni și aplicații","Localizare"},
-            {"Dată și oră","Stocare","Despre telefon","Setări Android"}};
+            {"Dată și oră","Stocare","Despre telefon","Setări Android","Configurare inițială"}};
         list("Setări Leo",Arrays.asList(rows[category]),selections[category],new Choice(){public void pick(int i){
             selections[category]=i;
             if(category==0) {
@@ -42,7 +42,7 @@ public final class SettingsActivity extends LeoActivity {
             } else {
                 if(i==0) startActivity(new Intent(SettingsActivity.this,DateTimeSettingsActivity.class)); else if(i==1) storage();
                 else if(i==2) page("Despre Leo",Build.MODEL+"\nAndroid "+Build.VERSION.RELEASE+" · API "+Build.VERSION.SDK_INT+"\nShell nativ pentru taste\n"+Build.DISPLAY);
-                else launch(Settings.ACTION_SETTINGS);
+                else if(i==3)launch(Settings.ACTION_SETTINGS);else startActivity(new Intent(SettingsActivity.this,SetupWizardActivity.class));
             }
         }},"Categorii",new Runnable(){public void run(){options("Categorii",TABS,new Choice(){public void pick(int i){switchCategory(i);}});}});
         android.widget.LinearLayout tabs=new android.widget.LinearLayout(this);

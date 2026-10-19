@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual.tests">
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
+    <application android:label="Leo local feature checks" android:allowBackup="false" />
+    <instrumentation android:name="ro.leo.visual.FeatureTests" android:targetPackage="ro.leo.visual" />
+</manifest>

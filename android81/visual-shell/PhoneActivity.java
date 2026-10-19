@@ -63,14 +63,18 @@ public final class PhoneActivity extends LeoActivity {
     }
     private void history() {
         final ArrayList<String> labels=new ArrayList<String>(),numbers=new ArrayList<String>();
+        final ArrayList<Long> missedDates=new ArrayList<Long>();
         worker.execute(new Runnable() { public void run() {
             try(Cursor c=getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.NUMBER,CallLog.Calls.CACHED_NAME,CallLog.Calls.DATE,CallLog.Calls.TYPE},null,null,CallLog.Calls.DATE+" DESC")) {
                 SimpleDateFormat date=new SimpleDateFormat("dd.MM HH:mm",java.util.Locale.getDefault());
                 while(c!=null && c.moveToNext() && labels.size()<100) {
                     String p=c.getString(0),name=c.getString(1); int type=c.getInt(3);
+                    if(type==CallLog.Calls.MISSED_TYPE)missedDates.add(c.getLong(2));
                     numbers.add(p); labels.add((name==null || name.isEmpty()?p:name)+"\n"+(type==CallLog.Calls.OUTGOING_TYPE?"Ieșit":type==CallLog.Calls.MISSED_TYPE?"Pierdut":"Primit")+" · "+date.format(new Date(c.getLong(2))));
                 }
                 ui(new Runnable() { public void run() {
+                    long through=0;
+                    for(Long value:missedDates)through=Math.max(through,value);UnreadState.readCalls(PhoneActivity.this,through);
                     list("Istoric apeluri",labels,0,new Choice() { public void pick(int i) { dial(numbers.get(i)); } },"",null);
                     back=new Runnable() { public void run() { dial(""); } };
                 }});

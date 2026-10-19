@@ -52,6 +52,7 @@ for permission in permissions:
     java('/system/bin/pm','grant','ro.leo.visual','android.permission.'+permission)
 java('/system/bin/appops','set','ro.leo.visual','WRITE_SETTINGS','allow')
 native('/system/bin/cmd','notification','allow_dnd','ro.leo.visual')
+native('/system/bin/cmd','notification','allow_listener','ro.leo.visual/.LeoNotificationService')
 permission_marker='# Leo system-app permissions for the keypad engineering image.'
 current_script=native('/system/bin/cat','/system/etc/leo-first-setup.sh').replace('\r\n','\n')
 permission_block=permission_marker+'\nif cmd package list packages ro.leo.visual | grep -qx \'package:ro.leo.visual\'; then\n'

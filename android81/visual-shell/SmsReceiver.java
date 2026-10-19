@@ -22,6 +22,7 @@ public final class SmsReceiver extends BroadcastReceiver {
             hash.update(("|"+sub).getBytes("UTF-8"));
             StringBuilder key=new StringBuilder(); for(byte b:hash.digest()) key.append(String.format("%02x",b&255));
             try(SmsStore store=new SmsStore(context)) { store.received(key.toString(),address,body.toString(),sent,sub); }
+            UnreadState.refresh(context);
             notify(context,"Mesaj SMS nou",address);
         } catch(Exception failed) { notify(context,"SMS primit: stocare indisponibilă",address); }
     }
@@ -30,7 +31,7 @@ public final class SmsReceiver extends BroadcastReceiver {
         manager.createNotificationChannel(new NotificationChannel("leo-sms","Mesaje Leo",NotificationManager.IMPORTANCE_DEFAULT));
         Intent open=new Intent(context,MessagesActivity.class).putExtra("thread",number);
         PendingIntent click=PendingIntent.getActivity(context,number.hashCode(),open,PendingIntent.FLAG_UPDATE_CURRENT);
-        manager.notify(number.hashCode(),new Notification.Builder(context,"leo-sms").setSmallIcon(android.R.drawable.stat_notify_chat)
-            .setContentTitle(title).setContentText("Deschide Mesaje Leo").setContentIntent(click).setAutoCancel(true).build());
+        manager.notify("leo-sms",number.hashCode(),new Notification.Builder(context,"leo-sms").setSmallIcon(android.R.drawable.stat_notify_chat)
+            .setCategory(Notification.CATEGORY_MESSAGE).setContentTitle(title).setContentText("Deschide Mesaje Leo").setContentIntent(click).setAutoCancel(true).build());
     }
 }

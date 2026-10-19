@@ -77,12 +77,13 @@ public final class LeoPointerService extends AccessibilityService {
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Închide"},new KeypadDialog.Action() {
+            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide"},new KeypadDialog.Action() {
                 public void select(int which) {
-                    if(which==0) performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
+                    if(which==0) startActivity(new android.content.Intent(LeoPointerService.this,NotificationsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
                     else if(which==1) setActive(!active);
                     else if(which==2) performGlobalAction(GLOBAL_ACTION_HOME);
                     else if(which==3) startActivity(new android.content.Intent(LeoPointerService.this,SettingsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                    else if(which==5) startActivity(new android.content.Intent(LeoPointerService.this,QuickSettingsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
                     else if(which==4) {setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,KeypadLockActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));}
                 }
             });

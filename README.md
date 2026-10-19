@@ -58,8 +58,12 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
 | Pornire și repornire | **Parțial** | Corecție NetworkPolicy instalată; după recuperare nu s-a raportat ANR. Proba de autostart conectivitate a fost urmată de 900E; cauza rămâne în investigare. |
 | USB / ADB / root | **Funcțional** | Diagnostic, instalare și control din PC; s-au observat și întreruperi USB temporare. |
-| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 19 intrări pe trei pagini, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
+| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 22 intrări pe trei pagini, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
 | Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
+| Notificări native Leo | **Parțial** | Notificare sintetică citită, deschisă prin PendingIntent și eliminată din taste. Ascultător propriu autorizat explicit pe low-RAM; fără răspuns direct la notificări. |
+| Configurări rapide Leo | **Parțial** | Wi-Fi și Bluetooth oprite/repornite din taste; luminozitate salvată și restaurată. Hotspot/SIM deschid paginile native; vibrator nedetectat. |
+| Indicatoare SMS / apeluri pierdute | **Parțial** | SMS și apel pierdut sintetice afișate pe Home și pe ecranul blocat, apoi confirmate separat la citire. Marcarea conversației păstrează un SMS mai nou. Fără apel/SMS real inițiat în această probă. |
+| Configurare inițială | **Parțial** | Șapte pagini native; navigare și finalizare verificate. Leo rămâne în română; limba Android se schimbă separat. |
 | Mouse din D-pad | **Parțial** | Deplasare cu accelerare la menținere, oprire la eliberare și clic verificate; compatibilitatea tuturor aplicațiilor și derularea nu sunt complet validate. |
 | Listă Aplicații Android | **Funcțional** | 12 activități lansabile detectate, iconuri și sortare; Calculator și revenire în listă verificate. Nu validează toate aplicațiile. |
 | Tastatură fizică / D-pad | **Funcțional** | Mapare adaptată și confirmări pe telefon; aplicațiile Android nu sunt toate adaptate la taste. |
@@ -107,6 +111,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Calculator Leo | **Funcțional** | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon. |
 | Notițe Leo | **Funcțional** | Scriere multi-tap, salvare/redeschidere, editare fără duplicare, ciornă și ștergere confirmată testate pe nota de probă; fără teste de volum sau pierdere a alimentării. |
 | Contacte Leo | **Funcțional** | Creare, căutare, editare și ștergere verificate pe un contact local de probă. Contactele sincronizate și structurile complexe rămân nevalidate. |
+| Contacte · T9 / VCF / apelare rapidă | **Parțial** | Parser VCF 2.1 quoted-printable, 3.0 UTF-8 și 4.0; import/export prin provider și căutare T9 verificate pe date sintetice. Importul adaugă copii, fără deduplicare. Menținerea tastei 9 a deschis numărul sintetic pentru confirmare, fără apel real. |
 | Telefon Leo | **Parțial** | Tastatură numerică, istoric și alegere SIM implementate; două conturi SIM afișate. Nu a fost inițiat un apel în această probă. |
 | Ceas Leo | **Parțial** | Oră/cronometru testate; temporizatorul și alarma proprie au declanșat în fundal, inclusiv după terminarea procesului. Utilizatorul confirmă sunetul temporizatorului. Recuperarea la reboot și celelalte rute/volume nu sunt validate. |
 | Calendar Leo | **Parțial** | Interfață nativă, lună/agendă; salvare de eveniment în calendarul local Android verificată. Creare, persistență după reboot, editare și ștergere verificate; fără recurențe/remindere. |
@@ -123,7 +128,8 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
 | Muzică / Video Leo | **Parțial** | Biblioteci și controale native implementate; redarea este oprită dacă placa audio lipsește. Decodarea și redarea reale rămân de validat. |
 | Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
-| Browser / WebView | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Fără navigare stabilă pe internet validată. |
+| WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
+| Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
 | Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
 | Cameră | **Nefuncțional** | Serviciul Android raportează zero dispozitive. |
 | GPS / localizare reală | **Nefuncțional** | Fără provider GPS funcțional sau fix real confirmat. |
@@ -318,3 +324,27 @@ Stânga/dreapta schimbă tabul, sus/jos selectează o intrare, OK deschide subme
 | Dată și oră | Aplicații |
 | --- | --- |
 | ![Dată și oră Leo](android81/screenshots/leo-datetime-settings.png) | ![Administrare aplicații Leo](android81/screenshots/leo-app-settings.png) |
+
+### Șase extensii pentru shell
+
+[Notificări, configurări rapide, Contacte/VCF, indicatoare, browser text și ghid inițial](android81/LEO-SHELL-FEATURES.md).
+
+
+Capturile de mai jos folosesc SMS, apel pierdut și contact **sintetice**, fără
+transmisie prin modem. Browserul afișează pagina publică de probă example.org.
+
+| Indicatoare pe Home | Indicatoare la blocare |
+| --- | --- |
+| ![SMS și apel pierdut sintetice](android81/screenshots/leo-home-indicators.png) | ![Indicatoare fără conținut personal](android81/screenshots/leo-lock-indicators.png) |
+
+| Notificări native | Configurări rapide |
+| --- | --- |
+| ![Notificare locală Leo](android81/screenshots/leo-notifications.png) | ![Configurări rapide Leo](android81/screenshots/leo-quick-settings.png) |
+
+| Contacte · cifre T9 | Browser text · HTTPS |
+| --- | --- |
+| ![Contact sintetic găsit cu T9](android81/screenshots/leo-contacts-t9.png) | ![example.org în browserul text](android81/screenshots/leo-browser-text.png) |
+
+| Ghid inițial |
+| --- |
+| ![Configurare inițială Leo](android81/screenshots/leo-first-setup.png) |

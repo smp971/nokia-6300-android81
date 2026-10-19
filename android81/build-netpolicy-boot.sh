@@ -4,6 +4,7 @@ TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$TASK_DIR/environment.sh"
 python3 "$TASK_DIR/patch-netpolicy-boot.py"
 python3 "$TASK_DIR/patch-leo-policy-access.py"
+python3 "$TASK_DIR/patch-leo-notification-listener.py"
 cd /root/android81-leo/src
 source build/envsetup.sh
 lunch aosp_leo_go-eng

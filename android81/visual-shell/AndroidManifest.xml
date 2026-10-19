@@ -44,6 +44,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".NotificationsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".QuickSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".BrowserActivity" android:exported="false" android:screenOrientation="portrait" android:process=":browser" />
+        <activity android:name=".SetupWizardActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".SpeedDialActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".VCardActivity" android:exported="false" android:screenOrientation="portrait" />
+        <service android:name=".LeoNotificationService" android:exported="true" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
+        </service>
         <activity android:name=".DownloadsActivity" android:exported="false" android:label="Descărcări Leo" android:screenOrientation="portrait" />
         <activity android:name=".GalleryActivity" android:exported="false" android:label="Gallery Leo" android:screenOrientation="portrait" />
         <activity android:name=".WallpaperActivity" android:exported="false" android:label="Wallpaper Leo" android:screenOrientation="portrait" />

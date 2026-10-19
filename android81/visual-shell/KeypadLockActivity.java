@@ -30,6 +30,7 @@ public final class KeypadLockActivity extends LeoActivity {
         super.onResume();visible=true;IntentFilter f=new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         f.addAction(Intent.ACTION_TIME_CHANGED);f.addAction(Intent.ACTION_TIMEZONE_CHANGED);f.addAction(Intent.ACTION_SCREEN_ON);
         f.addAction("android.intent.action.SERVICE_STATE");f.addAction("android.intent.action.SIM_STATE_CHANGED");f.addAction("android.intent.action.ACTION_SUBINFO_RECORD_UPDATED");
+        f.addAction(UnreadState.CHANGED);UnreadState.watch(this);UnreadState.refresh(this);
         registerReceiver(changes,f);handler.removeCallbacks(minute);handler.post(minute);
     }
     protected void onPause(){visible=false;unregisterReceiver(changes);handler.removeCallbacks(minute);handler.removeCallbacks(disarm);armed=0;super.onPause();}
@@ -106,8 +107,9 @@ public final class KeypadLockActivity extends LeoActivity {
             label(c,time,120,91,49,Color.WHITE,Paint.Align.CENTER);
             label(c,date,120,115,13,0xfff0e8f7,Paint.Align.CENTER);
             label(c,sims[0],120,147,12,0xfff0e8f7,Paint.Align.CENTER);label(c,sims[1],120,167,12,0xfff0e8f7,Paint.Align.CENTER);
+            label(c,UnreadState.label(),120,190,12,Color.WHITE,Paint.Align.CENTER);
             paint.setColor(0x99150e24);c.drawRoundRect(new RectF(12,207,228,283),10,10,paint);
-            paint.setColor(0xfff5eefb);c.drawRoundRect(new RectF(112,197,128,212),3,3,paint);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2);c.drawArc(new RectF(114,188,126,205),180,180,false,paint);paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0xfff5eefb);c.drawRoundRect(new RectF(112,205,128,220),3,3,paint);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2);c.drawArc(new RectF(114,196,126,213),180,180,false,paint);paint.setStyle(Paint.Style.FILL);
             label(c,armed>0?"Apasă acum *":"Taste blocate",120,237,17,Color.WHITE,Paint.Align.CENTER);
             label(c,armed>0?"Ai 3 secunde":"Soft stânga, apoi *",120,259,12,0xffe3d4ef,Paint.Align.CENTER);
             label(c,"Deblochează",10,311,12,Color.WHITE,Paint.Align.LEFT);label(c,"*",230,311,15,Color.WHITE,Paint.Align.RIGHT);
