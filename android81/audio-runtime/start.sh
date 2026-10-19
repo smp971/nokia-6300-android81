@@ -1,6 +1,10 @@
 #!/system/bin/sh
 set -eu
 base=/vendor/leo-audio
+trace() {
+    printf '%s %s\n' "$(date +%s)" "$*" >> /data/leo-audio-trace/setup.log
+    sync
+}
 restart_audio() {
     setprop ctl.stop audioserver
     setprop ctl.stop audio-hal-2-0
@@ -10,6 +14,7 @@ restart_audio() {
     setprop ctl.start audioserver
 }
 fail() {
+    trace 'setup failed; generic fallback requested'
     setprop persist.leo.audio.enabled 0
     setprop sys.leo.audio.state failed
     restart_audio
@@ -17,13 +22,19 @@ fail() {
 }
 load() {
     if ! grep -q "^$2 " /proc/modules; then
+        trace "before insmod $1"
         insmod "$base/modules/$1.ko" || fail
+        trace "after insmod $1"
         sleep 1
     fi
 }
 case "$1" in
 setup)
     [ "$(getprop persist.leo.audio.autoload)" = 1 ] || exit 0
+    mkdir -p /data/leo-audio-trace
+    chmod 700 /data/leo-audio-trace
+    : > /data/leo-audio-trace/setup.log
+    trace 'setup entered'
     # Clear the arm before touching kernel modules. A failed boot will not loop.
     setprop persist.leo.audio.autoload 0
     setprop sys.leo.audio.state waiting
@@ -41,7 +52,9 @@ setup)
     load audio_q6_notifier q6_notifier_dlkm
     load audio_apr apr_dlkm
     load audio_adsp_loader adsp_loader_dlkm
+    trace 'before boot_adsp'
     printf 1 > /sys/kernel/boot_adsp/boot
+    trace 'after boot_adsp'
     sleep 3
     load audio_q6 q6_dlkm
     load audio_wcd_core wcd_core_dlkm
@@ -67,6 +80,7 @@ setup)
     [ -n "$p" ] && grep -q '/vendor/leo-audio/lib/audio.primary.msm8909.so' /proc/$p/maps || fail
     if grep -q '/vendor/leo-audio/lib/audio-primary-generic.so' /proc/$p/maps; then fail;fi
     setprop sys.leo.audio.state active
+    trace 'setup active'
     if [ "$(getprop persist.leo.audio.validated)" = 1 ]; then setprop persist.leo.audio.autoload 1;fi
     ;;
 disable)

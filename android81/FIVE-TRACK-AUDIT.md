@@ -35,3 +35,5 @@ Jurnalele brute, copiile binare și numerele de telefon nu sunt incluse în repo
 O a doua pornire, cu autostartul conectivității și Bluetooth oprite, a ajuns la boot-completed în 29 s. După aproximativ nouă minute: fără ANR raportat. Această probă nu validează autostartul HAL.
 
 Reîncărcarea manuală a configurației audio a trecut prin stările waiting/loading, apoi dispozitivul a reapărut ca Qualcomm 900E. Încărcarea completă nu a fost repetată. Protecția dezarmează autoload înainte de încărcare; cauza la nivel de modul/DSP trebuie izolată. Proba SIM 2 nu este declarată efectuată.
+
+Jurnalizarea durabilă a inițializării audio a fost instalată fără pornirea driverelor: /data/leo-audio-trace/setup.log notează fiecare insmod înainte și după, precum și cererea boot_adsp, cu sync. Scriptul anterior este salvat local; /system a revenit read-only. Încărcarea audio și autostartul conectivității au rămas dezactivate. USB continuă să aibă deconectări și în afara probei audio; acest fapt nu identifică singur cauza blocajelor.
