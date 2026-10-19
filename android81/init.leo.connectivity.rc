@@ -1,0 +1,43 @@
+# Trial services remain disabled until explicitly requested.
+service leo_connectivity_setup /system/bin/sh /vendor/leo-connectivity/start.sh
+    class late_start
+    user root
+    group root wifi bluetooth inet net_admin net_raw
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+# Root is retained for this engineering trial; production permission hardening pending.
+service leo_wifi_hal /system/bin/env LD_LIBRARY_PATH=/vendor/leo-connectivity/lib:/vendor/lib:/system/lib /vendor/leo-connectivity/bin/android.hardware.wifi@1.0-service
+    class hal
+    user root
+    group root wifi inet net_admin net_raw
+    seclabel u:r:init:s0
+    disabled
+
+service leo_bluetooth_hal /system/bin/env LD_LIBRARY_PATH=/vendor/leo-connectivity/lib:/vendor/lib:/system/lib /vendor/leo-connectivity/bin/android.hardware.bluetooth@1.0-service
+    class hal
+    user root
+    group root bluetooth net_bt_admin net_bt_stack
+    seclabel u:r:init:s0
+    disabled
+
+service wpa_supplicant /system/bin/env LD_LIBRARY_PATH=/vendor/leo-connectivity/lib:/vendor/lib:/system/lib /vendor/leo-connectivity/bin/wpa_supplicant -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -O/data/misc/wifi/sockets -g@android:wpa_wlan0
+    class main
+    user wifi
+    group wifi inet keystore net_raw net_admin
+    capabilities NET_ADMIN NET_RAW
+    seclabel u:r:init:s0
+    socket wpa_wlan0 dgram 0660 wifi wifi
+    disabled
+    oneshot
+
+# Oreo wificond writes hostapd.conf and controls the service by this exact name.
+service hostapd /system/bin/env LD_LIBRARY_PATH=/vendor/leo-connectivity/lib:/vendor/lib:/system/lib /vendor/leo-connectivity/bin/hostapd -e /data/misc/wifi/entropy.bin /data/misc/wifi/hostapd.conf
+    class main
+    user wifi
+    group wifi net_raw net_admin
+    capabilities NET_ADMIN NET_RAW
+    seclabel u:r:init:s0
+    disabled
+    oneshot

@@ -1,0 +1,5 @@
+<permissions>
+    <privapp-permissions package="ro.leo.visual">
+        <permission name="android.permission.OVERRIDE_WIFI_CONFIG" />
+    </privapp-permissions>
+</permissions>

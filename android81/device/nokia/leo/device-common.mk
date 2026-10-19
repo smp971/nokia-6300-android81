@@ -1,6 +1,9 @@
 # Shared Nokia hardware bring-up configuration.
 DEVICE_PACKAGE_OVERLAYS += device/nokia/leo/overlay
 PRODUCT_COPY_FILES += \
+    device/nokia/leo/leo-connectivity.xml:system/etc/permissions/leo-connectivity.xml \
+    device/nokia/leo/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
+PRODUCT_COPY_FILES += \
     device/nokia/leo/prebuilt/kernel:kernel \
     device/nokia/leo/rootdir/init.qcom.rc:root/init.qcom.rc \
     device/nokia/leo/rootdir/fstab.qcom:root/fstab.qcom \

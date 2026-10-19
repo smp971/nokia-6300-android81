@@ -16,6 +16,14 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.OVERRIDE_WIFI_CONFIG" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
@@ -37,6 +45,7 @@
         <activity android:name=".WallpaperActivity" android:exported="false" android:label="Wallpaper Leo" android:screenOrientation="portrait" />
         <activity android:name=".ConverterActivity" android:exported="false" android:label="Converter Leo" android:screenOrientation="portrait" />
         <activity android:name=".SettingsActivity" android:exported="false" android:label="Settings Leo" android:screenOrientation="portrait" />
+        <activity android:name=".ConnectivityActivity" android:exported="false" android:label="Conectivitate Leo" android:screenOrientation="portrait" />
         <activity android:name=".MediaActivity" android:exported="false" android:label="Media Leo" android:screenOrientation="portrait" />
         <activity android:name=".VideoActivity" android:exported="false" android:label="Video Leo" android:screenOrientation="portrait" />
         <activity android:name=".RecorderActivity" android:exported="false" android:label="Recorder Leo" android:screenOrientation="portrait" />

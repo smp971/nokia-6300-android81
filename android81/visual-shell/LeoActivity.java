@@ -92,6 +92,9 @@ abstract class LeoActivity extends Activity {
         edit.setTextSize(19); edit.setTextColor(Color.WHITE); edit.setHintTextColor(0xffd3bddf);
         edit.setBackgroundColor(0xff30213f); edit.setInputType(type); edit.setText(value);
         if((type&InputType.TYPE_TEXT_FLAG_MULTI_LINE)==0) edit.setSingleLine(true);
+        // setSingleLine replaces the transformation; restore masking for password fields.
+        if((type&InputType.TYPE_MASK_VARIATION)==InputType.TYPE_TEXT_VARIATION_PASSWORD)
+            edit.setTransformationMethod(android.text.method.PasswordTransformationMethod.getInstance());
         edit.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(4096)});
         edit.setOnKeyListener(new View.OnKeyListener() { public boolean onKey(View view,int key,KeyEvent event) {
             if(event.getAction()!=KeyEvent.ACTION_DOWN || (key!=KeyEvent.KEYCODE_DPAD_UP && key!=KeyEvent.KEYCODE_DPAD_DOWN)) return false;

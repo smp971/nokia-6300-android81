@@ -36,3 +36,14 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 # The framebuffer HWC completes presentation synchronously and returns no retire fences.
 # Keep DispSync sampling vsync instead of waiting for absent present fences.
 TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true
+
+# Qualcomm WCNSS/Pronto connectivity; actual activation remains a runtime trial.
+BOARD_WLAN_DEVICE := qcwcn
+BOARD_WPA_SUPPLICANT_DRIVER := NL80211
+BOARD_HOSTAPD_DRIVER := NL80211
+BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_qcwcn
+BOARD_HOSTAPD_PRIVATE_LIB := lib_driver_cmd_qcwcn
+WPA_SUPPLICANT_VERSION := VER_0_8_X
+WIFI_DRIVER_MODULE_PATH := /vendor/leo-connectivity/modules/pronto_wlan.ko
+WIFI_DRIVER_MODULE_NAME := wlan
+WIFI_DRIVER_MODULE_ARG :=

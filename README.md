@@ -22,7 +22,7 @@ au fost confirmate în probele descrise mai jos.
 | Ecran | 240 × 320, SPI, ieșire RGB565 |
 | Sistem original | KaiOS 2.5.4, Gecko 48.0a2 |
 | Sistem portat | AOSP `android-8.1.0_r81`, produs `aosp_leo_go-eng` |
-| Kernel utilizat | Stock `4.9.240-perf-g4f9e270fd77f`, nu mainline |
+| Kernel utilizat | Derivat din stock `4.9.240-perf-g4f9e270fd77f`, cu UHID pentru mouse Bluetooth; nu mainline |
 | Profil memorie | `ro.config.low_ram=true`, zRAM aproximativ 256 MiB |
 | Partiții utilizate | Intern: `/system` aproximativ 800 MiB, `/data` aproximativ 2,3 GiB |
 | Interfață | **Leo Visual**, HOME nativ; **Leo Keypad**, multi-tap / T9 local |
@@ -94,9 +94,9 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Client IMS | **Experimental** | Port compilat, cu înregistrare IMS voce pe SIM 1 într-o probă controlată. Activarea a fost retrasă; nu pornește automat. |
 | VoLTE | **Netestat** | Înregistrarea IMS nu dovedește un apel VoLTE; apelul primit reușit nu a fost identificat ca VoLTE. |
 | VoWiFi | **Nefuncțional** | IMS/VoWiFi neintegrat; conectarea Wi-Fi de probă nu validează apeluri Wi-Fi. |
-| Wi-Fi | **Experimental** | Asociere COMPLETED, adresă și 2/2 ping prin wlan0 în proba manuală. Autostart dezactivat după un episod 900E; stabilitatea după reboot nu este validată. |
-| Bluetooth | **Experimental** | ON în proba manuală; după recuperare, inițializarea HCI a produs SIGABRT repetat. Oprit temporar; fără împerechere sau accesorii validate. |
-| Hotspot | **Netestat** | Nu există o probă de partajare a conexiunii. |
+| Wi-Fi | **Funcțional** | Asociere COMPLETED, adresă și 2/2 ping prin wlan0 după două porniri cu inițializare timpurie. Stabilitatea pe termen lung necesită observație. |
+| Bluetooth | **Parțial** | ON după reboot; mouse BLE conectat prin HID, mișcare și clic confirmate de utilizator. Accesoriile audio și alte profiluri nu sunt validate. |
+| Hotspot | **Funcțional** | WPA2 pornit/oprit din Leo; DHCP și partajare mobilă active. Utilizatorul a confirmat acces web de pe alt telefon cu datele mobile ale clientului oprite. |
 
 ### Aplicații și alte componente hardware
 
@@ -114,7 +114,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Galerie Leo | **Funcțional** | Miniaturi, vizualizare și zoom verificate cu imagine sintetică. Până la 500 imagini; fără albume/editor foto. |
 | Fundaluri și teme Leo | **Funcțional** | Patru teme, alegere imagine din Galerie, aplicare/eliminare pe HOME verificate. |
 | Convertor Leo | **Funcțional** | Șase categorii; 137 verificări JVM și probă 100 °C → 212 °F pe telefon. |
-| Setări Leo / profiluri | **Parțial** | Luminozitate, timeout, Silențios și Normal verificate; valori de probă restaurate. Android nu detectează vibratorul. Rețelele/data folosesc paginile Android. |
+| Setări Leo / profiluri | **Parțial** | Patru taburi din D-pad, submeniuri și controale native Wi-Fi/Bluetooth/hotspot; pagini Android pentru opțiunile încă neadaptate. Luminozitate, timeout și profiluri verificate; vibrator nedetectat. |
 | Favorite | **Funcțional** | Marcaj Android STARRED, listă proprie și probă pe contact sintetic, curățat după verificare. |
 | Blocare taste | **Funcțional** | Blocare pentru apăsări accidentale; Home blocat și soft stânga → * verificate. Fără PIN; nu este o barieră de securitate. |
 | Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
@@ -179,7 +179,7 @@ instrucțiuni validate pentru acest port.
 ## Probleme cunoscute
 
 - Corecție NetworkPolicy instalată; stabilitatea pornirii necesită observație suplimentară.
-- Wi-Fi are acces Internet în proba manuală; autostartul este dezactivat. Bluetooth necesită repararea inițializării HCI; împerecherea nu este confirmată.
+- Wi-Fi și Bluetooth pornesc automat în noua ordine de inițializare; stabilitatea pe termen lung și accesoriile audio necesită probe. ADB are încă întreruperi care pot cere reconectarea cablului.
 - Cameră, GPS și integrarea senzorilor nefuncționale în auditul documentat.
 - WebView a prezentat crash GPU; Email are o eroare de resurse la pornire.
 - Aplicațiile Android nu sunt toate controlabile complet din taste; cursorul este o opțiune de acces.
@@ -239,6 +239,8 @@ Multi-tap și predicția T9 locală de bază funcționează; dicționarul comple
 | --- | --- |
 | Stare și istoric | [STATUS](android81/STATUS.md), [audit inițial](android81/FUNCTION-AUDIT-2026-10-18.md) |
 | Shell, meniu, mouse și aplicații Android | [VISUAL-SHELL](android81/VISUAL-SHELL.md) |
+| Setări cu taburi, Wi-Fi, Bluetooth și hotspot | [LEO-CONNECTIVITY-SETTINGS](android81/LEO-CONNECTIVITY-SETTINGS.md), [CONNECTIVITY-BRINGUP](android81/CONNECTIVITY-BRINGUP.md) |
+| Corecția paginii Connected devices | [SETTINGS-CONNECTED-DEVICES](android81/SETTINGS-CONNECTED-DEVICES.md) |
 | Calculator și Notițe Leo | [LEO-CALCULATOR-NOTES](android81/LEO-CALCULATOR-NOTES.md) |
 | Contacte, Telefon, Mesaje, alarme | [LEO-SYSTEM-APPS](android81/LEO-SYSTEM-APPS.md) |
 | Tastatură multi-tap | [KEYPAD-IME](android81/KEYPAD-IME.md) |
@@ -288,3 +290,16 @@ de aici provin din proiectul Android Leo, nu din acea pagină.
 | Profil silențios | Blocare taste | T9 local |
 | --- | --- | --- |
 | ![Profil Leo](android81/screenshots/leo-profile-silent.png) | ![Blocare taste](android81/screenshots/leo-keypad-lock.png) | ![T9 în editorul de probă](android81/screenshots/leo-t9.png) |
+
+
+### Setări Leo organizate pe categorii
+
+Stânga/dreapta schimbă tabul, sus/jos selectează o intrare, OK deschide submeniul.
+
+| Rețele | Aspect |
+| --- | --- |
+| ![Rețele Leo](android81/screenshots/leo-settings-tabs-networks.png) | ![Aspect Leo](android81/screenshots/leo-settings-tabs-appearance.png) |
+
+| Siguranță | Telefon |
+| --- | --- |
+| ![Siguranță Leo](android81/screenshots/leo-settings-tabs-security.png) | ![Telefon Leo](android81/screenshots/leo-settings-tabs-device.png) |

@@ -7,22 +7,67 @@ import android.provider.Settings;
 import java.util.*;
 
 public final class SettingsActivity extends LeoActivity {
+    private static final String[] TABS={"Rețele","Aspect","Siguranță","Telefon"};
+    private final int[] selections=new int[4];
+    private int category;
+    private boolean categories;
     protected void onCreate(Bundle state) { super.onCreate(state); }
     protected void onResume() { super.onResume(); show(); }
+    private void rememberSelection() {
+        if(categories && root!=null) for(int i=0;i<root.getChildCount();i++)
+            if(root.getChildAt(i) instanceof android.widget.ListView) {
+                int position=((android.widget.ListView)root.getChildAt(i)).getSelectedItemPosition();
+                if(position>=0) selections[category]=position;
+            }
+    }
     private void show() {
+        rememberSelection(); categories=true;
         AudioManager audio=(AudioManager)getSystemService(AUDIO_SERVICE);
         String profile=audio.getRingerMode()==AudioManager.RINGER_MODE_SILENT?"Silențios":audio.getRingerMode()==AudioManager.RINGER_MODE_VIBRATE?"Vibrații":"Normal";
-        list("Setări Leo",Arrays.asList("Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9","Dată și oră","Stocare","Rețea mobilă","Wi-Fi · experimental","Bluetooth · experimental","Despre telefon","Setări Android"),0,new Choice() { public void pick(int i) {
-            if(i==0) profiles();
-            else if(i==1) brightness(); else if(i==2) timeout();
-            else if(i==3) startActivity(new Intent(SettingsActivity.this,WallpaperActivity.class));
-            else if(i==4) page("Tastatură Leo","# schimbă abc / ABC / 123 / T9 / T9 ABC.\nT9: o apăsare pentru fiecare literă, * schimbă sugestia, 0 acceptă și adaugă spațiu.\nDicționar românesc local de bază; fără învățare automată.");
-            else if(i==5) launch(Settings.ACTION_DATE_SETTINGS);
-            else if(i==6) storage(); else if(i==7) launch(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
-            else if(i==8) launch(Settings.ACTION_WIFI_SETTINGS); else if(i==9) launch(Settings.ACTION_BLUETOOTH_SETTINGS);
-            else if(i==10) page("Despre Leo",Build.MODEL+"\nAndroid "+Build.VERSION.RELEASE+" · API "+Build.VERSION.SDK_INT+"\nShell nativ pentru taste\n"+Build.DISPLAY);
-            else launch(Settings.ACTION_SETTINGS);
-        } },"",null);
+        String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","Rețea mobilă"},
+            {"Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9"},
+            {"Blocarea tastelor","Permisiuni și aplicații","Localizare"},
+            {"Dată și oră","Stocare","Despre telefon","Setări Android"}};
+        list("Setări Leo",Arrays.asList(rows[category]),selections[category],new Choice(){public void pick(int i){
+            selections[category]=i;
+            if(category==0) {
+                if(i<3) startActivity(new Intent(SettingsActivity.this,ConnectivityActivity.class).putExtra("kind",new String[]{"wifi","bluetooth","hotspot"}[i]));
+                else launch(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
+            } else if(category==1) {
+                if(i==0) profiles(); else if(i==1) brightness(); else if(i==2) timeout();
+                else if(i==3) startActivity(new Intent(SettingsActivity.this,WallpaperActivity.class));
+                else page("Tastatură Leo","# schimbă abc / ABC / 123 / T9 / T9 ABC.\nT9: o apăsare pentru fiecare literă, * schimbă sugestia, 0 acceptă și adaugă spațiu.\nDicționar românesc local de bază; fără învățare automată.");
+            } else if(category==2) {
+                if(i==0) startActivity(new Intent(SettingsActivity.this,KeypadLockActivity.class));
+                else launch(i==1?Settings.ACTION_APPLICATION_SETTINGS:Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            } else {
+                if(i==0) launch(Settings.ACTION_DATE_SETTINGS); else if(i==1) storage();
+                else if(i==2) page("Despre Leo",Build.MODEL+"\nAndroid "+Build.VERSION.RELEASE+" · API "+Build.VERSION.SDK_INT+"\nShell nativ pentru taste\n"+Build.DISPLAY);
+                else launch(Settings.ACTION_SETTINGS);
+            }
+        }},"Categorii",new Runnable(){public void run(){options("Categorii",TABS,new Choice(){public void pick(int i){switchCategory(i);}});}});
+        android.widget.LinearLayout tabs=new android.widget.LinearLayout(this);
+        tabs.setBackgroundColor(0xff100f1d);
+        for(int i=0;i<TABS.length;i++) {
+            final int index=i;
+            android.widget.TextView tab=text(TABS[i],12); tab.setPadding(0,0,0,0);tab.setGravity(android.view.Gravity.CENTER);
+            tab.setTextColor(i==category?0xff38224f:0xffdfcde9);tab.setBackgroundColor(i==category?0xfff5eefb:0xff100f1d);
+            tab.setOnClickListener(new android.view.View.OnClickListener(){public void onClick(android.view.View v){switchCategory(index);}});
+            tabs.addView(tab,new android.widget.LinearLayout.LayoutParams(0,dp(32),1));
+        }
+        root.addView(tabs,1);
+    }
+    private void switchCategory(int next) {
+        rememberSelection(); categories=false; category=(next+TABS.length)%TABS.length; show();
+    }
+    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+        int key=event.getKeyCode();
+        if(categories && (key==android.view.KeyEvent.KEYCODE_DPAD_LEFT || key==android.view.KeyEvent.KEYCODE_DPAD_RIGHT)) {
+            if(event.getAction()==android.view.KeyEvent.ACTION_DOWN && event.getRepeatCount()==0)
+                switchCategory(category+(key==android.view.KeyEvent.KEYCODE_DPAD_RIGHT?1:-1));
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
     }
     private void launch(String action) { try { startActivity(new Intent(action)); } catch(RuntimeException unavailable) { notice("Pagina Android nu este disponibilă"); } }
     private boolean writable() {
@@ -47,5 +92,5 @@ public final class SettingsActivity extends LeoActivity {
         try { StatFs stat=new StatFs(dir.getPath());return android.text.format.Formatter.formatFileSize(this,stat.getAvailableBytes())+" liber / "+android.text.format.Formatter.formatFileSize(this,stat.getTotalBytes()); } catch(RuntimeException unavailable) { return "indisponibil"; }
     }
     private void storage() { page("Stocare","Date interne\n"+capacity(Environment.getDataDirectory())+"\n\nMemorie partajată\n"+capacity(Environment.getExternalStorageDirectory())); }
-    private void page(String title,String value) { begin(title);android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(text(value,18));root.addView(scroll,new android.widget.LinearLayout.LayoutParams(-1,0,1));back=new Runnable(){public void run(){show();}};footer("","","Înapoi"); }
+    private void page(String title,String value) { rememberSelection();categories=false;begin(title);android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(text(value,18));root.addView(scroll,new android.widget.LinearLayout.LayoutParams(-1,0,1));back=new Runnable(){public void run(){show();}};footer("","","Înapoi"); }
 }

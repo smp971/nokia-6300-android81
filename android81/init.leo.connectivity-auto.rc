@@ -1,3 +1,5 @@
-# Opt-in activation of the already staged, disabled WCNSS/HAL trial.
-on property:sys.boot_completed=1 && property:persist.leo.connectivity.auto=1
-    start leo_connectivity_setup
+# Prepare hardware before the main boot classes restore Wi-Fi/Bluetooth preferences.
+# Oreo loads persist properties after post-fs-data; early-boot sees the saved opt-in.
+# A failed setup disarms itself in start.sh; first trials do not rearm themselves.
+on early-boot && property:persist.leo.connectivity.auto=1
+    exec_start leo_connectivity_setup

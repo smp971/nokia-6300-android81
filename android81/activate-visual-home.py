@@ -47,7 +47,7 @@ if marker not in old_script:
     finally:
         native('/system/bin/mount', '-o', 'remount,ro', '/system')
 java('/system/bin/pm', 'grant', 'ro.leo.visual', 'android.permission.READ_PHONE_STATE')
-permissions=['READ_CONTACTS','WRITE_CONTACTS','READ_CALL_LOG','CALL_PHONE','READ_SMS','RECEIVE_SMS','SEND_SMS','READ_CALENDAR','WRITE_CALENDAR','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE','RECORD_AUDIO']
+permissions=['READ_CONTACTS','WRITE_CONTACTS','READ_CALL_LOG','CALL_PHONE','READ_SMS','RECEIVE_SMS','SEND_SMS','READ_CALENDAR','WRITE_CALENDAR','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE','RECORD_AUDIO','ACCESS_COARSE_LOCATION']
 for permission in permissions:
     java('/system/bin/pm','grant','ro.leo.visual','android.permission.'+permission)
 java('/system/bin/appops','set','ro.leo.visual','WRITE_SETTINGS','allow')
