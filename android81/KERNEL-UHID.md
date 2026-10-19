@@ -134,6 +134,33 @@ contain the external Qualcomm audio machine driver's implementation, which limit
 direct source-level debugging of that original binary. Do not bypass signatures,
 CRC checks, or repeatedly retry the same load as a proposed fix.
 
+## Offline machine-driver audit
+
+`build-audio-abi-probe.sh` builds an object against the candidate's configured
+headers, solely to expose structure sizes/offsets as ELF symbols. It never builds
+or installs a loadable driver. `inspect-audio-abi.py` compares those facts with
+real data symbols and relocations in the retained original machine module.
+
+The limited checks match: `snd_soc_card` 400 bytes, `platform_driver` 92 bytes,
+`snd_soc_ops` 24 bytes, `snd_soc_dai_link` 144 bytes, and the card's `dai_link`
+pointer at offset 148. These checks supplement symbol CRCs; they do not prove
+complete ABI compatibility or rule out every private structure mismatch.
+
+The module's match table requires `qcom,msm8952-audio-codec`, also present on the
+live `7702000.sound` node. Static analysis shows that module init registers its
+platform driver; the matching probe obtains/maps resources, reads DT properties,
+sets up state and calls `devm_snd_soc_register_card`. Its name `msm8952` despite
+the msm8909 module filename is therefore expected, not evidence of a wrong module.
+The exact crashing call is still unknown. The upstream
+[Qualcomm msm8952 source](https://android.googlesource.com/kernel/msm/+/a9d25cfa08574b5b06fdfccea47b3fc99f8b5d15/sound/soc/msm/msm8952.c)
+is a reference for this driver family, not the verified Nokia module's source.
+
+The configured kernel lacks KPROBES, FTRACE and DYNAMIC_DEBUG as well as PSTORE.
+No runtime tracing switch can enable features that were not compiled in. The
+next useful diagnostic would require targeted kernel logging around driver probe
+and ASoC card registration, or the matching external driver source. No further
+image was installed or audio module loaded during this offline audit.
+
 These are offline prerequisite checks. They do not establish bootability or
 working graphics, audio, modem, Wi-Fi or mouse input. No boot image is packaged
 or flashed by these scripts. A later device trial must preserve the current
