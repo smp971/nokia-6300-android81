@@ -17,6 +17,21 @@ public final class LeoPointerService extends AccessibilityService {
     private boolean active, scroll, gesturePending, consumePoundUp;
     private int x, y, width, height;
     private KeypadDialog menu;
+    private boolean screenWatching;
+    private final android.content.BroadcastReceiver screenReceiver=new android.content.BroadcastReceiver(){
+        public void onReceive(android.content.Context c,android.content.Intent intent){
+            boolean busy=AlarmRingService.ringing;
+            try{busy|=((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall();}catch(RuntimeException ignored){}
+            if(android.content.Intent.ACTION_SCREEN_OFF.equals(intent.getAction())){
+                setActive(false);if(menu!=null)menu.dismiss();
+                if(!busy && getSharedPreferences("keyguard",0).getBoolean("screen_off",false))
+                    getSharedPreferences("keyguard",0).edit().putBoolean("locked",true).apply();
+            }else if(!busy && KeypadLockActivity.locked(LeoPointerService.this) && !KeypadLockActivity.visible){
+                try{startActivity(new android.content.Intent(LeoPointerService.this,KeypadLockActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK|android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));}
+                catch(RuntimeException unavailable){Log.w("LeoPointer","Lock window unavailable",unavailable);}
+            }
+        }
+    };
     private final android.os.Handler movement=new android.os.Handler();
     private int heldDirection;
     private long heldSince;
@@ -43,6 +58,7 @@ public final class LeoPointerService extends AccessibilityService {
     protected void onServiceConnected() {
         instance=this;
         manager=(WindowManager)getSystemService(WINDOW_SERVICE);
+        if(!screenWatching){android.content.IntentFilter f=new android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF);f.addAction(android.content.Intent.ACTION_SCREEN_ON);registerReceiver(screenReceiver,f);screenWatching=true;}
     }
     public static boolean toggle() {
         if(instance==null) return false;
@@ -169,5 +185,5 @@ public final class LeoPointerService extends AccessibilityService {
     }
     public void onAccessibilityEvent(AccessibilityEvent event) { }
     public void onInterrupt() { setActive(false); }
-    public void onDestroy() { if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
+    public void onDestroy() { if(screenWatching)unregisterReceiver(screenReceiver);screenWatching=false;if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
 }

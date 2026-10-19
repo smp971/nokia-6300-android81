@@ -1,5 +1,9 @@
 <permissions>
     <privapp-permissions package="ro.leo.visual">
         <permission name="android.permission.OVERRIDE_WIFI_CONFIG" />
+        <permission name="android.permission.MODIFY_PHONE_STATE" />
+        <permission name="android.permission.WRITE_SECURE_SETTINGS" />
+        <permission name="android.permission.SET_TIME" />
+        <permission name="android.permission.SET_TIME_ZONE" />
     </privapp-permissions>
 </permissions>

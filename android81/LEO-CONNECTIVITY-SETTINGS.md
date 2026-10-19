@@ -41,6 +41,8 @@ adaugă aceeași aplicație în `/system/priv-app/LeoVisual/`, cu allowlist expl
 pentru `OVERRIDE_WIFI_CONFIG`. Android verifică compatibilitatea semnăturii la
 instalarea inițială; UID-ul și datele existente se păstrează. Reboot-ul activează
 dreptul privilegiat necesar configurării hotspotului pe Oreo.
+Extinderea pentru SIM, ceas și setări protejate are un allowlist suplimentar,
+descris în [paginile native de setări](LEO-NATIVE-SETTINGS.md).
 
 `build-connectivity-resources.sh` construiește overlay-ul WLAN pentru tethering.
 `install-connectivity-resources.py` păstrează APK-ul anterior, verifică toate

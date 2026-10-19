@@ -24,7 +24,7 @@ public final class SettingsActivity extends LeoActivity {
         rememberSelection(); categories=true;
         AudioManager audio=(AudioManager)getSystemService(AUDIO_SERVICE);
         String profile=audio.getRingerMode()==AudioManager.RINGER_MODE_SILENT?"Silențios":audio.getRingerMode()==AudioManager.RINGER_MODE_VIBRATE?"Vibrații":"Normal";
-        String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","Rețea mobilă"},
+        String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă"},
             {"Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9"},
             {"Blocarea tastelor","Permisiuni și aplicații","Localizare"},
             {"Dată și oră","Stocare","Despre telefon","Setări Android"}};
@@ -32,16 +32,15 @@ public final class SettingsActivity extends LeoActivity {
             selections[category]=i;
             if(category==0) {
                 if(i<3) startActivity(new Intent(SettingsActivity.this,ConnectivityActivity.class).putExtra("kind",new String[]{"wifi","bluetooth","hotspot"}[i]));
-                else launch(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
+                else startActivity(new Intent(SettingsActivity.this,MobileSettingsActivity.class));
             } else if(category==1) {
                 if(i==0) profiles(); else if(i==1) brightness(); else if(i==2) timeout();
                 else if(i==3) startActivity(new Intent(SettingsActivity.this,WallpaperActivity.class));
                 else page("Tastatură Leo","# schimbă abc / ABC / 123 / T9 / T9 ABC.\nT9: o apăsare pentru fiecare literă, * schimbă sugestia, 0 acceptă și adaugă spațiu.\nDicționar românesc local de bază; fără învățare automată.");
             } else if(category==2) {
-                if(i==0) startActivity(new Intent(SettingsActivity.this,KeypadLockActivity.class));
-                else launch(i==1?Settings.ACTION_APPLICATION_SETTINGS:Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(new Intent(SettingsActivity.this,i==0?KeypadLockSettingsActivity.class:i==1?AppSettingsActivity.class:PrivacySettingsActivity.class));
             } else {
-                if(i==0) launch(Settings.ACTION_DATE_SETTINGS); else if(i==1) storage();
+                if(i==0) startActivity(new Intent(SettingsActivity.this,DateTimeSettingsActivity.class)); else if(i==1) storage();
                 else if(i==2) page("Despre Leo",Build.MODEL+"\nAndroid "+Build.VERSION.RELEASE+" · API "+Build.VERSION.SDK_INT+"\nShell nativ pentru taste\n"+Build.DISPLAY);
                 else launch(Settings.ACTION_SETTINGS);
             }

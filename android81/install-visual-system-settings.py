@@ -1,7 +1,8 @@
-"""Give Leo system Settings access to Oreo's protected hotspot configuration.
+"""Install Leo system Settings with an explicit privileged permission allowlist.
 
 Retain the existing package identity/data; install a same-signed system base and
-an explicit one-permission privileged allowlist. Reboot activates the privilege.
+an explicit allowlist for hotspot, SIM, clock and secure settings. Reboot
+activates newly requested privileged permissions.
 """
 from pathlib import Path
 import hashlib
@@ -57,4 +58,4 @@ finally:
     native('/system/bin/mount','-o','remount,ro','/system')
 for destination,digest in digests.items(): assert native('/system/bin/sha256sum',destination).split()[0]==digest
 manifest.write_text(json.dumps(digests,indent=2),encoding='utf-8')
-print('Leo system base and hotspot permission installed; data retained; reboot required; system read-only')
+print('Leo system settings base synchronized; data retained; newly added privileges activate after reboot; system read-only')

@@ -87,7 +87,7 @@ public final class ConnectivityActivity extends LeoActivity {
         }
         if(Settings.Secure.getInt(getContentResolver(),Settings.Secure.LOCATION_MODE,0)==0) {
             notice("Android 8 cere Localizare activă pentru scanare. Poți adăuga Wi-Fi manual.");
-            androidPage(Settings.ACTION_LOCATION_SOURCE_SETTINGS); return false;
+            startActivity(new Intent(this,PrivacySettingsActivity.class)); return false;
         }
         return true;
     }

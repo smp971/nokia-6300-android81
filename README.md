@@ -114,9 +114,12 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Galerie Leo | **Funcțional** | Miniaturi, vizualizare și zoom verificate cu imagine sintetică. Până la 500 imagini; fără albume/editor foto. |
 | Fundaluri și teme Leo | **Funcțional** | Patru teme, alegere imagine din Galerie, aplicare/eliminare pe HOME verificate. |
 | Convertor Leo | **Funcțional** | Șase categorii; 137 verificări JVM și probă 100 °C → 212 °F pe telefon. |
-| Setări Leo / profiluri | **Parțial** | Patru taburi din D-pad, submeniuri și controale native Wi-Fi/Bluetooth/hotspot; pagini Android pentru opțiunile încă neadaptate. Luminozitate, timeout și profiluri verificate; vibrator nedetectat. |
+| Setări Leo / profiluri | **Parțial** | Patru taburi din D-pad, pagini native de conectivitate, SIM, timp, localizare și aplicații. APN, operator avansat și modificarea permisiunilor folosesc Android. Vibrator nedetectat. |
+| Preferințe SIM din Leo | **Parțial** | Salvare apeluri/SMS pe SIM 1 verificată fără trafic de probă; schimbarea efectivă a SIM-ului de date și SIM 2 rămân de verificat. |
+| Dată și oră din taste | **Parțial** | Oră automată, format 12/24 și respingerea datei invalide verificate. Aplicarea manuală a unei date valide/altui fus nu a fost testată. |
+| Aplicații / permisiuni din Leo | **Parțial** | Listă uzuală/completă, informații și starea permisiunilor; administrarea completă se deschide în Android. |
 | Favorite | **Funcțional** | Marcaj Android STARRED, listă proprie și probă pe contact sintetic, curățat după verificare. |
-| Blocare taste | **Funcțional** | Blocare pentru apăsări accidentale; Home blocat și soft stânga → * verificate. Fără PIN; nu este o barieră de securitate. |
+| Ecran de blocare Leo | **Funcțional** | Ceas, dată, baterie și ambele SIM-uri, cu tema/fundalul HOME. Blocare automată la stingere și expirarea combinației verificate. Deblocare: soft stânga → *. Protecție contra apăsărilor accidentale, fără PIN. |
 | Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
 | Muzică / Video Leo | **Parțial** | Biblioteci și controale native implementate; redarea este oprită dacă placa audio lipsește. Decodarea și redarea reale rămân de validat. |
 | Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
@@ -240,6 +243,7 @@ Multi-tap și predicția T9 locală de bază funcționează; dicționarul comple
 | Stare și istoric | [STATUS](android81/STATUS.md), [audit inițial](android81/FUNCTION-AUDIT-2026-10-18.md) |
 | Shell, meniu, mouse și aplicații Android | [VISUAL-SHELL](android81/VISUAL-SHELL.md) |
 | Setări cu taburi, Wi-Fi, Bluetooth și hotspot | [LEO-CONNECTIVITY-SETTINGS](android81/LEO-CONNECTIVITY-SETTINGS.md), [CONNECTIVITY-BRINGUP](android81/CONNECTIVITY-BRINGUP.md) |
+| SIM-uri, dată/oră, localizare, aplicații și blocare vizuală | [LEO-NATIVE-SETTINGS](android81/LEO-NATIVE-SETTINGS.md) |
 | Corecția paginii Connected devices | [SETTINGS-CONNECTED-DEVICES](android81/SETTINGS-CONNECTED-DEVICES.md) |
 | Calculator și Notițe Leo | [LEO-CALCULATOR-NOTES](android81/LEO-CALCULATOR-NOTES.md) |
 | Contacte, Telefon, Mesaje, alarme | [LEO-SYSTEM-APPS](android81/LEO-SYSTEM-APPS.md) |
@@ -289,7 +293,7 @@ de aici provin din proiectul Android Leo, nu din acea pagină.
 
 | Profil silențios | Blocare taste | T9 local |
 | --- | --- | --- |
-| ![Profil Leo](android81/screenshots/leo-profile-silent.png) | ![Blocare taste](android81/screenshots/leo-keypad-lock.png) | ![T9 în editorul de probă](android81/screenshots/leo-t9.png) |
+| ![Profil Leo](android81/screenshots/leo-profile-silent.png) | ![Blocare taste](android81/screenshots/leo-visual-lockscreen.png) | ![T9 în editorul de probă](android81/screenshots/leo-t9.png) |
 
 
 ### Setări Leo organizate pe categorii
@@ -303,3 +307,14 @@ Stânga/dreapta schimbă tabul, sus/jos selectează o intrare, OK deschide subme
 | Siguranță | Telefon |
 | --- | --- |
 | ![Siguranță Leo](android81/screenshots/leo-settings-tabs-security.png) | ![Telefon Leo](android81/screenshots/leo-settings-tabs-device.png) |
+
+
+### Blocare vizuală și pagini de setări native
+
+| Ecran de blocare | Blocare automată |
+| --- | --- |
+| ![Blocare Leo](android81/screenshots/leo-visual-lockscreen.png) | ![Opțiuni blocare](android81/screenshots/leo-lock-settings.png) |
+
+| Dată și oră | Aplicații |
+| --- | --- |
+| ![Dată și oră Leo](android81/screenshots/leo-datetime-settings.png) | ![Administrare aplicații Leo](android81/screenshots/leo-app-settings.png) |
