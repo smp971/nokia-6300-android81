@@ -1,37 +1,55 @@
-# Nokia 6300 4G TA-1286 — Android 8.1 / Leo
+# Nokia 6300 4G (nokia-leo)
 
-Port experimental **AOSP Android 8.1** pentru Nokia 6300 4G, cu interfață nativă pentru tastatura fizică, accelerare Adreno și adaptarea componentelor Qualcomm din sistemul original KaiOS.
+**Port Android 8.1 / Leo · TA-1286 · experimental**
 
-**Actualizat: 19 octombrie 2026.** Android rulează din memoria internă. Meniul Leo, datele LTE și redarea audio funcționează în probele efectuate. Un apel primit real a fost confirmat pe telefon: ecran complet, răspuns și închidere din taste, conversație audibilă în ambele sensuri.
+Ultima actualizare: **19 octombrie 2026**
 
-Proiectul rămâne un prototip de dezvoltare: există un ANR cunoscut la pornire, componente hardware neintegrate și aplicații instabile. Repository-ul conține surse, patch-uri și documentație; **nu oferă un ROM complet instalabil**.
+Android pornește din memoria internă, cu accelerare Adreno și interfață pentru
+taste. Datele LTE, redarea audio și un apel primit cu sunet în ambele sensuri
+au fost confirmate în probele descrise mai jos.
 
-## Platformă și abordare
+> **Starea portului: pornește, utilizare experimentală.** Există un ANR la boot,
+> hardware încă neintegrat și aplicații instabile. Repository-ul nu oferă încă
+> un ROM complet instalabil. Acesta este un proiect Android, independent de portul postmarketOS.
 
-| Componentă | Configurație utilizată |
+| Dispozitiv | Nokia 6300 4G |
 | --- | --- |
-| Telefon țintă | Nokia 6300 4G **TA-1286**, produs `leo` |
-| Sistem | AOSP `android-8.1.0_r81`, produs `aosp_leo_go-eng` |
-| Arhitectură | ARMv7, userspace și Binder pe 32 de biți |
-| Kernel | Kernel stock `4.9.240-perf-g4f9e270fd77f` |
-| Ecran | 240 × 320, panou SPI, ieșire RGB565 |
-| GPU | Qualcomm Adreno 304, GLES 3.0 |
-| Profil de memorie | `ro.config.low_ram=true`, zRAM de aproximativ 256 MiB |
-| Stocare sistem | Memorie internă: `/system` aproximativ 800 MiB, `/data` aproximativ 2,3 GiB |
-| Interfață principală | Leo Shell nativ, D-pad și taste soft |
-| Servicii Google | Nu sunt incluse; configurația Go nu reprezintă certificare Android Go |
+| Producător / variantă testată | HMD Global / **TA-1286** |
+| Nume de cod | `leo` / `nokia-leo` |
+| Tip | Telefon cu taste, D-pad, două SIM-uri; fără touchscreen |
+| Platformă | Qualcomm `msm8909`, Cortex-A7; ARMv7, userspace/Binder 32-bit |
+| GPU | Adreno 304, GLES 3.0 |
+| Ecran | 240 × 320, SPI, ieșire RGB565 |
+| Sistem original | KaiOS 2.5.4, Gecko 48.0a2 |
+| Sistem portat | AOSP `android-8.1.0_r81`, produs `aosp_leo_go-eng` |
+| Kernel utilizat | Stock `4.9.240-perf-g4f9e270fd77f`, nu mainline |
+| Profil memorie | `ro.config.low_ram=true`, zRAM aproximativ 256 MiB |
+| Partiții utilizate | Intern: `/system` aproximativ 800 MiB, `/data` aproximativ 2,3 GiB |
+| Interfață | **Leo Visual**, HOME nativ; **Leo Multi-tap**, IME implicit |
+| Configurație dispozitiv | [device/nokia/leo](android81/device/nokia/leo/) |
+| Pachet de instalare | Indisponibil; surse, patch-uri și scripturi de dezvoltare |
 
-Portul păstrează kernelul și componentele hardware necesare din sistemul original, adaptându-le la frameworkul Oreo. Launcherul nu folosește WebView. Grafica folosește Adreno, gralloc ION adaptat și un bridge HWC1 pentru panoul SPI. Telefonia folosește două instanțe RIL și serviciile Qualcomm integrate în init.
+Profilul pentru memorie redusă nu reprezintă certificare Android Go. Serviciile
+Google nu sunt incluse. Kernelul și componentele Qualcomm necesare provin din
+sistemul original; shell-ul nu depinde de WebView.
+
+**Cuprins:** [Funcții](#tabelul-funcțiilor) · [Capturi](#capturi) ·
+[Instalare](#instalare) · [Pornire și recuperare](#pornire-și-recuperare) ·
+[Probleme](#probleme-cunoscute) · [Dezvoltare](#dezvoltare) ·
+[Documentație](#documentație) · [Contribuții](#contribuții)
 
 ## Tabelul funcțiilor
 
-Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
+Stările se referă exclusiv la portul Android și la probele efectuate pe TA-1286.
+Nu sunt stările portului postmarketOS și nu garantează toate scenariile de utilizare.
 
-- **Funcțional** — operația descrisă a trecut pe telefon, în limitele menționate.
-- **Parțial** — doar o parte este verificată sau există o problemă cunoscută.
-- **Nefuncțional** — proba documentată a eșuat ori componenta nu este integrată.
-- **Netestat** — nu avem încă o probă suficientă pentru un verdict.
-- **Experimental** — rezultat obținut într-o probă temporară, neactivat permanent.
+| Stare | Semnificație |
+| --- | --- |
+| **Funcțional** | Proba descrisă a trecut pe telefon, în limitele menționate |
+| **Parțial** | Numai o parte funcționează sau există o problemă cunoscută |
+| **Nefuncțional** | Componentă neintegrată sau probă eșuată |
+| **Netestat** | Nu există încă o probă suficientă |
+| **Experimental** | Rezultat într-o probă temporară, fără validare ca funcție permanentă |
 
 ### Sistem, interfață și stocare
 
@@ -40,11 +58,14 @@ Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
 | Pornire și repornire | **Parțial** | Android și serviciile revin după reboot; ANR-ul NetworkPolicy poate necesita „Așteaptă”. |
 | USB / ADB / root | **Funcțional** | Diagnostic, instalare și control din PC; s-au observat și întreruperi USB temporare. |
-| Leo Shell | **Funcțional** | Meniu nativ, listă de aplicații, navigare și etichete pentru tastele soft. |
+| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
+| Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
+| Mouse din D-pad | **Parțial** | Deplasare cu accelerare la menținere, oprire la eliberare și clic verificate; compatibilitatea tuturor aplicațiilor și derularea nu sunt complet validate. |
+| Listă Aplicații Android | **Funcțional** | 12 activități lansabile detectate, iconuri și sortare; Calculator și revenire în listă verificate. Nu validează toate aplicațiile. |
 | Tastatură fizică / D-pad | **Funcțional** | Mapare adaptată și confirmări pe telefon; aplicațiile Android nu sunt toate adaptate la taste. |
-| Introducere multi-tap din taste | **Funcțional** | IME Android selectat; 11 probe în editor local: litere, diacritice, majuscule, ștergere și câmp numeric. Compatibilitatea tuturor aplicațiilor nu este încă verificată. |
+| Introducere multi-tap din taste | **Funcțional** | IME implicit, inclus în împachetare; hook nou la boot încă neverificat prin reboot; 11 probe în editor local: litere, diacritice, majuscule, ștergere și câmp numeric. Compatibilitatea tuturor aplicațiilor nu este încă verificată. |
 | Predicție T9 | **Nefuncțional** | Motorul predictiv nu este încă integrat; dicționarul românesc și integrarea IMEConnect din dump sunt identificate pentru analiză. |
-| Bară de stare Android | **Funcțional** | Vizibilă împreună cu Leo Shell; nu confirmă singură funcționarea fiecărui serviciu afișat. |
+| Bară de stare Android | **Funcțional** | Vizibilă împreună cu Leo Visual; nu confirmă singură funcționarea fiecărui serviciu afișat. |
 | Accelerare Adreno | **Funcțional** | Renderer Qualcomm și test Android HARDWARE bitmap verificate, inclusiv după reboot. |
 | Fluiditate generală | **Parțial** | Sincronizarea HWC1 a fost corectată; limitele panoului SPI și întârzierile unor aplicații rămân. |
 | Profil pentru memorie redusă | **Funcțional** | `low_ram` și zRAM verificate software; nu înseamnă că orice aplicație rulează fluent. |
@@ -72,8 +93,8 @@ Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
 | Client IMS | **Experimental** | Port compilat, cu înregistrare IMS voce pe SIM 1 într-o probă controlată. Activarea a fost retrasă; nu pornește automat. |
 | VoLTE | **Netestat** | Înregistrarea IMS nu dovedește un apel VoLTE; apelul primit reușit nu a fost identificat ca VoLTE. |
 | VoWiFi | **Nefuncțional** | Neintegrat; Wi-Fi nu este încă operațional. |
-| Wi-Fi | **Nefuncțional** | Fără scanare/conectare confirmată; auditul a găsit stare hardware unknown și lipsa interfeței WLAN. |
-| Bluetooth | **Nefuncțional** | Activarea eșuează din cauza serviciului HCI lipsă; procesul se închide. |
+| Wi-Fi | **Experimental** | În probele curente, bootstrap WCNSS și modulul stock creează wlan0/p2p0; HAL înregistrat. Fără asociere, Internet sau persistență la boot confirmate. |
+| Bluetooth | **Experimental** | HAL HCI înregistrat și BLE_ON în proba temporară; fără activare clasică completă, împerechere sau accesorii validate. |
 | Hotspot | **Netestat** | Nu există o probă de partajare a conexiunii. |
 
 ### Aplicații și alte componente hardware
@@ -82,7 +103,8 @@ Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
 | --- | --- | --- |
 | Setări Android | **Parțial** | Se deschide după corecții; unele categorii nu au suport hardware funcțional. |
 | Calculator | **Funcțional** | Pornire și `2 + 2 = 4` verificate; introducerea din proba inițială a fost prin ADB. |
-| Ceas / Calendar / Contacte / Fișiere | **Parțial** | Interfețele se deschid; alarmele, salvarea evenimentelor/contactelor și operațiile complete nu sunt validate. |
+| Ceas Leo | **Parțial** | Oră și cronometru native; start, tură, pauză, resetare și stare după relansare verificate. Alarmele proprii și temporizatorul nu sunt implementate. |
+| Calendar / Contacte / Fișiere Android | **Parțial** | Interfețele se deschid; salvarea evenimentelor/contactelor și operațiile complete nu sunt validate. |
 | Galerie / Muzică | **Parțial** | Pornire verificată; proba MediaPlayer separată nu confirmă toate funcțiile acestor aplicații. |
 | Browser / WebView | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Fără navigare stabilă pe internet validată. |
 | Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
@@ -90,132 +112,133 @@ Starea descrie **probele efectuate**, nu toate scenariile posibile de utilizare.
 | GPS / localizare reală | **Nefuncțional** | Fără provider GPS funcțional sau fix real confirmat. |
 | Senzori Android | **Nefuncțional** | SensorService nu detectează senzori; descrie integrarea software, nu inventarul fizic. |
 
-**Detalii despre probe:** [apeluri și taste](android81/CALL-KEYPAD.md), [LTE](android81/LTE-BRINGUP.md), [audio](android81/AUDIO-BRINGUP.md), [codec OGG și setări mobile](android81/PHONE-AUDIO-FOLLOWUP.md), [IMS](android81/IMS-PORT.md), [auditul inițial](android81/FUNCTION-AUDIT-2026-10-18.md).
+## Capturi
 
-## Capturi de pe telefon
+Capturi reale la 240 × 320. Ecranele de test IME și mouse nu reprezintă aplicații
+complete; capturile istorice ale apelurilor sunt simulări. Apelul real este documentat separat.
 
-### Leo Visual — interfața actuală
-
-| Home și ambele SIM-uri | Grila de aplicații |
-| --- | --- |
-| ![Leo Visual Home cu Vodafone și DIGI](android81/screenshots/visual-shell-home.png) | ![Grilă 3×3 controlată din taste](android81/screenshots/visual-shell-grid.png) |
-
-| Meniul global din tasta Meniu | Cursor controlat din taste |
-| --- | --- |
-| ![Meniu Leo afișat peste Calculator](android81/screenshots/visual-global-menu.png) | ![Cursor și clic confirmat pe butonul local de test](android81/screenshots/visual-pointer-test.png) |
-
-Meniul global oferă Notificări, Mouse din taste și Acasă. Captura cursorului
-arată un **ecran local de test**, unde apăsarea OK a activat butonul o dată.
-Grila deschide aplicații Android existente; prezența unei iconițe nu confirmă
-instalarea sau funcționarea completă a aplicației respective.
-
-### Introducere text din taste
-
-| Introducere multi-tap în Android | Diacritice românești |
-| --- | --- |
-| ![Cuvânt introdus din taste](android81/screenshots/keypad-ime-word.png) | ![Diacritice în editorul de test](android81/screenshots/keypad-ime-romanian.png) |
-
-Aceste două capturi sunt din editorul local folosit pentru verificarea IME,
-nu dintr-o aplicație de mesagerie și nu reprezintă predicție T9.
-
-### Capturi din etapele anterioare
-
-
-| Leo Shell | Setări | Înregistrare în rețea |
+| HOME / dual SIM | Listă aplicații | Meniu global |
 | --- | --- | --- |
-| ![Meniul Leo](android81/screenshots/leo-shell.png) | ![Setări Android](android81/screenshots/settings.png) | ![Rețea în Leo Shell](android81/screenshots/network-registered.png) |
+| ![Leo HOME](android81/screenshots/visual-shell-home.png) | ![Listă Leo](android81/screenshots/visual-shell-list.png) | ![Meniu din tasta fizică](android81/screenshots/visual-shell-global-menu.png) |
 
-| Meniu cu Adreno | Test HARDWARE bitmap | Setări LTE |
+| Aplicații Android | Ceas / cronometru | Multi-tap românesc |
 | --- | --- | --- |
-| ![Meniu cu Adreno](android81/screenshots/adreno-menu.png) | ![Test GPU](android81/screenshots/adreno-hardware-bitmap.png) | ![Opțiunea LTE](android81/screenshots/mobile-network-lte.png) |
+| ![Aplicații Android](android81/screenshots/visual-shell-android-apps.png) | ![Ceas Leo](android81/screenshots/leo-clock-stopwatch.png) | ![Editor de test IME](android81/screenshots/keypad-ime-romanian.png) |
 
-| Demonstrație apel primit | Opțiuni controlabile din taste |
-| --- | --- |
-| ![Simulare locală de apel primit](android81/screenshots/call-keypad-incoming-demo.png) | ![Opțiuni în simulare](android81/screenshots/call-keypad-options-demo.png) |
+[Toate capturile păstrate în proiect](android81/screenshots/).
 
-Capturi reale ale ecranului de 240 × 320. Cele două capturi de apel provin din **simularea locală**, nu din conversația reală; validarea apelului real este documentată separat. Capturile inițiale pot avea ceasul nesincronizat.
+## Instalare
 
-## Investigație: interfață alternativă inspirată de KaiOS
+Nu există o imagine release, un pachet OTA sau o procedură de flash validată
+pentru public. Scripturile actuale depind de arborele AOSP, intrările proprietare
+locale, configurația WSL și verificările aparatului de dezvoltare.
 
-Dump-ul KaiOS 2.5.4 conține 64 de intrări de aplicații și 63 de pachete locale.
-Am inventariat shell-ul, permisiunile, API-urile specifice și declarațiile de
-servicii. Acestea nu sunt încă portate ca ansamblu în Android.
+Sistemul testat rulează din memoria internă: `/system` read-only și `/data`
+read-write. Etapele inițiale de pe microSD sunt păstrate în documentație ca istoric,
+nu ca instrucțiuni pentru configurația curentă. Nu folosim `pmbootstrap` pentru acest port Android.
 
-Vezi [inventarul complet](android81/KAIOS-UI-INVENTORY.md) și
-[planul pentru interfață și aplicații](android81/KAIOS-ALTERNATIVE.md).
-Analiza nu a modificat sistemul de pe telefon.
+Puncte de plecare pentru dezvoltare:
 
-Primul [prototip Leo Visual](android81/VISUAL-SHELL.md) este acum instalat separat:
-home, stare pentru ambele SIM-uri și grilă 3×3 controlată din taste. Deschide
-aplicațiile Android existente; nu reprezintă încă portarea aplicațiilor KaiOS.
-Leo Visual este acum HOME implicit, cu acces la notificări din prima pagină și
-mouse opțional din taste. Tasta dedicată Meniu deschide comenzile globale și
-din alte aplicații. Leo clasic a fost dezinstalat pentru utilizatorul activ.
+- [Configurația AOSP a dispozitivului](android81/device/nokia/leo/).
+- [Pregătirea inițială — document istoric](android81/README.md).
+- [Rezultate și istoric tehnic](android81/STATUS.md).
 
-## Ce am adaptat
+## Pornire și recuperare
 
-Pentru introducere text există acum [Leo Multi-tap](android81/KEYPAD-IME.md),
-o metodă Android pentru tastatura fizică, cu bară compactă și diacritice.
-Predicția T9 este o etapă separată, încă neimplementată.
+Android, ADB și serviciile de bază au revenit după repornire în probele efectuate.
+Un ANR NetworkPolicy poate bloca interfața până la alegerea „Așteaptă”. USB poate
+dispărea temporar; lipsa ADB nu dovedește singură că telefonul nu a pornit.
 
-- **Pornire și stocare:** trecerea de la probele inițiale la rularea din memoria internă.
-- **Grafică:** integrarea Adreno/ION/HWC1, păstrând afișarea SPI RGB565.
-- **Interfață:** Leo Shell nativ, mapare de taste și bară pentru acțiunile softkeys.
-- **Telefonie:** servicii Qualcomm, sincronizarea celor două RIL-uri și date LTE.
-- **Audio:** HAL Qualcomm, module/calibrări necesare și configurația codec pentru OGG.
-- **Apeluri:** comenzi fizice și deschiderea directă a ecranului complet la apel primit.
-- **Compatibilitate Oreo:** corecții pentru Setări, statistici de trafic absente și portul experimental IMS.
+Recovery-ul de diagnostic cu ADB a fost folosit în dezvoltare. Nu există aici o
+procedură universală de deblocare/flash/recovery pentru toate variantele Nokia.
+Comenzile și combinațiile de taste de pe paginile altor dispozitive nu sunt
+instrucțiuni validate pentru acest port.
 
-Corecția DispSync/HWC1 a redus mediana **tastă → începutul desenării** de la aproximativ **1005 ms la 18 ms**, în două probe de câte 16 apăsări. Nu este latența optică până la afișarea pe panou și nu reprezintă un test FPS. [Metodă și limite](android81/UI-LATENCY.md).
+## Probleme cunoscute
 
-## Structura repository-ului
+- ANR NetworkPolicy la pornire; revenirea după boot nu este complet autonomă.
+- Wi-Fi și Bluetooth sunt în bring-up; nu avem încă conectare Wi-Fi sau împerechere confirmate.
+- Cameră, GPS și integrarea senzorilor nefuncționale în auditul documentat.
+- WebView a prezentat crash GPU; Email are o eroare de resurse la pornire.
+- Aplicațiile Android nu sunt toate controlabile complet din taste; cursorul este o opțiune de acces.
+- SMS/MMS, apeluri inițiate, accesorii audio, autonomia și încărcarea completă necesită probe.
+- Înregistrarea IMS experimentală nu validează VoLTE sau VoWiFi.
+
+Corecția DispSync/HWC1 a redus mediana **tastă → începutul desenării** de la
+aproximativ **1005 ms la 18 ms** în două probe de câte 16 apăsări. Nu este o
+măsurare optică sau un test FPS. [Metodă și limite](android81/UI-LATENCY.md).
+
+## Dezvoltare
+
+Mediul actual: Windows + WSL (`kaios`), Java 8 și AOSP separat în
+`/root/android81-leo/src`. Arborele AOSP și componentele proprietare nu sunt
+incluse. Clonarea repository-ului nu furnizează singură toate intrările de compilare.
 
 ```text
 android81/
-  device/nokia/leo/    Configurație AOSP, init, keylayout și componente native
-  shell/               Sursele launcherului Leo
-  call-ui/             Comenzi pentru apeluri și demonstrația fără apel real
-  audio-runtime/       Inițializare și integrare audio
-  radio-runtime/       Inițializare și integrare radio
-  screenshots/         Capturi selectate pentru documentație
-  *.py, *.sh, *.ps1    Patch-uri, compilare, instalare și verificare
-analysis/              Unelte pentru analiza dump-ului
-kaios31/               Investigația unui sistem KaiOS donator
+  device/nokia/leo/    Configurație AOSP, init, keylayout, componente native
+  visual-shell/       HOME, aplicații Android, meniuri, pointer și Ceas Leo
+  keypad-ime/         Introducere text multi-tap din taste
+  call-ui/            Adaptarea comenzilor de apel și demonstrații locale
+  audio-runtime/      Integrarea audio
+  radio-runtime/      Integrarea radio
+  screenshots/        Capturi selectate
+  local/              Copii KaiOS și intrări locale, ignorate de Git
+  output/             Artefacte și rezultate de test, ignorate de Git
+analysis/             Unelte de analiză a dump-ului
+kaios31/              Investigația unui sistem donator
 ```
 
-## Compilare și reproducere
+### Aplicațiile KaiOS și shell-ul Leo
 
-Mediul existent folosește Windows + WSL, distribuția `kaios`, Java 8 și arborele AOSP separat din `/root/android81-leo/src`. Arborele AOSP nu este copiat în acest repository. Patch-urile și configurațiile portului sunt păstrate aici.
+Copia locală păstrează 63 de arhive și registrul celor 64 de intrări, cu verificare
+SHA-256. Aplicațiile privilegiate KaiOS nu rulează prin simpla copiere: folosesc
+API-uri Gecko ce necesită înlocuitori Android. Codul nou Leo este o adaptare nativă
+a fluxurilor analizate. Primul port parțial este **Ceas Leo**; alarmele proprii și
+temporizatorul rămân neimplementate. Multi-tap funcționează, predicția T9 încă nu.
 
-Fluxul de lucru este: pregătirea surselor și intrărilor locale, aplicarea patch-urilor, compilarea componentei, verificarea rezultatului, apoi instalarea controlată pe telefonul țintă. Scripturile conțin căi și verificări specifice mediului de dezvoltare și aparatului testat; clonarea repository-ului singură nu reproduce toate intrările necesare.
+- [Planul proiectului și criterii de acceptare](android81/PROJECT.md).
+- [Portarea aplicațiilor: copie, matrice și rezultate](android81/KAIOS-APP-PORTS.md).
+- [Inventarul KaiOS](android81/KAIOS-UI-INVENTORY.md).
 
-| Subiect | Documentație |
+### Următoarele etape
+
+1. Uniformizarea dialogurilor și continuarea aplicațiilor pentru taste: Calculator, Notițe, Contacte, Mesaje.
+2. Eliminarea ANR-ului la boot și repetarea probelor de stabilitate/performanță.
+3. Finalizarea conectivității și continuarea integrării hardware.
+4. Probe reale separate pentru apeluri inițiate, SMS, ambele SIM-uri și rutele audio.
+5. Investigarea predicției T9 și a IMS/VoLTE/VoWiFi, cu validare distinctă pentru fiecare.
+
+## Documentație
+
+| Subiect | Document |
 | --- | --- |
-| Pregătire inițială / istoric | [android81/README.md](android81/README.md) |
-| Rezultate și evoluție | [STATUS.md](android81/STATUS.md), cu cele mai noi rezultate la început |
-| Grafică Adreno și revenire la rendererul anterior | [ADRENO-INTEGRATION.md](android81/ADRENO-INTEGRATION.md) |
-| Măsurarea întârzierii interfeței | [UI-LATENCY.md](android81/UI-LATENCY.md) |
-| Radio și date LTE | [RADIO-BRINGUP.md](android81/RADIO-BRINGUP.md), [LTE-BRINGUP.md](android81/LTE-BRINGUP.md) |
-| Sunet și codec-uri | [AUDIO-BRINGUP.md](android81/AUDIO-BRINGUP.md), [PHONE-AUDIO-FOLLOWUP.md](android81/PHONE-AUDIO-FOLLOWUP.md) |
-| Interfață de apel, compilare și probe | [CALL-KEYPAD.md](android81/CALL-KEYPAD.md) |
-| Port IMS și limitele probei | [IMS-PORT.md](android81/IMS-PORT.md) |
+| Stare și istoric | [STATUS](android81/STATUS.md), [audit inițial](android81/FUNCTION-AUDIT-2026-10-18.md) |
+| Shell, meniu, mouse și aplicații Android | [VISUAL-SHELL](android81/VISUAL-SHELL.md) |
+| Tastatură multi-tap | [KEYPAD-IME](android81/KEYPAD-IME.md) |
+| Grafică / performanță | [ADRENO-INTEGRATION](android81/ADRENO-INTEGRATION.md), [UI-LATENCY](android81/UI-LATENCY.md) |
+| Radio și date | [RADIO-BRINGUP](android81/RADIO-BRINGUP.md), [LTE-BRINGUP](android81/LTE-BRINGUP.md) |
+| Audio / codec-uri / setări mobile | [AUDIO-BRINGUP](android81/AUDIO-BRINGUP.md), [PHONE-AUDIO-FOLLOWUP](android81/PHONE-AUDIO-FOLLOWUP.md) |
+| Apeluri din taste | [CALL-KEYPAD](android81/CALL-KEYPAD.md) |
+| IMS experimental | [IMS-PORT](android81/IMS-PORT.md) |
+| Analiza interfeței KaiOS | [KAIOS-ALTERNATIVE](android81/KAIOS-ALTERNATIVE.md), [KAIOS-UI-INVENTORY](android81/KAIOS-UI-INVENTORY.md) |
 
-Nu sunt incluse dump-uri complete, kernelul precompilat, binare proprietare, imagini generate, APK-uri compilate, chei ADB sau date private. Acestea rămân locale; jurnalele brute nu sunt publicate. Nu există aici un pachet universal de flash, o instalare OTA sau o procedură validată pentru alte variante Nokia.
+## Contribuții
 
-## Următoarele verificări și lucrări
+Dezvoltarea și probele sunt urmărite în [commit-uri](https://github.com/smp971/nokia-6300-android81/commits/main).
+Un raport util include varianta telefonului, commit-ul, pașii de reproducere,
+rezultatul observat și jurnalul relevant fără date personale. O simulare sau
+prezența unei iconițe nu justifică marcarea unei funcții hardware drept funcțională.
 
-1. Apeluri inițiate de pe Nokia, respingere reală, ambele SIM-uri și repetarea probelor audio.
-2. DTMF către rețea, microfon mut, difuzor și accesorii în convorbire reală.
-3. SMS, predicție T9 și extinderea probelor multi-tap în aplicațiile reale.
-4. Rezolvarea ANR-ului de pornire și stabilizarea aplicațiilor/WebView.
-5. Integrarea Wi-Fi, Bluetooth, camerei și localizării.
-6. Continuarea IMS, cu probe separate pentru VoLTE și VoWiFi după îndeplinirea dependențelor.
+Repository-ul păstrează surse, patch-uri, scripturi și documentație. Dump-urile,
+binarele proprietare, dicționarele vendor, imaginile generate, APK-urile, cheile
+și datele personale rămân locale. Documentele istorice pot descrie blocaje rezolvate;
+tabelul de mai sus este rezumatul actual. Experimentele anterioare inițializării
+Git nu au commit-uri retroactive.
 
-Tabelul de mai sus este rezumatul curent. Documentele mai vechi păstrează rezultatele etapelor respective și pot descrie blocaje rezolvate ulterior. Istoricul Git începe de la inițializarea repository-ului; experimentele anterioare nu au commit-uri retroactive.
-## Planul interfeței Leo
+## Referințe
 
-[Componente, adaptări din KaiOS și etape de dezvoltare](android81/PROJECT.md).
-[Portarea aplicațiilor implicite și copia de referință KaiOS](android81/KAIOS-APP-PORTS.md):
-primul port parțial este Ceas Leo, cu oră și cronometru native.
-Leo Multi-tap este metoda de text implicită; Leo Visual oferă listă/grilă și
-preferințe de aspect salvate. [Captură listă](android81/screenshots/visual-shell-list.png).
+Structura fișei este inspirată de paginile Devices din postmarketOS, de exemplu
+[Nokia N900](https://wiki.postmarketos.org/wiki/Nokia_N900_%28nokia-n900%29):
+identificare, funcții, instalare, pornire și documentație. Stările și rezultatele
+de aici provin din proiectul Android Leo, nu din acea pagină.
