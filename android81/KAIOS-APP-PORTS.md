@@ -49,7 +49,8 @@ Verificat pe telefon: intrarea Ceas lansează Leo; start → tură → pauză a 
 2.978 ms total și o tură la 1.488 ms; relansarea după oprirea procesului a păstrat
 starea și tura. Captura reală a fost inspectată. Nu a fost făcut un reboot nou.
 Etapa următoare a adăugat alarme și temporizator, cu declanșare în fundal verificată;
-sunetul audibil și reboot-ul sunt încă de confirmat. [Detalii](LEO-SYSTEM-APPS.md).
+sunetul temporizatorului a fost confirmat de utilizator. Recuperarea după reboot
+rămâne de verificat. [Detalii](LEO-SYSTEM-APPS.md).
 
 ![Cronometru Leo](screenshots/leo-clock-stopwatch.png)
 
@@ -61,7 +62,7 @@ Aceasta este ordinea propusă, nu o listă de aplicații deja funcționale.
 | --- | --- | --- |
 | Launcher, System, temă | Leo Visual, meniu global, softkeys | Bază implementată; uniformizare în curs |
 | Keyboard | Leo Multi-tap / InputConnection | Funcțional fizic; predicția T9 separată |
-| Clock | Ceas Leo + AlarmManager | Oră, cronometru, alarme și temporizator; declanșare în fundal verificată, sunetul audibil și reboot-ul neconfirmate |
+| Clock | Ceas Leo + AlarmManager | Oră, cronometru, alarme și temporizator; declanșare în fundal verificată și sunetul temporizatorului confirmat; recuperarea la reboot netestată |
 | Calculator | Calculator Leo nativ | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon |
 | Unit Converter | Activitate Leo nativă | De portat |
 | Notes | Editor nativ + stocare privată | Instalat; multi-tap, salvare, redeschidere, ciornă, renunțare și ștergere confirmată verificate |

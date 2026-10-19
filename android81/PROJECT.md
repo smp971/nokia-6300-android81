@@ -63,7 +63,8 @@ Inventarul reproductibil este în [KAIOS-UI-INVENTORY](KAIOS-UI-INVENTORY.md).
    salvare/redeschidere, ciornă, renunțare și ștergere confirmată.
    Contacte, Telefon, Mesaje și alarme/temporizator sunt implementate și instalate.
    Contactele CRUD și declanșarea în fundal au trecut; telefonia de ieșire,
-   SMS-ul real și sunetul alarmei necesită probe distincte.
+   SMS-ul real necesită probe distincte. Utilizatorul a confirmat sunetul
+   temporizatorului în fundal; recuperarea alarmelor după reboot rămâne netestată.
    [Rezultate și limite](LEO-SYSTEM-APPS.md).
 4. **Predicție T9:** alegerea unui motor redistribuibil, integrare în IME și teste
    românești. Acceptare: candidați, selecție, corectare și revenire sigură la multi-tap.

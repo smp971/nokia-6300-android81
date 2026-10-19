@@ -88,7 +88,10 @@ receiver-ul, serviciul foreground și ecranul de alarmă după Home; OK a oprit
 serviciul. Alarma RTC creată din formular s-a declanșat după închiderea ecranului
 și terminarea procesului Leo: receiver-ul a rulat într-un proces nou, a pornit
 serviciul și a dezactivat alarma fără repetare. OK a oprit-o.
-Sunetul audibil, reboot-ul și cazurile DST necesită confirmări distincte.
+Utilizatorul a confirmat că temporizatorul de 12 secunde s-a auzit după revenirea
+la Home. Aceasta validează ruta sonoră folosită de serviciul comun al alarmelor;
+nu confirmă toate volumele, accesoriile sau alarmele în timpul unui apel.
+Recuperarea după reboot și cazurile DST necesită probe distincte.
 Modul mouse și meniul overlay sunt închise la deschiderea ecranului de alarmă,
 pentru ca OK să oprească semnalul în loc să injecteze un clic.
 Alarma de probă a fost ștearsă ulterior; temporizatorul este inactiv.

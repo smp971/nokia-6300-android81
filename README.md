@@ -108,7 +108,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Notițe Leo | **Funcțional** | Scriere multi-tap, salvare/redeschidere, editare fără duplicare, ciornă și ștergere confirmată testate pe nota de probă; fără teste de volum sau pierdere a alimentării. |
 | Contacte Leo | **Funcțional** | Creare, căutare, editare și ștergere verificate pe un contact local de probă. Contactele sincronizate și structurile complexe rămân nevalidate. |
 | Telefon Leo | **Parțial** | Tastatură numerică, istoric și alegere SIM implementate; două conturi SIM afișate. Nu a fost inițiat un apel în această probă. |
-| Ceas Leo | **Parțial** | Oră/cronometru testate; temporizatorul și alarma proprie au declanșat în fundal, inclusiv după terminarea procesului. Sunetul audibil și recuperarea la reboot încă neconfirmate. |
+| Ceas Leo | **Parțial** | Oră/cronometru testate; temporizatorul și alarma proprie au declanșat în fundal, inclusiv după terminarea procesului. Utilizatorul confirmă sunetul temporizatorului. Recuperarea la reboot și celelalte rute/volume nu sunt validate. |
 | Calendar / Fișiere Android | **Parțial** | Interfețele se deschid; salvarea evenimentelor și operațiile complete nu sunt validate. |
 | Galerie / Muzică | **Parțial** | Pornire verificată; proba MediaPlayer separată nu confirmă toate funcțiile acestor aplicații. |
 | Browser / WebView | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Fără navigare stabilă pe internet validată. |
@@ -218,7 +218,7 @@ Multi-tap funcționează, predicția T9 încă nu.
 
 ### Următoarele etape
 
-1. Validarea apelurilor inițiate și a SMS-urilor reale, confirmarea sunetului alarmelor și continuarea cu Calendar/Fișiere.
+1. Validarea apelurilor inițiate, a SMS-urilor reale și a recuperării alarmelor după reboot; continuarea cu Calendar/Fișiere.
 2. Eliminarea ANR-ului la boot și repetarea probelor de stabilitate/performanță.
 3. Finalizarea conectivității și continuarea integrării hardware.
 4. Probe reale separate pentru apeluri inițiate, SMS, ambele SIM-uri și rutele audio.
