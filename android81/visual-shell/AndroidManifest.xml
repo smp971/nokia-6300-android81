@@ -15,6 +15,11 @@
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <application android:label="Leo Visual" android:allowBackup="false" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:screenOrientation="portrait" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize">
             <intent-filter>
@@ -27,6 +32,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".DownloadsActivity" android:exported="false" android:label="Descărcări Leo" android:screenOrientation="portrait" />
+        <activity android:name=".GalleryActivity" android:exported="false" android:label="Gallery Leo" android:screenOrientation="portrait" />
+        <activity android:name=".WallpaperActivity" android:exported="false" android:label="Wallpaper Leo" android:screenOrientation="portrait" />
+        <activity android:name=".ConverterActivity" android:exported="false" android:label="Converter Leo" android:screenOrientation="portrait" />
+        <activity android:name=".SettingsActivity" android:exported="false" android:label="Settings Leo" android:screenOrientation="portrait" />
+        <activity android:name=".MediaActivity" android:exported="false" android:label="Media Leo" android:screenOrientation="portrait" />
+        <activity android:name=".VideoActivity" android:exported="false" android:label="Video Leo" android:screenOrientation="portrait" />
+        <activity android:name=".RecorderActivity" android:exported="false" android:label="Recorder Leo" android:screenOrientation="portrait" />
+        <activity android:name=".KeypadLockActivity" android:exported="false" android:label="KeypadLock Leo" android:screenOrientation="portrait" />
+        <service android:name=".PlaybackService" android:exported="false" />
+        <service android:name=".RecordingService" android:exported="false" />
         <activity android:name=".PointerTestActivity" android:exported="false" android:label="Test cursor" />
         <activity android:name=".AndroidAppsActivity" android:exported="false" android:label="Aplicații Android" android:screenOrientation="portrait" />
         <activity android:name=".ClockActivity" android:exported="false" android:label="Ceas Leo" android:screenOrientation="portrait" />
@@ -47,6 +63,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
         <receiver android:name=".SmsStatusReceiver" android:exported="false" />

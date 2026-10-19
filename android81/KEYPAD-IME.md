@@ -1,109 +1,56 @@
-# Leo Multi-tap — introducere text din taste
+# Leo Keypad — multi-tap și T9 local
 
-**19 octombrie 2026.** IME Android separat, `ro.leo.keypad/.KeypadIme`, pentru
-tastatura fizică a Nokia 6300. Folosește InputMethodService și InputConnection;
-nu este un editor integrat doar în launcher și nu necesită WebView.
+19 octombrie 2026. IME Android 8.1 pentru tastatura fizică a Nokia 6300 TA-1286.
+Componenta rămâne `ro.leo.keypad/.KeypadIme`; actualizarea păstrează selecția IME.
 
-## Ce implementează prima versiune
+## Comenzi
 
-IME este acum selectat implicit pe telefon. `activate-keypad-ime.py` adaugă
-în scriptul existent de configurare un hook care îl activează/selectează numai
-dacă pachetul este instalat. Actualizarea este atomică, iar `/system` revine
-read-only. Împachetarea internă include acum `LeoKeypad.apk` și cere existența
-APK-ului construit. Hook-ul nou nu a fost verificat printr-un reboot suplimentar;
-imaginea completă nu a fost reconstruită în această etapă.
-
-- Multi-tap: apăsări repetate pe aceeași tastă aleg litera, cu confirmare automată după 850 ms.
-- Moduri `abc`, `ABC`, `123`, schimbate cu `#` în câmpurile de text.
-- Diacritice românești: ă, â, î, ș, ț și formele majuscule.
-- Spațiu, semne de punctuație, ștergere și acțiunea editorului prin OK.
-- Bară compactă de stare în loc de tastatură virtuală cu multe rânduri.
-- Câmpurile Android Phone/Number/DateTime păstrează tratarea normală a cifrelor.
-- Soft dreapta șterge și în câmpurile numerice.
-- Fără permisiune INTERNET, predicție, salvare de cuvinte sau jurnalizare a textului introdus.
-
-Aceasta **nu este încă predicție T9**. Motorul Kika/IMEConnect și dicționarul
-românesc din dump nu au fost încă portate în acest IME; nu sunt incluse în APK
-sau repository. Implementarea este originală, cu API-uri Android.
-
-## Utilizare
-
-| Tastă | În câmp de text |
+| Mod / tastă | Acțiune |
 | --- | --- |
-| 2 | a, b, c, ă, â, 2 |
-| 3 | d, e, f, 3 |
-| 4 | g, h, i, î, 4 |
-| 5 | j, k, l, 5 |
-| 6 | m, n, o, 6 |
-| 7 | p, q, r, s, ș, 7 |
-| 8 | t, u, v, ț, 8 |
-| 9 | w, x, y, z, 9 |
-| 0 | Spațiu; în modul 123 introduce cifra 0 |
-| 1 | Punctuație prin apăsări repetate |
-| * | Altă secvență de simboluri prin apăsări repetate; în modul 123 introduce * |
-| # | Schimbă abc → ABC → 123 → abc |
-| Soft dreapta | Șterge litera în compunere sau caracterul anterior |
-| Săgeți | Confirmă litera în compunere, apoi lasă editorul să deplaseze cursorul/focusul |
-| OK | Confirmă litera în compunere; fără literă în compunere, execută acțiunea editorului sau inserează un rând nou |
+| # | abc → ABC → 123 → T9 → T9 ABC; modul este păstrat între editoare |
+| abc / ABC | Apăsări repetate pe 2–9 pentru literă; confirmare după 850 ms |
+| T9 / T9 ABC | O apăsare pentru fiecare literă; dicționar local românesc de bază |
+| * în T9, cuvânt în curs | Sugestia următoare |
+| * în abc | Simboluri prin apăsări repetate |
+| 0 | Acceptă compoziția și adaugă spațiu |
+| OK | Acceptă compoziția; dacă nu există, acțiunea editorului sau rând nou |
+| Soft dreapta fizic / Delete | Șterge ultima cifră a predicției, litera în compoziție sau caracterul anterior |
+| Săgeți / schimbare câmp | Confirmă compoziția înainte de mutarea cursorului |
+| Câmp telefon / numeric | Taste numerice obișnuite, indiferent de modul text |
+| Parolă | Fără T9; # selectează doar abc/ABC/123 |
 
-Pentru două litere consecutive de pe aceeași tastă, așteaptă 850 ms sau apasă
-săgeata dreapta între ele. Apăsarea lungă nu este o scurtătură separată pentru
-cifră în această versiune; modul 123 permite introducerea rapidă a numerelor.
+Sunt incluse diacriticele românești în multi-tap. Ștergerea din afara compoziției
+folosește puncte de cod Unicode, cu fallback pentru perechi surrogate.
 
-În câmpurile Phone/Number/DateTime, cifrele și simbolurile sunt lăsate editorului
-nativ; `#` nu schimbă modul. Nu efectuăm apeluri sau cereri USSD în probe.
-Înapoi dedicat, Meniu și tasta roșie păstrează acțiunile platformei; doar Back cu
-scan code 158 este folosit ca ștergere. Dezactivează mouse-ul cu `#` înainte de
-introducerea textului, deoarece acel mod rezervă tasta pentru oprirea cursorului.
+## Dicționar și limite
 
-## Validare și limite
+`PredictiveDictionary.java` conține o listă proprie de cuvinte uzuale, cu eliminarea
+duplicatelor și potrivire numerică fără diferențierea diacriticelor. Sunt afișate
+maximum 12 sugestii, preferând potrivirile complete înaintea completărilor de prefix.
+Compoziția este limitată la 24 de cifre. Cuvintele lipsă se scriu în modul abc;
+o secvență fără potrivire rămâne numerică.
 
-**Rezultat pe telefon: toate cele 11 cazuri automate au trecut.** Android
-raportează Leo Multi-tap ca IME selectat, conectat și cu bara de introducere
-vizibilă. Utilizatorul a confirmat ulterior, pe tastatura fizică, scrierea
-literelor și ștergerea corectă în editorul local. Această confirmare nu validează
-predicția T9 sau compatibilitatea tuturor aplicațiilor.
+Nu sunt preluate motorul Kika/IMEConnect sau dicționarele proprietare din KaiOS.
+Nu există permisiune INTERNET, învățare automată, salvarea cuvintelor introduse
+sau jurnalizare a textului. Este păstrată numai preferința de mod.
 
-| Cuvânt introdus din taste | Diacritice românești |
-| --- | --- |
-| ![salut în editorul local](screenshots/keypad-ime-word.png) | ![ăâîșț în editorul local](screenshots/keypad-ime-romanian.png) |
+## Verificări
 
-`verify-keypad-ime.py` trimite evenimente prin dispozitivul matrix_keypad într-un
-editor local privat. Cele 11 cazuri verifică ciclarea, litere consecutive de pe
-aceeași tastă, timeout, cuvânt, diacritice, majuscule, mod numeric în text,
-ștergerea literei în compunere, ștergerea caracterului confirmat, cifre/*/# în
-câmp Phone și ștergere în câmp Phone.
+- 424 verificări JVM pentru coduri, diacritice, potriviri, prefixe, limite și fallback.
+- Zece probe pe editorul Android real: salut, ștergere în predicție, OK, majuscule,
+  schimbare sugestie cu *, fallback necunoscut, mod numeric, multi-tap, parolă și câmp telefon.
+- Probele vechi au verificat fizic diacritice, majuscule și ștergere multi-tap.
 
-Editorul de probă compară rezultatul și înregistrează doar ID-ul testului și
-un boolean, fără conținutul câmpului. Capturile și rezultatele brute se păstrează
-local în `output/keypad-ime-test/`. Capturile selectate conțin numai text de test.
+Editorul de probă `ro.leo.keypad/.EditorTestActivity` nu are acțiuni de trimitere
+sau salvare. El compară textul cu rezultatul sintetic așteptat și jurnalizează numai
+identificatorul probei și booleanul passed; nu conținutul câmpului. Nu garantează
+compatibilitatea tuturor aplicațiilor sau tuturor tipurilor de parolă/PIN.
 
-Integrarea ca IME o face disponibilă pentru editorii Android standard, dar
-aplicațiile care interceptează tastele înaintea IME sau folosesc editoare proprii
-pot necesita adaptări. Nu avem încă o probă completă pentru fiecare aplicație,
-parole/PIN-uri, toate semnele Unicode sau predicție. Nu pretindem că înlocuiește
-integral tastatura KaiOS.
+## Reproducere
 
-## Build și activare
+În WSL kaios: `bash android81/build-keypad-ime.sh`, respectiv
+`bash android81/test-app-suite.sh`. Pe Windows: `python android81/install-leo-app-suite.py`
+și `python android81/verify-keypad-prediction.py` cu serialul 695d conectat.
+Instalatorul păstrează APK-urile anterioare verificate local și datele aplicațiilor.
 
-Surse: `keypad-ime/`. `build-keypad-ime.sh` folosește Java 8 și uneltele AOSP 8.1
-locale pentru APK-ul ignorat `output/leo-keypad-ime.apk`.
-
-După instalare, `activate-keypad-ime.py` salvează selecția și lista IME anterioare
-în `output/keypad-ime-before.json`, apoi activează și selectează Leo Multi-tap.
-Nu șterge celelalte metode de introducere. Selecția Android este persistentă;
-nu s-a efectuat încă un reboot separat pentru această probă.
-
-IME-ul decide să afișeze doar bara sa compactă, inclusiv cu tastatura fizică,
-fără schimbarea setării globale care ascunde tastaturile virtuale mari.
-Revenirea la vechea metodă folosește `ime set COMPONENTA_ANTERIOARĂ`, din copia
-locală. Editorul privat de probă este `ro.leo.keypad/.EditorTestActivity`.
-
-## Predicția T9: etapa următoare
-
-În dump au fost identificate `js/keypad_t9.js`, `js/imeconnect_sdk.js` și
-`vendor/dict/kika/Romanian.dict` (1.364.005 octeți). SDK-ul referă operații precum
-`candidateWord`, `getComposingWords`, `setLanguage` și `importDictionary`.
-Aceste constatări nu demonstrează compatibilitatea motorului cu Android.
-Urmează analiza binding-ului IMEConnect și a formatului de dicționar, apoi
-alegerea între adaptarea motorului și un motor predictiv propriu.
+[Restul suitei și limitele hardware](LEO-APP-SUITE.md).

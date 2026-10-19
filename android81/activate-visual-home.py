@@ -47,9 +47,11 @@ if marker not in old_script:
     finally:
         native('/system/bin/mount', '-o', 'remount,ro', '/system')
 java('/system/bin/pm', 'grant', 'ro.leo.visual', 'android.permission.READ_PHONE_STATE')
-permissions=['READ_CONTACTS','WRITE_CONTACTS','READ_CALL_LOG','CALL_PHONE','READ_SMS','RECEIVE_SMS','SEND_SMS','READ_CALENDAR','WRITE_CALENDAR','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE']
+permissions=['READ_CONTACTS','WRITE_CONTACTS','READ_CALL_LOG','CALL_PHONE','READ_SMS','RECEIVE_SMS','SEND_SMS','READ_CALENDAR','WRITE_CALENDAR','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE','RECORD_AUDIO']
 for permission in permissions:
     java('/system/bin/pm','grant','ro.leo.visual','android.permission.'+permission)
+java('/system/bin/appops','set','ro.leo.visual','WRITE_SETTINGS','allow')
+native('/system/bin/cmd','notification','allow_dnd','ro.leo.visual')
 permission_marker='# Leo system-app permissions for the keypad engineering image.'
 current_script=native('/system/bin/cat','/system/etc/leo-first-setup.sh').replace('\r\n','\n')
 permission_block=permission_marker+'\nif cmd package list packages ro.leo.visual | grep -qx \'package:ro.leo.visual\'; then\n'

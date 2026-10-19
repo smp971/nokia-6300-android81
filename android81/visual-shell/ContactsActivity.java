@@ -13,20 +13,21 @@ public final class ContactsActivity extends LeoActivity {
     private final ArrayList<Entry> entries=new ArrayList<Entry>();
     private String filter="";
     private int selected;
-    private static final class Entry { long data,raw,contact; String name,number; }
-    protected void onCreate(Bundle state) { super.onCreate(state); load(); }
+    private boolean favorites;
+    private static final class Entry { long data,raw,contact; String name,number; boolean starred; }
+    protected void onCreate(Bundle state) { super.onCreate(state); favorites=getIntent().getBooleanExtra("favorites",false); load(); }
     private void load() {
         begin("Contacte"); root.addView(text("Se încarcă…",18),new LinearLayout.LayoutParams(-1,0,1)); footer("","", "Înapoi");
         final String query=filter;
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Entry> found=new ArrayList<Entry>();
             try(Cursor cursor=getContentResolver().query(Phone.CONTENT_URI,
-                new String[]{Phone._ID,Phone.RAW_CONTACT_ID,Phone.CONTACT_ID,Phone.DISPLAY_NAME,Phone.NUMBER},
-                query.isEmpty()?null:Phone.DISPLAY_NAME+" LIKE ? OR "+Phone.NUMBER+" LIKE ?",
+                new String[]{Phone._ID,Phone.RAW_CONTACT_ID,Phone.CONTACT_ID,Phone.DISPLAY_NAME,Phone.NUMBER,Phone.STARRED},
+                (query.isEmpty()?"1":"("+Phone.DISPLAY_NAME+" LIKE ? OR "+Phone.NUMBER+" LIKE ?)")+(favorites?" AND "+Phone.STARRED+"=1":""),
                 query.isEmpty()?null:new String[]{"%"+query+"%","%"+query+"%"},Phone.DISPLAY_NAME+" COLLATE LOCALIZED ASC")) {
                 while(cursor!=null && cursor.moveToNext() && found.size()<500) {
                     Entry e=new Entry(); e.data=cursor.getLong(0); e.raw=cursor.getLong(1); e.contact=cursor.getLong(2);
-                    e.name=cursor.getString(3); e.number=cursor.getString(4); found.add(e);
+                    e.name=cursor.getString(3); e.number=cursor.getString(4); e.starred=cursor.getInt(5)!=0; found.add(e);
                 }
                 ui(new Runnable() { public void run() { entries.clear(); entries.addAll(found); show(); } });
             } catch(RuntimeException denied) { ui(new Runnable() { public void run() { notice("Agenda nu poate fi citită; verifică permisiunile"); entries.clear(); show(); } }); }
@@ -34,10 +35,10 @@ public final class ContactsActivity extends LeoActivity {
     }
     private void show() {
         ArrayList<String> labels=new ArrayList<String>();
-        for(Entry e:entries) labels.add((e.name==null?"Fără nume":e.name)+"\n"+e.number);
-        list(filter.isEmpty()?"Contacte":"Rezultate",labels,selected,new Choice() { public void pick(int i) { selected=i; detail(entries.get(i)); } },"Opțiuni",new Runnable() {
-            public void run() { options("Contacte",new String[]{"Contact nou","Caută","Toate contactele"},new Choice() {
-                public void pick(int i) { if(i==0) edit(null); else if(i==1) search(); else { filter=""; load(); } }
+        for(Entry e:entries) labels.add((e.starred?"★ ":"")+(e.name==null?"Fără nume":e.name)+"\n"+e.number);
+        list(favorites?"Favorite":filter.isEmpty()?"Contacte":"Rezultate",labels,selected,new Choice() { public void pick(int i) { selected=i; detail(entries.get(i)); } },"Opțiuni",new Runnable() {
+            public void run() { options("Contacte",new String[]{"Contact nou","Caută","Toate contactele","Favorite"},new Choice() {
+                public void pick(int i) { if(i==0) edit(null); else if(i==1) search(); else { filter=""; favorites=i==3; selected=0; load(); } }
             }); }
         });
     }
@@ -48,10 +49,12 @@ public final class ContactsActivity extends LeoActivity {
     }
     private void detail(final Entry entry) {
         ArrayList<String> actions=new ArrayList<String>(); actions.add("Apelează\n"+entry.number); actions.add("Mesaj SMS"); actions.add("Editează"); actions.add("Șterge contactul");
+        actions.add(entry.starred?"Elimină din favorite":"Adaugă la favorite");
         list(entry.name==null?"Contact":entry.name,actions,0,new Choice() { public void pick(int i) {
             if(i==0) startActivity(new Intent(ContactsActivity.this,PhoneActivity.class).putExtra("number",entry.number));
             else if(i==1) startActivity(new Intent(ContactsActivity.this,MessagesActivity.class).putExtra("number",entry.number));
             else if(i==2) edit(entry);
+            else if(i==4) {try{ContentValues value=new ContentValues();value.put(ContactsContract.Contacts.STARRED,entry.starred?0:1);getContentResolver().update(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,entry.contact),value,null,null);load();}catch(RuntimeException denied){notice("Favoritul nu poate fi modificat");}}
             else options("Ștergi contactul?",new String[]{"Păstrează","Șterge definitiv"},new Choice() { public void pick(int c) {
                 if(c==1) { try { getContentResolver().delete(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,entry.contact),null,null); load(); }
                     catch(RuntimeException failure) { notice("Contactul nu poate fi șters"); } }

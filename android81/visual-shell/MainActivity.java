@@ -51,6 +51,8 @@ public final class MainActivity extends Activity {
     }
     protected void onResume() {
         super.onResume();
+        screen.reloadAppearance();
+        if(KeypadLockActivity.locked(this)) startActivity(new Intent(this,KeypadLockActivity.class));
         subscriptions = (SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE);
         try { subscriptions.addOnSubscriptionsChangedListener(subscriptionListener); }
         catch (RuntimeException ignored) { }
@@ -113,9 +115,7 @@ public final class MainActivity extends Activity {
                 screen.list?"Afișare grilă":"Afișare listă"}, new KeypadDialog.Action() {
               public void select(int which) {
                 if (which == 0) {
-                    screen.warm = !screen.warm;
-                    getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("warm",screen.warm).apply();
-                    screen.invalidate();
+                    startActivity(new Intent(MainActivity.this,WallpaperActivity.class));
                 }
                 else if (which == 1) {
                     if (!LeoPointerService.toggle()) new AlertDialog.Builder(MainActivity.this)
@@ -147,11 +147,21 @@ public final class MainActivity extends Activity {
         final Path path = new Path();
         final Typeface regular = Typeface.create("sans-serif", Typeface.NORMAL);
         final Typeface light = Typeface.create("sans-serif-light", Typeface.NORMAL);
-        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar"};
+        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar", "Video", "Reportofon", "Convertor", "Descărcări", "Fundaluri", "Favorite", "Blocare taste"};
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
-        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42,0xff599cde};
+        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42,0xff599cde,0xffde656e,0xffd46c9b,0xff55a6b8,0xff7299df,0xffb88cdd,0xffe8ad3a,0xff779e91};
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
+        Bitmap wallpaper;
+        int theme;
+        Shader gradient=violet;
+        void reloadAppearance() {
+            theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
+            gradient=new LinearGradient(0,0,240,302,Appearance.COLORS[theme],null,Shader.TileMode.CLAMP);
+            if(wallpaper!=null) {wallpaper.recycle();wallpaper=null;}
+            if(Appearance.wallpaper(MainActivity.this).isFile()) wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(MainActivity.this).getPath());
+            invalidate();
+        }
         boolean grid;
         boolean warm=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("warm",false);
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
@@ -225,18 +235,21 @@ public final class MainActivity extends Activity {
                     if(key==KeyEvent.KEYCODE_DPAD_UP) selected=Math.max(0,selected-1);
                     if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=Math.min(names.length-1,selected+1);
                 }
-                else if(selected>=9) {
-                    if(delta==-3) selected-=3;
-                    else if(delta==-1) selected--;
-                    else if(delta==1 && selected<names.length-1) selected++;
-                } else if((delta==3 && selected>=6) || (delta==1 && selected==8)) selected=9;
-                else if ((delta == -1 && selected % 3 != 0) || (delta == 1 && selected % 3 != 2)
-                         || (delta == -3 && selected >= 3) || (delta == 3 && selected < 6)) selected += delta;
+                else selected=Math.max(0,Math.min(names.length-1,selected+delta));
                 message = ""; invalidate(); return true;
             }
             return false;
         }
         void open(int index) {
+            if(index==5) {startActivity(new Intent(MainActivity.this,GalleryActivity.class));return;}
+            if(index==6 || index==12) {startActivity(new Intent(MainActivity.this,MediaActivity.class).putExtra("kind",index==12?"video":"audio"));return;}
+            if(index==8) {startActivity(new Intent(MainActivity.this,SettingsActivity.class));return;}
+            if(index==13) {startActivity(new Intent(MainActivity.this,RecorderActivity.class));return;}
+            if(index==14) {startActivity(new Intent(MainActivity.this,ConverterActivity.class));return;}
+            if(index==15) {startActivity(new Intent(MainActivity.this,DownloadsActivity.class));return;}
+            if(index==16) {startActivity(new Intent(MainActivity.this,WallpaperActivity.class));return;}
+            if(index==17) {startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}
+            if(index==18) {startActivity(new Intent(MainActivity.this,KeypadLockActivity.class));return;}
             if(index==7) { startActivity(new Intent(MainActivity.this,FilesActivity.class)); return; }
             if(index==11) { startActivity(new Intent(MainActivity.this,CalendarActivity.class)); return; }
             if(index==0) { startActivity(new Intent(MainActivity.this,PhoneActivity.class)); return; }
@@ -283,6 +296,13 @@ public final class MainActivity extends Activity {
             p.setColor(colors[index]); c.drawCircle(x,y,22,p);
             c.save(); c.translate(x,y); p.setColor(Color.WHITE); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(2.4f); p.setStrokeCap(Paint.Cap.ROUND);
             switch(index) {
+                case 12: c.drawRect(-12,-10,12,10,p);line(c,-4,-5,5,0);line(c,5,0,-4,5);line(c,-4,5,-4,-5);break;
+                case 13: c.drawRoundRect(new RectF(-4,-12,4,4),4,4,p);c.drawArc(-8,-3,8,9,0,180,false,p);line(c,0,9,0,13);break;
+                case 14: line(c,-12,-5,12,-5);line(c,7,-10,12,-5);line(c,-12,6,12,6);line(c,-12,6,-7,11);break;
+                case 15: line(c,0,-12,0,4);line(c,-6,-2,0,4);line(c,0,4,6,-2);line(c,-11,10,11,10);break;
+                case 16: c.drawCircle(5,-5,4,p);line(c,-12,10,-2,-2);line(c,-2,-2,11,10);break;
+                case 17: for(int n=0;n<5;n++){c.save();c.rotate(n*72);line(c,0,-13,4,-3);line(c,4,-3,12,-4);c.restore();}break;
+                case 18: c.drawRoundRect(new RectF(-9,-2,9,12),2,2,p);c.drawArc(-6,-13,6,4,180,180,false,p);break;
                 case 0: c.drawArc(-11,-12,12,11,25,135,false,p); line(c,-10,-7,-7,-11); line(c,8,8,12,5); break;
                 case 1: c.drawCircle(0,-5,5,p); c.drawArc(-10,3,10,17,190,160,false,p); break;
                 case 2: box.set(-12,-9,12,7); c.drawRoundRect(box,3,3,p); line(c,-7,7,-10,12); line(c,-5,-3,6,-3); line(c,-5,2,3,2); break;
@@ -301,12 +321,15 @@ public final class MainActivity extends Activity {
         protected void onDraw(Canvas output) {
             super.onDraw(output);
             output.save(); output.scale(getWidth()/240f,getHeight()/302f);
-            p.setStyle(Paint.Style.FILL); p.setShader(warm?sunset:violet); output.drawRect(0,0,240,302,p); p.setShader(null);
+            p.setStyle(Paint.Style.FILL); p.setShader(gradient); output.drawRect(0,0,240,302,p); p.setShader(null);
             if (!grid) {
+                if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
+                else {
                 p.setColor(0x25ffffff); output.drawCircle(192,149,37,p);
                 path.reset(); path.moveTo(0,238); path.lineTo(74,137); path.lineTo(147,238); path.close(); p.setColor(0xff372454); output.drawPath(path,p);
                 path.reset(); path.moveTo(78,254); path.lineTo(172,157); path.lineTo(240,235); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(0xff281d42); output.drawPath(path,p);
                 path.reset(); path.moveTo(0,261); path.cubicTo(75,224,140,290,240,245); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(0xff17162d); output.drawPath(path,p);
+                }
                 text(output,"L E O",120,22,10,0xffdac8ef,Paint.Align.CENTER);
                 text(output,time,120,86,54,Color.WHITE,Paint.Align.CENTER);
                 text(output,date,120,108,13,0xfff0e5f5,Paint.Align.CENTER);
@@ -339,7 +362,7 @@ public final class MainActivity extends Activity {
                     icon(output,i,x,y);
                     text(output,i==9?"Android":names[i],x,y+33,10,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.CENTER);
                 }
-                for(int i=0;i<2;i++) {p.setColor(i==page?0xffe0b8ff:0xff64536f); output.drawCircle(115+i*10,267,2,p);}
+                for(int i=0;i<(names.length+8)/9;i++) {p.setColor(i==page?0xffe0b8ff:0xff64536f); output.drawCircle(110+i*10,267,2,p);}
                 }
             }
             if(!message.isEmpty()) {

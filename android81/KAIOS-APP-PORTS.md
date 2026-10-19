@@ -61,21 +61,21 @@ Aceasta este ordinea propusă, nu o listă de aplicații deja funcționale.
 | Aplicații / componentă | Destinație Android | Stare / criteriu de acceptare |
 | --- | --- | --- |
 | Launcher, System, temă | Leo Visual, meniu global, softkeys | Bază implementată; uniformizare în curs |
-| Keyboard | Leo Multi-tap / InputConnection | Funcțional fizic; predicția T9 separată |
+| Keyboard | Leo Multi-tap / InputConnection | Multi-tap și T9 local de bază implementate; probe pe editorul real, fără învățare |
 | Clock | Ceas Leo + AlarmManager | Oră, cronometru, alarme și temporizator; declanșare în fundal verificată și sunetul temporizatorului confirmat; recuperarea la reboot netestată |
 | Calculator | Calculator Leo nativ | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon |
-| Unit Converter | Activitate Leo nativă | De portat |
+| Unit Converter | Convertor Leo nativ | Instalat; șase categorii, 137 verificări JVM și probă de temperatură pe telefon |
 | Notes | Editor nativ + stocare privată | Instalat; multi-tap, salvare, redeschidere, ciornă, renunțare și ștergere confirmată verificate |
-| Contact, Call Log | ContactsContract / CallLog / Telecom | Contacte: creare, căutare, editare, ștergere testate local; Telefon: UI și conturi SIM, fără apel inițiat |
-| Messages | Furnizor SMS Android / SmsManager + copie privată la recepție | UI, ciornă și selector SIM testate; cererea către numărul invalid a eșuat; trimiterea și recepția reale nu sunt validate |
-| Calendar | CalendarContract / stocare locală | De portat; navigare și evenimente persistente |
-| File Manager, Downloads | Storage Access Framework / DownloadManager | De portat; listare, deschidere și operații confirmate |
-| Music, Video | MediaStore / MediaPlayer | De portat UI; redarea audio de bază există deja |
-| Gallery, Wallpaper | MediaStore / resurse proprii | De portat; navigare și selecție din taste |
-| Recorder | MediaRecorder / ruta microfon | De portat și validat hardware; înregistrare și redare reală |
+| Contact, Call Log | ContactsContract / CallLog / Telecom | Contacte și favorite testate local; apelul inițiat pe SIM 1 a sunat la destinatar, dar fără audio după recuperare |
+| Messages | Furnizor SMS Android / SmsManager + copie privată la recepție | SIM 1: trimitere și răspuns cu emoji confirmate; SIM 2 încă de validat |
+| Calendar | CalendarContract / stocare locală | Calendar Leo: creare, persistență după reboot, editare și ștergere verificate |
+| File Manager, Downloads | Storage Access Framework / DownloadManager | Fișiere Leo: text, editare, redenumire și ștergere testate. Descărcări: UI implementat, transfer nevalidat |
+| Music, Video | MediaStore / MediaPlayer | Muzică/Video Leo implementate; redarea reală depinde de repararea driverelor după recuperare |
+| Gallery, Wallpaper | MediaStore / resurse proprii | Galerie și Fundaluri Leo: miniaturi, vizualizare, zoom și aplicare/eliminare fundal testate |
+| Recorder | MediaRecorder / ruta microfon | Reportofon Leo implementat; înregistrare și redare reale încă nevalidate |
 | Camera | Camera API / HAL | Depinde de integrarea hardware; un ecran nou nu rezolvă driverul |
 | FM Radio | Driver / HAL / rută audio | Necesită investigație hardware; fără echivalent Android generic garantat |
-| Settings, Bluetooth Manager | API-uri și servicii Android | Adaptare UI pe funcțiile integrate; conectivitatea are un flux separat |
+| Settings, Bluetooth Manager | API-uri și servicii Android | Setări Leo implementate: ecran, profiluri, stocare, teme și legături Android; conectivitatea are un flux separat |
 | Callscreen, EmergencyCall | Telecom / UI apel Leo | Apel primit și audio verificate anterior; nu testăm apeluri de urgență |
 | STK, Network Alerts, WAP Push | Serviciile de telefonie Android | Necesită analiză pe funcții și operator; nu se copiază daemonii KaiOS |
 | Internet, E-Mail | Motor web / client compatibil Android | Investigație separată de stabilitate și servicii |
@@ -89,3 +89,5 @@ standard Leo.
 Detalii despre implementările noi, comenzi și criteriile de validare:
 [Calculator și Notițe Leo](LEO-CALCULATOR-NOTES.md).
 [Contacte, Telefon, Mesaje și alarme](LEO-SYSTEM-APPS.md).
+
+[Suita nouă: implementare, verificări și limite](LEO-APP-SUITE.md).

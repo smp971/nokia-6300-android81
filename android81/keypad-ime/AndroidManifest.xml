@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.keypad">
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
-    <application android:label="Leo Multi-tap" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar">
-        <service android:name=".KeypadIme" android:label="Leo Multi-tap" android:exported="true" android:permission="android.permission.BIND_INPUT_METHOD">
+    <application android:label="Leo Keypad" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar">
+        <service android:name=".KeypadIme" android:label="Leo Keypad · abc / T9" android:exported="true" android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter><action android:name="android.view.InputMethod" /></intent-filter>
             <meta-data android:name="android.view.im" android:resource="@xml/method" />
         </service>

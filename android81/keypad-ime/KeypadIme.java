@@ -13,7 +13,7 @@ import android.view.inputmethod.InputConnection;
 import android.widget.TextView;
 import java.util.Locale;
 
-/** Offline physical-key IME. No network, dictionaries, logging or text persistence. */
+/** Offline physical-key IME with an original, bounded Romanian prediction dictionary. */
 public final class KeypadIme extends InputMethodService {
     private static final String[] LETTERS={" ",".,?!'\"-:;@1","abcăâ2","def3","ghiî4","jkl5","mno6","pqrsș7","tuvț8","wxyz9"};
     private static final String SYMBOLS=".,?!@-_/:;()*+=#";
@@ -22,6 +22,9 @@ public final class KeypadIme extends InputMethodService {
     private TextView strip;
     private int pending=-1, index, mode, inputClass;
     private boolean editing;
+    private boolean password;
+    private String sequence="";
+    private int candidate;
     private final Runnable commit=new Runnable() { public void run() { finishLetter(); } };
 
     public View onCreateInputView() {
@@ -35,8 +38,11 @@ public final class KeypadIme extends InputMethodService {
     public boolean onShowInputRequested(int flags,boolean changing) { return editing; }
     public void onStartInput(EditorInfo info,boolean restarting) {
         super.onStartInput(info,restarting);
-        handler.removeCallbacks(commit); pending=-1; consumed.clear(); mode=0;
+        handler.removeCallbacks(commit); pending=-1; sequence=""; candidate=0; consumed.clear();
         inputClass=info.inputType & InputType.TYPE_MASK_CLASS;
+        int variation=info.inputType & InputType.TYPE_MASK_VARIATION;
+        password=(inputClass==InputType.TYPE_CLASS_TEXT && (variation==InputType.TYPE_TEXT_VARIATION_PASSWORD || variation==InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD || variation==InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD)) || (inputClass==InputType.TYPE_CLASS_NUMBER && variation==InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        mode=password?0:Math.max(0,Math.min(4,getSharedPreferences("keypad",0).getInt("mode",0)));
         editing=inputClass!=InputType.TYPE_NULL; updateStrip();
     }
     public void onFinishInput() { finishLetter(); editing=false; super.onFinishInput(); }
@@ -44,13 +50,18 @@ public final class KeypadIme extends InputMethodService {
     private void updateStrip() {
         if(strip!=null) strip.setText(inputClass==InputType.TYPE_CLASS_PHONE || inputClass==InputType.TYPE_CLASS_NUMBER
             || inputClass==InputType.TYPE_CLASS_DATETIME ? "123 · Taste numerice"
-            : (mode==0?"abc":mode==1?"ABC":"123")+" · # mod · 0 spațiu · Șterge");
+            : (mode==0?"abc":mode==1?"ABC":mode==2?"123":mode==3?"T9":"T9 ABC")+" · # mod · "+(sequence.isEmpty()?"0 spațiu":suggestion()+" · * următor"));
+    }
+    private String suggestion() { java.util.List<String> words=PredictiveDictionary.candidates(sequence);if(words.isEmpty())return "";String word=words.get(candidate%words.size());return mode==4?word.toUpperCase(new Locale("ro")):word; }
+    private void predict(int digit) {
+        if(sequence.length()>=24) finishLetter();
+        sequence+=(char)('0'+digit);candidate=0;getCurrentInputConnection().setComposingText(suggestion(),1);updateStrip();
     }
     private void finishLetter() {
         handler.removeCallbacks(commit);
         InputConnection connection=getCurrentInputConnection();
-        if(pending!=-1 && connection!=null) connection.finishComposingText();
-        pending=-1; index=0;
+        if((pending!=-1 || !sequence.isEmpty()) && connection!=null) connection.finishComposingText();
+        pending=-1; index=0; sequence=""; candidate=0; updateStrip();
     }
     private void letter(int digit) {
         InputConnection connection=getCurrentInputConnection(); if(connection==null) return;
@@ -64,7 +75,8 @@ public final class KeypadIme extends InputMethodService {
     private void erase() {
         InputConnection connection=getCurrentInputConnection(); if(connection==null) return;
         handler.removeCallbacks(commit);
-        if(pending!=-1) { connection.setComposingText("",1); connection.finishComposingText(); pending=-1; index=0; }
+        if(!sequence.isEmpty()) { sequence=sequence.substring(0,sequence.length()-1);candidate=0;connection.setComposingText(suggestion(),1);if(sequence.isEmpty())connection.finishComposingText();updateStrip(); }
+        else if(pending!=-1) { connection.setComposingText("",1); connection.finishComposingText(); pending=-1; index=0; }
         else {
             CharSequence selected=connection.getSelectedText(0);
             if(selected!=null && selected.length()>0) connection.commitText("",1);
@@ -89,13 +101,15 @@ public final class KeypadIme extends InputMethodService {
             if(event.getRepeatCount()>0) { if(erase) erase(); return true; }
             InputConnection connection=getCurrentInputConnection();
             if(erase) erase();
-            else if(key==KeyEvent.KEYCODE_POUND) { finishLetter(); mode=(mode+1)%3; updateStrip(); }
+            else if(key==KeyEvent.KEYCODE_POUND) { finishLetter(); mode=(mode+1)%(password?3:5);if(!password)getSharedPreferences("keypad",0).edit().putInt("mode",mode).apply();updateStrip(); }
             else if(enter) {
-                if(pending!=-1) finishLetter();
+                if(pending!=-1 || !sequence.isEmpty()) finishLetter();
                 else if(!sendDefaultEditorAction(true)) connection.commitText("\n",1);
-            } else if(key==KeyEvent.KEYCODE_STAR && mode!=2) letter(10);
+            } else if(key==KeyEvent.KEYCODE_STAR && mode>=3 && !sequence.isEmpty()) { candidate++;connection.setComposingText(suggestion(),1);updateStrip(); }
+            else if(key==KeyEvent.KEYCODE_STAR && mode!=2) { if(mode>=3)finishLetter();letter(10); }
             else if(mode==2) { finishLetter(); connection.commitText(digit>=0?String.valueOf((char)('0'+digit)):"*",1); }
             else if(digit==0) { finishLetter(); connection.commitText(" ",1); }
+            else if(mode>=3 && digit>=2) predict(digit);
             else letter(digit);
             return true;
         }
@@ -110,5 +124,6 @@ public final class KeypadIme extends InputMethodService {
     public void onUpdateSelection(int oldStart,int oldEnd,int newStart,int newEnd,int candidatesStart,int candidatesEnd) {
         super.onUpdateSelection(oldStart,oldEnd,newStart,newEnd,candidatesStart,candidatesEnd);
         if(pending!=-1 && (newStart!=candidatesEnd || newEnd!=candidatesEnd)) finishLetter();
+        if(!sequence.isEmpty() && candidatesEnd>=0 && (newStart!=candidatesEnd || newEnd!=candidatesEnd)) finishLetter();
     }
 }

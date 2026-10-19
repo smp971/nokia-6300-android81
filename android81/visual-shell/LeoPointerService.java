@@ -61,11 +61,13 @@ public final class LeoPointerService extends AccessibilityService {
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Închide"},new KeypadDialog.Action() {
+            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Închide"},new KeypadDialog.Action() {
                 public void select(int which) {
                     if(which==0) performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
                     else if(which==1) setActive(!active);
                     else if(which==2) performGlobalAction(GLOBAL_ACTION_HOME);
+                    else if(which==3) startActivity(new android.content.Intent(LeoPointerService.this,SettingsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                    else if(which==4) {setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,KeypadLockActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));}
                 }
             });
         menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
@@ -104,6 +106,15 @@ public final class LeoPointerService extends AccessibilityService {
     }
     protected boolean onKeyEvent(KeyEvent event) {
         int key=event.getKeyCode();
+        boolean guard=KeypadLockActivity.locked(this);
+        boolean call=false;
+        if(guard) try {call=((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall();}catch(RuntimeException ignored){}
+        if(guard && !AlarmRingService.ringing && !call) {
+            if(active)setActive(false);
+            if(KeypadLockActivity.visible) return key==KeyEvent.KEYCODE_HOME || key==KeyEvent.KEYCODE_ENDCALL || key==KeyEvent.KEYCODE_APP_SWITCH || key==KeyEvent.KEYCODE_NOTIFICATION;
+            if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) startActivity(new android.content.Intent(this,KeypadLockActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK|android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));
+            return true;
+        }
         if(event.getAction()==KeyEvent.ACTION_UP && key==heldDirection) stopMovement();
         // Scan 212 is the dedicated Menu key; scan 139 is the left softkey.
         // Keep the softkey's context-specific actions intact.

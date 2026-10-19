@@ -25,7 +25,7 @@ au fost confirmate în probele descrise mai jos.
 | Kernel utilizat | Stock `4.9.240-perf-g4f9e270fd77f`, nu mainline |
 | Profil memorie | `ro.config.low_ram=true`, zRAM aproximativ 256 MiB |
 | Partiții utilizate | Intern: `/system` aproximativ 800 MiB, `/data` aproximativ 2,3 GiB |
-| Interfață | **Leo Visual**, HOME nativ; **Leo Multi-tap**, IME implicit |
+| Interfață | **Leo Visual**, HOME nativ; **Leo Keypad**, multi-tap / T9 local |
 | Configurație dispozitiv | [device/nokia/leo](android81/device/nokia/leo/) |
 | Pachet de instalare | Indisponibil; surse, patch-uri și scripturi de dezvoltare |
 
@@ -58,13 +58,13 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
 | Pornire și repornire | **Parțial** | Corecție NetworkPolicy instalată; după recuperare nu s-a raportat ANR. Proba de autostart conectivitate a fost urmată de 900E; cauza rămâne în investigare. |
 | USB / ADB / root | **Funcțional** | Diagnostic, instalare și control din PC; s-au observat și întreruperi USB temporare. |
-| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
+| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 19 intrări pe trei pagini, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
 | Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
 | Mouse din D-pad | **Parțial** | Deplasare cu accelerare la menținere, oprire la eliberare și clic verificate; compatibilitatea tuturor aplicațiilor și derularea nu sunt complet validate. |
 | Listă Aplicații Android | **Funcțional** | 12 activități lansabile detectate, iconuri și sortare; Calculator și revenire în listă verificate. Nu validează toate aplicațiile. |
 | Tastatură fizică / D-pad | **Funcțional** | Mapare adaptată și confirmări pe telefon; aplicațiile Android nu sunt toate adaptate la taste. |
 | Introducere multi-tap din taste | **Funcțional** | IME implicit, inclus în împachetare; hook nou la boot încă neverificat prin reboot; 11 probe în editor local: litere, diacritice, majuscule, ștergere și câmp numeric. Compatibilitatea tuturor aplicațiilor nu este încă verificată. |
-| Predicție T9 | **Nefuncțional** | Motorul predictiv nu este încă integrat; dicționarul românesc și integrarea IMEConnect din dump sunt identificate pentru analiză. |
+| Predicție T9 | **Parțial** | Dicționar românesc local propriu; zece probe reale și 424 verificări JVM trecute. Fără învățare sau dicționar complet; motorul KaiOS nu este executat. |
 | Bară de stare Android | **Funcțional** | Vizibilă împreună cu Leo Visual; nu confirmă singură funcționarea fiecărui serviciu afișat. |
 | Accelerare Adreno | **Funcțional** | Renderer Qualcomm și test Android HARDWARE bitmap verificate, inclusiv după reboot. |
 | Fluiditate generală | **Parțial** | Sincronizarea HWC1 a fost corectată; limitele panoului SPI și întârzierile unor aplicații rămân. |
@@ -80,7 +80,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Date mobile LTE / 4G | **Funcțional** | SIM 1: conexiune Android validată și două răspunsuri ping externe după reboot. Nu confirmă datele pe SIM 2 sau toate rețelele/APN-urile. |
 | Setări rețea mobilă / opțiune 4G | **Funcțional** | Pagina și taburile SIM verificate; opțiunea LTE este expusă. Statisticile de trafic indisponibile sunt dezactivate. |
 | Ecran de apel pentru taste | **Funcțional** | Apelul primit deschide interfața completă; răspunsul și închiderea din taste au fost confirmate pe apel real. |
-| Apel primit și audio în ambele sensuri | **Funcțional** | Un apel real a trecut: ringing → off-hook → idle; utilizatorul confirmă conversația în ambele sensuri. Nu validează toate SIM-urile sau rutele audio. |
+| Apel primit și audio în ambele sensuri | **Parțial** | Conversație în ambele sensuri confirmată anterior. După recuperare placa audio lipsește, iar audio este dezactivat; funcția nu este disponibilă în starea curentă. |
 | Apel inițiat de pe Nokia | **Parțial** | SIM 1: destinatarul confirmă că a sunat; fără sunet în proba respectivă. După recuperare s-a găsit driverul audio neîncărcat; ruta necesită retestare. |
 | Respingere apel real / apel în așteptare / conferință | **Netestat** | Respingerea a trecut în simulare; scenariile reale necesită probe separate. |
 | Tasta roșie | **Parțial** | Mapată ENDCALL; revenirea Acasă în repaus a fost verificată prin codul fizic. Apelul real a fost închis cu soft dreapta. |
@@ -89,7 +89,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | MMS | **Nefuncțional** | Nu este implementat în Mesaje Leo. |
 | Difuzor / AudioTrack | **Parțial** | Bipuri confirmate anterior înainte/după reboot. După recuperarea din 900E placa audio lipsește; reîncărcarea manuală a produs un nou 900E. Necesită repararea inițializării. |
 | MediaPlayer / fișiere OGG | **Parțial** | Decodorul Vorbis și configurația codec corectate; redare OGG confirmată auditiv. Nu validează toate formatele sau aplicațiile media. |
-| Microfon în convorbire | **Funcțional** | Confirmat prin conversația în ambele sensuri; înregistrarea audio separată nu este testată. |
+| Microfon în convorbire | **Parțial** | Confirmat anterior; driverul audio este acum dezactivat după recuperare. Înregistrarea separată rămâne nevalidată. |
 | Căști / alte rute audio | **Netestat** | Fără validare completă pentru accesorii și schimbarea rutelor. |
 | Client IMS | **Experimental** | Port compilat, cu înregistrare IMS voce pe SIM 1 într-o probă controlată. Activarea a fost retrasă; nu pornește automat. |
 | VoLTE | **Netestat** | Înregistrarea IMS nu dovedește un apel VoLTE; apelul primit reușit nu a fost identificat ca VoLTE. |
@@ -111,7 +111,15 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Ceas Leo | **Parțial** | Oră/cronometru testate; temporizatorul și alarma proprie au declanșat în fundal, inclusiv după terminarea procesului. Utilizatorul confirmă sunetul temporizatorului. Recuperarea la reboot și celelalte rute/volume nu sunt validate. |
 | Calendar Leo | **Parțial** | Interfață nativă, lună/agendă; salvare de eveniment în calendarul local Android verificată. Creare, persistență după reboot, editare și ștergere verificate; fără recurențe/remindere. |
 | Fișiere Leo | **Parțial** | Folder și text UTF-8 create; provider read-only și respingere acces în afara rădăcinii verificate. Persistență după reboot, editare text, redenumire de fișier și ștergere fișier/folder gol verificate; deschiderea externă depinde de aplicațiile instalate. |
-| Galerie / Muzică | **Parțial** | Pornire verificată; proba MediaPlayer separată nu confirmă toate funcțiile acestor aplicații. |
+| Galerie Leo | **Funcțional** | Miniaturi, vizualizare și zoom verificate cu imagine sintetică. Până la 500 imagini; fără albume/editor foto. |
+| Fundaluri și teme Leo | **Funcțional** | Patru teme, alegere imagine din Galerie, aplicare/eliminare pe HOME verificate. |
+| Convertor Leo | **Funcțional** | Șase categorii; 137 verificări JVM și probă 100 °C → 212 °F pe telefon. |
+| Setări Leo / profiluri | **Parțial** | Luminozitate, timeout, Silențios și Normal verificate; valori de probă restaurate. Android nu detectează vibratorul. Rețelele/data folosesc paginile Android. |
+| Favorite | **Funcțional** | Marcaj Android STARRED, listă proprie și probă pe contact sintetic, curățat după verificare. |
+| Blocare taste | **Funcțional** | Blocare pentru apăsări accidentale; Home blocat și soft stânga → * verificate. Fără PIN; nu este o barieră de securitate. |
+| Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
+| Muzică / Video Leo | **Parțial** | Biblioteci și controale native implementate; redarea este oprită dacă placa audio lipsește. Decodarea și redarea reale rămân de validat. |
+| Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
 | Browser / WebView | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Fără navigare stabilă pe internet validată. |
 | Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
 | Cameră | **Nefuncțional** | Serviciul Android raportează zero dispozitive. |
@@ -211,7 +219,7 @@ API-uri Gecko ce necesită înlocuitori Android. Codul nou Leo este o adaptare n
 a fluxurilor analizate. **Ceas Leo**, **Calculator Leo** și **Notițe Leo** sunt
 instalate. Contacte, Telefon, Mesaje, alarme și temporizator sunt integrate;
 stările și limitele fiecăruia sunt în [fișa aplicațiilor de sistem](android81/LEO-SYSTEM-APPS.md).
-Multi-tap funcționează, predicția T9 încă nu.
+Multi-tap și predicția T9 locală de bază funcționează; dicționarul complet și învățarea nu sunt implementate.
 
 - [Planul proiectului și criterii de acceptare](android81/PROJECT.md).
 - [Portarea aplicațiilor: copie, matrice și rezultate](android81/KAIOS-APP-PORTS.md).
@@ -268,3 +276,15 @@ de aici provin din proiectul Android Leo, nu din acea pagină.
 | Calendar Leo · eveniment sintetic | Fișiere Leo · text sintetic |
 | --- | --- |
 | ![Calendar Leo](android81/screenshots/leo-calendar-event.png) | ![Fișiere Leo](android81/screenshots/leo-files-created.png) |
+
+### Suita Leo pentru taste
+
+[Aplicații, comenzi, probe și limite](android81/LEO-APP-SUITE.md): Galerie, Fundaluri, Convertor, Setări, Descărcări, Muzică/Video, Reportofon, Favorite, blocare taste și T9 local.
+
+| Meniu Leo · aplicații noi | Galerie · probă sintetică | Convertor |
+| --- | --- | --- |
+| ![Meniu Leo](android81/screenshots/leo-suite-menu.png) | ![Galerie Leo](android81/screenshots/leo-gallery-grid.png) | ![Convertor Leo](android81/screenshots/leo-converter.png) |
+
+| Profil silențios | Blocare taste | T9 local |
+| --- | --- | --- |
+| ![Profil Leo](android81/screenshots/leo-profile-silent.png) | ![Blocare taste](android81/screenshots/leo-keypad-lock.png) | ![T9 în editorul de probă](android81/screenshots/leo-t9.png) |
