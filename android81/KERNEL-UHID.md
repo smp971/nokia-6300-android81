@@ -81,7 +81,33 @@ point still requires the persisted audio trace/crash log after a battery power
 cycle. The audio setup disarms its automatic loading before inserting modules;
 the failed trial did not reach its success/rearm step. Do not rerun audio setup
 until the failure is understood. Static module CRC/signature compatibility does
-not establish runtime safety. Mouse connection and input remain unverified.
+not establish runtime safety.
+
+## Recovery and mouse result
+
+After a battery power cycle, the rebuilt kernel and Leo launcher booted again.
+Audio autoload remained 0, and no audio trial was repeated. The persisted trace
+shows successful return from every module insertion, including the final
+`audio_machine_int_msm8909`; the crash occurred after that point, before the
+setup reached active. With `CONFIG_PSTORE` disabled and no last_kmsg, the final
+panic could not be recovered after battery removal. Its root cause is unresolved.
+
+Connectivity was started manually and Bluetooth enabled. The bonded MX Master
+3 Mac connected with HID state 2 and created an input device under virtual UHID
+(`046d:b023`, handlers keyboard/mouse/event). A screenshot showed the cursor.
+An eight-second physical input capture recorded 231 relative-motion/wheel events,
+including 21 wheel events. No button events were captured in that interval, so
+individual click actions were not independently measured. The user confirmed
+that the mouse works. `verify-uhid-runtime.py` checks the running kernel, device
+permissions, UHID input registration and HID connection without changing state.
+
+This establishes Bluetooth mouse operation with the rebuilt kernel. It does not
+resolve the audio crash or establish automatic connectivity activation at boot.
+A later read-only check in the same boot found HID disconnected and the input
+device absent, while Bluetooth remained ON. Whether the mouse was switched to
+another channel, slept, or lost its connection was not established; sustained
+connection and reconnection behavior still need testing. The verification script
+reports the current disconnected state rather than reusing earlier success.
 
 These are offline prerequisite checks. They do not establish bootability or
 working graphics, audio, modem, Wi-Fi or mouse input. No boot image is packaged
