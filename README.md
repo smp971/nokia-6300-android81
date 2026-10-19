@@ -103,6 +103,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | --- | --- | --- |
 | Setări Android | **Parțial** | Se deschide după corecții; unele categorii nu au suport hardware funcțional. |
 | Calculator | **Funcțional** | Pornire și `2 + 2 = 4` verificate; introducerea din proba inițială a fost prin ADB. |
+| Calculator Leo / Notițe Leo | **Netestat** | Implementări native noi, compilate; 29 cazuri ale motorului aritmetic trecute pe JVM. Nu sunt încă instalate/validate pe telefon; așteaptă reconectarea ADB. |
 | Ceas Leo | **Parțial** | Oră și cronometru native; start, tură, pauză, resetare și stare după relansare verificate. Alarmele proprii și temporizatorul nu sunt implementate. |
 | Calendar / Contacte / Fișiere Android | **Parțial** | Interfețele se deschid; salvarea evenimentelor/contactelor și operațiile complete nu sunt validate. |
 | Galerie / Muzică | **Parțial** | Pornire verificată; proba MediaPlayer separată nu confirmă toate funcțiile acestor aplicații. |
@@ -215,6 +216,7 @@ temporizatorul rămân neimplementate. Multi-tap funcționează, predicția T9 �
 | --- | --- |
 | Stare și istoric | [STATUS](android81/STATUS.md), [audit inițial](android81/FUNCTION-AUDIT-2026-10-18.md) |
 | Shell, meniu, mouse și aplicații Android | [VISUAL-SHELL](android81/VISUAL-SHELL.md) |
+| Calculator și Notițe Leo | [LEO-CALCULATOR-NOTES](android81/LEO-CALCULATOR-NOTES.md) |
 | Tastatură multi-tap | [KEYPAD-IME](android81/KEYPAD-IME.md) |
 | Grafică / performanță | [ADRENO-INTEGRATION](android81/ADRENO-INTEGRATION.md), [UI-LATENCY](android81/UI-LATENCY.md) |
 | Radio și date | [RADIO-BRINGUP](android81/RADIO-BRINGUP.md), [LTE-BRINGUP](android81/LTE-BRINGUP.md) |

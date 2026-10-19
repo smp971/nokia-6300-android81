@@ -45,7 +45,7 @@ public final class MainActivity extends Activity {
         screen = new Screen();
         if (state != null) {
             screen.grid = state.getBoolean("grid");
-            screen.selected = Math.max(0, Math.min(9, state.getInt("selected")));
+            screen.selected = Math.max(0, Math.min(screen.names.length-1, state.getInt("selected")));
         }
         setContentView(screen);
     }
@@ -147,9 +147,9 @@ public final class MainActivity extends Activity {
         final Path path = new Path();
         final Typeface regular = Typeface.create("sans-serif", Typeface.NORMAL);
         final Typeface light = Typeface.create("sans-serif-light", Typeface.NORMAL);
-        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android"};
+        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe"};
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
-        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a};
+        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42};
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
         boolean grid;
@@ -225,9 +225,10 @@ public final class MainActivity extends Activity {
                     if(key==KeyEvent.KEYCODE_DPAD_UP) selected=Math.max(0,selected-1);
                     if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=Math.min(names.length-1,selected+1);
                 }
-                else if(selected==9) {
-                    if(delta==-3) selected=6;
-                    else if(delta==-1) selected=8;
+                else if(selected>=9) {
+                    if(delta==-3) selected-=3;
+                    else if(delta==-1) selected--;
+                    else if(delta==1 && selected<names.length-1) selected++;
                 } else if((delta==3 && selected>=6) || (delta==1 && selected==8)) selected=9;
                 else if ((delta == -1 && selected % 3 != 0) || (delta == 1 && selected % 3 != 2)
                          || (delta == -3 && selected >= 3) || (delta == 3 && selected < 6)) selected += delta;
@@ -236,6 +237,8 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==4) { startActivity(new Intent(MainActivity.this,CalculatorActivity.class)); return; }
+            if(index==10) { startActivity(new Intent(MainActivity.this,NotesActivity.class)); return; }
             if(index==3) { startActivity(new Intent(MainActivity.this,ClockActivity.class)); return; }
             if(index==9) { startActivity(new Intent(MainActivity.this,AndroidAppsActivity.class)); return; }
             Intent intent;
@@ -285,6 +288,7 @@ public final class MainActivity extends Activity {
                 case 7: path.reset(); path.moveTo(-13,-8); path.lineTo(-3,-8); path.lineTo(0,-4); path.lineTo(13,-4); path.lineTo(13,10); path.lineTo(-13,10); path.close(); c.drawPath(path,p); break;
                 case 8: c.drawCircle(0,0,9,p); c.drawCircle(0,0,3,p); for(int k=0;k<8;k++){c.save();c.rotate(k*45);line(c,0,-10,0,-14);c.restore();} break;
                 case 9: for(int row=0;row<2;row++) for(int col=0;col<2;col++) c.drawRect(-10+col*12,-10+row*12,-3+col*12,-3+row*12,p); break;
+                case 10: c.drawRect(-10,-13,10,13,p); line(c,-5,-6,5,-6); line(c,-5,0,5,0); line(c,-5,6,2,6); break;
             }
             p.setStyle(Paint.Style.FILL); c.restore();
         }

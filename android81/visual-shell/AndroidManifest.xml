@@ -17,6 +17,8 @@
         <activity android:name=".PointerTestActivity" android:exported="false" android:label="Test cursor" />
         <activity android:name=".AndroidAppsActivity" android:exported="false" android:label="Aplicații Android" android:screenOrientation="portrait" />
         <activity android:name=".ClockActivity" android:exported="false" android:label="Ceas Leo" android:screenOrientation="portrait" />
+        <activity android:name=".CalculatorActivity" android:exported="false" android:label="Calculator Leo" android:screenOrientation="portrait" />
+        <activity android:name=".NotesActivity" android:exported="false" android:label="Notițe Leo" android:screenOrientation="portrait" />
         <service android:name=".LeoPointerService" android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/pointer_service" />

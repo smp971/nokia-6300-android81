@@ -58,6 +58,8 @@ Inventarul reproductibil este în [KAIOS-UI-INVENTORY](KAIOS-UI-INVENTORY.md).
    Copia locală a aplicațiilor KaiOS este verificată; primul ecran propriu este Ceas
    (oră și cronometru). Matricea completă și limitele sunt în
    [KAIOS-APP-PORTS.md](KAIOS-APP-PORTS.md).
+   Calculator și Notițe Leo sunt compilate; motorul aritmetic are 29 de cazuri
+   validate pe JVM. Instalarea și probele fizice așteaptă reconectarea telefonului.
 4. **Predicție T9:** alegerea unui motor redistribuibil, integrare în IME și teste
    românești. Acceptare: candidați, selecție, corectare și revenire sigură la multi-tap.
 5. **Stabilitate și performanță:** măsurători pe aceleași ecrane, pornire repetabilă,
