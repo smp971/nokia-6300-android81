@@ -19,7 +19,7 @@ public final class FilesActivity extends LeoActivity {
         base=null; current=null; selected=null;
         final ArrayList<File> values=new ArrayList<File>(); ArrayList<String> labels=new ArrayList<String>();
         for(Map.Entry<String,File> root:LeoFileProvider.roots(this).entrySet()) {
-            values.add(root.getValue()); labels.add(root.getKey().equals("phone")?"Memorie telefon":root.getKey().equals("leo")?"Documente Leo":"Card SD · folder Leo");
+            values.add(root.getValue()); labels.add(root.getKey().equals("phone")?"Memorie telefon":root.getKey().equals("leo")?"Documente Leo":"Card SD");
         }
         list("Fișiere",labels,0,new Choice() { public void pick(int i) { base=values.get(i); browse(base); } },"Android",new Runnable() { public void run() {
             try { startActivity(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE)); }

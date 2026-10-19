@@ -1,0 +1,14 @@
+# The diagnostic ramdisk disables the old SwiftShader boot animation.
+# Enable the small Leo animation after the Adreno setup; never delay boot completion.
+on post-fs-data
+    setprop debug.sf.nobootanimation 0
+    setprop service.bootanim.exit 0
+
+on boot
+    setprop debug.sf.nobootanimation 0
+    setprop service.bootanim.exit 0
+    start bootanim
+
+on property:sys.boot_completed=1
+    setprop service.bootanim.exit 1
+    stop bootanim

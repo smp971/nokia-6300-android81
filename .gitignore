@@ -16,6 +16,8 @@
 !/android81/*.md
 !/android81/leo-adreno-init.rc
 !/android81/init.leo.connectivity.rc
+!/android81/leo-bootanimation.rc
+!/android81/leo-storage.fstab
 !/android81/device/
 !/android81/shell/
 !/android81/screenshots/

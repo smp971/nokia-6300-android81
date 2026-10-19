@@ -6,6 +6,7 @@
 *.h text eol=lf
 *.mk text eol=lf
 *.rc text eol=lf
+*.fstab text eol=lf
 *.kl text eol=lf
 *.md text eol=lf
 *.ps1 text eol=crlf

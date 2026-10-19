@@ -60,15 +60,22 @@ abstract class LeoActivity extends Activity {
             public Object getItem(int i) { return values.get(i); }
             public long getItemId(int i) { return i; }
             public View getView(int i,View reuse,android.view.ViewGroup parent) {
-                TextView label=text(values.get(i),18); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
-                label.setMinHeight(dp(52)); label.setGravity(Gravity.CENTER_VERTICAL);
-                label.setBackgroundColor(i==focused[0]?0xfff5eefb:0xff21172e);
-                label.setTextColor(i==focused[0]?0xff38224f:Color.WHITE); return label;
+                TextView label;
+                if(reuse instanceof TextView) label=(TextView)reuse;
+                else {
+                    label=text("",18); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
+                    label.setMinHeight(dp(52)); label.setGravity(Gravity.CENTER_VERTICAL);
+                }
+                label.setText(values.get(i)); paintSelection(label,i==focused[0]); return label;
             }
         };
         list.setAdapter(adapter);
         list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p,View v,int i,long id) { focused[0]=i; adapter.notifyDataSetChanged(); }
+            public void onItemSelected(AdapterView<?> p,View v,int i,long id) {
+                int previous=focused[0]; focused[0]=i;
+                if(previous!=i) paintSelection(list.getChildAt(previous-list.getFirstVisiblePosition()),false);
+                paintSelection(v,true);
+            }
             public void onNothingSelected(AdapterView<?> p) { }
         });
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -81,6 +88,11 @@ abstract class LeoActivity extends Activity {
         footer(action,"Deschide","Înapoi");
         list.requestFocus(); list.setSelection(focused[0]);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
+    }
+    private void paintSelection(View row,boolean selected) {
+        if(!(row instanceof TextView)) return;
+        row.setBackgroundColor(selected?0xfff5eefb:0xff21172e);
+        ((TextView)row).setTextColor(selected?0xff38224f:Color.WHITE);
     }
     LinearLayout fields(String title) {
         begin(title); form=true;

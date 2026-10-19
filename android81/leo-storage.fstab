@@ -1,0 +1,6 @@
+# Internal Android partitions; this file never formats partitions.
+/dev/block/mmcblk0p30 /system ext4 ro wait
+/dev/block/mmcblk0p39 /data ext4 noatime,nosuid,nodev wait
+# Oreo requires the adoptable-capability flag for a secondary public SD to be
+# visible to applications. This does not adopt, encrypt, or format the card.
+/devices/platform/soc/7864900.sdhci/mmc_host* auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata

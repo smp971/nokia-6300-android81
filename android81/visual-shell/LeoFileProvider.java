@@ -17,7 +17,17 @@ public final class LeoFileProvider extends ContentProvider {
         roots.put("phone",Environment.getExternalStorageDirectory());
         File docs=new File(c.getFilesDir(),"documents"); docs.mkdirs(); roots.put("leo",docs);
         File[] external=c.getExternalFilesDirs(null);
-        for(int i=1;i<external.length;i++) if(external[i]!=null) roots.put("sd"+i,external[i]);
+        for(int i=1;i<external.length;i++) if(external[i]!=null) {
+            File app=external[i].getParentFile();
+            File data=app==null?null:app.getParentFile();
+            File android=data==null?null:data.getParentFile();
+            File volume=android==null?null:android.getParentFile();
+            // Derive only the public volume backing our Android/data/<package>/files.
+            // Keep canonical-path checks below for every file and URI grant.
+            if(volume!=null && app.getName().equals(c.getPackageName()) && data.getName().equals("data")
+                    && android.getName().equals("Android") && volume.isDirectory()
+                    && Environment.isExternalStorageRemovable(external[i])) roots.put("sd"+i,volume);
+        }
         return roots;
     }
     static boolean inside(File root,File file) throws IOException {

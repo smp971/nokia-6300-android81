@@ -57,7 +57,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | --- | --- | --- |
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
 | Pornire și repornire | **Parțial** | Corecție NetworkPolicy instalată; după recuperare nu s-a raportat ANR. Proba de autostart conectivitate a fost urmată de 900E; cauza rămâne în investigare. |
-| USB / ADB / root | **Funcțional** | Diagnostic, instalare și control din PC; s-au observat și întreruperi USB temporare. |
+| USB / ADB / root | **Parțial** | Diagnostic, instalare și control funcționale; după unele reporniri conexiunea cere reconectarea cablului. Uneltele au acum timeout pentru a evita așteptarea nelimitată. |
 | Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 22 intrări pe trei pagini, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
 | Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
 | Notificări native Leo | **Parțial** | Notificare sintetică citită, deschisă prin PendingIntent și eliminată din taste. Ascultător propriu autorizat explicit pe low-RAM; fără răspuns direct la notificări. |
@@ -71,10 +71,12 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Predicție T9 | **Parțial** | Dicționar românesc local propriu; zece probe reale și 424 verificări JVM trecute. Fără învățare sau dicționar complet; motorul KaiOS nu este executat. |
 | Bară de stare Android | **Funcțional** | Vizibilă împreună cu Leo Visual; nu confirmă singură funcționarea fiecărui serviciu afișat. |
 | Accelerare Adreno | **Funcțional** | Renderer Qualcomm și test Android HARDWARE bitmap verificate, inclusiv după reboot. |
-| Fluiditate generală | **Parțial** | Sincronizarea HWC1 a fost corectată; limitele panoului SPI și întârzierile unor aplicații rămân. |
+| Fluiditate generală | **Parțial** | Listele Leo reutilizează rândurile și actualizează numai selecția: p95 HWUI Configurări 7–8 → 5 ms în probe controlate. Prezentarea la aproximativ 29 Hz și erorile EGL rămân; nu este latența completă tastă–ecran. [Măsurători](android81/PERFORMANCE-AUDIT.md). |
 | Profil pentru memorie redusă | **Funcțional** | `low_ram` și zRAM verificate software; nu înseamnă că orice aplicație rulează fluent. |
 | Baterie / alimentare USB | **Parțial** | Nivel, tensiune, temperatură și alimentare citite; autonomia și ciclul complet de încărcare sunt netestate. |
-| Card microSD / MTP | **Netestat** | Nu avem o probă completă de utilizare și transfer pentru aceste funcții. |
+| Card microSD FAT32 | **Parțial** | Aproximativ 32 GB, PUBLIC/VISIBLE după reboot; folder și fișier UTF-8 create din Fișiere Leo, citire prin provider verificată. Configurația vold reparată fără formatare; scoaterea la cald și alte carduri sunt netestate. |
+| MTP | **Netestat** | Detectarea SD nu validează transferul MTP prin USB. |
+| Animație de pornire LEO | **Funcțional** | Logo original și puncte mov animate, 240×320, 6 cadre/s; confirmate pe telefon la reboot, apoi meniul Leo. |
 
 ### Telefonie, sunet și conectivitate
 
@@ -136,6 +138,10 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Senzori Android | **Nefuncțional** | SensorService nu detectează senzori; descrie integrarea software, nu inventarul fizic. |
 
 ## Capturi
+
+| Pornire LEO · captură din proba pe telefon | Card SD în Fișiere Leo |
+| --- | --- |
+| ![Animație LEO](android81/screenshots/leo-bootanimation.png) | ![Card SD](android81/screenshots/leo-sd-locations.png) |
 
 Capturi reale la 240 × 320. Ecranele de test IME și mouse nu reprezintă aplicații
 complete; capturile istorice ale apelurilor sunt simulări. Apelul real este documentat separat.
@@ -255,6 +261,8 @@ Multi-tap și predicția T9 locală de bază funcționează; dicționarul comple
 | Contacte, Telefon, Mesaje, alarme | [LEO-SYSTEM-APPS](android81/LEO-SYSTEM-APPS.md) |
 | Tastatură multi-tap | [KEYPAD-IME](android81/KEYPAD-IME.md) |
 | Grafică / performanță | [ADRENO-INTEGRATION](android81/ADRENO-INTEGRATION.md), [UI-LATENCY](android81/UI-LATENCY.md) |
+| Optimizarea listelor și timeout ADB | [PERFORMANCE-AUDIT](android81/PERFORMANCE-AUDIT.md) |
+| Animație de pornire și repararea SD | [BOOTANIMATION-SD](android81/BOOTANIMATION-SD.md) |
 | Radio și date | [RADIO-BRINGUP](android81/RADIO-BRINGUP.md), [LTE-BRINGUP](android81/LTE-BRINGUP.md) |
 | Audio / codec-uri / setări mobile | [AUDIO-BRINGUP](android81/AUDIO-BRINGUP.md), [PHONE-AUDIO-FOLLOWUP](android81/PHONE-AUDIO-FOLLOWUP.md) |
 | Apeluri din taste | [CALL-KEYPAD](android81/CALL-KEYPAD.md) |
