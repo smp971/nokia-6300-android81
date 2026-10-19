@@ -1,0 +1,3 @@
+# Opt-in activation of the already staged, disabled WCNSS/HAL trial.
+on property:sys.boot_completed=1 && property:persist.leo.connectivity.auto=1
+    start leo_connectivity_setup

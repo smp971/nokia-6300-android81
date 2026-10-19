@@ -147,9 +147,9 @@ public final class MainActivity extends Activity {
         final Path path = new Path();
         final Typeface regular = Typeface.create("sans-serif", Typeface.NORMAL);
         final Typeface light = Typeface.create("sans-serif-light", Typeface.NORMAL);
-        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe"};
+        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar"};
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
-        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42};
+        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42,0xff599cde};
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
         boolean grid;
@@ -237,6 +237,8 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==7) { startActivity(new Intent(MainActivity.this,FilesActivity.class)); return; }
+            if(index==11) { startActivity(new Intent(MainActivity.this,CalendarActivity.class)); return; }
             if(index==0) { startActivity(new Intent(MainActivity.this,PhoneActivity.class)); return; }
             if(index==1) { startActivity(new Intent(MainActivity.this,ContactsActivity.class)); return; }
             if(index==2) { startActivity(new Intent(MainActivity.this,MessagesActivity.class)); return; }
@@ -292,6 +294,7 @@ public final class MainActivity extends Activity {
                 case 8: c.drawCircle(0,0,9,p); c.drawCircle(0,0,3,p); for(int k=0;k<8;k++){c.save();c.rotate(k*45);line(c,0,-10,0,-14);c.restore();} break;
                 case 9: for(int row=0;row<2;row++) for(int col=0;col<2;col++) c.drawRect(-10+col*12,-10+row*12,-3+col*12,-3+row*12,p); break;
                 case 10: c.drawRect(-10,-13,10,13,p); line(c,-5,-6,5,-6); line(c,-5,0,5,0); line(c,-5,6,2,6); break;
+                case 11: c.drawRect(-12,-10,12,12,p); line(c,-12,-3,12,-3); line(c,-6,-13,-6,-7); line(c,6,-13,6,-7); line(c,-6,3,-3,3); line(c,3,3,6,3); line(c,-6,8,-3,8); break;
             }
             p.setStyle(Paint.Style.FILL); c.restore();
         }

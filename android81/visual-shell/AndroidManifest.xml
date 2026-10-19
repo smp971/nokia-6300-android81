@@ -11,6 +11,10 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application android:label="Leo Visual" android:allowBackup="false" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:screenOrientation="portrait" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize">
             <intent-filter>
@@ -33,6 +37,9 @@
         <activity android:name=".MessagesActivity" android:exported="false" android:label="Mesaje Leo" android:screenOrientation="portrait" />
         <activity android:name=".AlarmsActivity" android:exported="false" android:label="Alarme Leo" android:screenOrientation="portrait" />
         <activity android:name=".TimerActivity" android:exported="false" android:label="Temporizator Leo" android:screenOrientation="portrait" />
+        <activity android:name=".CalendarActivity" android:exported="false" android:label="Calendar Leo" android:screenOrientation="portrait" />
+        <activity android:name=".FilesActivity" android:exported="false" android:label="Fișiere Leo" android:screenOrientation="portrait" />
+        <provider android:name=".LeoFileProvider" android:authorities="ro.leo.visual.files" android:exported="false" android:grantUriPermissions="true" />
         <activity android:name=".AlarmRingActivity" android:exported="false" android:launchMode="singleTop" android:label="Alarmă Leo" android:screenOrientation="portrait" />
         <service android:name=".AlarmRingService" android:exported="false" />
         <receiver android:name=".AlarmReceiver" android:exported="false">

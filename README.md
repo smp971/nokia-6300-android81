@@ -8,7 +8,7 @@ Android pornește din memoria internă, cu accelerare Adreno și interfață pen
 taste. Datele LTE, redarea audio și un apel primit cu sunet în ambele sensuri
 au fost confirmate în probele descrise mai jos.
 
-> **Starea portului: pornește, utilizare experimentală.** Există un ANR la boot,
+> **Starea portului: pornește, utilizare experimentală.** Pornirea are încă probleme de stabilitate,
 > hardware încă neintegrat și aplicații instabile. Repository-ul nu oferă încă
 > un ROM complet instalabil. Acesta este un proiect Android, independent de portul postmarketOS.
 
@@ -56,7 +56,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Funcție | Stare | Ce am verificat / limită |
 | --- | --- | --- |
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
-| Pornire și repornire | **Parțial** | Android și serviciile revin după reboot; ANR-ul NetworkPolicy poate necesita „Așteaptă”. |
+| Pornire și repornire | **Parțial** | Corecție NetworkPolicy instalată; după recuperare nu s-a raportat ANR. Proba de autostart conectivitate a fost urmată de 900E; cauza rămâne în investigare. |
 | USB / ADB / root | **Funcțional** | Diagnostic, instalare și control din PC; s-au observat și întreruperi USB temporare. |
 | Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
 | Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
@@ -81,21 +81,21 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Setări rețea mobilă / opțiune 4G | **Funcțional** | Pagina și taburile SIM verificate; opțiunea LTE este expusă. Statisticile de trafic indisponibile sunt dezactivate. |
 | Ecran de apel pentru taste | **Funcțional** | Apelul primit deschide interfața completă; răspunsul și închiderea din taste au fost confirmate pe apel real. |
 | Apel primit și audio în ambele sensuri | **Funcțional** | Un apel real a trecut: ringing → off-hook → idle; utilizatorul confirmă conversația în ambele sensuri. Nu validează toate SIM-urile sau rutele audio. |
-| Apel inițiat de pe Nokia | **Netestat** | Deschiderea Dialer nu confirmă efectuarea unui apel către rețea. |
+| Apel inițiat de pe Nokia | **Parțial** | SIM 1: destinatarul confirmă că a sunat; fără sunet în proba respectivă. După recuperare s-a găsit driverul audio neîncărcat; ruta necesită retestare. |
 | Respingere apel real / apel în așteptare / conferință | **Netestat** | Respingerea a trecut în simulare; scenariile reale necesită probe separate. |
 | Tasta roșie | **Parțial** | Mapată ENDCALL; revenirea Acasă în repaus a fost verificată prin codul fizic. Apelul real a fost închis cu soft dreapta. |
 | DTMF, microfon mut, difuzor și volum în apel | **Parțial** | Comenzi implementate; DTMF și comutările microfon/difuzor au trecut în simulare. Transportul DTMF și toate efectele audio în apel real sunt netestate. |
-| SMS Leo | **Parțial** | Conversații, ciornă, multi-tap și alegere SIM implementate; ciornă/selector testate. O cerere către numărul invalid de probă a eșuat. Fără trimitere reușită sau recepție reală validate. |
+| SMS Leo | **Parțial** | SIM 1: SMS trimis și primit de destinatar; răspuns cu emoji primit în inboxul Leo. SIM 2 încă de validat. Ciornă, multi-tap și alegere SIM; fără MMS/raport de livrare. |
 | MMS | **Nefuncțional** | Nu este implementat în Mesaje Leo. |
-| Difuzor / AudioTrack | **Funcțional** | Bipuri prin HAL-ul Qualcomm, confirmate auditiv înainte și după reboot. |
-| MediaPlayer / fișiere OGG | **Funcțional** | Decodorul Vorbis și configurația codec corectate; redare OGG confirmată auditiv. Nu validează toate formatele sau aplicațiile media. |
+| Difuzor / AudioTrack | **Parțial** | Bipuri confirmate anterior înainte/după reboot. După recuperarea din 900E placa audio lipsește; reîncărcarea manuală a produs un nou 900E. Necesită repararea inițializării. |
+| MediaPlayer / fișiere OGG | **Parțial** | Decodorul Vorbis și configurația codec corectate; redare OGG confirmată auditiv. Nu validează toate formatele sau aplicațiile media. |
 | Microfon în convorbire | **Funcțional** | Confirmat prin conversația în ambele sensuri; înregistrarea audio separată nu este testată. |
 | Căști / alte rute audio | **Netestat** | Fără validare completă pentru accesorii și schimbarea rutelor. |
 | Client IMS | **Experimental** | Port compilat, cu înregistrare IMS voce pe SIM 1 într-o probă controlată. Activarea a fost retrasă; nu pornește automat. |
 | VoLTE | **Netestat** | Înregistrarea IMS nu dovedește un apel VoLTE; apelul primit reușit nu a fost identificat ca VoLTE. |
-| VoWiFi | **Nefuncțional** | Neintegrat; Wi-Fi nu este încă operațional. |
-| Wi-Fi | **Experimental** | În probele curente, bootstrap WCNSS și modulul stock creează wlan0/p2p0; HAL înregistrat. Fără asociere, Internet sau persistență la boot confirmate. |
-| Bluetooth | **Experimental** | HAL HCI înregistrat și BLE_ON în proba temporară; fără activare clasică completă, împerechere sau accesorii validate. |
+| VoWiFi | **Nefuncțional** | IMS/VoWiFi neintegrat; conectarea Wi-Fi de probă nu validează apeluri Wi-Fi. |
+| Wi-Fi | **Experimental** | Asociere COMPLETED, adresă și 2/2 ping prin wlan0 în proba manuală. Autostart dezactivat după un episod 900E; stabilitatea după reboot nu este validată. |
+| Bluetooth | **Experimental** | ON în proba manuală; după recuperare, inițializarea HCI a produs SIGABRT repetat. Oprit temporar; fără împerechere sau accesorii validate. |
 | Hotspot | **Netestat** | Nu există o probă de partajare a conexiunii. |
 
 ### Aplicații și alte componente hardware
@@ -109,7 +109,8 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Contacte Leo | **Funcțional** | Creare, căutare, editare și ștergere verificate pe un contact local de probă. Contactele sincronizate și structurile complexe rămân nevalidate. |
 | Telefon Leo | **Parțial** | Tastatură numerică, istoric și alegere SIM implementate; două conturi SIM afișate. Nu a fost inițiat un apel în această probă. |
 | Ceas Leo | **Parțial** | Oră/cronometru testate; temporizatorul și alarma proprie au declanșat în fundal, inclusiv după terminarea procesului. Utilizatorul confirmă sunetul temporizatorului. Recuperarea la reboot și celelalte rute/volume nu sunt validate. |
-| Calendar / Fișiere Android | **Parțial** | Interfețele se deschid; salvarea evenimentelor și operațiile complete nu sunt validate. |
+| Calendar Leo | **Parțial** | Interfață nativă, lună/agendă; salvare de eveniment în calendarul local Android verificată. Creare, persistență după reboot, editare și ștergere verificate; fără recurențe/remindere. |
+| Fișiere Leo | **Parțial** | Folder și text UTF-8 create; provider read-only și respingere acces în afara rădăcinii verificate. Persistență după reboot, editare text, redenumire de fișier și ștergere fișier/folder gol verificate; deschiderea externă depinde de aplicațiile instalate. |
 | Galerie / Muzică | **Parțial** | Pornire verificată; proba MediaPlayer separată nu confirmă toate funcțiile acestor aplicații. |
 | Browser / WebView | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Fără navigare stabilă pe internet validată. |
 | Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
@@ -159,7 +160,7 @@ Puncte de plecare pentru dezvoltare:
 ## Pornire și recuperare
 
 Android, ADB și serviciile de bază au revenit după repornire în probele efectuate.
-Un ANR NetworkPolicy poate bloca interfața până la alegerea „Așteaptă”. USB poate
+Corecția NetworkPolicy este în testare; vezi [auditul actual](android81/FIVE-TRACK-AUDIT.md). USB poate
 dispărea temporar; lipsa ADB nu dovedește singură că telefonul nu a pornit.
 
 Recovery-ul de diagnostic cu ADB a fost folosit în dezvoltare. Nu există aici o
@@ -169,12 +170,12 @@ instrucțiuni validate pentru acest port.
 
 ## Probleme cunoscute
 
-- ANR NetworkPolicy la pornire; revenirea după boot nu este complet autonomă.
-- Wi-Fi și Bluetooth sunt în bring-up; nu avem încă conectare Wi-Fi sau împerechere confirmate.
+- Corecție NetworkPolicy instalată; stabilitatea pornirii necesită observație suplimentară.
+- Wi-Fi are acces Internet în proba manuală; autostartul este dezactivat. Bluetooth necesită repararea inițializării HCI; împerecherea nu este confirmată.
 - Cameră, GPS și integrarea senzorilor nefuncționale în auditul documentat.
 - WebView a prezentat crash GPU; Email are o eroare de resurse la pornire.
 - Aplicațiile Android nu sunt toate controlabile complet din taste; cursorul este o opțiune de acces.
-- SMS/MMS, apeluri inițiate, accesorii audio, autonomia și încărcarea completă necesită probe.
+- SIM 2, audio la apel inițiat după recuperare, accesorii audio, autonomia și încărcarea completă necesită probe; MMS neimplementat.
 - Înregistrarea IMS experimentală nu validează VoLTE sau VoWiFi.
 
 Corecția DispSync/HWC1 a redus mediana **tastă → începutul desenării** de la
@@ -259,3 +260,11 @@ Structura fișei este inspirată de paginile Devices din postmarketOS, de exempl
 [Nokia N900](https://wiki.postmarketos.org/wiki/Nokia_N900_%28nokia-n900%29):
 identificare, funcții, instalare, pornire și documentație. Stările și rezultatele
 de aici provin din proiectul Android Leo, nu din acea pagină.
+
+### Audit curent și aplicații noi
+
+[Rezultate și limite pentru cele cinci direcții](android81/FIVE-TRACK-AUDIT.md).
+
+| Calendar Leo · eveniment sintetic | Fișiere Leo · text sintetic |
+| --- | --- |
+| ![Calendar Leo](android81/screenshots/leo-calendar-event.png) | ![Fișiere Leo](android81/screenshots/leo-files-created.png) |

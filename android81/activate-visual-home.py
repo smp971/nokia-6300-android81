@@ -47,19 +47,26 @@ if marker not in old_script:
     finally:
         native('/system/bin/mount', '-o', 'remount,ro', '/system')
 java('/system/bin/pm', 'grant', 'ro.leo.visual', 'android.permission.READ_PHONE_STATE')
-permissions=['READ_CONTACTS','WRITE_CONTACTS','READ_CALL_LOG','CALL_PHONE','READ_SMS','RECEIVE_SMS','SEND_SMS']
+permissions=['READ_CONTACTS','WRITE_CONTACTS','READ_CALL_LOG','CALL_PHONE','READ_SMS','RECEIVE_SMS','SEND_SMS','READ_CALENDAR','WRITE_CALENDAR','READ_EXTERNAL_STORAGE','WRITE_EXTERNAL_STORAGE']
 for permission in permissions:
     java('/system/bin/pm','grant','ro.leo.visual','android.permission.'+permission)
 permission_marker='# Leo system-app permissions for the keypad engineering image.'
 current_script=native('/system/bin/cat','/system/etc/leo-first-setup.sh').replace('\r\n','\n')
-if permission_marker not in current_script:
+permission_block=permission_marker+'\nif cmd package list packages ro.leo.visual | grep -qx \'package:ro.leo.visual\'; then\n'
+permission_block+='    for permission in READ_PHONE_STATE '+' '.join(permissions)+'; do\n'
+permission_block+='        cmd package grant --user 0 ro.leo.visual android.permission.$permission\n    done\nfi\n'
+updated_permissions=current_script
+if permission_marker in current_script:
+    start=current_script.index(permission_marker)
+    end=current_script.index('\nfi',start)+len('\nfi')
+    updated_permissions=current_script[:start]+permission_block.rstrip()+current_script[end:]
+else:
+    updated_permissions=current_script.rstrip()+'\n'+permission_block
+if updated_permissions != current_script:
     previous=ROOT/'output/visual-permissions-before.sh'
     if not previous.exists(): previous.write_bytes(current_script.encode('utf-8'))
-    permission_block=permission_marker+'\nif cmd package list packages ro.leo.visual | grep -qx \'package:ro.leo.visual\'; then\n'
-    permission_block+='    for permission in READ_PHONE_STATE '+' '.join(permissions)+'; do\n'
-    permission_block+='        cmd package grant --user 0 ro.leo.visual android.permission.$permission\n    done\nfi\n'
     staged=ROOT/'output/visual-permissions-setup.sh'
-    staged.write_bytes((current_script.rstrip()+'\n'+permission_block).encode('utf-8'))
+    staged.write_bytes(updated_permissions.encode('utf-8'))
     subprocess.run(ADB+['push',str(staged),'/tmp/leo-visual-permissions.sh'],check=True)
     native('/system/bin/mount','-o','remount,rw','/system')
     try:
