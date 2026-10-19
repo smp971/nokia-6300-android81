@@ -59,8 +59,29 @@ built-in UHID and enforced module signatures. The embedded configuration has
 only the three intended differences listed above. Build artifacts and detailed
 reports remain under ignored `android81/output/kernel-uhid/`.
 
-This candidate has not been packaged into a device boot image or run on the phone.
-Mouse connection and input remain unverified.
+## First device trial: 19 October 2026
+
+`package-uhid-boot.py` combines the candidate zImage with all 38 appended original
+DTBs, retaining the live boot image's exact compressed ramdisk, header addresses,
+command line and partition size. It updates the kernel size and boot SHA-1 ID.
+`flash-uhid-boot.py` verifies serial, partition identity/size, idle call state,
+fresh boot backup, staged image and readback hashes. It also saves the current
+recovery read-only and confirms its hash is unchanged. It never formats data or
+writes recovery, and does not reboot automatically.
+
+The authorized flash readback matched and Android booted the rebuilt kernel.
+ADB and the Leo launcher ran; `/dev/uhid` appeared in Android's device namespace
+as `uhid:uhid`, mode 0660. The original signed WLAN module loaded and WCNSS
+reached ONLINE. Both SIMs reported READY and the first radio reported LTE;
+Internet connectivity was not revalidated in this trial. Bluetooth reached ON.
+
+A manually started audio regression trial loaded the initial Qualcomm audio
+modules, then the device entered Qualcomm diagnostics 900E. The exact failure
+point still requires the persisted audio trace/crash log after a battery power
+cycle. The audio setup disarms its automatic loading before inserting modules;
+the failed trial did not reach its success/rearm step. Do not rerun audio setup
+until the failure is understood. Static module CRC/signature compatibility does
+not establish runtime safety. Mouse connection and input remain unverified.
 
 These are offline prerequisite checks. They do not establish bootability or
 working graphics, audio, modem, Wi-Fi or mouse input. No boot image is packaged
