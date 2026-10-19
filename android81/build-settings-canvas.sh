@@ -3,6 +3,7 @@ set -eo pipefail
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$TASK_DIR/environment.sh"
 python3 "$TASK_DIR/patch-settings-optional-wifi.py"
+python3 "$TASK_DIR/patch-settings-optional-usb.py"
 python3 "$TASK_DIR/patch-settings-rendering.py"
 cd /root/android81-leo/src
 source build/envsetup.sh
