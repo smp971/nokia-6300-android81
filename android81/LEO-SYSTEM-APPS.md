@@ -43,7 +43,9 @@ apel pe fiecare SIM și istoricul complet necesită probe separate.
 - Sus/jos selectează SMS-ul, OK deschide detaliul complet, Înapoi revine la
   aceeași selecție. Bulele afișează maximum șase rânduri, cu elipsă; detaliul
   oferă textul integral într-un ecran derulabil. Soft stânga: Răspunde,
-  Detalii mesaj, Reîmprospătează. Meniul fizic global rămâne separat.
+  Detalii mesaj, Redirecționează, Copiază textul, Copiază numărul, Caută în
+  conversație, Reîmprospătează. Același meniu este disponibil din detaliu.
+  Meniul fizic global rămâne separat.
 - Este o implementare nativă inspirată de stilul KaiOS, fără preluarea Gaia sau
   a resurselor proprietare. Rândurile sunt reutilizate, iar schimbarea selecției
   recolorează doar cele două bule implicate.
@@ -89,8 +91,78 @@ python android81/framework-command.py /system/bin/sh /system/bin/am start -f 0x1
 ```
 
 Modul demo nu citește inbox-ul, nu marchează conversații ca citite, nu salvează
-ciorne și blochează compunerea/trimiterea. Înapoi închide demonstrația. Deschiderea
+ciorne și blochează răspunsul/trimiterea. Redirecționarea permite verificarea
+editorului cu date fictive, dar trimiterea rămâne blocată. Înapoi din editor
+revine la demonstrație. Înapoi din conversație o închide. Deschiderea
 normală din Home folosește conversațiile reale și noul aspect.
+
+### Căutare, redirecționare și clipboard
+
+Din lista Mesaje, soft stânga oferă SMS nou și Caută în mesaje. Căutarea folosește
+textul sau adresa expeditorului/destinatarului, ca subșir literal, fără diferențe
+de majuscule sau diacritice (`maine` găsește `mâine`). Filtrarea rulează în fundal,
+iar părăsirea paginii anulează afișarea rezultatului vechi. Domeniul este arhiva
+încărcată: cel mult 1.000 intrări din fiecare sursă (provider, inbox local,
+arhivă locală de ieșire). Nu promitem căutare în tot istoricul nelimitat.
+Rezultatele sunt în ordine descrescătoare a datei; OK deschide textul integral.
+O simplă căutare nu marchează conversațiile ca citite.
+
+Redirecționează copiază corpul în editor și lasă destinatarul gol. Dacă există
+o ciornă, utilizatorul alege păstrarea ei sau înlocuirea; nu se suprascrie implicit.
+Pentru texte peste limita de 1.000 caractere, redirecționarea este refuzată cu
+explicație, iar copierea integrală rămâne disponibilă. Se păstrează alegerea SIM,
+segmentarea și confirmarea explicită înainte de trimitere.
+
+Clipboard-ul Android primește exact textul selectat sau adresa sa (un expeditor
+alfanumeric este copiat ca atare). Nu este o arhivă permanentă Leo. Verificat pe
+telefon: căutare fără diacritice, deschiderea rezultatului, editor de redirecționare
+cu destinatar gol, blocarea trimiterii demo, copiere text/adresă și lipire în
+editor. Preferințele reale de ciornă/trimitere au rămas identice în proba demo.
+
+### Corecție: mesajele trimise nu apăreau
+
+Confirmarea veche elimina corpul din preferințele temporare fără să-l salveze
+local. La audit, tabela SMS din providerul Android era goală. Mesajele vechi ale
+căror corpuri au fost eliminate nu pot fi reconstruite din simpla stare „trimis”.
+
+`SmsStore` are acum schema 3: inbox-ul existent rămâne intact, iar tabela
+`outgoing` păstrează tokenul, destinatarul, textul, data, SIM-ul și starea.
+Înregistrarea se salvează **înaintea** cererii modemului. Dacă salvarea inițială
+eșuează, nu se trimite SMS-ul. Callback-urile multipart actualizează aceeași
+înregistrare: trimis numai dacă toate segmentele au reușit; eșuat la finalizarea
+cu eroare; altfel rămâne în așteptare. „Trimis” confirmă operația de trimitere,
+nu livrarea la destinatar.
+
+Rezultatul se arhivează înainte de ștergerea preferințelor temporare. Eșecul
+arhivării păstrează datele pentru recuperare. Callback-urile duplicate nu dublează
+istoricul, iar ciorna se șterge numai dacă este încă identică mesajului trimis.
+Starea aflată deja în așteptare în versiunea veche poate fi importată, dacă textul
+încă există; data originală poate lipsi. Nu se retrimite nimic automat.
+
+Conversația se actualizează la schimbarea confirmărilor și la revenirea în aplicație.
+Arhiva locală este citită și dacă providerul Android nu răspunde. Dacă există și o
+copie în provider, se încearcă asocierea unu-la-unu după adresă, text, SIM și dată
+(fereastră de 10 secunde). Nu există încă un identificator comun garantat pentru
+toate implementările de provider.
+
+Validare: 20 verificări pe SQLite Android și receiver-ul de producție, într-un
+director `/tmp` separat, cu notificările înlocuite de un stub de test. Include
+migrare din schema 2, persistență, Unicode/SIM, confirmări multipart, duplicate,
+eșec parțial, ciornă nouă și indisponibilitatea stocării. Proba nu include
+`SmsManager` și nu folosește datele reale ale aplicației. Separat, interfața a
+afișat trei înregistrări locale marcate DEMO (trimis/eșuat/în așteptare), apoi
+numai acele înregistrări au fost eliminate. Nu s-a trimis un SMS real nou pentru
+această corecție; proba radio completă rămâne de repetat.
+
+```text
+wsl -d kaios -- bash /mnt/d/ROMS/nokia-6300-ta1286-dump/android81/build-sms-archive-probe.sh
+adb -s 695d push android81/output/leo-sms-archive-probe.jar /tmp/leo-sms-archive-probe.jar
+python android81/framework-command.py /system/bin/env CLASSPATH=/tmp/leo-sms-archive-probe.jar /system/bin/app_process /system/bin ro.leo.visual.SmsArchiveProbe /tmp/leo-sms-probe-UNIQUE
+```
+
+Folosește un nume nou de director la fiecare rulare. Proba refuză un director
+existent și șterge doar fișierele proprii. Stub-ul din `sms-tests` este compilat
+exclusiv în probă; APK-ul folosește receiver-ul de notificări original.
 
 ## Alarme și temporizator
 

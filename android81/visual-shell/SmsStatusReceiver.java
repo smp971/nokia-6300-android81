@@ -16,10 +16,19 @@ public final class SmsStatusReceiver extends BroadcastReceiver {
             boolean complete=true,success=true;
             for(int i=0;i<states.length();i++) { if(states.getInt(i)==0) complete=false; if(states.getInt(i)!=1) success=false; }
             if(!complete) { saved.edit().putString("parts",states.toString()).commit(); return; }
+            // Persist the result before removing the sole temporary copy of the body.
+            try(SmsStore store=new SmsStore(context)) {
+                store.outgoing(token,saved.getString("number",""),saved.getString("body",""),saved.getLong("date",System.currentTimeMillis()),saved.getInt("sub",-1));
+                store.completed(token,success);
+            }
             SharedPreferences draft=context.getSharedPreferences("sms-draft",0);
             if(success && draft.getString("number","").equals(saved.getString("number","")) && draft.getString("body","").equals(saved.getString("body",""))) draft.edit().clear().commit();
             String number=saved.getString("number",""); saved.edit().clear().putString("status",success?"SMS trimis":"Trimitere eșuată sau parțială; verifică înainte de reîncercare").commit();
             SmsReceiver.notify(context,success?"SMS trimis":"SMS netrimis complet; ciornă păstrată",number);
         } catch(JSONException invalid) { }
+        catch(RuntimeException unavailable) {
+            // Keep temporary state for recovery instead of discarding the message.
+            SmsReceiver.notify(context,"Confirmare SMS: arhivă indisponibilă",saved.getString("number",""));
+        }
     }
 }
