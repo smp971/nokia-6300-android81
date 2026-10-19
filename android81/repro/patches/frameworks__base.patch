@@ -1,0 +1,106 @@
+diff --git a/libs/hwui/renderthread/OpenGLPipeline.cpp b/libs/hwui/renderthread/OpenGLPipeline.cpp
+index 7283eb123d6a13bf0b959dbe461ee138bb463850..5e3fb4ca36df99db5e007f960ecb5010897782d1 100644
+--- a/libs/hwui/renderthread/OpenGLPipeline.cpp
++++ b/libs/hwui/renderthread/OpenGLPipeline.cpp
+@@ -26,6 +26,7 @@
+ 
+ #include <cutils/properties.h>
+ #include <strings.h>
++#include <string.h>
+ 
+ namespace android {
+ namespace uirenderer {
+@@ -364,7 +365,25 @@ static bool uploadBitmapToGraphicBuffer(uirenderer::Caches& caches, SkBitmap& bi
+     EGLint waitStatus = eglClientWaitSyncKHR(display, autoFence.fence,
+             EGL_SYNC_FLUSH_COMMANDS_BIT_KHR, FENCE_TIMEOUT);
+     if (waitStatus != EGL_CONDITION_SATISFIED_KHR) {
+-        LOG_ALWAYS_FATAL("Failed to wait for the fence %#x", eglGetError());
++        EGLint error = eglGetError();
++        // LEO_ADRENO_BITMAP_FENCE: this upload owns the current GL context.
++        // The stock A304 driver rejects both finite and infinite client waits.
++        // Finish this context's upload, rather than ignoring synchronization.
++        const char* vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
++        if (error == EGL_BAD_PARAMETER &&
++                property_get_bool("persist.leo.adreno.hwui_finish", false) &&
++                vendor && strstr(vendor, "Qualcomm")) {
++            glFinish();
++            if (glGetError() == GL_NO_ERROR) {
++                static bool warned = false;
++                if (!warned) {
++                    ALOGW("Leo Adreno: hardware bitmap upload synchronized with glFinish");
++                    warned = true;
++                }
++                return true;
++            }
++        }
++        LOG_ALWAYS_FATAL("Failed to wait for the fence %#x", error);
+         return false;
+     }
+     return true;
+diff --git a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+index 5159c70e991c8ebe20327aaeb6c2992cdd9ea1d6..d7b7765ff31138fc8b6a5274b392d2faef74a34c 100644
+--- a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
++++ b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+@@ -794,9 +794,9 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
+                     new NetworkRequest.Builder().build(), mNetworkCallback);
+ 
+             mUsageStats.addAppIdleStateChangeListener(new AppIdleStateChangeListener());
+-            // tell systemReady() that the service has been initialized
+-            initCompleteSignal.countDown();
+         } finally {
++            // Leo: always release startup, including unsupported bandwidth control.
++            initCompleteSignal.countDown();
+             // Restore the default priority after init is done
+             Process.setThreadPriority(oldPriority);
+             Trace.traceEnd(Trace.TRACE_TAG_NETWORK);
+diff --git a/services/core/java/com/android/server/net/NetworkStatsService.java b/services/core/java/com/android/server/net/NetworkStatsService.java
+index 3af5265e6fa9bbc78d25f9bf241657232face84e..66672c8630e336078c0a415770a9ea6dbc69a476 100644
+--- a/services/core/java/com/android/server/net/NetworkStatsService.java
++++ b/services/core/java/com/android/server/net/NetworkStatsService.java
+@@ -330,6 +330,7 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
+         mSystemReady = true;
+ 
+         if (!isBandwidthControlEnabled()) {
++            mSystemReady = false;
+             Slog.w(TAG, "bandwidth controls disabled, unable to track stats");
+             return;
+         }
+@@ -1318,6 +1319,12 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
+         final IndentingPrintWriter pw = new IndentingPrintWriter(rawWriter, "  ");
+ 
+         synchronized (mStatsLock) {
++            // Leo: no recorders exist when kernel bandwidth accounting is unavailable.
++            if (!mSystemReady || mDevRecorder == null || mXtRecorder == null
++                    || mUidRecorder == null || mUidTagRecorder == null) {
++                pw.println("Network usage accounting unavailable: recorders not initialized");
++                return;
++            }
+             if (args.length > 0 && "--proto".equals(args[0])) {
+                 // In this case ignore all other arguments.
+                 dumpProtoLocked(fd);
+diff --git a/services/core/java/com/android/server/notification/NotificationManagerService.java b/services/core/java/com/android/server/notification/NotificationManagerService.java
+index 797ce37af56099ad83608c3a9a5beaa04d1351c6..dfa6e29a2af5f4ea8dea5a63c8ee508ebb54a0d6 100644
+--- a/services/core/java/com/android/server/notification/NotificationManagerService.java
++++ b/services/core/java/com/android/server/notification/NotificationManagerService.java
+@@ -2783,7 +2783,8 @@ public class NotificationManagerService extends SystemService {
+             checkCallerIsSystemOrShell();
+             final long identity = Binder.clearCallingIdentity();
+             try {
+-                if (!mActivityManager.isLowRamDevice()) {
++                // Leo: shell/system may explicitly grant policy access to our keypad shell on low RAM.
++                if (!mActivityManager.isLowRamDevice() || "ro.leo.visual".equals(pkg)) {
+                     mConditionProviders.setPackageOrComponentEnabled(
+                             pkg, userId, true, granted);
+ 
+@@ -2879,7 +2880,10 @@ public class NotificationManagerService extends SystemService {
+             checkCallerIsSystemOrShell();
+             final long identity = Binder.clearCallingIdentity();
+             try {
+-                if (!mActivityManager.isLowRamDevice()) {
++                // Leo: retain low-RAM limits except our explicitly granted keypad notification center.
++                if (!mActivityManager.isLowRamDevice() ||
++                        ("ro.leo.visual".equals(listener.getPackageName()) &&
++                        "ro.leo.visual.LeoNotificationService".equals(listener.getClassName()))) {
+                     mConditionProviders.setPackageOrComponentEnabled(listener.flattenToString(),
+                             userId, false, granted);
+                     mListeners.setPackageOrComponentEnabled(listener.flattenToString(),

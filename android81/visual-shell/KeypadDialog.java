@@ -23,6 +23,7 @@ final class KeypadDialog extends Dialog {
 
     KeypadDialog(Context context, String title, String[] items, Action action) {
         super(context);
+        final Appearance.Palette palette=Appearance.palette(context);
         this.title=title; this.items=items; this.action=action;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         content=new View(context) {
@@ -33,18 +34,19 @@ final class KeypadDialog extends Dialog {
             }
             protected void onDraw(Canvas c) {
                 c.save(); c.scale(getWidth()/240f,getHeight()/280f);
-                c.drawColor(0xff21172e);
+                c.drawColor(palette.background);
                 text(c,title,120,27,18,Color.WHITE,Paint.Align.CENTER);
+                paint.setColor(palette.accent);c.drawRect(12,35,228,37,paint);
                 int first=Math.max(0,Math.min(Math.max(0,items.length-5),selected-2));
                 for(int row=0;row<5 && first+row<items.length;row++) {
                     int index=first+row; float top=42+row*39;
                     if(index==selected) {
-                        paint.setColor(0xfff5eefb);
+                        paint.setColor(palette.selection);
                         c.drawRoundRect(new RectF(6,top,234,top+35),6,6,paint);
                     }
-                    text(c,items[index],15,top+23,14,index==selected?0xff38224f:Color.WHITE,Paint.Align.LEFT);
+                    text(c,items[index],15,top+23,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
                 }
-                paint.setColor(0xff100b19); c.drawRect(0,250,240,280,paint);
+                paint.setColor(palette.bar); c.drawRect(0,250,240,280,paint);
                 text(c,"Alege",120,270,13,Color.WHITE,Paint.Align.CENTER);
                 text(c,"Înapoi",233,270,12,Color.WHITE,Paint.Align.RIGHT);
                 c.restore();

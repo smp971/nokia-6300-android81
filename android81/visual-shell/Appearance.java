@@ -6,8 +6,20 @@ import android.util.AtomicFile;
 import java.io.*;
 
 final class Appearance {
-    static final String[] THEMES={"Violet","Apus","Ocean","Pădure"};
-    static final int[][] COLORS={{0xff241047,0xff593185,0xffbc6e91},{0xff243959,0xff98707c,0xffedb17c},{0xff081d36,0xff17628b,0xff58b6be},{0xff102d28,0xff3c7657,0xffaac47e}};
+    static final String[] THEMES={"Violet","Apus","Ocean","Pădure","Clasic · Albastru","Coral"};
+    static final int[][] COLORS={{0xff241047,0xff593185,0xffbc6e91},{0xff243959,0xff98707c,0xffedb17c},{0xff081d36,0xff17628b,0xff58b6be},{0xff102d28,0xff3c7657,0xffaac47e},{0xff091a37,0xff205cb4,0xff5fc9ed},{0xff32182c,0xffa44162,0xffffad83}};
+    static final class Palette {
+        final int background,bar,card,accent,selection,ink;
+        final int[] gradient;
+        Palette(int[] colors){gradient=colors;background=mix(colors[0],0xff080e19,.48f);bar=mix(colors[0],0xff03070e,.6f);card=mix(colors[0],colors[1],.24f);accent=colors[2];selection=mix(colors[2],Color.WHITE,.84f);ink=mix(colors[0],Color.BLACK,.18f);}
+    }
+    static Palette palette(Context c){android.content.SharedPreferences prefs=c.getSharedPreferences("appearance",0);int i=Math.max(0,Math.min(COLORS.length-1,prefs.getInt("theme",prefs.getBoolean("warm",false)?1:0)));return new Palette(COLORS[i]);}
+    static int mix(int a,int b,float f){return Color.rgb((int)(Color.red(a)*(1-f)+Color.red(b)*f),(int)(Color.green(a)*(1-f)+Color.green(b)*f),(int)(Color.blue(a)*(1-f)+Color.blue(b)*f));}
+    static android.graphics.drawable.GradientDrawable surface(int color,int radius){android.graphics.drawable.GradientDrawable d=new android.graphics.drawable.GradientDrawable();d.setColor(color);d.setCornerRadius(radius);return d;}
+    static android.graphics.drawable.StateListDrawable fieldSurface(Palette p,int radius){
+        android.graphics.drawable.GradientDrawable focus=surface(p.card,radius);focus.setStroke(2,p.accent);
+        android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},focus);states.addState(new int[]{},surface(p.card,radius));return states;
+    }
     static Bitmap decode(Context context,Uri uri,int bound) throws IOException {
         BitmapFactory.Options o=new BitmapFactory.Options(); o.inJustDecodeBounds=true;
         try(InputStream stream=context.getContentResolver().openInputStream(uri)) { BitmapFactory.decodeStream(stream,null,o); }

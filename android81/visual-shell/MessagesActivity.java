@@ -273,8 +273,8 @@ public final class MessagesActivity extends LeoActivity {
         if(!(view instanceof LinearLayout))return;
         LinearLayout row=(LinearLayout)view;boolean received=Boolean.TRUE.equals(row.getTag());
         GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(9));
-        background.setColor(received?0xff40364e:0xff633b87);
-        background.setStroke(dp(2),selected?0xfff0d9ff:Color.TRANSPARENT);
+        background.setColor(received?palette.card:Appearance.mix(palette.gradient[1],palette.background,.15f));
+        background.setStroke(dp(2),selected?palette.accent:Color.TRANSPARENT);
         row.getChildAt(1).setBackground(background);
     }
     private void demo() {

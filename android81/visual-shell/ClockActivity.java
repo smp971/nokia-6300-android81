@@ -20,6 +20,7 @@ import java.util.Locale;
 
 /** Original Android adaptation of the clock/stopwatch workflow studied in KaiOS. */
 public final class ClockActivity extends Activity {
+    private Appearance.Palette palette;
     private final Handler handler=new Handler();
     private final ArrayList<Long> laps=new ArrayList<Long>();
     private Face face;
@@ -34,8 +35,8 @@ public final class ClockActivity extends Activity {
         }
     };
     public void onCreate(Bundle state) {
-        super.onCreate(state);
-        getWindow().setStatusBarColor(0xff1a0e3a);
+        super.onCreate(state);palette=Appearance.palette(this);
+        getWindow().setStatusBarColor(palette.bar);
         boot=Settings.Global.getInt(getContentResolver(),Settings.Global.BOOT_COUNT,-1);
         SharedPreferences saved=getSharedPreferences("clock",MODE_PRIVATE);
         accumulated=saved.getLong("elapsed",0); started=saved.getLong("started",0);
@@ -106,9 +107,11 @@ public final class ClockActivity extends Activity {
             paint.setTextSize(size); paint.setColor(color); paint.setTextAlign(align); c.drawText(value,x,y,paint);
         }
         protected void onDraw(Canvas c) {
-            c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(0xff21172e);
+            c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(palette.background);
             text(c,"Ceas",120,26,18,Color.WHITE,Paint.Align.CENTER);
-            text(c,"‹  "+(stopwatch?"Cronometru":"Ora")+"  ›",120,52,14,0xffdfbdff,Paint.Align.CENTER);
+            text(c,"‹  "+(stopwatch?"Cronometru":"Ora")+"  ›",120,52,14,palette.accent,Paint.Align.CENTER);
+            paint.setColor(palette.card);c.drawRoundRect(10,70,230,185,16,16,paint);
+            paint.setColor(palette.accent);c.drawRoundRect(97,76,143,79,2,2,paint);
             if(stopwatch) {
                 text(c,duration(elapsed()),120,110,35,Color.WHITE,Paint.Align.CENTER);
                 text(c,running?"În mers":accumulated>0?"În pauză":"Pregătit",120,134,12,0xffd3bddf,Paint.Align.CENTER);
@@ -123,10 +126,10 @@ public final class ClockActivity extends Activity {
                 text(c,new SimpleDateFormat("d MMMM yyyy",new Locale("ro")).format(now),120,160,17,0xffd3bddf,Paint.Align.CENTER);
                 text(c,"Stânga / dreapta: schimbă fila",120,212,12,0xffd3bddf,Paint.Align.CENTER);
             }
-            text(c,message,120,263,11,0xffdfbdff,Paint.Align.CENTER);
-            paint.setColor(0xff100f1d); c.drawRect(0,276,240,302,paint);
+            text(c,message,120,263,11,palette.accent,Paint.Align.CENTER);
+            paint.setColor(palette.bar); c.drawRect(0,276,240,302,paint);
             text(c,stopwatch?(running?"Tură":"Resetare"):"Opțiuni",7,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(c,stopwatch?(running?"Pauză":accumulated>0?"Continuă":"Start"):"Cronometru",120,293,12,0xffdfbdff,Paint.Align.CENTER);
+            text(c,stopwatch?(running?"Pauză":accumulated>0?"Continuă":"Start"):"Cronometru",120,293,12,palette.accent,Paint.Align.CENTER);
             text(c,"Înapoi",233,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
         }
     }

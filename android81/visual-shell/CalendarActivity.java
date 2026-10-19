@@ -130,8 +130,8 @@ public final class CalendarActivity extends LeoActivity {
             Calendar first=(Calendar)day.clone(); first.set(Calendar.DAY_OF_MONTH,1); int offset=(first.get(Calendar.DAY_OF_WEEK)+5)%7;
             for(int value=1;value<=day.getActualMaximum(Calendar.DAY_OF_MONTH);value++) {
                 int cell=offset+value-1; float x=18+cell%7*34,y=78+cell/7*25;
-                if(value==day.get(Calendar.DAY_OF_MONTH)) { p.setColor(0xfff5eefb); c.drawRoundRect(new RectF(x-15,y-18,x+15,y+5),5,5,p); }
-                text(c,""+value,x,y,14,value==day.get(Calendar.DAY_OF_MONTH)?0xff38224f:Color.WHITE);
+                if(value==day.get(Calendar.DAY_OF_MONTH)) { p.setColor(palette.selection); c.drawRoundRect(new RectF(x-15,y-18,x+15,y+5),5,5,p); }
+                text(c,""+value,x,y,14,value==day.get(Calendar.DAY_OF_MONTH)?palette.ink:Color.WHITE);
             }
             text(c,"* luna precedentă · # luna următoare",120,221,11,0xffd3bddf); c.restore();
         }

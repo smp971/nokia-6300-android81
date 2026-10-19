@@ -1,0 +1,76 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 591a132a667a1a3d2a3c45d89e7f54b37ffd34ae..6c7555edb4fc9e9863e83ce08d7f05320952383e 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -91,7 +91,7 @@
+             android:icon="@drawable/ic_launcher_settings"
+             android:taskAffinity=""
+             android:theme="@style/Theme.Settings"
+-            android:hardwareAccelerated="true"
++            android:hardwareAccelerated="false"
+             android:requiredForAllUsers="true"
+             android:supportsRtl="true"
+             android:allowBackup="false"
+diff --git a/src/com/android/settings/connecteddevice/ConnectedDeviceDashboardFragment.java b/src/com/android/settings/connecteddevice/ConnectedDeviceDashboardFragment.java
+index 483b00c3e44b080a7f93ce5b5cfeaaee21325b90..66ef0133035791f7a89a156a175575ece91d499e 100644
+--- a/src/com/android/settings/connecteddevice/ConnectedDeviceDashboardFragment.java
++++ b/src/com/android/settings/connecteddevice/ConnectedDeviceDashboardFragment.java
+@@ -73,7 +73,10 @@ public class ConnectedDeviceDashboardFragment extends DashboardFragment {
+                 new NfcPreferenceController(context);
+         lifecycle.addObserver(nfcPreferenceController);
+         controllers.add(nfcPreferenceController);
+-        mUsbPrefController = new UsbModePreferenceController(context, new UsbBackend(context));
++        // LEO_OPTIONAL_USB: do not fetch an unpublished USB service on this eng build.
++        mUsbPrefController = new UsbModePreferenceController(context,
++                android.os.ServiceManager.checkService(Context.USB_SERVICE) == null
++                        ? null : new UsbBackend(context));
+         lifecycle.addObserver(mUsbPrefController);
+         controllers.add(mUsbPrefController);
+         final BluetoothMasterSwitchPreferenceController bluetoothPreferenceController =
+diff --git a/src/com/android/settings/connecteddevice/UsbModePreferenceController.java b/src/com/android/settings/connecteddevice/UsbModePreferenceController.java
+index a6cb9be1e7f7a3b58fd74dc7453b3063fba0208a..c85405c8983eaa0e4f0e22382907dbca3486eeb2 100644
+--- a/src/com/android/settings/connecteddevice/UsbModePreferenceController.java
++++ b/src/com/android/settings/connecteddevice/UsbModePreferenceController.java
+@@ -61,7 +61,8 @@ public class UsbModePreferenceController extends AbstractPreferenceController
+ 
+     @Override
+     public boolean isAvailable() {
+-        return true;
++        // LEO_OPTIONAL_USB: the row is unavailable without its Android backend.
++        return mUsbBackend != null;
+     }
+ 
+     @Override
+@@ -76,7 +77,7 @@ public class UsbModePreferenceController extends AbstractPreferenceController
+ 
+     @Override
+     public void onResume() {
+-        mUsbReceiver.register();
++        if (mUsbBackend != null) mUsbReceiver.register();
+     }
+ 
+     @VisibleForTesting
+@@ -97,6 +98,7 @@ public class UsbModePreferenceController extends AbstractPreferenceController
+     }
+ 
+     private void updataSummary(Preference preference) {
++        if (mUsbBackend == null) return;
+         updataSummary(preference, mUsbBackend.getCurrentMode());
+     }
+ 
+diff --git a/src/com/android/settings/wfd/WifiDisplaySettings.java b/src/com/android/settings/wfd/WifiDisplaySettings.java
+index 0d6b4dc28b919cd1ce84a52d92162f327df41d1c..576d5210742e279df2ecf4dd0e759f89c9bdf7ee 100755
+--- a/src/com/android/settings/wfd/WifiDisplaySettings.java
++++ b/src/com/android/settings/wfd/WifiDisplaySettings.java
+@@ -212,6 +212,11 @@ public final class WifiDisplaySettings extends SettingsPreferenceFragment {
+     }
+ 
+     public static boolean isAvailable(Context context) {
++        // LEO_OPTIONAL_WIFI: querying a missing service is fatal for this eng system app.
++        if (!context.getPackageManager().hasSystemFeature(
++                android.content.pm.PackageManager.FEATURE_WIFI_DIRECT)) {
++            return false;
++        }
+         return context.getSystemService(Context.DISPLAY_SERVICE) != null
+                 && context.getSystemService(Context.WIFI_P2P_SERVICE) != null;
+     }

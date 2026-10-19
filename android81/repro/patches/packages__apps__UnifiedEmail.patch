@@ -1,0 +1,27 @@
+diff --git a/res/drawable/compose_button.xml b/res/drawable/compose_button.xml
+index 484747dc3a7889e3ecab9df874fe5a034c1e39f5..a5bc1b59f4d31296c7d0b32f8563731860bb9095 100644
+--- a/res/drawable/compose_button.xml
++++ b/res/drawable/compose_button.xml
+@@ -26,8 +26,6 @@
+         </selector>
+     </item>
+ 
+-    <item>
+-        <bitmap android:src="@drawable/ic_pencil_wht_24dp"
+-                android:gravity="center" />
+-    </item>
++    <item android:width="24dp" android:height="24dp" android:gravity="center"
++          android:drawable="@drawable/ic_pencil_wht_24dp" />
+ </layer-list>
+diff --git a/res/drawable/ic_next.xml b/res/drawable/ic_next.xml
+index 34586dd1bee2cd727f1017070b1d348609486710..882c03d5b0e42fbed46ca69bbbc3c437fd4b5a8b 100644
+--- a/res/drawable/ic_next.xml
++++ b/res/drawable/ic_next.xml
+@@ -16,5 +16,5 @@
+      limitations under the License.
+ -->
+ 
+-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:src="@drawable/ic_next_24dp" />
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:drawable="@drawable/ic_next_24dp" />

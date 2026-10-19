@@ -1,0 +1,14 @@
+diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+index b28fe68224f6718ac116cb9762352fbb5c2ed3e0..4d3855bb760a76ae672f1cc6abf074dc79874498 100644
+--- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
++++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+@@ -172,6 +172,9 @@ SurfaceFlinger::SurfaceFlinger()
+     dispSyncPresentTimeOffset = getInt64< ISurfaceFlingerConfigs,
+             &ISurfaceFlingerConfigs::presentTimeOffsetFromVSyncNs>(0);
+ 
++    // HWC1 also needs the scheduler thread introduced by DispSync::init.
++    mPrimaryDispSync.init(hasSyncFramework, dispSyncPresentTimeOffset);
++
+     useHwcForRgbToYuv = getBool< ISurfaceFlingerConfigs,
+             &ISurfaceFlingerConfigs::useHwcForRGBtoYUV>(false);
+ 

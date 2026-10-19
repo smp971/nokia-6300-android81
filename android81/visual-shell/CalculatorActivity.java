@@ -9,13 +9,14 @@ import android.view.KeyEvent;
 import android.view.View;
 
 public final class CalculatorActivity extends Activity {
+    private Appearance.Palette palette;
     private String expression="",message="";
     private boolean result;
     private Face face;
     public void onCreate(Bundle state) {
-        super.onCreate(state);
+        super.onCreate(state);palette=Appearance.palette(this);
         if(state!=null) { expression=state.getString("expression",""); result=state.getBoolean("result"); }
-        getWindow().setStatusBarColor(0xff1a0e3a);
+        getWindow().setStatusBarColor(palette.bar);
         face=new Face(); setContentView(face);
     }
     protected void onSaveInstanceState(Bundle state) {
@@ -70,8 +71,10 @@ public final class CalculatorActivity extends Activity {
             p.setTextSize(size); p.setColor(color); p.setTextAlign(align); c.drawText(value,x,y,p);
         }
         protected void onDraw(Canvas c) {
-            c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(0xff21172e);
+            c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(palette.background);
             text(c,"Calculator",120,28,18,Color.WHITE,Paint.Align.CENTER);
+            p.setColor(palette.card);c.drawRoundRect(8,48,232,143,12,12,p);
+            p.setColor(palette.accent);c.drawRoundRect(8,48,12,143,2,2,p);
             String shown=expression.isEmpty()?"0":expression.replace('*','×').replace('/','÷');
             p.setTextSize(24);
             if(p.measureText(shown)>216) {
@@ -79,13 +82,14 @@ public final class CalculatorActivity extends Activity {
                 shown="…"+shown;
             }
             text(c,shown,228,99,24,Color.WHITE,Paint.Align.RIGHT);
-            text(c,message,120,131,12,0xffdfbdff,Paint.Align.CENTER);
-            text(c,"↑ +     ↓ −     ← ×     → ÷",120,185,16,Color.WHITE,Paint.Align.CENTER);
+            text(c,message,120,131,12,palette.accent,Paint.Align.CENTER);
+            String[] keys={"↑  +","↓  −","←  ×","→  ÷"};
+            for(int i=0;i<4;i++){float x=8+i*57;p.setColor(palette.card);c.drawRoundRect(x,158,x+53,198,8,8,p);text(c,keys[i],x+26,184,15,palette.accent,Paint.Align.CENTER);}
             text(c,"0–9 cifre · * zecimal · # șterge tot",120,220,12,0xffd3bddf,Paint.Align.CENTER);
             text(c,"Tasta Înapoi: ieșire",120,249,12,0xffd3bddf,Paint.Align.CENTER);
-            p.setColor(0xff100f1d); c.drawRect(0,276,240,302,p);
+            p.setColor(palette.bar); c.drawRect(0,276,240,302,p);
             text(c,"Opțiuni",7,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(c,"=",120,293,16,0xffdfbdff,Paint.Align.CENTER);
+            text(c,"=",120,293,16,palette.accent,Paint.Align.CENTER);
             text(c,"Șterge",233,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
         }
     }

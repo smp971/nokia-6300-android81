@@ -1,0 +1,119 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index a38491940b3acbfedaa0b027e25691f800883b7a..652e290c360bb9350f4d524705e3b1ef718c4372 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -109,6 +109,10 @@
+     android:name="com.android.dialer.binary.aosp.AospDialerApplication"
+     android:supportsRtl="true"
+     android:usesCleartextTraffic="false">
++      <!-- Offline keypad preview: no Telecom calls, not exported to other apps. -->
++    <activity android:name="com.android.incallui.LeoCallPreview"
++      android:exported="false" android:label="Leo Call Preview"
++      android:theme="@android:style/Theme.Material.NoActionBar"/>
+   </application>
+ 
+ </manifest>
+diff --git a/java/com/android/incallui/InCallActivity.java b/java/com/android/incallui/InCallActivity.java
+index c95086c1e241da9018e587e618edd99ec1fa4e9b..527a8afca054ead58437df143fc6747621954721 100644
+--- a/java/com/android/incallui/InCallActivity.java
++++ b/java/com/android/incallui/InCallActivity.java
+@@ -77,6 +77,8 @@ public class InCallActivity extends TransactionSafeFragmentActivity
+ 
+   private static final String CONFIG_ANSWER_AND_RELEASE_ENABLED = "answer_and_release_enabled";
+ 
++  // LEO_CALL_KEYS: use Telecom's existing call objects, never synthetic calls.
++  private LeoCallKeys leoKeys;
+   private final InCallActivityCommon common;
+   private boolean didShowAnswerScreen;
+   private boolean didShowInCallScreen;
+@@ -129,6 +131,43 @@ public class InCallActivity extends TransactionSafeFragmentActivity
+             View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+ 
+     pseudoBlackScreenOverlay = findViewById(R.id.psuedo_black_screen_overlay);
++    leoKeys = new LeoCallKeys(this, new LeoCallKeys.Host() {
++      public boolean ringing() { return CallList.getInstance().getIncomingCall() != null; }
++      public boolean connected() { return CallList.getInstance().getActiveCall() != null; }
++      public void answer() {
++        DialerCall call = CallList.getInstance().getIncomingCall();
++        if (call != null) call.answer(android.telecom.VideoProfile.STATE_AUDIO_ONLY);
++      }
++      public void end() {
++        CallList calls = CallList.getInstance();
++        DialerCall call = calls.getIncomingCall();
++        if (call != null) { call.reject(false, null); return; }
++        call = calls.getOutgoingCall();
++        if (call == null) call = calls.getPendingOutgoingCall();
++        if (call == null) call = calls.getActiveOrBackgroundCall();
++        if (call != null) call.disconnect();
++      }
++      public boolean muted() {
++        return com.android.incallui.audiomode.AudioModeProvider.getInstance().getAudioState().isMuted();
++      }
++      public boolean speaker() {
++        return com.android.incallui.audiomode.AudioModeProvider.getInstance().getAudioState().getRoute()
++            == android.telecom.CallAudioState.ROUTE_SPEAKER;
++      }
++      public void mute() { com.android.incallui.call.TelecomAdapter.getInstance().mute(!muted()); }
++      public void route() {
++        com.android.incallui.call.TelecomAdapter.getInstance().setAudioRoute(speaker()
++            ? android.telecom.CallAudioState.ROUTE_WIRED_OR_EARPIECE
++            : android.telecom.CallAudioState.ROUTE_SPEAKER);
++      }
++      public void tone(char digit, boolean down) {
++        DialerCall call = CallList.getInstance().getActiveCall();
++        if (call != null) {
++          if (down) com.android.incallui.call.TelecomAdapter.getInstance().playDtmfTone(call.getId(), digit); else com.android.incallui.call.TelecomAdapter.getInstance().stopDtmfTone(call.getId());
++        }
++      }
++    });
++    leoKeys.attach();
+   }
+ 
+   @Override
+@@ -161,6 +200,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
+     LogUtil.i("InCallActivity.onResume", "");
+     super.onResume();
+     common.onResume();
++    leoKeys.resume();
+     PseudoScreenState pseudoScreenState = InCallPresenter.getInstance().getPseudoScreenState();
+     pseudoScreenState.addListener(this);
+     onPseudoScreenStateChanged(pseudoScreenState.isOn());
+@@ -171,6 +211,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
+   protected void onPause() {
+     LogUtil.i("InCallActivity.onPause", "");
+     super.onPause();
++    leoKeys.pause();
+     common.onPause();
+     InCallPresenter.getInstance().getPseudoScreenState().removeListener(this);
+   }
+@@ -276,6 +317,11 @@ public class InCallActivity extends TransactionSafeFragmentActivity
+     return super.onOptionsItemSelected(item);
+   }
+ 
++  @Override
++  public boolean dispatchKeyEvent(KeyEvent event) {
++    return (leoKeys != null && leoKeys.key(event)) || super.dispatchKeyEvent(event);
++  }
++
+   @Override
+   public boolean onKeyUp(int keyCode, KeyEvent event) {
+     return common.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event);
+diff --git a/java/com/android/incallui/InCallPresenter.java b/java/com/android/incallui/InCallPresenter.java
+index 563468e848f8a898778444d9082802d6285b8744..58892cad3125bb7251fe05c1224fbb1cee6b54b4 100644
+--- a/java/com/android/incallui/InCallPresenter.java
++++ b/java/com/android/incallui/InCallPresenter.java
+@@ -1370,6 +1370,14 @@ public class InCallPresenter implements CallList.Listener {
+       LogUtil.i("InCallPresenter.startOrFinishUi", "Start Full Screen in call UI");
+ 
+       mStatusBarNotifier.updateNotification(mCallList);
++      // LEO_INCOMING_KEYPAD_SCREEN: an unlocked Oreo device may display only
++      // a heads-up notification. Its touch actions are inaccessible on Leo.
++      // Open the keypad activity once per transition to a ringing call.
++      if (mainUiNotVisible && mInCallState != InCallState.INCOMING) {
++        mContext.startActivity(InCallActivity.getIntent(
++            mContext, false /* showDialpad */, false /* newOutgoingCall */,
++            true /* isForFullScreen */));
++      }
+     } else if (newState == InCallState.NO_CALLS) {
+       // The new state is the no calls state.  Tear everything down.
+       attemptFinishActivity();

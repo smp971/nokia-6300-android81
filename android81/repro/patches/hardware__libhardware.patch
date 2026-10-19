@@ -1,0 +1,32 @@
+diff --git a/modules/gralloc/Android.mk b/modules/gralloc/Android.mk
+index ff5808db0c0a0d08abd51375bc922848a534cc5a..18390a4e256e4cb35f3f8dcf27373e12ece851f9 100644
+--- a/modules/gralloc/Android.mk
++++ b/modules/gralloc/Android.mk
+@@ -36,4 +36,9 @@ ifeq ($(TARGET_USE_PAN_DISPLAY),true)
+ LOCAL_CFLAGS += -DUSE_PAN_DISPLAY=1
+ endif
+ 
++# LEO software framebuffer bridge only.
++ifeq ($(TARGET_DEVICE),leo)
++LOCAL_CFLAGS += -DLEO_SOFTWARE_HWC
++endif
++
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/modules/gralloc/gralloc.cpp b/modules/gralloc/gralloc.cpp
+index 07bbfbacc48568a5a87fe4c647859c8500e55bfd..32ef2d328e9ae423e55bf1ddc4bb40b2f78f62e0 100644
+--- a/modules/gralloc/gralloc.cpp
++++ b/modules/gralloc/gralloc.cpp
+@@ -207,6 +207,13 @@ static int gralloc_alloc(alloc_device_t* dev,
+     if (!pHandle || !pStride)
+         return -EINVAL;
+ 
++#ifdef LEO_SOFTWARE_HWC
++    // LEO_SOFTWARE_HWC: HWC converts shared RGBA buffers into the physical RGB565 fb.
++    // Physical framebuffer handles contain allocator-process pointers and have a
++    // different pixel size. Never expose them as RGBA client targets over HIDL.
++    usage &= ~GRALLOC_USAGE_HW_FB;
++#endif
++
+     int bytesPerPixel = 0;
+     switch (format) {
+         case HAL_PIXEL_FORMAT_RGBA_FP16:

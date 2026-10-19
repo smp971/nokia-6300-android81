@@ -1,0 +1,18 @@
+diff --git a/runtime/mem_map.cc b/runtime/mem_map.cc
+index 7b4160876cd25cdda0d9c6441bf23495736bfc59..e59f3d81869c09ccc05bc2e76e613f27febdce64 100644
+--- a/runtime/mem_map.cc
++++ b/runtime/mem_map.cc
+@@ -923,6 +923,13 @@ void* MemMap::MapInternal(void* addr,
+   UNUSED(low_4gb);
+ #endif
+   DCHECK_ALIGNED(length, kPageSize);
++#if defined(__linux__) && !defined(ANDROID_OS)
++  // LEO_HOST_EXACT_MMAP: modern Linux may align file hints to huge pages.
++  // Unlike MAP_FIXED, NOREPLACE fails on collisions and never overwrites memory.
++  if (addr != nullptr && (flags & MAP_FIXED) == 0) {
++    flags |= 0x100000;  // MAP_FIXED_NOREPLACE, Linux >= 4.17.
++  }
++#endif
+   if (low_4gb) {
+     DCHECK_EQ(flags & MAP_FIXED, 0);
+   }

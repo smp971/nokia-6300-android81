@@ -46,11 +46,11 @@ public final class SettingsActivity extends LeoActivity {
             }
         }},"Categorii",new Runnable(){public void run(){options("Categorii",TABS,new Choice(){public void pick(int i){switchCategory(i);}});}});
         android.widget.LinearLayout tabs=new android.widget.LinearLayout(this);
-        tabs.setBackgroundColor(0xff100f1d);
+        tabs.setBackgroundColor(palette.bar);
         for(int i=0;i<TABS.length;i++) {
             final int index=i;
             android.widget.TextView tab=text(TABS[i],12); tab.setPadding(0,0,0,0);tab.setGravity(android.view.Gravity.CENTER);
-            tab.setTextColor(i==category?0xff38224f:0xffdfcde9);tab.setBackgroundColor(i==category?0xfff5eefb:0xff100f1d);
+            tab.setTextColor(i==category?palette.ink:0xffdfcde9);tab.setBackgroundColor(i==category?palette.selection:palette.bar);
             tab.setOnClickListener(new android.view.View.OnClickListener(){public void onClick(android.view.View v){switchCategory(index);}});
             tabs.addView(tab,new android.widget.LinearLayout.LayoutParams(0,dp(32),1));
         }

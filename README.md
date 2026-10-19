@@ -33,6 +33,8 @@ Profilul pentru memorie redusă nu reprezintă certificare Android Go. Serviciil
 Google nu sunt incluse. Kernelul și componentele Qualcomm necesare provin din
 sistemul original; shell-ul nu depinde de WebView.
 
+**Recompilare:** [surse, manifest AOSP fixat și comenzi de build](android81/REBUILD.md).
+
 **Cuprins:** [Funcții](#tabelul-funcțiilor) · [Capturi](#capturi) ·
 [Instalare](#instalare) · [Pornire și recuperare](#pornire-și-recuperare) ·
 [Probleme](#probleme-cunoscute) · [Dezvoltare](#dezvoltare) ·
@@ -58,7 +60,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
 | Pornire și repornire | **Parțial** | Corecție NetworkPolicy instalată; după recuperare nu s-a raportat ANR. Proba de autostart conectivitate a fost urmată de 900E; cauza rămâne în investigare. |
 | USB / ADB / root | **Parțial** | Diagnostic, instalare și control funcționale; după unele reporniri conexiunea cere reconectarea cablului. Uneltele au acum timeout pentru a evita așteptarea nelimitată. |
-| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 22 intrări pe trei pagini, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
+| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 23 intrări pe trei pagini, pictograme colorate și scurtături pe Home, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
 | Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
 | Notificări native Leo | **Parțial** | Notificare sintetică citită, deschisă prin PendingIntent și eliminată din taste. Ascultător propriu autorizat explicit pe low-RAM; fără răspuns direct la notificări. |
 | Configurări rapide Leo | **Parțial** | Wi-Fi și Bluetooth oprite/repornite din taste; luminozitate salvată și restaurată. Hotspot/SIM deschid paginile native; vibrator nedetectat. |
@@ -137,12 +139,27 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
 | Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
-| Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
+| Email | **Parțial** | Email Leo: editor din taste și interfață pentru conturi/foldere/mesaje. Eroarea de resurse AOSP a fost reparată, configurarea se deschide. Conturile reale, sincronizarea și trimiterea rămân netestate. [Detalii](android81/LEO-STYLE-EMAIL.md). |
 | Cameră | **Nefuncțional** | Android raportează zero dispozitive. Audit offline: 23 componente originale și 16 biblioteci Android, fără dependențe declarate lipsă; încărcarea izolată a HAL-ului QCamera a reușit pe telefon. Senzorul, daemonul și captura rămân nevalidate. [Audit](android81/CAMERA-PORT-AUDIT.md). |
 | GPS / localizare reală | **Nefuncțional** | Fără provider GPS funcțional sau fix real confirmat. |
 | Senzori Android | **Nefuncțional** | SensorService nu detectează senzori; descrie integrarea software, nu inventarul fizic. |
 
 ## Capturi
+
+### Interfața Leo actualizată
+
+Teme comune, pictograme mai vizibile și un dialer cu trei favorite, telemetrie
+pentru ambele SIM-uri și taburi pentru istoric/statistici. Cifrele se introduc din
+tastele fizice. [Comenzi și limite](android81/LEO-STYLE-EMAIL.md).
+
+| Home | Aplicații | Telefon |
+| --- | --- | --- |
+| ![Home Leo](android81/screenshots/leo-style-home.png) | ![Grilă Leo](android81/screenshots/leo-style-grid.png) | ![Telefon cu favorite](android81/screenshots/leo-style-phone.png) |
+
+| Statistici apeluri | Email Leo | Calculator |
+| --- | --- | --- |
+| ![Statistici locale](android81/screenshots/leo-style-call-stats.png) | ![Email Leo](android81/screenshots/leo-style-email.png) | ![Calculator](android81/screenshots/leo-style-calculator.png) |
+
 
 | Pornire LEO · captură din proba pe telefon | Card SD în Fișiere Leo |
 | --- | --- |
@@ -211,7 +228,7 @@ instrucțiuni validate pentru acest port.
 - Corecție NetworkPolicy instalată; stabilitatea pornirii necesită observație suplimentară.
 - Wi-Fi și Bluetooth pornesc automat în noua ordine de inițializare; stabilitatea pe termen lung și accesoriile audio necesită probe. ADB are încă întreruperi care pot cere reconectarea cablului.
 - Cameră, GPS și integrarea senzorilor nefuncționale în auditul documentat.
-- WebView a prezentat crash GPU; Email are o eroare de resurse la pornire.
+- WebView a prezentat crash GPU; autentificarea și mesajele reale Email rămân nevalidate.
 - Aplicațiile Android nu sunt toate controlabile complet din taste; cursorul este o opțiune de acces.
 - SIM 2, audio la apel inițiat după recuperare, accesorii audio, autonomia și încărcarea completă necesită probe; MMS neimplementat.
 - Înregistrarea IMS experimentală nu validează VoLTE sau VoWiFi.

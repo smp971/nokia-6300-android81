@@ -21,6 +21,7 @@ import java.util.Locale;
 
 /** Launchable Android activities only; opening this screen never launches an app. */
 public final class AndroidAppsActivity extends Activity {
+    private Appearance.Palette palette;
     private final ArrayList<Entry> apps=new ArrayList<Entry>();
     private AppList screen;
     private int selected;
@@ -31,9 +32,9 @@ public final class AndroidAppsActivity extends Activity {
         Drawable icon;
     }
     public void onCreate(Bundle state) {
-        super.onCreate(state);
+        super.onCreate(state);palette=Appearance.palette(this);
         if(state!=null) selected=state.getInt("selected");
-        getWindow().setStatusBarColor(0xff1a0e3a);
+        getWindow().setStatusBarColor(palette.bar);
         screen=new AppList(); setContentView(screen);
     }
     protected void onResume() {
@@ -96,21 +97,21 @@ public final class AndroidAppsActivity extends Activity {
             return value+"…";
         }
         protected void onDraw(Canvas c) {
-            c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(0xff21172e);
+            c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(palette.background);
             text(c,"Aplicații Android",120,27,18,Color.WHITE,Paint.Align.CENTER);
             int first=Math.max(0,Math.min(Math.max(0,apps.size()-5),selected-2));
             for(int row=0;row<5 && first+row<apps.size();row++) {
                 int index=first+row; float top=43+row*42;
-                if(index==selected) { paint.setColor(0xfff5eefb); c.drawRoundRect(new RectF(6,top,234,top+38),7,7,paint); }
+                if(index==selected) { paint.setColor(palette.selection); c.drawRoundRect(new RectF(6,top,234,top+38),7,7,paint); }
                 Entry item=apps.get(index);
                 c.save(); c.translate(13,top+5); item.icon.setBounds(0,0,28,28); item.icon.draw(c); c.restore();
-                text(c,fit(item.label,178),49,top+25,14,index==selected?0xff38224f:Color.WHITE,Paint.Align.LEFT);
+                text(c,fit(item.label,178),49,top+25,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
             }
             if(apps.isEmpty()) text(c,"Nicio aplicație disponibilă",120,140,14,Color.WHITE,Paint.Align.CENTER);
             text(c,error.isEmpty()?(apps.isEmpty()?"0 / 0":(selected+1)+" / "+apps.size()):error,
                 120,268,11,0xffd3bddf,Paint.Align.CENTER);
-            paint.setColor(0xff100f1d); c.drawRect(0,276,240,302,paint);
-            text(c,apps.isEmpty()?"":"Deschide",120,293,12,0xffdfbdff,Paint.Align.CENTER);
+            paint.setColor(palette.bar); c.drawRect(0,276,240,302,paint);
+            text(c,apps.isEmpty()?"":"Deschide",120,293,12,palette.accent,Paint.Align.CENTER);
             text(c,"Înapoi",232,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
         }
     }

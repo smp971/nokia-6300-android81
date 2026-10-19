@@ -1,0 +1,82 @@
+{
+  "base": "AOSP android-8.1.0_r81",
+  "manifest_sha256": "a918244ec93dcf28b56501e74fa6a57241ce63e52c964162267e41de983a94e5",
+  "projects": [
+    {
+      "path": "art",
+      "revision": "019baa4e67376ffd1968ee3c5e9b9a0008cfc014",
+      "files": [],
+      "patch": "patches/art.patch",
+      "sha256": "630a6171210f6ac1fe08270e537760df45dbac9ab9b95d2fadd6a6d4e59ab6bd"
+    },
+    {
+      "path": "frameworks/base",
+      "revision": "7e7ea0991020d15cdb69c5da933c282c92f884ef",
+      "files": [],
+      "patch": "patches/frameworks__base.patch",
+      "sha256": "ea116f3cb2ca21a14ea4d773433a8077aa84fdc442feb4c0f32b0870bc884c82"
+    },
+    {
+      "path": "frameworks/native",
+      "revision": "5dd8c54fe37a50f4cbf2769176509e90ef42ddf0",
+      "files": [],
+      "patch": "patches/frameworks__native.patch",
+      "sha256": "890ea8244d0d10719a17ea92cfb331a48753ebeaadda170f1200570aafeafcd5"
+    },
+    {
+      "path": "hardware/libhardware",
+      "revision": "99f49b759d52a9f084e571357811a01ef041348f",
+      "files": [],
+      "patch": "patches/hardware__libhardware.patch",
+      "sha256": "5b01104e62484f2ab21941985613a59bddcf8268b118cb25fecb8d551b7f6996"
+    },
+    {
+      "path": "packages/apps/Dialer",
+      "revision": "c873824b2a0fe3a3a8ec7232385641fe3a346f21",
+      "files": [
+        {
+          "path": "java/com/android/incallui/LeoCallKeys.java",
+          "source": "files/packages/apps/Dialer/java/com/android/incallui/LeoCallKeys.java",
+          "sha256": "342b0f8aa8cb7f87e2f8850360cbde2fc0b075ebd9fb32011294438897701f1e",
+          "mode": 420
+        },
+        {
+          "path": "java/com/android/incallui/LeoCallPreview.java",
+          "source": "files/packages/apps/Dialer/java/com/android/incallui/LeoCallPreview.java",
+          "sha256": "c37b11a3c8d8778567c38de0aa344c26cd97e6f3d4ddf836ec571797d5bd278e",
+          "mode": 420
+        }
+      ],
+      "patch": "patches/packages__apps__Dialer.patch",
+      "sha256": "2f289b7588f859a53d9cac3e278069b4d799123d7fdc91b7abb44b6ab93e1f2a"
+    },
+    {
+      "path": "packages/apps/Settings",
+      "revision": "77016f3005c73412b5c0f244da01fb9a3151b1c5",
+      "files": [],
+      "patch": "patches/packages__apps__Settings.patch",
+      "sha256": "ad9ace2f12ea10f8b2c90244cefdca45aa248c4a801665374859f8e37810cdfd"
+    },
+    {
+      "path": "packages/apps/UnifiedEmail",
+      "revision": "11034d99fb55b1a4bf2ab9e52c315cc51a45389c",
+      "files": [],
+      "patch": "patches/packages__apps__UnifiedEmail.patch",
+      "sha256": "458df7d58597a476870f5f023975507d89edaba85d1c2a3b20d5359f3d1fb355"
+    },
+    {
+      "path": "packages/services/Telephony",
+      "revision": "2d6037bcee918fe36e28d160d8f28bc6f75f8b42",
+      "files": [],
+      "patch": "patches/packages__services__Telephony.patch",
+      "sha256": "9cfb0db09f2c9f899ab389a3c6bb7b53fbdab1770099d2c2663dc5030186a39f"
+    },
+    {
+      "path": "system/core",
+      "revision": "33421af60f4a5c73b34119c195c5f53d9eadca0e",
+      "files": [],
+      "patch": "patches/system__core.patch",
+      "sha256": "d007c1353e58a7fb7f6bae79ad3eb04bd44ebc1fc62f2afad3bdb5a343ba1180"
+    }
+  ]
+}

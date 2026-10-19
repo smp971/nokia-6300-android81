@@ -1,0 +1,42 @@
+diff --git a/adb/daemon/main.cpp b/adb/daemon/main.cpp
+index 3c27582761eab532dfe0651e35263dd97f9cc94d..513a2318af00046639149087594693894af9371a 100644
+--- a/adb/daemon/main.cpp
++++ b/adb/daemon/main.cpp
+@@ -60,6 +60,8 @@ static void drop_capabilities_bounding_set_if_needed(struct minijail *j) {
+ 
+ static bool should_drop_privileges() {
+ #if defined(ALLOW_ADBD_ROOT)
++    // LEO diagnostic only: root ADB before Android properties exist.
++    if (getenv("LEO_EARLY_ADB")) return false;
+     // The properties that affect `adb root` and `adb unroot` are ro.secure and
+     // ro.debuggable. In this context the names don't make the expected behavior
+     // particularly obvious.
+diff --git a/init/init.cpp b/init/init.cpp
+index f65bfe08cc1f0d361b19500047b2e8dd7033ca57..b10a0f744ceb47656e855ba48b83e489b0ad6b91 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -586,6 +586,8 @@ static selinux_enforcing_status selinux_status_from_cmdline() {
+ 
+ static bool selinux_is_enforcing(void)
+ {
++    // LEO diagnostic only: keep stock boot command line and allow early ADB.
++    if (ALLOW_PERMISSIVE_SELINUX && getenv("LEO_DIAG_HOLD_ON_FAILURE")) return false;
+     if (ALLOW_PERMISSIVE_SELINUX) {
+         return selinux_status_from_cmdline() == SELINUX_ENFORCING;
+     }
+diff --git a/init/util.cpp b/init/util.cpp
+index fdcb22d1cf2cbcd7dbfab2ac8e3188615109c47d..006b44c28ece4ec4830769b4655b56c9a6f1fe6c 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -371,6 +371,11 @@ bool expand_props(const std::string& src, std::string* dst) {
+ }
+ 
+ void panic() {
++    // LEO diagnostic only: preserve early ADB instead of hiding the error in a reboot.
++    if (getenv("LEO_DIAG_HOLD_ON_FAILURE")) {
++        LOG(ERROR) << "LEO_DIAG: init panic requested; holding for early ADB";
++        for (;;) pause();
++    }
+     LOG(ERROR) << "panic: rebooting to bootloader";
+     // Do not queue "shutdown" trigger since we want to shutdown immediately
+     DoReboot(ANDROID_RB_RESTART2, "reboot", "bootloader", false);

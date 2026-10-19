@@ -21,8 +21,9 @@ abstract class LeoActivity extends Activity {
     LinearLayout root;
     Runnable left,back;
     boolean form;
+    Appearance.Palette palette;
     protected void onCreate(Bundle state) {
-        super.onCreate(state); getWindow().setStatusBarColor(0xff1a0e3a);
+        super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
     protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
@@ -33,12 +34,16 @@ abstract class LeoActivity extends Activity {
     }
     void begin(String title) {
         form=false; left=null; back=null;
-        root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(0xff21172e);
-        TextView heading=text(title,22); heading.setGravity(Gravity.CENTER);
+        palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
+        root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
+        TextView heading=text(title,21); heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        heading.setCompoundDrawables(new AppBadge(title,dp(29)),null,null,null);heading.setCompoundDrawablePadding(dp(10));
+        heading.setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,new int[]{palette.card,palette.background}));
         root.addView(heading,new LinearLayout.LayoutParams(-1,dp(42)));
+        View accent=new View(this);accent.setBackgroundColor(palette.accent);root.addView(accent,new LinearLayout.LayoutParams(-1,dp(2)));
     }
     void footer(String a,String b,String c) {
-        LinearLayout bar=new LinearLayout(this); bar.setBackgroundColor(0xff100f1d);
+        LinearLayout bar=new LinearLayout(this); bar.setBackgroundColor(palette.bar);
         String[] values={a,b,c};
         for(int i=0;i<3;i++) {
             TextView label=text(values[i],13); label.setSingleLine(true);
@@ -91,8 +96,8 @@ abstract class LeoActivity extends Activity {
     }
     private void paintSelection(View row,boolean selected) {
         if(!(row instanceof TextView)) return;
-        row.setBackgroundColor(selected?0xfff5eefb:0xff21172e);
-        ((TextView)row).setTextColor(selected?0xff38224f:Color.WHITE);
+        row.setBackground(Appearance.surface(selected?palette.selection:palette.card,dp(7)));
+        ((TextView)row).setTextColor(selected?palette.ink:Color.WHITE);
     }
     LinearLayout fields(String title) {
         begin(title); form=true;
@@ -102,7 +107,7 @@ abstract class LeoActivity extends Activity {
     EditText field(LinearLayout fields,String label,String value,int type) {
         fields.addView(text(label,15)); EditText edit=new EditText(this); edit.setId(View.generateViewId());
         edit.setTextSize(19); edit.setTextColor(Color.WHITE); edit.setHintTextColor(0xffd3bddf);
-        edit.setBackgroundColor(0xff30213f); edit.setInputType(type); edit.setText(value);
+        edit.setBackground(Appearance.fieldSurface(palette,dp(7)));edit.setPadding(dp(10),dp(8),dp(10),dp(8)); edit.setInputType(type); edit.setText(value);
         if((type&InputType.TYPE_TEXT_FLAG_MULTI_LINE)==0) edit.setSingleLine(true);
         // setSingleLine replaces the transformation; restore masking for password fields.
         if((type&InputType.TYPE_MASK_VARIATION)==InputType.TYPE_TEXT_VARIATION_PASSWORD)

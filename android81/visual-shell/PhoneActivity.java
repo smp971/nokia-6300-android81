@@ -9,6 +9,9 @@ import android.telecom.*;
 import android.telephony.PhoneNumberUtils;
 import android.text.InputType;
 import android.view.KeyEvent;
+import android.view.View;
+import android.view.Gravity;
+import android.graphics.*;
 import android.widget.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,29 +20,78 @@ import java.util.Date;
 
 public final class PhoneActivity extends LeoActivity {
     private EditText number;
+    private LinearLayout favoriteRow;
+    private TextView networkText;
+    private NetworkTelemetry network;
+    private int page,generation;
+    private String draft="";
+    private final String[] tabNames={"Apelare","Istoric","Statistici"};
     protected void onCreate(Bundle state) {
-        super.onCreate(state); dial(state==null?getIntent().getStringExtra("number"):state.getString("number"));
+        super.onCreate(state);
+        network=new NetworkTelemetry(this,new Runnable(){public void run(){if(page==0&&networkText!=null)networkText.setText(network.summary());}});
+        dial(state==null?getIntent().getStringExtra("number"):state.getString("number"));
+        if(state!=null&&state.getInt("page")!=0)switchPage(state.getInt("page"));
     }
+    protected void onResume(){super.onResume();network.start();if(page==0&&favoriteRow!=null)favoriteCards();}
+    protected void onPause(){network.stop();super.onPause();}
+    protected void onDestroy(){generation++;super.onDestroy();}
     protected void onSaveInstanceState(Bundle state) {
-        if(number!=null) state.putString("number",number.getText().toString()); super.onSaveInstanceState(state);
+        state.putString("number",number==null?draft:number.getText().toString());state.putInt("page",page);super.onSaveInstanceState(state);
+    }
+    private void switchPage(int selected){
+        if(page==0&&number!=null)draft=number.getText().toString();
+        if(selected==0)dial(draft);else if(selected==1)history();else stats();
+    }
+    private void tabs(){
+        LinearLayout tabs=new LinearLayout(this);tabs.setBackgroundColor(palette.bar);
+        for(int i=0;i<tabNames.length;i++){
+            final int index=i;TextView tab=text(tabNames[i],13);tab.setPadding(0,0,0,0);tab.setGravity(Gravity.CENTER);tab.setFocusable(true);
+            android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},Appearance.surface(palette.accent,dp(5)));states.addState(new int[]{},Appearance.surface(i==page?palette.card:palette.bar,dp(5)));tab.setBackground(states);tab.setTextColor(Color.WHITE);
+            tab.setOnClickListener(new View.OnClickListener(){public void onClick(View v){switchPage(index);}});
+            tab.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){if(e.getAction()==KeyEvent.ACTION_DOWN&&e.getRepeatCount()==0)switchPage((index+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:2))%3);return true;}return false;}});
+            tabs.addView(tab,new LinearLayout.LayoutParams(0,dp(28),1));
+        }
+        root.addView(tabs,1);
+        if(page!=0)tabs.getChildAt(page).requestFocus();
+    }
+    private void menu(){
+        options("Telefon",new String[]{"Apelează","Istoric apeluri","Statistici","Contacte","Editează favorite","Telefon Android"},new Choice(){public void pick(int i){
+            if(i==0){if(page!=0)dial(draft);else chooseSim();}else if(i==1)switchPage(1);else if(i==2)switchPage(2);
+            else if(i==3)startActivity(new Intent(PhoneActivity.this,ContactsActivity.class));
+            else if(i==4)options("Alege căsuța",new String[]{"Favorit 1","Favorit 2","Favorit 3"},new Choice(){public void pick(int slot){favoriteMenu(slot);}});
+            else{Intent original=getPackageManager().getLaunchIntentForPackage("com.android.dialer");if(original!=null)startActivity(original);else notice("Telefon Android indisponibil");}
+        }});
     }
     private void dial(String initial) {
-        LinearLayout fields=fields("Telefon"); number=field(fields,"Număr",initial==null?"":initial,InputType.TYPE_CLASS_PHONE);
-        fields.addView(text("Tasta verde: apel\nSoft stânga: opțiuni",16));
-        left=new Runnable() { public void run() {
-            options("Telefon",new String[]{"Apelează","Istoric apeluri","Contacte","Telefon Android"},new Choice() {
-                public void pick(int i) {
-                    if(i==0) chooseSim(); else if(i==1) history();
-                    else if(i==2) startActivity(new Intent(PhoneActivity.this,ContactsActivity.class));
-                    else {
-                        Intent original=getPackageManager().getLaunchIntentForPackage("com.android.dialer");
-                        if(original!=null) startActivity(original); else notice("Telefon Android indisponibil");
-                    }
-                }
-            });
-        }};
-        footer("Opțiuni","Verde: apel","Șterge"); number.requestFocus();
+        page=0;generation++;draft=initial==null?"":initial;LinearLayout fields=fields("Telefon");
+        networkText=text(network.summary(),12);networkText.setMaxLines(2);networkText.setEllipsize(android.text.TextUtils.TruncateAt.END);networkText.setTextColor(palette.accent);networkText.setPadding(dp(6),dp(2),dp(6),dp(2));fields.addView(networkText,new LinearLayout.LayoutParams(-1,dp(36)));
+        number=new EditText(this);number.setId(View.generateViewId());number.setInputType(InputType.TYPE_CLASS_PHONE);number.setSingleLine(true);
+        number.setText(draft);number.setHint("Introdu numărul");number.setHintTextColor(0xffa8b6c9);
+        number.setTextSize(26);number.setTextColor(Color.WHITE);number.setGravity(Gravity.CENTER);
+        number.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(32)});
+        number.setBackground(Appearance.fieldSurface(palette,dp(10)));fields.addView(number,new LinearLayout.LayoutParams(-1,dp(60)));number.setSelection(number.length());
+        TextView heading=text("FAVORITE",12);heading.setTextColor(palette.accent);fields.addView(heading);
+        favoriteRow=new LinearLayout(this);fields.addView(favoriteRow,new LinearLayout.LayoutParams(-1,dp(90)));favoriteCards();
+        TextView hint=text("Tastează numărul · Verde pentru apel",12);hint.setGravity(Gravity.CENTER);hint.setTextColor(palette.accent);fields.addView(hint);
+        number.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(e.getAction()==KeyEvent.ACTION_DOWN){if(key==KeyEvent.KEYCODE_DPAD_DOWN){favoriteRow.getChildAt(0).requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP){((LinearLayout)root.getChildAt(1)).getChildAt(0).requestFocus();return true;}}return false;}});
+        left=new Runnable(){public void run(){menu();}};footer("Opțiuni","Verde: apel","Înapoi");tabs();number.requestFocus();
     }
+    private void favoriteCards(){
+        if(favoriteRow==null)return;favoriteRow.removeAllViews();final android.content.SharedPreferences prefs=getSharedPreferences("dialer-favorites",0);
+        for(int i=0;i<3;i++){
+            final int slot=i;String name=prefs.getString("name"+i,""),value=prefs.getString("number"+i,"");
+            Button card=new Button(this);card.setText(value.isEmpty()?"Adaugă":name.isEmpty()?"Favorit "+(i+1):name);card.setTextSize(13);card.setAllCaps(false);card.setPadding(dp(3),dp(6),dp(3),dp(5));card.setGravity(Gravity.CENTER);card.setMaxLines(2);card.setEllipsize(android.text.TextUtils.TruncateAt.END);card.setMinimumWidth(0);card.setMinWidth(0);
+            AppBadge icon=new AppBadge("Contacte",dp(32));card.setCompoundDrawables(null,icon,null,null);card.setCompoundDrawablePadding(dp(8));
+            android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},Appearance.surface(palette.selection,dp(10)));states.addState(new int[]{},Appearance.surface(palette.card,dp(10)));card.setBackground(states);
+            card.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_focused},new int[]{}},new int[]{palette.ink,Color.WHITE}));
+            card.setContentDescription("Favorit "+(i+1)+" · "+(value.isEmpty()?"Adaugă contact":name));
+            card.setOnClickListener(new View.OnClickListener(){public void onClick(View v){String value=prefs.getString("number"+slot,"");if(value.isEmpty())pickFavorite(slot);else{number.setText(value);number.setSelection(number.length());number.requestFocus();}}});
+            card.setOnLongClickListener(new View.OnLongClickListener(){public boolean onLongClick(View v){favoriteMenu(slot);return true;}});
+            LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(0,-1,1);layout.setMargins(dp(3),0,dp(3),0);favoriteRow.addView(card,layout);
+        }
+    }
+    private void pickFavorite(int slot){startActivity(new Intent(this,ContactsActivity.class).putExtra("dialer_slot",slot));}
+    private void favoriteMenu(final int slot){options("Favorit "+(slot+1),new String[]{"Alege contact","Golește căsuța","Înapoi"},new Choice(){public void pick(int i){if(i==0)pickFavorite(slot);else if(i==1){getSharedPreferences("dialer-favorites",0).edit().remove("name"+slot).remove("number"+slot).apply();favoriteCards();}}});}
     private void chooseSim() {
         final String destination=PhoneNumberUtils.normalizeNumber(number.getText().toString());
         if(destination.isEmpty()) { notice("Introdu numărul"); return; }
@@ -62,6 +114,7 @@ public final class PhoneActivity extends LeoActivity {
         } catch(SecurityException denied) { notice("Permisiunea de telefonie lipsește"); }
     }
     private void history() {
+        page=1;networkText=null;final int token=++generation;
         final ArrayList<String> labels=new ArrayList<String>(),numbers=new ArrayList<String>();
         final ArrayList<Long> missedDates=new ArrayList<Long>();
         worker.execute(new Runnable() { public void run() {
@@ -73,18 +126,28 @@ public final class PhoneActivity extends LeoActivity {
                     numbers.add(p); labels.add((name==null || name.isEmpty()?p:name)+"\n"+(type==CallLog.Calls.OUTGOING_TYPE?"Ieșit":type==CallLog.Calls.MISSED_TYPE?"Pierdut":"Primit")+" · "+date.format(new Date(c.getLong(2))));
                 }
                 ui(new Runnable() { public void run() {
-                    long through=0;
+                    if(token!=generation)return;long through=0;
                     for(Long value:missedDates)through=Math.max(through,value);UnreadState.readCalls(PhoneActivity.this,through);
-                    list("Istoric apeluri",labels,0,new Choice() { public void pick(int i) { dial(numbers.get(i)); } },"",null);
-                    back=new Runnable() { public void run() { dial(""); } };
+                    list("Istoric apeluri",labels,0,new Choice() { public void pick(int i) { dial(numbers.get(i)); } },"Opțiuni",new Runnable(){public void run(){menu();}});tabs();
+                    back=new Runnable() { public void run() { dial(draft); } };
                 }});
-            } catch(RuntimeException denied) { ui(new Runnable() { public void run() { notice("Istoricul nu poate fi citit"); } }); }
+            } catch(RuntimeException denied) { ui(new Runnable() { public void run() { if(token==generation){dial(draft);notice("Istoricul nu poate fi citit");} } }); }
         }});
     }
+    private void stats(){
+        page=2;networkText=null;final int token=++generation;
+        worker.execute(new Runnable(){public void run(){
+            final long[] values=new long[7];long cutoff=System.currentTimeMillis()-7L*86400000L;
+            try(Cursor c=getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.TYPE,CallLog.Calls.DURATION,CallLog.Calls.DATE},null,null,CallLog.Calls.DATE+" DESC")){
+                while(c!=null&&c.moveToNext()&&values[0]<5000){int type=c.getInt(0);long duration=Math.max(0,c.getLong(1));values[0]++;if(type==CallLog.Calls.INCOMING_TYPE)values[1]++;else if(type==CallLog.Calls.OUTGOING_TYPE)values[2]++;else if(type==CallLog.Calls.MISSED_TYPE)values[3]++;values[4]+=duration;if(c.getLong(2)>=cutoff){values[5]++;values[6]+=duration;}}
+                ui(new Runnable(){public void run(){if(token!=generation)return;list("Statistici apeluri",java.util.Arrays.asList("Total · "+values[0]+" apeluri","Primite · "+values[1],"Efectuate · "+values[2],"Pierdute · "+values[3],"Durată totală · "+duration(values[4]),"Ultimele 7 zile · "+values[5]+" apeluri","Durată 7 zile · "+duration(values[6]),"Jurnal local · max. 5000 intrări"),0,new Choice(){public void pick(int i){notice("Statistici din jurnalul local, nu facturare operator");}},"Actualizează",new Runnable(){public void run(){stats();}});tabs();back=new Runnable(){public void run(){dial(draft);}};}});
+            }catch(RuntimeException e){ui(new Runnable(){public void run(){if(token==generation){dial(draft);notice("Statisticile nu pot fi citite");}}});}
+        }});
+    }
+    private static String duration(long seconds){return String.format(java.util.Locale.ROOT,"%d:%02d:%02d",seconds/3600,(seconds/60)%60,seconds%60);}
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if(event.getKeyCode()==KeyEvent.KEYCODE_CALL && form) {
-            if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) chooseSim(); return true;
-        }
+        int key=event.getKeyCode();
+        if(page==0&&key==KeyEvent.KEYCODE_CALL){if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0)chooseSim();return true;}
         return super.dispatchKeyEvent(event);
     }
 }

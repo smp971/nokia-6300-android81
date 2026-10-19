@@ -1,0 +1,40 @@
+diff --git a/res/values/config.xml b/res/values/config.xml
+index e42b63af32b4846776c1e6c16016b31805cecfbd..8f68c99bf4d40434cf6781499dbecec3a5881d9e 100644
+--- a/res/values/config.xml
++++ b/res/values/config.xml
+@@ -137,7 +137,7 @@
+     <!-- DEPRECATED: Use CarrierConfigManager#KEY_PREFER_2G_BOOL -->
+     <bool name="config_prefer_2g" translatable="false">true</bool>
+     <!-- Show enabled lte option for lte device -->
+-    <bool name="config_enabled_lte" translatable="false">false</bool>
++    <bool name="config_enabled_lte" translatable="false">true</bool>
+     <!-- Show enabled tdscdma option for device -->
+     <bool name="config_support_tdscdma" translatable="false">false</bool>
+     <!-- Show enabled tdscdma option for device when connect roaming network -->
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 34347fb324057c1064f3f8644ee6f90bc8235365..3708c0a40ae9392e1777a7b3cec03d627d98bbe0 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -1446,4 +1446,5 @@
+     <string name="mobile_data_activate_button">ADD DATA</string>
+     <!-- activate data plan dialogue button for cancel further actions-->
+     <string name="mobile_data_activate_cancel_button">CANCEL</string>
++    <string name="leo_data_usage_unavailable">Data usage unavailable</string>
+ </resources>
+diff --git a/src/com/android/phone/DataUsagePreference.java b/src/com/android/phone/DataUsagePreference.java
+index 85e77001f7c8da69c69c9e15a53c7815fefdf67c..e2b738b8300fa421a222e2c0cb12ae054e0677ea 100644
+--- a/src/com/android/phone/DataUsagePreference.java
++++ b/src/com/android/phone/DataUsagePreference.java
+@@ -55,6 +55,12 @@ public class DataUsagePreference extends Preference {
+         DataUsageController controller = new DataUsageController(activity);
+ 
+         DataUsageController.DataUsageInfo usageInfo = controller.getDataUsageInfo(mTemplate);
++        // LEO_MISSING_TRAFFIC_STATS: the controller may return null on this kernel.
++        setEnabled(usageInfo != null);
++        if (usageInfo == null) {
++            setSummary(R.string.leo_data_usage_unavailable);
++            return;
++        }
+         setSummary(activity.getString(R.string.data_usage_template,
+                 Formatter.formatFileSize(activity, usageInfo.usageLevel), usageInfo.period));
+         setIntent(getIntent());

@@ -85,12 +85,14 @@ public final class MainActivity extends Activity {
             if (active != null) for (SubscriptionInfo info : active) {
                 TelephonyManager phone = ((TelephonyManager)getSystemService(TELEPHONY_SERVICE))
                     .createForSubscriptionId(info.getSubscriptionId());
+                final int slot=info.getSimSlotIndex();
                 PhoneStateListener listener = new PhoneStateListener() {
                     public void onServiceStateChanged(ServiceState state) { screen.refresh(); }
                     public void onDataConnectionStateChanged(int state, int type) { screen.refresh(); }
+                    public void onSignalStrengthsChanged(android.telephony.SignalStrength strength){if(slot>=0&&slot<2){screen.signalDbm[slot]=NetworkTelemetry.dbm(strength);screen.refresh();}}
                 };
                 phones.add(phone); phoneListeners.add(listener);
-                phone.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE);
+                phone.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
             }
         } catch (RuntimeException ignored) { }
         screen.refresh();
@@ -101,7 +103,7 @@ public final class MainActivity extends Activity {
     }
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent); setIntent(intent);
-        screen.grid = false; screen.message = ""; screen.refresh();
+        screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();
     }
     public void onBackPressed() {
         if (screen.grid || !screen.message.isEmpty()) {
@@ -151,9 +153,9 @@ public final class MainActivity extends Activity {
         final Path path = new Path();
         final Typeface regular = Typeface.create("sans-serif", Typeface.NORMAL);
         final Typeface light = Typeface.create("sans-serif-light", Typeface.NORMAL);
-        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar", "Video", "Reportofon", "Convertor", "Descărcări", "Fundaluri", "Favorite", "Blocare taste", "Browser text", "Configurări rapide", "Configurare"};
+        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar", "Video", "Reportofon", "Convertor", "Descărcări", "Fundaluri", "Favorite", "Blocare taste", "Browser text", "Configurări rapide", "Configurare", "Email"};
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
-        final int[] colors = {0xff32c479,0xff23a8e1,0xffefb733,0xffa275ed,0xff687bfa,0xfff07596,0xffec6868,0xffefaa45,0xff8795ab,0xff78b94a,0xffd79b42,0xff599cde,0xffde656e,0xffd46c9b,0xff55a6b8,0xff7299df,0xffb88cdd,0xffe8ad3a,0xff779e91,0xff4fadc4,0xffb489d4,0xff78b994};
+
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
         Bitmap wallpaper;
@@ -161,6 +163,7 @@ public final class MainActivity extends Activity {
         Shader gradient=violet;
         void reloadAppearance() {
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
+            palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);
             gradient=new LinearGradient(0,0,240,302,Appearance.COLORS[theme],null,Shader.TileMode.CLAMP);
             if(wallpaper!=null) {wallpaper.recycle();wallpaper=null;}
             if(Appearance.wallpaper(MainActivity.this).isFile()) wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(MainActivity.this).getPath());
@@ -170,8 +173,12 @@ public final class MainActivity extends Activity {
         boolean warm=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("warm",false);
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
+        int shortcut=-1;
+        final int[] shortcuts={0,2,6,22};
+        Appearance.Palette palette=Appearance.palette(MainActivity.this);
         String time = "", date = "", message = "";
         final String[] simLabels = {"SIM 1: se verifică", "SIM 2: se verifică"};
+        final int[] signalDbm={Integer.MIN_VALUE,Integer.MIN_VALUE};
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
         void refresh() {
             Date now = new Date();
@@ -207,7 +214,7 @@ public final class MainActivity extends Activity {
                                 : (type == TelephonyManager.NETWORK_TYPE_UMTS || type == TelephonyManager.NETWORK_TYPE_HSDPA
                                 || type == TelephonyManager.NETWORK_TYPE_HSUPA || type == TelephonyManager.NETWORK_TYPE_HSPA
                                 || type == TelephonyManager.NETWORK_TYPE_HSPAP) ? " · 3G" : " · conectat";
-                            simLabels[slot] = prefix + name + rat;
+                            simLabels[slot] = prefix + name + rat+(signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":"");
                         } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = prefix + "doar urgențe";
                         else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = prefix + "radio oprit";
                         else simLabels[slot] = prefix + "fără serviciu";
@@ -218,10 +225,10 @@ public final class MainActivity extends Activity {
             }
         }
         boolean key(int key, int repeat) {
-            if (key == KeyEvent.KEYCODE_BACK) { if (repeat == 0) { if(grid) onBackPressed(); else open(1); } return true; }
+            if (key == KeyEvent.KEYCODE_BACK) { if (repeat == 0) { if(grid) onBackPressed(); else if(shortcut>=0){shortcut=-1;invalidate();}else open(1); } return true; }
             if (key == KeyEvent.KEYCODE_MENU) { if (repeat == 0) { if(grid) options(); else notifications(); } return true; }
             if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
-                if (repeat == 0) { if (grid) open(selected); else { grid = true; message = ""; invalidate(); } }
+                if (repeat == 0) { if (grid) open(selected); else if(shortcut>=0)open(shortcuts[shortcut]);else { grid = true; message = ""; invalidate(); } }
                 return true;
             }
             // Green opens the dialer only; this app never places a call.
@@ -233,6 +240,7 @@ public final class MainActivity extends Activity {
             }
             if(!grid&&key==KeyEvent.KEYCODE_DPAD_UP){if(repeat==0)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return true;}
             if(!grid&&key==KeyEvent.KEYCODE_DPAD_DOWN){if(repeat==0)notifications();return true;}
+            if(!grid&&(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){shortcut=(shortcut+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:shortcut<0?0:3)+4)%4;invalidate();return true;}
             int delta = key == KeyEvent.KEYCODE_DPAD_UP ? -3 : key == KeyEvent.KEYCODE_DPAD_DOWN ? 3
                 : key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : key == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
             if (delta != 0) {
@@ -247,6 +255,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==22){startActivity(new Intent(MainActivity.this,EmailActivity.class));return;}
             if(index==19){startActivity(new Intent(MainActivity.this,BrowserActivity.class));return;}
             if(index==20){startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return;}
             if(index==21){startActivity(new Intent(MainActivity.this,SetupWizardActivity.class));return;}
@@ -300,36 +309,8 @@ public final class MainActivity extends Activity {
             p.setShader(null); p.setColor(color); p.setStyle(Paint.Style.FILL); box.set(l,t,r,b); c.drawRoundRect(box,radius,radius,p);
         }
         void line(Canvas c,float x1,float y1,float x2,float y2) { c.drawLine(x1,y1,x2,y2,p); }
-        void icon(Canvas c,int index,float x,float y) {
-            p.setShader(null); p.setColor(0x25000000); p.setStyle(Paint.Style.FILL); c.drawCircle(x,y+2,22,p);
-            p.setColor(colors[index]); c.drawCircle(x,y,22,p);
-            c.save(); c.translate(x,y); p.setColor(Color.WHITE); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(2.4f); p.setStrokeCap(Paint.Cap.ROUND);
-            switch(index) {
-                case 12: c.drawRect(-12,-10,12,10,p);line(c,-4,-5,5,0);line(c,5,0,-4,5);line(c,-4,5,-4,-5);break;
-                case 13: c.drawRoundRect(new RectF(-4,-12,4,4),4,4,p);c.drawArc(-8,-3,8,9,0,180,false,p);line(c,0,9,0,13);break;
-                case 14: line(c,-12,-5,12,-5);line(c,7,-10,12,-5);line(c,-12,6,12,6);line(c,-12,6,-7,11);break;
-                case 15: line(c,0,-12,0,4);line(c,-6,-2,0,4);line(c,0,4,6,-2);line(c,-11,10,11,10);break;
-                case 16: c.drawCircle(5,-5,4,p);line(c,-12,10,-2,-2);line(c,-2,-2,11,10);break;
-                case 17: for(int n=0;n<5;n++){c.save();c.rotate(n*72);line(c,0,-13,4,-3);line(c,4,-3,12,-4);c.restore();}break;
-                case 19: c.drawCircle(0,0,13,p);c.drawOval(-6,-13,6,13,p);line(c,-12,0,12,0);break;
-                case 20: for(int n=0;n<3;n++){line(c,-12,-9+n*9,12,-9+n*9);c.drawCircle(-5+n*5,-9+n*9,3,p);}break;
-                case 21: line(c,-10,0,-2,8);line(c,-2,8,12,-10);break;
-                case 18: c.drawRoundRect(new RectF(-9,-2,9,12),2,2,p);c.drawArc(-6,-13,6,4,180,180,false,p);break;
-                case 0: c.drawArc(-11,-12,12,11,25,135,false,p); line(c,-10,-7,-7,-11); line(c,8,8,12,5); break;
-                case 1: c.drawCircle(0,-5,5,p); c.drawArc(-10,3,10,17,190,160,false,p); break;
-                case 2: box.set(-12,-9,12,7); c.drawRoundRect(box,3,3,p); line(c,-7,7,-10,12); line(c,-5,-3,6,-3); line(c,-5,2,3,2); break;
-                case 3: c.drawCircle(0,0,12,p); line(c,0,0,0,-7); line(c,0,0,6,3); break;
-                case 4: box.set(-10,-13,10,13); c.drawRoundRect(box,2,2,p); line(c,-5,-7,5,-7); line(c,-5,0,-1,0); line(c,3,0,6,0); line(c,-5,6,-1,6); line(c,3,6,6,6); break;
-                case 5: box.set(-13,-10,13,10); c.drawRoundRect(box,2,2,p); c.drawCircle(6,-4,2,p); line(c,-10,6,-3,-2); line(c,-3,-2,2,3); line(c,2,3,5,0); line(c,5,0,10,6); break;
-                case 6: line(c,0,-9,0,8); line(c,0,-9,10,-12); line(c,10,-12,10,5); c.drawOval(-7,5,0,11,p); c.drawOval(3,2,10,8,p); break;
-                case 7: path.reset(); path.moveTo(-13,-8); path.lineTo(-3,-8); path.lineTo(0,-4); path.lineTo(13,-4); path.lineTo(13,10); path.lineTo(-13,10); path.close(); c.drawPath(path,p); break;
-                case 8: c.drawCircle(0,0,9,p); c.drawCircle(0,0,3,p); for(int k=0;k<8;k++){c.save();c.rotate(k*45);line(c,0,-10,0,-14);c.restore();} break;
-                case 9: for(int row=0;row<2;row++) for(int col=0;col<2;col++) c.drawRect(-10+col*12,-10+row*12,-3+col*12,-3+row*12,p); break;
-                case 10: c.drawRect(-10,-13,10,13,p); line(c,-5,-6,5,-6); line(c,-5,0,5,0); line(c,-5,6,2,6); break;
-                case 11: c.drawRect(-12,-10,12,12,p); line(c,-12,-3,12,-3); line(c,-6,-13,-6,-7); line(c,6,-13,6,-7); line(c,-6,3,-3,3); line(c,3,3,6,3); line(c,-6,8,-3,8); break;
-            }
-            p.setStyle(Paint.Style.FILL); c.restore();
-        }
+        final IconArt artwork=new IconArt();
+        void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);}
         protected void onDraw(Canvas output) {
             super.onDraw(output);
             output.save(); output.scale(getWidth()/240f,getHeight()/302f);
@@ -338,11 +319,12 @@ public final class MainActivity extends Activity {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
                 else {
                 p.setColor(0x25ffffff); output.drawCircle(192,149,37,p);
-                path.reset(); path.moveTo(0,238); path.lineTo(74,137); path.lineTo(147,238); path.close(); p.setColor(0xff372454); output.drawPath(path,p);
-                path.reset(); path.moveTo(78,254); path.lineTo(172,157); path.lineTo(240,235); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(0xff281d42); output.drawPath(path,p);
-                path.reset(); path.moveTo(0,261); path.cubicTo(75,224,140,290,240,245); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(0xff17162d); output.drawPath(path,p);
+                path.reset(); path.moveTo(0,238); path.lineTo(74,137); path.lineTo(147,238); path.close(); p.setColor(Appearance.mix(palette.gradient[0],palette.gradient[1],.4f)); output.drawPath(path,p);
+                path.reset(); path.moveTo(78,254); path.lineTo(172,157); path.lineTo(240,235); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(Appearance.mix(palette.gradient[0],Color.BLACK,.1f)); output.drawPath(path,p);
+                path.reset(); path.moveTo(0,261); path.cubicTo(75,224,140,290,240,245); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(palette.bar); output.drawPath(path,p);
                 }
-                text(output,"L E O",120,22,10,0xffdac8ef,Paint.Align.CENTER);
+                round(output,10,10,230,151,15,0x28000000);
+                text(output,"L E O  ·  ACTIVE STANDBY",120,27,10,0xffeee8fa,Paint.Align.CENTER);
                 text(output,time,120,86,54,Color.WHITE,Paint.Align.CENTER);
                 text(output,date,120,108,13,0xfff0e5f5,Paint.Align.CENTER);
                 for(int slot=0;slot<2;slot++) {
@@ -350,20 +332,24 @@ public final class MainActivity extends Activity {
                     while(label.length()>1 && p.measureText(label)>220) label=label.substring(0,label.length()-2)+"…";
                     text(output,label,120,128+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
                 }
-                text(output,UnreadState.label(),120,172,12,Color.WHITE,Paint.Align.CENTER);
-                round(output,88,214,152,233,9,0x26ffffff);
-                text(output,"PROTOTIP",120,227,9,0xffe5d7f5,Paint.Align.CENTER);
-                text(output,"OK pentru aplicații",120,256,12,0xffc8bdd9,Paint.Align.CENTER);
+                round(output,12,158,228,187,9,0x35000000);
+                text(output,UnreadState.label(),120,177,12,Color.WHITE,Paint.Align.CENTER);
+                for(int i=0;i<shortcuts.length;i++){
+                    float x=33+i*58;
+                    if(shortcut==i)round(output,x-26,196,x+26,251,10,0x55ffffff);
+                    output.save();output.translate(x,222);output.scale(.78f,.78f);icon(output,shortcuts[i],0,0);output.restore();
+                    text(output,names[shortcuts[i]],x,263,10,Color.WHITE,Paint.Align.CENTER);
+                }
             } else {
-                p.setColor(0xc7161428); output.drawRect(0,0,240,276,p);
+                p.setColor(0xbb000000); output.drawRect(0,0,240,276,p);
                 text(output,names[selected],120,25,18,Color.WHITE,Paint.Align.CENTER);
                 if(list) {
                     int first=Math.max(0,Math.min(names.length-5,selected-2));
                     for(int row=0;row<5;row++) {
                         int i=first+row; float y=60+row*42;
-                        if(i==selected) round(output,7,y-19,233,y+19,7,0xfff5eefb);
+                        if(i==selected) round(output,7,y-19,233,y+19,7,palette.selection);
                         output.save(); output.translate(32,y); output.scale(.65f,.65f); icon(output,i,0,0); output.restore();
-                        text(output,names[i],57,y+5,14,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.LEFT);
+                        text(output,names[i],57,y+5,14,i==selected?palette.ink:0xffe8e1f1,Paint.Align.LEFT);
                     }
                     text(output,(selected+1)+" / "+names.length,120,267,10,0xffd3bddf,Paint.Align.CENTER);
                 } else {
@@ -371,9 +357,11 @@ public final class MainActivity extends Activity {
                 for(int i=page*9;i<Math.min(names.length,page*9+9);i++) {
                     int cell=i%9;
                     float x=40+(cell%3)*80, y=67+(cell/3)*76;
-                    if(i==selected) round(output,x-34,y-29,x+34,y+39,10,0xfff5eefb);
+                    if(i==selected) round(output,x-34,y-31,x+34,y+44,10,palette.selection);
                     icon(output,i,x,y);
-                    text(output,i==9?"Android":names[i],x,y+33,10,i==selected?0xff38224f:0xffe8e1f1,Paint.Align.CENTER);
+                    String label=i==9?"Android":names[i];p.setTextSize(10);
+                    if(p.measureText(label)>70){while(label.length()>1&&p.measureText(label+"…")>70)label=label.substring(0,label.length()-1);label+="…";}
+                    text(output,label,x,y+39,10,i==selected?palette.ink:0xffe8e1f1,Paint.Align.CENTER);
                 }
                 for(int i=0;i<(names.length+8)/9;i++) {p.setColor(i==page?0xffe0b8ff:0xff64536f); output.drawCircle(110+i*10,267,2,p);}
                 }
@@ -382,10 +370,10 @@ public final class MainActivity extends Activity {
                 round(output,5,240,235,274,6,0xff302339);
                 text(output,message,120,261,12,Color.WHITE,Paint.Align.CENTER);
             }
-            p.setColor(0xff100f1d); output.drawRect(0,276,240,302,p);
+            p.setColor(palette.bar); output.drawRect(0,276,240,302,p);
             text(output,grid?"Opțiuni":"Notificări",8,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(output,grid?"Deschide":"Meniu",120,293,12,0xffdfbdff,Paint.Align.CENTER);
-            text(output,grid?"Înapoi":"Contacte",232,293,11,Color.WHITE,Paint.Align.RIGHT);
+            text(output,grid?"Deschide":shortcut>=0?"Deschide":"Meniu",120,293,12,palette.selection,Paint.Align.CENTER);
+            text(output,grid||shortcut>=0?"Înapoi":"Contacte",232,293,11,Color.WHITE,Paint.Align.RIGHT);
             output.restore();
         }
     }

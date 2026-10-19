@@ -34,6 +34,7 @@ import java.util.UUID;
 
 /** Private local notes; no contacts, storage, network or message permissions. */
 public final class NotesActivity extends Activity {
+    private Appearance.Palette palette;
     private final ArrayList<Note> notes=new ArrayList<Note>();
     private final Handler handler=new Handler();
     private AtomicFile store;
@@ -45,8 +46,8 @@ public final class NotesActivity extends Activity {
     private static final class Note { String id,body; }
     private final Runnable draft=new Runnable() { public void run() { saveDraft(); } };
     public void onCreate(Bundle state) {
-        super.onCreate(state);
-        getWindow().setStatusBarColor(0xff1a0e3a);
+        super.onCreate(state);palette=Appearance.palette(this);
+        getWindow().setStatusBarColor(palette.bar);
         store=new AtomicFile(new File(getFilesDir(),"notes.json"));
         if(store.getBaseFile().exists() || new File(store.getBaseFile()+".bak").exists()) {
             try {
@@ -69,12 +70,13 @@ public final class NotesActivity extends Activity {
         text.setTextColor(Color.WHITE); text.setGravity(Gravity.CENTER_VERTICAL); return text;
     }
     private LinearLayout base() {
-        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(0xff21172e);
+        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(palette.background);
         TextView title=label(editing?"Notiță":"Notițe",22); title.setGravity(Gravity.CENTER);
+        title.setBackgroundColor(palette.card);
         root.addView(title,new LinearLayout.LayoutParams(-1,height(42))); return root;
     }
     private void footer(LinearLayout root,String left,String center,String right) {
-        LinearLayout bar=new LinearLayout(this); bar.setBackgroundColor(0xff100f1d);
+        LinearLayout bar=new LinearLayout(this); bar.setBackgroundColor(palette.bar);
         String[] labels={left,center,right};
         for(int i=0;i<3;i++) {
             TextView item=label(labels[i],14); item.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
@@ -101,8 +103,8 @@ public final class NotesActivity extends Activity {
                     TextView item=label(title(notes.get(position).body),18);
                     item.setSingleLine(true); item.setEllipsize(TextUtils.TruncateAt.END);
                     item.setPadding(height(10),0,height(10),0); item.setMinHeight(height(48));
-                    item.setBackgroundColor(position==selected?0xfff5eefb:0xff21172e);
-                    item.setTextColor(position==selected?0xff38224f:Color.WHITE); return item;
+                    item.setBackground(Appearance.surface(position==selected?palette.selection:palette.card,height(8)));
+                    item.setTextColor(position==selected?palette.ink:Color.WHITE); return item;
                 }
             });
             list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -132,7 +134,7 @@ public final class NotesActivity extends Activity {
         editing=true; editingId=id;
         LinearLayout root=base(); editor=new EditText(this);
         editor.setTextColor(Color.WHITE); editor.setHintTextColor(0xffd3bddf); editor.setTextSize(19);
-        editor.setBackgroundColor(0xff30213f); editor.setGravity(Gravity.TOP|Gravity.LEFT);
+        editor.setBackground(Appearance.surface(palette.card,height(8))); editor.setGravity(Gravity.TOP|Gravity.LEFT);
         editor.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         editor.setFilters(new InputFilter[]{new InputFilter.LengthFilter(8192)});
         editor.setHint("Scrie din taste…"); editor.setText(body); editor.setSelection(editor.length());
