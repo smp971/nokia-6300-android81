@@ -2,6 +2,15 @@
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application android:label="Leo Visual" android:allowBackup="false" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:screenOrientation="portrait" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize">
             <intent-filter>
@@ -19,6 +28,24 @@
         <activity android:name=".ClockActivity" android:exported="false" android:label="Ceas Leo" android:screenOrientation="portrait" />
         <activity android:name=".CalculatorActivity" android:exported="false" android:label="Calculator Leo" android:screenOrientation="portrait" />
         <activity android:name=".NotesActivity" android:exported="false" android:label="Notițe Leo" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ContactsActivity" android:exported="false" android:label="Contacte Leo" android:screenOrientation="portrait" />
+        <activity android:name=".PhoneActivity" android:exported="false" android:label="Telefon Leo" android:screenOrientation="portrait" />
+        <activity android:name=".MessagesActivity" android:exported="false" android:label="Mesaje Leo" android:screenOrientation="portrait" />
+        <activity android:name=".AlarmsActivity" android:exported="false" android:label="Alarme Leo" android:screenOrientation="portrait" />
+        <activity android:name=".TimerActivity" android:exported="false" android:label="Temporizator Leo" android:screenOrientation="portrait" />
+        <activity android:name=".AlarmRingActivity" android:exported="false" android:launchMode="singleTop" android:label="Alarmă Leo" android:screenOrientation="portrait" />
+        <service android:name=".AlarmRingService" android:exported="false" />
+        <receiver android:name=".AlarmReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".SmsStatusReceiver" android:exported="false" />
+        <receiver android:name=".SmsReceiver" android:exported="true" android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter><action android:name="android.provider.Telephony.SMS_RECEIVED" /></intent-filter>
+        </receiver>
         <service android:name=".LeoPointerService" android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/pointer_service" />

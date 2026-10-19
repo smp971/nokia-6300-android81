@@ -85,9 +85,11 @@ public final class ClockActivity extends Activity {
                         }
                     }).show();
                 } else {
-                    Intent alarms=new Intent(AlarmClock.ACTION_SHOW_ALARMS);
-                    try { startActivity(alarms); }
-                    catch(RuntimeException unavailable) { message="Alarme Android indisponibile"; face.invalidate(); }
+                    new KeypadDialog(this,"Ceas",new String[]{"Alarme", "Temporizator"},new KeypadDialog.Action() {
+                        public void select(int choice) {
+                            startActivity(new Intent(ClockActivity.this,choice==0?AlarmsActivity.class:TimerActivity.class));
+                        }
+                    }).show();
                 }
             }
             return true;
@@ -123,7 +125,7 @@ public final class ClockActivity extends Activity {
             }
             text(c,message,120,263,11,0xffdfbdff,Paint.Align.CENTER);
             paint.setColor(0xff100f1d); c.drawRect(0,276,240,302,paint);
-            text(c,stopwatch?(running?"Tură":"Resetare"):"Alarme",7,293,11,Color.WHITE,Paint.Align.LEFT);
+            text(c,stopwatch?(running?"Tură":"Resetare"):"Opțiuni",7,293,11,Color.WHITE,Paint.Align.LEFT);
             text(c,stopwatch?(running?"Pauză":accumulated>0?"Continuă":"Start"):"Cronometru",120,293,12,0xffdfbdff,Paint.Align.CENTER);
             text(c,"Înapoi",233,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
         }

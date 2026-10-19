@@ -7,6 +7,14 @@ din meniu. Nu sunt înlocuite serviciile de telefonie sau imaginile boot/recover
 
 ## HOME, notificări și cursor din taste
 
+### Aplicațiile de sistem Leo
+
+Telefon, Contacte și Mesaje deschid acum activități native Leo. În Ceas, fila Ora
+→ Opțiuni include Alarme și Temporizator, programate prin AlarmManager.
+Contactele locale și declanșarea alarmelor au trecut probele; apelurile inițiate,
+SMS-ul real și sunetul audibil al alarmei nu sunt încă validate complet.
+[Funcții, probe și limita cererii SMS de test](LEO-SYSTEM-APPS.md).
+
 ### Aplicații Android
 
 Intrarea **Ceas** din meniul principal deschide acum Ceas Leo (oră/cronometru).

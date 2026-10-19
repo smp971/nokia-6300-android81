@@ -48,6 +48,11 @@ public final class LeoPointerService extends AccessibilityService {
         if(instance==null) return false;
         instance.setActive(!instance.active); return true;
     }
+    static void prepareForAlarm() {
+        if(instance==null) return;
+        instance.setActive(false);
+        if(instance.menu!=null) instance.menu.dismiss();
+    }
     static boolean startCenteredTest() {
         if(instance==null) return false;
         instance.setActive(false); instance.setActive(true); return instance.active;

@@ -18,6 +18,7 @@ final class KeypadDialog extends Dialog {
     private final String[] items;
     private final Action action;
     private int selected;
+    private boolean centerPressed,backPressed;
     private View content;
 
     KeypadDialog(Context context, String title, String[] items, Action action) {
@@ -62,11 +63,24 @@ final class KeypadDialog extends Dialog {
             content.invalidate(); return true;
         }
         if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {
-            if(event.getRepeatCount()==0) { dismiss(); action.select(selected); }
+            if(event.getRepeatCount()==0) centerPressed=true;
             return true;
         }
-        if(key==KeyEvent.KEYCODE_BACK) { dismiss(); return true; }
+        if(key==KeyEvent.KEYCODE_BACK) { if(event.getRepeatCount()==0) backPressed=true; return true; }
         if(key==KeyEvent.KEYCODE_MENU) return true;
         return super.onKeyDown(key,event);
+    }
+    public boolean onKeyUp(int key,KeyEvent event) {
+        if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {
+            boolean accept=centerPressed && !event.isCanceled(); centerPressed=false;
+            if(accept) { dismiss(); action.select(selected); }
+            return true;
+        }
+        if(key==KeyEvent.KEYCODE_BACK) {
+            boolean close=backPressed && !event.isCanceled(); backPressed=false;
+            if(close) dismiss(); return true;
+        }
+        if(key==KeyEvent.KEYCODE_MENU || key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) return true;
+        return super.onKeyUp(key,event);
     }
 }

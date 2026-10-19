@@ -85,7 +85,8 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Respingere apel real / apel în așteptare / conferință | **Netestat** | Respingerea a trecut în simulare; scenariile reale necesită probe separate. |
 | Tasta roșie | **Parțial** | Mapată ENDCALL; revenirea Acasă în repaus a fost verificată prin codul fizic. Apelul real a fost închis cu soft dreapta. |
 | DTMF, microfon mut, difuzor și volum în apel | **Parțial** | Comenzi implementate; DTMF și comutările microfon/difuzor au trecut în simulare. Transportul DTMF și toate efectele audio în apel real sunt netestate. |
-| SMS / MMS | **Netestat** | Nu avem mesaje reale trimise/primite confirmate; auditul inițial nu avea o aplicație SMS dedicată. |
+| SMS Leo | **Parțial** | Conversații, ciornă, multi-tap și alegere SIM implementate; ciornă/selector testate. O cerere către numărul invalid de probă a eșuat. Fără trimitere reușită sau recepție reală validate. |
+| MMS | **Nefuncțional** | Nu este implementat în Mesaje Leo. |
 | Difuzor / AudioTrack | **Funcțional** | Bipuri prin HAL-ul Qualcomm, confirmate auditiv înainte și după reboot. |
 | MediaPlayer / fișiere OGG | **Funcțional** | Decodorul Vorbis și configurația codec corectate; redare OGG confirmată auditiv. Nu validează toate formatele sau aplicațiile media. |
 | Microfon în convorbire | **Funcțional** | Confirmat prin conversația în ambele sensuri; înregistrarea audio separată nu este testată. |
@@ -105,8 +106,10 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Calculator | **Funcțional** | Pornire și `2 + 2 = 4` verificate; introducerea din proba inițială a fost prin ADB. |
 | Calculator Leo | **Funcțional** | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon. |
 | Notițe Leo | **Funcțional** | Scriere multi-tap, salvare/redeschidere, editare fără duplicare, ciornă și ștergere confirmată testate pe nota de probă; fără teste de volum sau pierdere a alimentării. |
-| Ceas Leo | **Parțial** | Oră și cronometru native; start, tură, pauză, resetare și stare după relansare verificate. Alarmele proprii și temporizatorul nu sunt implementate. |
-| Calendar / Contacte / Fișiere Android | **Parțial** | Interfețele se deschid; salvarea evenimentelor/contactelor și operațiile complete nu sunt validate. |
+| Contacte Leo | **Funcțional** | Creare, căutare, editare și ștergere verificate pe un contact local de probă. Contactele sincronizate și structurile complexe rămân nevalidate. |
+| Telefon Leo | **Parțial** | Tastatură numerică, istoric și alegere SIM implementate; două conturi SIM afișate. Nu a fost inițiat un apel în această probă. |
+| Ceas Leo | **Parțial** | Oră/cronometru testate; temporizatorul și alarma proprie au declanșat în fundal, inclusiv după terminarea procesului. Sunetul audibil și recuperarea la reboot încă neconfirmate. |
+| Calendar / Fișiere Android | **Parțial** | Interfețele se deschid; salvarea evenimentelor și operațiile complete nu sunt validate. |
 | Galerie / Muzică | **Parțial** | Pornire verificată; proba MediaPlayer separată nu confirmă toate funcțiile acestor aplicații. |
 | Browser / WebView | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Fără navigare stabilă pe internet validată. |
 | Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
@@ -128,6 +131,14 @@ complete; capturile istorice ale apelurilor sunt simulări. Apelul real este doc
 | ![Aplicații Android](android81/screenshots/visual-shell-android-apps.png) | ![Ceas Leo](android81/screenshots/leo-clock-stopwatch.png) | ![Editor de test IME](android81/screenshots/keypad-ime-romanian.png) |
 
 [Toate capturile păstrate în proiect](android81/screenshots/).
+
+| Contacte Leo — date sintetice | Telefon Leo |
+| --- | --- |
+| ![Contact de probă](android81/screenshots/leo-contacts-search.png) | ![Telefon Leo](android81/screenshots/leo-phone.png) |
+
+| Ciornă SMS de probă | Alarmă declanșată în fundal |
+| --- | --- |
+| ![Compunere SMS](android81/screenshots/leo-messages-compose.png) | ![Alarmă Leo](android81/screenshots/leo-alarm.png) |
 
 ## Instalare
 
@@ -197,7 +208,8 @@ Copia locală păstrează 63 de arhive și registrul celor 64 de intrări, cu ve
 SHA-256. Aplicațiile privilegiate KaiOS nu rulează prin simpla copiere: folosesc
 API-uri Gecko ce necesită înlocuitori Android. Codul nou Leo este o adaptare nativă
 a fluxurilor analizate. **Ceas Leo**, **Calculator Leo** și **Notițe Leo** sunt
-instalate. Ceasul are încă alarmele proprii și temporizatorul neimplementate.
+instalate. Contacte, Telefon, Mesaje, alarme și temporizator sunt integrate;
+stările și limitele fiecăruia sunt în [fișa aplicațiilor de sistem](android81/LEO-SYSTEM-APPS.md).
 Multi-tap funcționează, predicția T9 încă nu.
 
 - [Planul proiectului și criterii de acceptare](android81/PROJECT.md).
@@ -206,7 +218,7 @@ Multi-tap funcționează, predicția T9 încă nu.
 
 ### Următoarele etape
 
-1. Uniformizarea dialogurilor, completarea Ceasului și continuarea aplicațiilor pentru taste: Contacte, Mesaje, Calendar.
+1. Validarea apelurilor inițiate și a SMS-urilor reale, confirmarea sunetului alarmelor și continuarea cu Calendar/Fișiere.
 2. Eliminarea ANR-ului la boot și repetarea probelor de stabilitate/performanță.
 3. Finalizarea conectivității și continuarea integrării hardware.
 4. Probe reale separate pentru apeluri inițiate, SMS, ambele SIM-uri și rutele audio.
@@ -219,6 +231,7 @@ Multi-tap funcționează, predicția T9 încă nu.
 | Stare și istoric | [STATUS](android81/STATUS.md), [audit inițial](android81/FUNCTION-AUDIT-2026-10-18.md) |
 | Shell, meniu, mouse și aplicații Android | [VISUAL-SHELL](android81/VISUAL-SHELL.md) |
 | Calculator și Notițe Leo | [LEO-CALCULATOR-NOTES](android81/LEO-CALCULATOR-NOTES.md) |
+| Contacte, Telefon, Mesaje, alarme | [LEO-SYSTEM-APPS](android81/LEO-SYSTEM-APPS.md) |
 | Tastatură multi-tap | [KEYPAD-IME](android81/KEYPAD-IME.md) |
 | Grafică / performanță | [ADRENO-INTEGRATION](android81/ADRENO-INTEGRATION.md), [UI-LATENCY](android81/UI-LATENCY.md) |
 | Radio și date | [RADIO-BRINGUP](android81/RADIO-BRINGUP.md), [LTE-BRINGUP](android81/LTE-BRINGUP.md) |

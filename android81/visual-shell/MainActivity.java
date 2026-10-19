@@ -237,6 +237,9 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==0) { startActivity(new Intent(MainActivity.this,PhoneActivity.class)); return; }
+            if(index==1) { startActivity(new Intent(MainActivity.this,ContactsActivity.class)); return; }
+            if(index==2) { startActivity(new Intent(MainActivity.this,MessagesActivity.class)); return; }
             if(index==4) { startActivity(new Intent(MainActivity.this,CalculatorActivity.class)); return; }
             if(index==10) { startActivity(new Intent(MainActivity.this,NotesActivity.class)); return; }
             if(index==3) { startActivity(new Intent(MainActivity.this,ClockActivity.class)); return; }

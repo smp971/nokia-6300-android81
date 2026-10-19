@@ -42,13 +42,14 @@ Implementarea proprie: `visual-shell/ClockActivity.java`, deschisă de intrarea
 | Resetare | Soft stânga în pauză, confirmare din meniul Leo |
 | Persistență | Stare și ture în preferințe private; ceas monotonic în aceeași pornire |
 | După reboot | Nu continuă automat cronometrul; păstrează ultimul checkpoint salvat |
-| Alarme | Din fila Ora, soft stânga cere aplicația Android pentru alarme; delegare încă nevalidată pe telefon |
-| Temporizator / editor propriu de alarme | Neimplementate în Leo |
+| Alarme | Editor propriu Leo și AlarmManager; o singură declanșare sau repetare zilnică |
+| Temporizator | Implementat, 1 secundă–24 ore; declanșare în fundal verificată |
 
 Verificat pe telefon: intrarea Ceas lansează Leo; start → tură → pauză a salvat
 2.978 ms total și o tură la 1.488 ms; relansarea după oprirea procesului a păstrat
 starea și tura. Captura reală a fost inspectată. Nu a fost făcut un reboot nou.
-Nu există încă o alarmă proprie de fundal în această implementare.
+Etapa următoare a adăugat alarme și temporizator, cu declanșare în fundal verificată;
+sunetul audibil și reboot-ul sunt încă de confirmat. [Detalii](LEO-SYSTEM-APPS.md).
 
 ![Cronometru Leo](screenshots/leo-clock-stopwatch.png)
 
@@ -60,12 +61,12 @@ Aceasta este ordinea propusă, nu o listă de aplicații deja funcționale.
 | --- | --- | --- |
 | Launcher, System, temă | Leo Visual, meniu global, softkeys | Bază implementată; uniformizare în curs |
 | Keyboard | Leo Multi-tap / InputConnection | Funcțional fizic; predicția T9 separată |
-| Clock | Ceas Leo + AlarmManager ulterior | Ora/cronometru implementate; alarme/timer rămase |
+| Clock | Ceas Leo + AlarmManager | Oră, cronometru, alarme și temporizator; declanșare în fundal verificată, sunetul audibil și reboot-ul neconfirmate |
 | Calculator | Calculator Leo nativ | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon |
 | Unit Converter | Activitate Leo nativă | De portat |
 | Notes | Editor nativ + stocare privată | Instalat; multi-tap, salvare, redeschidere, ciornă, renunțare și ștergere confirmată verificate |
-| Contact, Call Log | ContactsContract / CallLog | De portat; liste, căutare, detaliu, selectare SIM pentru apel |
-| Messages | Furnizor SMS Android / SmsManager | De portat; conversații, IME, SIM și rapoarte; probele de trimitere separat |
+| Contact, Call Log | ContactsContract / CallLog / Telecom | Contacte: creare, căutare, editare, ștergere testate local; Telefon: UI și conturi SIM, fără apel inițiat |
+| Messages | Furnizor SMS Android / SmsManager + copie privată la recepție | UI, ciornă și selector SIM testate; cererea către numărul invalid a eșuat; trimiterea și recepția reale nu sunt validate |
 | Calendar | CalendarContract / stocare locală | De portat; navigare și evenimente persistente |
 | File Manager, Downloads | Storage Access Framework / DownloadManager | De portat; listare, deschidere și operații confirmate |
 | Music, Video | MediaStore / MediaPlayer | De portat UI; redarea audio de bază există deja |
@@ -86,3 +87,4 @@ standard Leo.
 
 Detalii despre implementările noi, comenzi și criteriile de validare:
 [Calculator și Notițe Leo](LEO-CALCULATOR-NOTES.md).
+[Contacte, Telefon, Mesaje și alarme](LEO-SYSTEM-APPS.md).

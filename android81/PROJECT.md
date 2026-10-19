@@ -61,6 +61,10 @@ Inventarul reproductibil este în [KAIOS-UI-INVENTORY](KAIOS-UI-INVENTORY.md).
    Calculator și Notițe Leo sunt instalate; motorul aritmetic are 29 de cazuri
    validate pe JVM. Probele pe telefon au verificat calcule, scriere multi-tap,
    salvare/redeschidere, ciornă, renunțare și ștergere confirmată.
+   Contacte, Telefon, Mesaje și alarme/temporizator sunt implementate și instalate.
+   Contactele CRUD și declanșarea în fundal au trecut; telefonia de ieșire,
+   SMS-ul real și sunetul alarmei necesită probe distincte.
+   [Rezultate și limite](LEO-SYSTEM-APPS.md).
 4. **Predicție T9:** alegerea unui motor redistribuibil, integrare în IME și teste
    românești. Acceptare: candidați, selecție, corectare și revenire sigură la multi-tap.
 5. **Stabilitate și performanță:** măsurători pe aceleași ecrane, pornire repetabilă,

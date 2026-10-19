@@ -19,6 +19,12 @@ if cmd package list packages ro.leo.visual | grep -qx 'package:ro.leo.visual'; t
 else
     cmd activity start-activity -a android.intent.action.MAIN -c android.intent.category.HOME
 fi
+# Leo system-app permissions for the keypad engineering image.
+if cmd package list packages ro.leo.visual | grep -qx 'package:ro.leo.visual'; then
+    for permission in READ_PHONE_STATE READ_CONTACTS WRITE_CONTACTS READ_CALL_LOG CALL_PHONE READ_SMS RECEIVE_SMS SEND_SMS; do
+        cmd package grant --user 0 ro.leo.visual android.permission.$permission
+    done
+fi
 # Default physical-key text input, only when the IME is installed.
 if cmd package list packages ro.leo.keypad | grep -qx 'package:ro.leo.keypad'; then
     /system/bin/ime enable ro.leo.keypad/.KeypadIme
