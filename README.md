@@ -91,7 +91,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Respingere apel real / apel în așteptare / conferință | **Netestat** | Respingerea a trecut în simulare; scenariile reale necesită probe separate. |
 | Tasta roșie | **Parțial** | Mapată ENDCALL; revenirea Acasă în repaus a fost verificată prin codul fizic. Apelul real a fost închis cu soft dreapta. |
 | DTMF, microfon mut, difuzor și volum în apel | **Parțial** | Comenzi implementate; DTMF și comutările microfon/difuzor au trecut în simulare. Transportul DTMF și toate efectele audio în apel real sunt netestate. |
-| SMS Leo | **Parțial** | SIM 1: SMS trimis și primit de destinatar; răspuns cu emoji primit în inboxul Leo. SIM 2 încă de validat. Ciornă, multi-tap și alegere SIM; fără MMS/raport de livrare. |
+| SMS Leo | **Parțial** | SIM 1: SMS trimis și primit de destinatar; răspuns cu emoji primit în inboxul Leo. Conversație cu bule, dată, SIM și selecție din D-pad verificată separat pe date fictive. SIM 2 încă de validat; fără MMS/raport de livrare. |
 | MMS | **Nefuncțional** | Nu este implementat în Mesaje Leo. |
 | Difuzor / AudioTrack | **Parțial** | Bipuri confirmate anterior înainte/după reboot. După recuperarea din 900E placa audio lipsește; reîncărcarea manuală a produs un nou 900E. Necesită repararea inițializării. |
 | MediaPlayer / fișiere OGG | **Parțial** | Decodorul Vorbis și configurația codec corectate; redare OGG confirmată auditiv. Nu validează toate formatele sau aplicațiile media. |
@@ -142,6 +142,10 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Pornire LEO · captură din proba pe telefon | Card SD în Fișiere Leo |
 | --- | --- |
 | ![Animație LEO](android81/screenshots/leo-bootanimation.png) | ![Card SD](android81/screenshots/leo-sd-locations.png) |
+
+| Conversație SMS · date fictive | Opțiuni din taste |
+| --- | --- |
+| ![Conversație Leo](android81/screenshots/leo-sms-conversation-demo.png) | ![Opțiuni SMS](android81/screenshots/leo-sms-options-demo.png) |
 
 Capturi reale la 240 × 320. Ecranele de test IME și mouse nu reprezintă aplicații
 complete; capturile istorice ale apelurilor sunt simulări. Apelul real este documentat separat.

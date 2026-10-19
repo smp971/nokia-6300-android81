@@ -8,6 +8,11 @@ import android.os.Bundle;
 import android.provider.Telephony;
 import android.telephony.*;
 import android.text.InputType;
+import android.text.TextUtils;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.*;
 import org.json.JSONArray;
 import java.util.*;
@@ -17,10 +22,13 @@ import java.text.SimpleDateFormat;
 public final class MessagesActivity extends LeoActivity {
     private String current="";
     private boolean composing;
+    private boolean preview;
     private EditText recipient,body;
     private static final class Message { String address,body; long date,sent; int type,sub; }
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        preview=getIntent().getBooleanExtra("preview",false);
+        if(preview) { demo(); return; }
         String number=getIntent().getStringExtra("number"),thread=getIntent().getStringExtra("thread");
         if(number!=null) compose(number); else load(thread==null?"":thread);
     }
@@ -31,6 +39,7 @@ public final class MessagesActivity extends LeoActivity {
     }
     private String key(String address,long sent,String body,int sub) { return PhoneNumberUtils.normalizeNumber(address)+"|"+sent+"|"+sub+"|"+body; }
     private void load(final String address) {
+        if(preview) { demo(); return; }
         composing=false; current=address;
         begin("Mesaje"); root.addView(text("Se încarcă…",18),new LinearLayout.LayoutParams(-1,0,1)); footer("","","Înapoi");
         worker.execute(new Runnable() { public void run() {
@@ -57,34 +66,126 @@ public final class MessagesActivity extends LeoActivity {
     }
     private void display(final String address,ArrayList<Message> messages) {
         final ArrayList<Message> rows=new ArrayList<Message>(); ArrayList<String> labels=new ArrayList<String>();
-        HashSet<String> threads=new HashSet<String>(); SimpleDateFormat date=new SimpleDateFormat("dd.MM HH:mm",Locale.getDefault());
+        HashSet<String> threads=new HashSet<String>();
         for(Message m:messages) {
             if(address.isEmpty()) {
                 if(!threads.add(m.address)) continue;
                 rows.add(m); labels.add(m.address+"\n"+m.body);
             } else if(m.address.equals(address)) {
-                String status=m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"Primit":m.type==Telephony.Sms.MESSAGE_TYPE_SENT?"Eu · trimis":m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?"Eu · eșuat":"Eu · în așteptare";
-                rows.add(m); labels.add(status+" · "+sim(m.sub)+" · "+date.format(new Date(m.date))+"\n"+m.body);
+                rows.add(m);
             }
         }
-        list(address.isEmpty()?"Mesaje":address,labels,0,new Choice() { public void pick(int i) {
-            if(address.isEmpty()) load(rows.get(i).address);
-            else {
-                begin("SMS · "+sim(rows.get(i).sub)); ScrollView scroll=new ScrollView(MessagesActivity.this); scroll.addView(text(rows.get(i).body,19));
-                root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1)); left=new Runnable() { public void run() { compose(address); } };
-                back=new Runnable() { public void run() { load(address); } }; footer("Răspunde","","Înapoi");
-            }
+        if(!address.isEmpty()) {
+            Collections.reverse(rows);
+            conversation(address,rows);
+            if(!preview) { long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through); }
+            return;
+        }
+        list("Mesaje",labels,0,new Choice() { public void pick(int i) {
+            load(rows.get(i).address);
         } },"Scrie",new Runnable() { public void run() { compose(address); } });
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
         String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):"SMS în așteptare · fără confirmare";
         if(!status.isEmpty()) root.addView(text(status,14),1);
-        if(!address.isEmpty()) { long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through); }
-        if(!address.isEmpty()) back=new Runnable() { public void run() { load(""); } };
+    }
+    private String state(Message m) {
+        return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"Primit":m.type==Telephony.Sms.MESSAGE_TYPE_SENT?"Trimis":m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?"Eșuat":"În așteptare";
+    }
+    private String messageSim(Message m) { return preview?"SIM "+(m.sub+1):sim(m.sub); }
+    private void detail(final String address,final ArrayList<Message> rows,final int index) {
+        Message m=rows.get(index);
+        begin("Detalii SMS");
+        root.addView(text(state(m)+" · "+messageSim(m)+"\n"+new SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new Date(m.date)),14));
+        ScrollView scroll=new ScrollView(this); scroll.addView(text(m.body,19));
+        root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        left=new Runnable() { public void run() { compose(address); } };
+        back=new Runnable() { public void run() { conversation(address,rows,index); } };
+        footer("Răspunde","","Înapoi"); scroll.setFocusable(true); scroll.requestFocus();
+    }
+    private void conversation(String address,ArrayList<Message> rows) { conversation(address,rows,rows.size()-1); }
+    private void conversation(final String address,final ArrayList<Message> rows,int selected) {
+        composing=false; current=address;
+        begin(preview?"Conversație demo":address);
+        SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
+        if(!preview && address.equals(outgoing.getString("number",""))) {
+            String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):"SMS în așteptare · fără confirmare";
+            if(!status.isEmpty())root.addView(text(status,14));
+        }
+        final ListView thread=new ListView(this);thread.setDivider(null);thread.setSelector(android.R.color.transparent);
+        thread.setPadding(dp(5),0,dp(5),0);
+        final int[] focus={Math.max(0,Math.min(selected,rows.size()-1))};
+        final SimpleDateFormat day=new SimpleDateFormat("dd MMM yyyy",Locale.getDefault());
+        final SimpleDateFormat clock=new SimpleDateFormat("HH:mm",Locale.getDefault());
+        BaseAdapter adapter=new BaseAdapter() {
+            public int getCount() { return rows.size(); }
+            public Object getItem(int i) { return rows.get(i); }
+            public long getItemId(int i) { return i; }
+            public View getView(int i,View reuse,android.view.ViewGroup parent) {
+                LinearLayout row;
+                if(reuse instanceof LinearLayout) row=(LinearLayout)reuse;
+                else {
+                    row=new LinearLayout(MessagesActivity.this);row.setOrientation(1);row.setPadding(0,dp(4),0,dp(4));
+                    TextView date=text("",13);date.setGravity(Gravity.CENTER);row.addView(date);
+                    LinearLayout bubble=new LinearLayout(MessagesActivity.this);bubble.setOrientation(1);bubble.setPadding(dp(8),dp(5),dp(8),dp(5));
+                    TextView body=text("",18);body.setPadding(0,0,0,dp(3));body.setMaxLines(6);body.setEllipsize(TextUtils.TruncateAt.END);bubble.addView(body);
+                    TextView meta=text("",12);meta.setPadding(0,0,0,0);bubble.addView(meta);
+                    row.addView(bubble,new LinearLayout.LayoutParams(-1,-2));
+                }
+                Message m=rows.get(i);boolean received=m.type==Telephony.Sms.MESSAGE_TYPE_INBOX;
+                TextView date=(TextView)row.getChildAt(0);
+                String today=day.format(new Date(m.date));
+                date.setText(today);date.setVisibility(i==0 || !today.equals(day.format(new Date(rows.get(i-1).date)))?View.VISIBLE:View.GONE);
+                LinearLayout bubble=(LinearLayout)row.getChildAt(1);
+                LinearLayout.LayoutParams lp=(LinearLayout.LayoutParams)bubble.getLayoutParams();
+                lp.leftMargin=received?0:dp(22);lp.rightMargin=received?dp(22):0;bubble.setLayoutParams(lp);
+                ((TextView)bubble.getChildAt(0)).setText(m.body);
+                TextView meta=(TextView)bubble.getChildAt(1);meta.setText(clock.format(new Date(m.date))+" · "+messageSim(m)+" · "+state(m));
+                meta.setTextColor(m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?0xffffb8ad:0xffe4d6f1);
+                row.setTag(received);paintBubble(row,i==focus[0]);return row;
+            }
+        };
+        thread.setAdapter(adapter);
+        thread.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p,View v,int i,long id) {
+                int old=focus[0];focus[0]=i;
+                if(old!=i)paintBubble(thread.getChildAt(old-thread.getFirstVisiblePosition()),false);
+                paintBubble(v,true);
+            }
+            public void onNothingSelected(AdapterView<?> p) { }
+        });
+        thread.setOnItemClickListener(new AdapterView.OnItemClickListener() { public void onItemClick(AdapterView<?> p,View v,int i,long id) { detail(address,rows,i); } });
+        if(rows.isEmpty())root.addView(text("Niciun mesaj",18),new LinearLayout.LayoutParams(-1,0,1));
+        else root.addView(thread,new LinearLayout.LayoutParams(-1,0,1));
+        left=new Runnable() { public void run() {
+            options("Conversație",new String[]{"Răspunde","Detalii mesaj","Reîmprospătează"},new Choice() { public void pick(int i) {
+                if(i==0)compose(address);else if(i==1 && !rows.isEmpty())detail(address,rows,focus[0]);else if(i==2)load(address);
+            }});
+        }};
+        back=new Runnable() { public void run() { if(preview)finish();else load(""); } };
+        footer("Opțiuni","Detalii","Înapoi");thread.requestFocus();thread.setSelection(focus[0]);
+    }
+    private void paintBubble(View view,boolean selected) {
+        if(!(view instanceof LinearLayout))return;
+        LinearLayout row=(LinearLayout)view;boolean received=Boolean.TRUE.equals(row.getTag());
+        GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(9));
+        background.setColor(received?0xff40364e:0xff633b87);
+        background.setStroke(dp(2),selected?0xfff0d9ff:Color.TRANSPARENT);
+        row.getChildAt(1).setBackground(background);
+    }
+    private void demo() {
+        ArrayList<Message> messages=new ArrayList<Message>();
+        String[] bodies={"Salut! Ne vedem mâine?","Da, la ora zece. 🙂","Perfect. Îți scriu când ajung."};
+        for(int i=0;i<bodies.length;i++) {
+            Message m=new Message();m.address="Conversație demo";m.body=bodies[i];m.type=i==1?2:1;m.sub=i==1?1:0;
+            m.date=System.currentTimeMillis()-(2-i)*120000;messages.add(m);
+        }
+        conversation("Conversație demo",messages);
     }
     private void saveDraft() {
         if(recipient!=null && body!=null) getSharedPreferences("sms-draft",0).edit().putString("number",recipient.getText().toString()).putString("body",body.getText().toString()).apply();
     }
     private void compose(String address) {
+        if(preview) { notice("Demonstrație locală · fără trimitere SMS"); return; }
         SharedPreferences draft=getSharedPreferences("sms-draft",0);
         boolean reuse=address.isEmpty() || address.equals(draft.getString("number",""));
         LinearLayout fields=fields("SMS nou"); composing=true;

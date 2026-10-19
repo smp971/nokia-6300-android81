@@ -36,6 +36,17 @@ apel pe fiecare SIM și istoricul complet necesită probe separate.
 
 ## Mesaje SMS
 
+- Conversația folosește bule pentru SMS-urile primite (stânga) și trimise
+  (dreapta), în ordine cronologică. Intrarea selectată are contur deschis;
+  la deschidere este selectat ultimul mesaj. Ziua, ora, SIM-ul și starea de
+  trimitere sunt afișate separat. „Trimis” nu înseamnă raport de livrare.
+- Sus/jos selectează SMS-ul, OK deschide detaliul complet, Înapoi revine la
+  aceeași selecție. Bulele afișează maximum șase rânduri, cu elipsă; detaliul
+  oferă textul integral într-un ecran derulabil. Soft stânga: Răspunde,
+  Detalii mesaj, Reîmprospătează. Meniul fizic global rămâne separat.
+- Este o implementare nativă inspirată de stilul KaiOS, fără preluarea Gaia sau
+  a resurselor proprietare. Rândurile sunt reutilizate, iar schimbarea selecției
+  recolorează doar cele două bule implicate.
 - Citește SMS-urile din providerul Android; conversații după adresă, detaliu
   complet și compunere/răspuns din taste, cu eticheta SIM-ului când este disponibilă.
 - Imaginea testată nu are aplicație SMS implicită. Receiver-ul protejat de
@@ -53,7 +64,7 @@ apel pe fiecare SIM și istoricul complet necesită probe separate.
 - Nu sunt implementate MMS, grupuri, atașamente, rapoarte de livrare sau
   ștergerea/editarea mesajelor din providerul Android.
 
-**Limită importantă a probei:** ciorna și alegerea celor două SIM-uri au fost
+**Istoricul probei inițiale:** ciorna și alegerea celor două SIM-uri au fost
 verificate. În proba de confirmare s-a emis neașteptat o cerere către numărul
 invalid `0000000000`; nu există confirmare de trimitere reușită sau livrare.
 Cererea a fost inițial în așteptare, apoi callback-ul Android a raportat eșec.
@@ -64,6 +75,22 @@ Trimiterea reușită, recepția reală și confirmările modemului rămân neval
 nu marcăm SMS drept funcțional integral. Regresia cu același număr invalid a
 fost refuzată înainte de alegerea SIM-ului, fără o cerere nouă. Ciorna de probă
 a fost eliminată din interfață; starea de eșec rămâne disponibilă.
+
+Ulterior, trimiterea pe SIM 1 și recepția răspunsului cu emoji au fost confirmate
+în probe reale; vezi starea curentă din [README](../README.md). Schimbarea vizuală
+a conversației a fost verificată separat, pe telefon, cu trei mesaje fictive:
+selecție, detaliu SIM 2, revenire la aceeași selecție și meniul Opțiuni.
+Nu s-a trimis niciun SMS în această verificare vizuală.
+
+Previzualizare locală pentru dezvoltare:
+
+```text
+python android81/framework-command.py /system/bin/sh /system/bin/am start -f 0x14000000 -n ro.leo.visual/.MessagesActivity --ez preview true
+```
+
+Modul demo nu citește inbox-ul, nu marchează conversații ca citite, nu salvează
+ciorne și blochează compunerea/trimiterea. Înapoi închide demonstrația. Deschiderea
+normală din Home folosește conversațiile reale și noul aspect.
 
 ## Alarme și temporizator
 
