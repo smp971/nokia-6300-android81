@@ -1,5 +1,11 @@
 # Audio bring-up — 18 October 2026
 
+**19 October, rebuilt UHID kernel:** the earlier successful results below apply
+to the original kernel. Audio is currently disabled after crashes during stock
+module initialization on the rebuilt kernel. See [KERNEL-UHID.md](KERNEL-UHID.md)
+for the current trial and host-side tracing evidence. Do not interpret the
+historical successful reboot result as validation of the rebuilt kernel.
+
 Follow-up: ordinary OGG sounds also required the missing MediaCodec XML registry.
 After installing it and restarting codec/media services, MediaPlayer playback
 was audible and confirmed by the user. See PHONE-AUDIO-FOLLOWUP.md.

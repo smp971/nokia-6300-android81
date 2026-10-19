@@ -109,6 +109,31 @@ another channel, slept, or lost its connection was not established; sustained
 connection and reconnection behavior still need testing. The verification script
 reports the current disconnected state rather than reusing earlier success.
 
+## Staged audio isolation with host capture
+
+The 20 installed stock audio module/library files were read-only hash checked
+against the KaiOS dump: all 12 modules and 8 libraries were identical.
+`trace-audio-modules.py --load` then opened continuous host-side dmesg/logcat
+streams before any module insertion, stopped Android's audioserver and audio
+HAL service, retained Qualcomm activation and audio autoload at 0, and loaded
+the original modules with per-stage host timestamps and delays.
+
+The first eleven insertions returned success. The host lost the transport during
+`insmod audio_machine_int_msm8909.ko`, before that command returned. Unlike the
+earlier setup trial, this run never started the Qualcomm HAL. It narrows the
+failure to the kernel/driver initialization path without establishing its exact
+cause. The captured kernel tail contains no final panic/backtrace, so no crashing
+function is claimed. Traces remain in ignored local output. The diagnostic USB
+port was absent at the recovery check; the guarded 900E reset tool refused to
+operate, and the user recovered the device with a battery power cycle.
+
+After that cycle Android and the Leo launcher booted the rebuilt kernel again,
+with both `persist.leo.audio.autoload` and `persist.leo.audio.enabled` still 0.
+No further audio load was attempted. The local pinned source tree does not
+contain the external Qualcomm audio machine driver's implementation, which limits
+direct source-level debugging of that original binary. Do not bypass signatures,
+CRC checks, or repeatedly retry the same load as a proposed fix.
+
 These are offline prerequisite checks. They do not establish bootability or
 working graphics, audio, modem, Wi-Fi or mouse input. No boot image is packaged
 or flashed by these scripts. A later device trial must preserve the current
