@@ -10,9 +10,21 @@ vendor. În arhivele de referință sunt `calculator` (`index.html`, `dist/bundl
 - APK Leo Visual compilat cu succes pentru Android 8.1.
 - Motorul Calculator: **19 rezultate și 10 cazuri invalide/împărțire la zero**
   verificate automat pe JVM, fără dependență de interfață.
-- **Instalarea și probele pe telefon sunt în așteptare:** aparatul 695d nu apare
-  în ADB la această etapă. Nu declarăm încă navigarea sau salvarea Notițelor
-  validate pe dispozitiv. Nu există capturi ale noilor aplicații de pe telefon.
+- APK instalat pe Nokia 6300, fără ștergerea datelor sau reboot. HOME și serviciul
+  meniului global au fost reactivate după oprirea procesului pentru instalare.
+- Calculator pe telefon: `2+3*4 = 14`, `0.1+0.2 = 0.3`, eroare pentru `1/0`;
+  capturile reale au fost inspectate. Navigarea shell → Calculator → shell a trecut.
+- Notițe: „leo” introdus prin scan codes fizice și Leo Multi-tap, salvat, redeschis
+  după oprirea procesului; modificarea notei a păstrat același ID și o singură intrare.
+- Ciorna a revenit după Home și oprirea procesului; renunțarea a păstrat nota salvată.
+  „Păstrează” din confirmarea de ștergere a păstrat-o; confirmarea explicită a eliminat
+  doar nota de probă. Fișierul inițial nu conținea alte notițe.
+- Bara de comenzi a editorului este vizibilă deasupra IME după corecția `adjustResize`.
+  Nu au fost probate încă limitele de volum, erorile reale de stocare sau un reboot.
+
+| Calculator Leo | Notițe și IME |
+| --- | --- |
+| ![Rezultat 14](screenshots/leo-calculator.png) | ![Notiță de probă](screenshots/leo-notes-editor.png) |
 
 ## Calculator
 
@@ -69,12 +81,12 @@ de pe pagina a doua a grilei, lângă Aplicații Android.
 - Nu sunt cerute permisiuni noi. Textul nu este trimis sau jurnalizat. Stocarea
   privată Android nu echivalează cu criptarea într-un sistem cu root.
 
-## Probe necesare pe telefon
+## Probe efectuate pe telefon
 
-1. Calculator: `2+3*4`, rezultat 14; `0.1+0.2`, rezultat 0.3; împărțire la zero,
-   ștergere, paranteze și revenire în shell din taste.
+1. Calculator: `2+3*4`, rezultat 14; `0.1+0.2`, rezultat 0.3; împărțire la zero
+   și revenire în shell. Parantezele sunt validate pe JVM, nu încă fizic.
 2. Notițe: notiță de probă introdusă cu multi-tap, salvare, redeschidere după
    oprirea procesului și editare fără duplicarea notei.
 3. Ciornă: ieșire prin Home și redeschidere; renunțare fără modificarea notei salvate.
 4. Ștergere: anulare fără pierdere de date, apoi confirmare pe nota de probă.
-5. Capturi reale inspectate și actualizarea stărilor din README numai după probe.
+5. Capturi reale inspectate; rezultatele sunt reflectate în README.

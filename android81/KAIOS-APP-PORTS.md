@@ -61,9 +61,9 @@ Aceasta este ordinea propusă, nu o listă de aplicații deja funcționale.
 | Launcher, System, temă | Leo Visual, meniu global, softkeys | Bază implementată; uniformizare în curs |
 | Keyboard | Leo Multi-tap / InputConnection | Funcțional fizic; predicția T9 separată |
 | Clock | Ceas Leo + AlarmManager ulterior | Ora/cronometru implementate; alarme/timer rămase |
-| Calculator | Calculator Leo nativ | Compilat; 29 cazuri pe JVM trecute; instalarea și probele fizice așteaptă reconectarea ADB |
+| Calculator | Calculator Leo nativ | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon |
 | Unit Converter | Activitate Leo nativă | De portat |
-| Notes | Editor nativ + stocare privată | Compilat, cu ciornă și salvare atomică; probele fizice sunt în așteptare |
+| Notes | Editor nativ + stocare privată | Instalat; multi-tap, salvare, redeschidere, ciornă, renunțare și ștergere confirmată verificate |
 | Contact, Call Log | ContactsContract / CallLog | De portat; liste, căutare, detaliu, selectare SIM pentru apel |
 | Messages | Furnizor SMS Android / SmsManager | De portat; conversații, IME, SIM și rapoarte; probele de trimitere separat |
 | Calendar | CalendarContract / stocare locală | De portat; navigare și evenimente persistente |

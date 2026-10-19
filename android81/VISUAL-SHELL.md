@@ -13,9 +13,10 @@ Intrarea **Ceas** din meniul principal deschide acum Ceas Leo (oră/cronometru).
 Clock Android rămâne în lista de mai jos. Detalii și limite:
 [Portarea aplicațiilor KaiOS](KAIOS-APP-PORTS.md).
 
-Sursele noi includ și **Calculator Leo** (intrarea Calculator) și **Notițe**
-(ultimul element din listă / pagina a doua a grilei). Compilate, încă nevalidate
-pe telefon la etapa curentă din cauza lipsei conexiunii ADB.
+Shell-ul include **Calculator Leo** (intrarea Calculator) și **Notițe**
+(ultimul element din listă / pagina a doua a grilei). Instalate și testate pe
+telefon: rezultate aritmetice, scriere multi-tap, salvare, recuperarea ciornei,
+renunțare și ștergere confirmată. Bara editorului se redimensionează deasupra IME.
 [Comenzi, stocare și probe necesare](LEO-CALCULATOR-NOTES.md).
 
 Meniul principal are o a zecea intrare, **Aplicații Android**. În grilă este pe

@@ -103,7 +103,8 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | --- | --- | --- |
 | Setări Android | **Parțial** | Se deschide după corecții; unele categorii nu au suport hardware funcțional. |
 | Calculator | **Funcțional** | Pornire și `2 + 2 = 4` verificate; introducerea din proba inițială a fost prin ADB. |
-| Calculator Leo / Notițe Leo | **Netestat** | Implementări native noi, compilate; 29 cazuri ale motorului aritmetic trecute pe JVM. Nu sunt încă instalate/validate pe telefon; așteaptă reconectarea ADB. |
+| Calculator Leo | **Funcțional** | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon. |
+| Notițe Leo | **Funcțional** | Scriere multi-tap, salvare/redeschidere, editare fără duplicare, ciornă și ștergere confirmată testate pe nota de probă; fără teste de volum sau pierdere a alimentării. |
 | Ceas Leo | **Parțial** | Oră și cronometru native; start, tură, pauză, resetare și stare după relansare verificate. Alarmele proprii și temporizatorul nu sunt implementate. |
 | Calendar / Contacte / Fișiere Android | **Parțial** | Interfețele se deschid; salvarea evenimentelor/contactelor și operațiile complete nu sunt validate. |
 | Galerie / Muzică | **Parțial** | Pornire verificată; proba MediaPlayer separată nu confirmă toate funcțiile acestor aplicații. |
@@ -195,8 +196,9 @@ kaios31/              Investigația unui sistem donator
 Copia locală păstrează 63 de arhive și registrul celor 64 de intrări, cu verificare
 SHA-256. Aplicațiile privilegiate KaiOS nu rulează prin simpla copiere: folosesc
 API-uri Gecko ce necesită înlocuitori Android. Codul nou Leo este o adaptare nativă
-a fluxurilor analizate. Primul port parțial este **Ceas Leo**; alarmele proprii și
-temporizatorul rămân neimplementate. Multi-tap funcționează, predicția T9 încă nu.
+a fluxurilor analizate. **Ceas Leo**, **Calculator Leo** și **Notițe Leo** sunt
+instalate. Ceasul are încă alarmele proprii și temporizatorul neimplementate.
+Multi-tap funcționează, predicția T9 încă nu.
 
 - [Planul proiectului și criterii de acceptare](android81/PROJECT.md).
 - [Portarea aplicațiilor: copie, matrice și rezultate](android81/KAIOS-APP-PORTS.md).
@@ -204,7 +206,7 @@ temporizatorul rămân neimplementate. Multi-tap funcționează, predicția T9 �
 
 ### Următoarele etape
 
-1. Uniformizarea dialogurilor și continuarea aplicațiilor pentru taste: Calculator, Notițe, Contacte, Mesaje.
+1. Uniformizarea dialogurilor, completarea Ceasului și continuarea aplicațiilor pentru taste: Contacte, Mesaje, Calendar.
 2. Eliminarea ANR-ului la boot și repetarea probelor de stabilitate/performanță.
 3. Finalizarea conectivității și continuarea integrării hardware.
 4. Probe reale separate pentru apeluri inițiate, SMS, ambele SIM-uri și rutele audio.
