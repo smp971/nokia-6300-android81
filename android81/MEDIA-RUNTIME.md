@@ -41,24 +41,42 @@ The library also looks for indexed `.wma` files in MediaStore.Files, because the
 stock Android audio scanner may not classify them in its audio collection.
 Play/pause, seeking and volume use the same MediaPlayer path after preparation.
 
-## MTP experiment
+## USB MTP transfer
 
-The running kernel enables `USB_F_MTP` and `USB_CONFIGFS_F_MTP`. The native
-diagnostic bootstrap owns USB; Android's USB manager is absent. Setting
-`sys.usb.config=mtp` alone cannot add file transfer to this build.
+**Validated on this phone with Windows:** internal shared storage and the
+Transcend microSD volume both appear in Explorer. A synthetic UTF-8 file was
+copied from the PC to each volume and back. All five copies had SHA-256
+`9951ab8636467f3b488d1299717458864d4135de9946fbb9a08460b738ce641f`.
+The user also confirmed normal file copying works.
 
-Two initial shell-based composite-gadget trials disconnected USB and did not
-complete their automatic rollback. A full power cycle restored diagnostic ADB.
-They did not validate MTP and are not enabled on boot.
+Open **Setări Leo → Rețele → Transfer USB**. Select the first row with OK to
+start or stop transfer. The page reports the resulting service state; it does
+not measure an individual file-copy operation. Finish copying before switching
+off. D-pad/OK toggles were tested in both directions; ADB returned in both modes.
+Active calls block switching. The next boot uses diagnostic ADB only; transfer
+is opt-in for the current boot, and no raw block device is exported.
 
-The next implementation uses independent init services, persistent local logs,
-and a separate 60-second reboot watchdog. No transfer is enabled merely by
-installing it. `install-media-runtime.py` installs the WMA decoder, notice and
-these experimental hooks; `--restore` restores the original files. Init hooks
-require reboot. Only request MTP during an attended diagnostic with idle calls.
-The default next boot uses the bootstrap's ADB-only configuration.
+The bootstrap owns USB; Android's UsbManager is absent. Independent init services
+configure configfs and notify MediaProvider's MTP receiver explicitly. On this
+kernel plain `ln -s` works where toybox's forced form fails with EPERM. Link order
+must put MTP at MI_00 and ADB at MI_01 for Windows VID 18d1 / PID 4ee2.
+`leo-adbd-renew` retains the original FunctionFS mount namespace while renewing
+only the verified diagnostic adbd. System libraries are unchanged.
 
-Controller runtime power was set temporarily from `auto` to `on` during the
-successful codec tests; ADB stayed connected through those checks. This is an
-investigation result, not proof that runtime suspend causes every USB failure
-or a validated permanent battery-friendly fix.
+Normal Settings commands never arm a reboot watchdog. The separate watchdog is
+restricted to host diagnostics explicitly setting `sys.leo.usb.trial=1`.
+Earlier failed USB trials required power cycling; they are not evidence of
+successful transfer. The final composite configuration and on/off UI were tested
+after those corrections.
+
+While MTP is enabled the controller's runtime power mode is forced to `on`.
+The script saves its previous `auto`/`on` value once per boot and restores it on
+transfer shutdown. The new restoration branch is installed but has not yet been
+measured through another toggle cycle. Runtime suspend has not been established
+as the cause of every historical ADB interruption. Long transfers, arbitrary
+media files, unplug-during-copy behavior and battery cost need further testing.
+
+`install-media-runtime.py` installs the WMA decoder, notice, USB script, helper
+and init hooks. It verifies hashes, saves originals locally and remounts system
+read-only afterward. Installation retains the current USB mode; new init hooks
+require reboot. `--restore` restores the saved installation.

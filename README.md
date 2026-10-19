@@ -75,7 +75,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Profil pentru memorie redusă | **Funcțional** | `low_ram` și zRAM verificate software; nu înseamnă că orice aplicație rulează fluent. |
 | Baterie / alimentare USB | **Parțial** | Nivel, tensiune, temperatură și alimentare citite; autonomia și ciclul complet de încărcare sunt netestate. |
 | Card microSD FAT32 | **Parțial** | Aproximativ 32 GB, PUBLIC/VISIBLE după reboot; folder și fișier UTF-8 create din Fișiere Leo, citire prin provider verificată. Configurația vold reparată fără formatare; scoaterea la cald și alte carduri sunt netestate. |
-| MTP | **Experimental** | Suport prezent în kernel; probele de schimbare USB au întrerupt ADB. Transferul nu este încă validat; configurația normală rămâne ADB. |
+| MTP | **Funcțional în probe** | Transfer PC → memoria internă / microSD → PC, hash identic; confirmat și de utilizator. Pornire/oprire din Setări Leo → Rețele → Transfer USB, cu ADB în ambele moduri. Transferurile mari rămân netestate. [Detalii](android81/MEDIA-RUNTIME.md). |
 | Iluminarea tastelor | **Funcțional** | Pornire la apăsare fizică, nivel 20/40 și timeout de 8 secunde; iluminare confirmată de utilizator. |
 | Vibrații | **Nefuncțional** | HAL-ul lipsă a fost instalat; Android vede vibratorul și driverul raportează activare, dar utilizatorul nu simte motorul. |
 | Animație de pornire LEO | **Funcțional** | Logo original și puncte mov animate, 240×320, 6 cadre/s; confirmate pe telefon la reboot, apoi meniul Leo. |
@@ -138,7 +138,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
 | Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
 | Email | **Nefuncțional** | Se închide la pornire din cauza unei erori de resurse. |
-| Cameră | **Nefuncțional** | Android raportează zero dispozitive. Audit offline: 23 componente originale și 16 biblioteci Android, fără dependențe declarate lipsă; compatibilitatea ABI și captura sunt nevalidate. [Audit](android81/CAMERA-PORT-AUDIT.md). |
+| Cameră | **Nefuncțional** | Android raportează zero dispozitive. Audit offline: 23 componente originale și 16 biblioteci Android, fără dependențe declarate lipsă; încărcarea izolată a HAL-ului QCamera a reușit pe telefon. Senzorul, daemonul și captura rămân nevalidate. [Audit](android81/CAMERA-PORT-AUDIT.md). |
 | GPS / localizare reală | **Nefuncțional** | Fără provider GPS funcțional sau fix real confirmat. |
 | Senzori Android | **Nefuncțional** | SensorService nu detectează senzori; descrie integrarea software, nu inventarul fizic. |
 
@@ -166,6 +166,8 @@ complete; capturile istorice ale apelurilor sunt simulări. Apelul real este doc
 | Aplicații Android | Ceas / cronometru | Multi-tap românesc |
 | --- | --- | --- |
 | ![Aplicații Android](android81/screenshots/visual-shell-android-apps.png) | ![Ceas Leo](android81/screenshots/leo-clock-stopwatch.png) | ![Editor de test IME](android81/screenshots/keypad-ime-romanian.png) |
+
+![Transfer USB din Setări Leo](android81/screenshots/leo-usb-transfer.png)
 
 [Toate capturile păstrate în proiect](android81/screenshots/).
 

@@ -24,7 +24,7 @@ public final class SettingsActivity extends LeoActivity {
         rememberSelection(); categories=true;
         AudioManager audio=(AudioManager)getSystemService(AUDIO_SERVICE);
         String profile=audio.getRingerMode()==AudioManager.RINGER_MODE_SILENT?"Silențios":audio.getRingerMode()==AudioManager.RINGER_MODE_VIBRATE?"Vibrații":"Normal";
-        String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă"},
+        String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă","Transfer USB"},
             {"Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9"},
             {"Blocarea tastelor","Permisiuni și aplicații","Localizare"},
             {"Dată și oră","Stocare","Despre telefon","Setări Android","Configurare inițială"}};
@@ -32,7 +32,7 @@ public final class SettingsActivity extends LeoActivity {
             selections[category]=i;
             if(category==0) {
                 if(i<3) startActivity(new Intent(SettingsActivity.this,ConnectivityActivity.class).putExtra("kind",new String[]{"wifi","bluetooth","hotspot"}[i]));
-                else startActivity(new Intent(SettingsActivity.this,MobileSettingsActivity.class));
+                else startActivity(new Intent(SettingsActivity.this,i==3?MobileSettingsActivity.class:UsbTransferActivity.class));
             } else if(category==1) {
                 if(i==0) profiles(); else if(i==1) brightness(); else if(i==2) timeout();
                 else if(i==3) startActivity(new Intent(SettingsActivity.this,WallpaperActivity.class));

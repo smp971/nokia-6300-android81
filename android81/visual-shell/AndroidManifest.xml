@@ -67,6 +67,7 @@
         <activity android:name=".KeypadLockSettingsActivity" android:exported="false" android:label="Blocare taste Leo" android:screenOrientation="portrait" />
         <activity android:name=".AppSettingsActivity" android:exported="false" android:label="Aplicații și permisiuni Leo" android:screenOrientation="portrait" />
         <activity android:name=".MediaActivity" android:exported="false" android:label="Media Leo" android:screenOrientation="portrait" />
+        <activity android:name=".UsbTransferActivity" android:exported="false" android:label="Transfer USB" android:screenOrientation="portrait" />
         <activity android:name=".VideoActivity" android:exported="false" android:label="Video Leo" android:screenOrientation="portrait" />
         <activity android:name=".RecorderActivity" android:exported="false" android:label="Recorder Leo" android:screenOrientation="portrait" />
         <activity android:name=".KeypadLockActivity" android:exported="false" android:label="KeypadLock Leo" android:screenOrientation="portrait" />

@@ -1,4 +1,4 @@
-"""Install/restore the Leo local WMA decoder and opt-in MTP experiment."""
+"""Install/restore the Leo local WMA decoder and opt-in MTP services."""
 from pathlib import Path
 import argparse,hashlib,json,re,shlex,subprocess
 root=Path(__file__).resolve().parent
@@ -13,7 +13,8 @@ calls=re.findall(r'mCallState=(\d+)',native('/system/bin/dumpsys','telephony.reg
 assert calls and set(calls)=={'0'},'Refused during a call'
 backup=root/'output/media-runtime-before';backup.mkdir(exist_ok=True);manifest=backup/'manifest.json'
 records=json.loads(manifest.read_text()) if manifest.exists() else {}
-files={'/system/bin/leo-wma-decode':(root/'output/leo-wma-decode',755),
+files={'/system/bin/leo-adbd-renew':(root/'output/leo-adbd-renew',755),
+       '/system/bin/leo-wma-decode':(root/'output/leo-wma-decode',755),
        '/system/etc/NOTICE.leo-wma':(root/'output/leo-wma-LICENSE.txt',644),
        '/system/etc/leo-usb-mtp.sh':(root/'usb-mtp.sh',755),
        '/system/etc/init/init.leo.mtp.rc':(root/'init.leo.mtp.rc',644)}
@@ -46,4 +47,4 @@ try:
         native('/system/bin/mv',target+'.leo-new',target);native('/system/bin/restorecon',target)
         assert native('/system/bin/sha256sum',target).split()[0]==record['before' if args.restore else 'after']
 finally:native('/system/bin/sync');native('/system/bin/mount','-o','remount,ro','/system')
-print('Media files restored; reboot to unload init hooks' if args.restore else 'WMA decoder installed; experimental MTP service activates after reboot, transfer remains off')
+print('Media files restored; reboot to unload init hooks' if args.restore else 'WMA and USB files installed; current USB mode retained. New init hooks require reboot.')

@@ -1,4 +1,4 @@
-# Camera port: offline feasibility
+# Camera port: offline audit and isolated loading
 
 The dump contains `camera.msm8909.so`, `mm-qcamera-daemon`, and the Qualcomm camera
 pipeline libraries. Its framework reports Android 6.0.1/API 23; Leo targets API 27.
@@ -15,8 +15,30 @@ sensor tuning/calibration, daemon device permissions, kernel ioctls and the
 camera-provider adapter still need runtime checks. Global symbol availability
 does not prove each library's actual linker scope will resolve identically.
 
+## Device linker probe — 19 October 2026
+
+`build-camera-linker-probe.sh` and `run-camera-linker-probe.py` built and ran a
+separate ARM process against the private stock libraries. `dlopen(RTLD_NOW)`
+succeeded and the exported module reported:
+
+```text
+SANDBOX uid=9999 devices=hidden network=isolated
+DLOPEN_OK module=camera name=QCamera Module module_api=0x100 hal_api=0x100
+PROBE_CHILD_EXIT=0
+```
+
+The child used separate mount/network namespaces, a replacement `/dev` containing
+only null/zero/urandom, dropped supplementary groups and root identity, and had
+memory/CPU/time limits. No camera enumeration, open, capture or daemon method was
+called. This is a diagnostic containment measure, not a security boundary for
+arbitrary hostile code. A denied `vold.decrypt` property read was logged but did
+not prevent loading. The phone's boot ID and audio state were unchanged.
+
+Original libraries remain in a marked private diagnostic directory under
+`/data/local/tmp`, outside Android's system library search paths. No platform
+library was replaced. Binaries and detailed results stay in ignored `output/`.
+
 The kernel exposes `video0` as `msm-config`; that is not proof of a working image
-sensor. Next work should load dependencies in an isolated diagnostic, then inspect
-the camera module and provider before opening hardware. Keep Android's binder,
-utils and graphics libraries intact. No camera HAL or daemon was activated in
-this audit. The detailed JSON stays in ignored `output/camera-port-audit.json`.
+sensor. Next work is to inspect daemon initialization, sensor dependencies and
+the provider adapter before opening hardware. Keep Android's binder, utils and
+graphics libraries intact. Capture and camera registration remain unimplemented.
