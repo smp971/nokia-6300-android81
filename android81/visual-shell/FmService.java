@@ -48,7 +48,7 @@ public final class FmService extends Service implements AudioManager.OnAudioFocu
             }
         }});
     }
-    private void stop(String reason){if(closed)return;state=reason;playing=false;starting=false;scanning=false;publish();stopSelf();}
+    private void stop(String reason){if(closed)return;android.util.Log.i("LeoFM","Stop: "+reason);state=reason;playing=false;starting=false;scanning=false;publish();stopSelf();}
     public void onAudioFocusChange(int focus){if(focus<0)stop("Oprit · alt sunet");}
     public void onDestroy(){closed=true;main.removeCallbacksAndMessages(null);LocalSocket linked=socket;if(linked!=null){try{linked.shutdownOutput();}catch(IOException ignored){}try{linked.shutdownInput();}catch(IOException ignored){}try{linked.close();}catch(IOException ignored){}}control.shutdownNow();for(int n=0;n<listeners.size();n++)try{phones.get(n).listen(listeners.get(n),PhoneStateListener.LISTEN_NONE);}catch(RuntimeException ignored){}audio.unregisterAudioDeviceCallback(devices);audio.abandonAudioFocus(this);playing=false;starting=false;scanning=false;speaker=false;instance=null;stopForeground(true);sendBroadcast(new Intent(CHANGED).setPackage(getPackageName()));super.onDestroy();}
 }

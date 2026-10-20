@@ -84,3 +84,9 @@ Acestea sunt repere de implementare; comenzile private și comportamentul au fos
 | Acordaj și semnal măsurat | Meniu din taste |
 | --- | --- |
 | ![Radio FM Leo](screenshots/leo-fm-tuner.png) | ![Meniu Radio FM](screenshots/leo-fm-menu.png) |
+
+## Verificarea opririi după comutarea pe difuzor
+
+Utilizatorul a confirmat lista scanată și selectarea frecvențelor, dar a raportat oprirea sunetului după aproximativ o secundă pe difuzor. Jurnalul HAL confirmă activarea rutei speaker, urmată de închiderea sesiunii de aplicație; motivul exact nu era înregistrat în versiunea inițială. Serviciul înregistrează acum motivul opririi în tagul `LeoFM`, fără date personale.
+
+Testul mut a fost extins: selectează activarea difuzorului din meniul real, apoi verifică dacă sesiunea rămâne activă încă opt secunde. A trecut pe telefon, la fel și revenirea la căști. Această probă nu confirmă audibilitatea sau rezolvarea incidentului manual; repetarea de către utilizator rămâne necesară.
