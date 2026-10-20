@@ -12,9 +12,10 @@ final class Appearance {
     static final class Palette {
         final int background,bar,card,accent,selection,ink;
         final int[] gradient;
+        Palette(int background,int bar,int card,int accent,int selection,int ink){this.background=background;this.bar=bar;this.card=card;this.accent=accent;this.selection=selection;this.ink=ink;this.gradient=new int[]{background,card,accent};}
         Palette(int[] colors){gradient=colors;background=mix(colors[0],0xff080e19,.48f);bar=mix(colors[0],0xff03070e,.6f);card=mix(colors[0],colors[1],.24f);accent=colors[2];selection=mix(colors[2],Color.WHITE,.84f);ink=mix(colors[0],Color.BLACK,.18f);}
     }
-    static Palette palette(Context c){android.content.SharedPreferences prefs=c.getSharedPreferences("appearance",0);int i=Math.max(0,Math.min(COLORS.length-1,prefs.getInt("theme",prefs.getBoolean("warm",false)?1:0)));return new Palette(COLORS[i]);}
+    static Palette palette(Context c){if(c instanceof PhoneActivity||c instanceof InCallActivity)return PhoneTheme.palette();android.content.SharedPreferences prefs=c.getSharedPreferences("appearance",0);int i=Math.max(0,Math.min(COLORS.length-1,prefs.getInt("theme",prefs.getBoolean("warm",false)?1:0)));return new Palette(COLORS[i]);}
     static int mix(int a,int b,float f){return Color.rgb((int)(Color.red(a)*(1-f)+Color.red(b)*f),(int)(Color.green(a)*(1-f)+Color.green(b)*f),(int)(Color.blue(a)*(1-f)+Color.blue(b)*f));}
     static android.graphics.drawable.GradientDrawable surface(int color,int radius){android.graphics.drawable.GradientDrawable d=new android.graphics.drawable.GradientDrawable();d.setColor(color);d.setCornerRadius(Math.min(radius,3));return d;}
     static android.graphics.drawable.StateListDrawable fieldSurface(Palette p,int radius){

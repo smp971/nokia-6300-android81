@@ -13,6 +13,7 @@
 !/android81/*.sh
 !/android81/*.ps1
 !/android81/*.c
+!/android81/VibrationAudioProbe.java
 !/android81/*.md
 !/android81/repro/
 !/android81/audio-abi/

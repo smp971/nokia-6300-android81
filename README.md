@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 20 octombrie 2026** · [Șase rafinări noi](android81/LEO-DAILY-REFINEMENTS.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
+**Actualizat: 20 octombrie 2026** · [Ceas și Meteo](android81/LEO-CLOCK-WEATHER.md) · [Telefon Leo Night](android81/LEO-NATIVE-PHONE.md) · [Șase rafinări noi](android81/LEO-DAILY-REFINEMENTS.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
 
 [Ce funcționează](#ce-poți-face-deja) · [Capturi](#leo-în-imagini) ·
 [Audit](#auditul-proiectului) · [Ce urmează](#ce-mai-avem-de-construit) ·
@@ -35,6 +35,19 @@ Apasă o imagine pentru dimensiunea originală.
 | **Player muzical** | **Calculator** | **Meniul de opțiuni** |
 | <a href="android81/screenshots/leo-flat-20261020-music.png"><img src="android81/screenshots/leo-flat-20261020-music.png" width="180" alt="Player în pauză, fără piesă selectată"></a> | <a href="android81/screenshots/leo-flat-20261020-calculator.png"><img src="android81/screenshots/leo-flat-20261020-calculator.png" width="180" alt="Calculator Leo flat"></a> | <a href="android81/screenshots/leo-flat-20261020-menu.png"><img src="android81/screenshots/leo-flat-20261020-menu.png" width="180" alt="Opțiunile playerului din taste"></a> |
 
+**Telefon Leo Night:** interfață proprie pentru apelare și convorbire, conectată
+la Android Telecom. Ecranele de apel din aceste capturi sunt **demo locale**.
+
+| Apelare | Apel primit · demo | Convorbire · demo |
+| :---: | :---: | :---: |
+| <img src="android81/screenshots/leo-night-phone.png" width="180" alt="Telefon Leo Night"> | <img src="android81/screenshots/leo-night-incoming-demo.png" width="180" alt="Apel demonstrativ primit"> | <img src="android81/screenshots/leo-night-active-demo.png" width="180" alt="Convorbire demonstrativă"> |
+
+**Ceas și Meteo, pe aparat:** [funcții și probe](android81/LEO-CLOCK-WEATHER.md).
+
+| Ceas · cinci file | Ora pe glob | Meteo București |
+| :---: | :---: | :---: |
+| <img src="android81/screenshots/leo-clock-tabs.png" width="180" alt="Ceas Leo"> | <img src="android81/screenshots/leo-clock-world.png" width="180" alt="Ora pe glob"> | <img src="android81/screenshots/leo-weather-current.png" width="180" alt="Meteo București"> |
+
 ## Ce poți face deja
 
 „Confirmat” înseamnă că proba descrisă a trecut pe aparatul de dezvoltare.
@@ -52,12 +65,13 @@ Limitele și scenariile rămase sunt indicate separat.
 | 📻 **Radio FM** | Acordaj, căutare înainte/înapoi, canale scanate, favorite, căști/difuzor și nume RDS afișat, confirmate manual. |
 | 🎙️ **Reportofon** | Înregistrări AAC/M4A, pauză, salvare intern/SD, indicator care reacționează la voce și redenumire confirmată. |
 | 📂 **Fișiere și transfer** | Fișiere interne și SD, copiere/mutare verificate prin hash, redenumire; transfer USB MTP confirmat. |
-| 🧰 **Unelte zilnice** | Calculator, Notițe, Calendar local, Ceas, alarmă și temporizator; sunetul temporizatorului confirmat. |
+| 🧰 **Unelte zilnice** | Calculator, Notițe, Calendar local și Ceas cu cinci file: Ora, Alarme, Glob, Timer și Crono. Timer cu pauză/continuare și cronometru cu ture, verificate din taste. |
+| 🌤️ **Meteo** | București implicit, oraș configurabil, vreme modelată Open-Meteo, șapte zile, răsărit/apus și cache local cu data actualizării. Prognoză reală afișată pe telefon. |
 | 🎨 **Personalizare** | Teme, fundaluri, reordonarea aplicațiilor, scurtături, trei favorite în dialer și configurări rapide cu volum. |
 | 🌙 **Profiluri sonore** | Normal, Silențios, Exterior, Noapte și profil personal. Revenirea sunetului după Noapte → Normal confirmată. |
 
 **Scurtătura nouă:** din Home, apasă **0** pentru **Acum se redă** — un singur loc
-pentru muzică și FM, volum și acces la player. În meniul principal sunt **26 de intrări**;
+pentru muzică și FM, volum și acces la player. În meniul principal sunt **27 de intrări**;
 aplicațiile Android instalate au propria listă, iar compatibilitatea cu tastele variază.
 
 Pentru telefonia pe SIM 2, DTMF, VoLTE/VoWiFi și probe după repornire, consultă
@@ -76,7 +90,7 @@ confirmarea unei funcții se bazează pe proba ei separată.
 | **Interfața Leo** | Shell nativ adaptat la taste, cu un set consistent de aplicații | Home, bare softkey, T9 și meniuri comune. Serviciul tastelor era legat la procesul curent. Recuperarea sa limitată este implementată; eliminarea tuturor blocajelor nu este demonstrată. |
 | **Telefonie** | Funcțiile de bază au rezultate reale, cu acoperire incompletă | Apel primit și două apeluri inițiate bidirecționale, SMS și LTE pe SIM 1. SIM 2, DTMF și IMS au nevoie de probe distincte. [Probe noi](android81/STABILITY-PHONE-20261020.md). |
 | **Media** | Una dintre zonele cele mai avansate ale portului | Muzică, căști, FM/RDS și A2DP au confirmări reale. Modulul A2DP este încărcat în politica audio. Microfonul Bluetooth, apelurile prin accesorii și toate variantele de codec nu sunt validate. |
-| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | 90 fișiere Java în shell, plus 18 fișiere Java de probe; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
+| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | Inventar actualizat: 99 fișiere Java în shell, plus 20 fișiere Java de probe; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
 | **Recompilare** | Există o bază reproductibilă documentată, încă netestată integral pe un PC curat | Toate cele **590 de proiecte AOSP** din manifest au revizii SHA fixate. Arborele AOSP, dump-ul și componentele proprietare necesare sunt intrări separate. |
 | **Verificare automată** | Există teste locale și probe pe telefon; lipsește încă o rulare continuă centralizată | Testele cozii muzicale au trecut în ultima etapă. Alte rezultate sunt legate în documentație. Repository-ul nu are workflow-uri GitHub Actions; suita completă nu a fost rerulată în acest audit. |
 | **Livrare și mentenanță** | Proiect de dezvoltare, încă fără release pentru instalare generală | Scripturile depind de mediul local și includ verificări pentru aparatul de dezvoltare. Lipsesc încă o procedură completă de release și un fișier LICENSE la rădăcină. |
@@ -87,12 +101,14 @@ să facem aceste rezultate repetabile: pornire, taste, apeluri, autonomie și re
 
 ## Ce mai avem de construit
 
-Ordinea de mai jos pune folosirea zilnică înaintea adăugării unor meniuri noi.
+Etapa activă este interfața de telefonie Leo și investigația hardware.
+USB, performanța și autonomia sunt amânate momentan la alegerea utilizatorului;
+acest lucru nu înseamnă că limitele lor au fost rezolvate.
 
 | Prioritate | De lucru | Cum știm că este gata |
 | --- | --- | --- |
 | **1 · Stabilitate** | Blocaje Leo, întreruperi ADB/USB, pornire și repornire; DeskClock stock corectat, STOP fără alarmă activă verificat, reboot încă de testat | Serii documentate de porniri și navigare, cu recuperare verificată și fără pierderea controlului din taste. |
-| **2 · Telefonie completă** | Apeluri pe SIM 2, DTMF, respingere, SMS și rute de apel; apelurile inițiate pe SIM 1 au acum două confirmări audio | Matrice de apeluri și mesaje reale, repetată după reboot. VoLTE și VoWiFi validate separat. |
+| **2 · Telefonie completă · activ** | Telefon și ecran de apel native Leo Night, pe backend Telecom; rol Leo activat, demo și contract de integrare verificate. Probele SIM 2 urmează după maturizarea interfeței | Apeluri reale prin noua interfață, DTMF, respingere și rute audio; ulterior SIM 2 și reboot. VoLTE și VoWiFi validate separat. |
 | **3 · Autonomie** | Consum în repaus, suspendare, încărcare și utilizare pe baterie | Măsurători fără alimentare USB și sesiuni mai lungi, cu metodă și rezultate publicate. |
 | **4 · Hardware rămas** | Vibrație, cameră, GPS și integrarea senzorilor | Probe pe hardware real; camera rămâne momentan în afara etapei active, la cererea utilizatorului. |
 | **5 · Aplicații și accesibilitate** | T9 mai bun, email SMTP, browser/WebView, aplicații Android dificil de folosit din taste | Trimitere reală de email, scenarii T9 mai largi și fluxuri complete controlabile din taste. |
@@ -101,7 +117,7 @@ Ordinea de mai jos pune folosirea zilnică înaintea adăugării unor meniuri no
 ### Limite cunoscute, pe scurt
 
 - **Camera, GPS și integrarea senzorilor Android:** nefuncționale în starea documentată.
-- **Vibrații:** control software prezent, fără vibrație fizică confirmată.
+- **Vibrații:** funcționau în KaiOS, conform utilizatorului; trei impulsuri directe prin driverul actual au fost acceptate software, dar nu s-au simțit. Inițializarea hardware rămâne de investigat. [Detalii](android81/LEO-NATIVE-PHONE.md#vibrații--investigație-separată).
 - **VoLTE / VoWiFi:** o înregistrare IMS experimentală nu validează apeluri IMS.
 - **MMS:** neimplementat. SMS pe SIM 2 și noua cale a mesajelor trimise necesită probe suplimentare.
 - **Email / web:** primirea IMAP a funcționat; SMTP este nevalidat. Browserul text nu execută JavaScript, iar WebView a avut crash-uri GPU.

@@ -35,6 +35,7 @@ public final class LeoPointerService extends AccessibilityService {
     private final android.os.Handler movement=new android.os.Handler();
     private int heldDirection;
     private long heldSince;
+    static void prepareForCall(){if(instance!=null){instance.setActive(false);if(instance.menu!=null)instance.menu.dismiss();}}
     private final Runnable repeatMovement=new Runnable() {
         public void run() {
             if(!active || scroll || heldDirection==0) return;
@@ -139,6 +140,7 @@ public final class LeoPointerService extends AccessibilityService {
         // Scan 212 is the dedicated Menu key; scan 139 is the left softkey.
         // Keep the softkey's context-specific actions intact.
         if(key==KeyEvent.KEYCODE_MENU && event.getScanCode()==212) {
+            if(InCallActivity.visible)return false;
             if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) globalMenu();
             return true;
         }

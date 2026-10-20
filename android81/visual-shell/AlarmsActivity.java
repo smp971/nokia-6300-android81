@@ -7,7 +7,7 @@ import org.json.*;
 import java.util.*;
 
 public final class AlarmsActivity extends LeoActivity {
-    protected void onCreate(Bundle state) { super.onCreate(state); show(); }
+    protected void onCreate(Bundle state) { super.onCreate(state); if(getIntent().getBooleanExtra("new",false))edit(null);else if(getIntent().hasExtra("edit_id")){org.json.JSONObject alarm=AlarmScheduler.get(this,getIntent().getIntExtra("edit_id",-1));if(alarm!=null)edit(alarm);else show();}else show(); }
     private void show() {
         final JSONArray values;
         try { values=AlarmScheduler.alarms(this); }

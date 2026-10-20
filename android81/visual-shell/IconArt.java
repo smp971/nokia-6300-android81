@@ -4,13 +4,14 @@ import android.graphics.*;
 final class IconArt {
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF box=new RectF();private final Path path=new Path();
-    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc};
+    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc,0xff288cda};
     private void round(Canvas c,float l,float t,float r,float b,float radius,int color){p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(color);c.drawRoundRect(l,t,r,b,radius,radius,p);}
     private void line(Canvas c,float a,float b,float x,float y){c.drawLine(a,b,x,y,p);}
         void draw(Canvas c,int index,float x,float y) {
             round(c,x-25,y-25,x+25,y+25,8,COLORS[index]);
             c.save(); c.translate(x,y); p.setColor(Color.WHITE); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(2.8f); p.setStrokeCap(Paint.Cap.ROUND);
             switch(index) {
+                case 26: c.drawCircle(-5,-5,8,p);c.drawCircle(4,4,9,p);line(c,-7,13,12,13);line(c,-14,-5,-17,-5);line(c,-5,-14,-5,-17);break;
                 case 25: c.drawRoundRect(-14,-7,14,12,3,3,p);line(c,-10,-8,8,-17);c.drawCircle(-5,3,5,p);line(c,4,-1,10,-1);line(c,4,5,10,5);break;
                 case 24: line(c,-14,8,-7,8);line(c,-7,8,-3,-8);line(c,-3,-8,3,12);line(c,3,12,8,-2);line(c,8,-2,14,-2);break;
                 case 23: c.drawRect(-14,-11,14,11,p);line(c,-9,-5,-3,0);line(c,-3,0,-9,5);line(c,1,6,9,6);break;
