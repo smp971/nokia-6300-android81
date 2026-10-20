@@ -19,6 +19,7 @@ PRODUCT_COPY_FILES += \
 
 # First framework bring-up uses the software display stack verified on this phone.
 PRODUCT_PACKAGES += \
+    audio.a2dp.default \
     leo-keylight \
     Launcher3Go \
     hwcomposer.leo \

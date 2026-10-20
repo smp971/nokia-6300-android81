@@ -33,6 +33,7 @@ public final class RecordingService extends Service implements AudioManager.OnAu
         return START_NOT_STICKY;
     }
     private void toggle(){if(recorder==null||!startedRecorder)return;try{if(paused){recorder.resume();pausedTotal+=SystemClock.elapsedRealtime()-pausedAt;paused=false;state="Înregistrare";}else{recorder.pause();pausedAt=SystemClock.elapsedRealtime();paused=true;state="Pauză";}}catch(RuntimeException failure){finish(false);state="Pauza nu este disponibilă";stopSelf();}}
+    int amplitude(){if(recorder==null||!startedRecorder||paused)return 0;try{return recorder.getMaxAmplitude();}catch(RuntimeException unavailable){return 0;}}
     static long elapsed(){return Math.max(0,(paused?pausedAt:SystemClock.elapsedRealtime())-started-pausedTotal);}
     private void finish(boolean keep){
         if(recorder!=null){try{if(startedRecorder)recorder.stop();else keep=false;}catch(RuntimeException invalid){keep=false;}recorder.release();recorder=null;startedRecorder=false;

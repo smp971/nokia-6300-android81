@@ -112,7 +112,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | VoLTE | **Netestat** | Înregistrarea IMS nu dovedește un apel VoLTE; apelul primit reușit nu a fost identificat ca VoLTE. |
 | VoWiFi | **Nefuncțional** | IMS/VoWiFi neintegrat; conectarea Wi-Fi de probă nu validează apeluri Wi-Fi. |
 | Wi-Fi | **Funcțional** | Asociere COMPLETED, adresă și 2/2 ping prin wlan0 după două porniri cu inițializare timpurie. Stabilitatea pe termen lung necesită observație. |
-| Bluetooth | **Parțial** | ON după reboot; mouse BLE conectat prin HID, mișcare și clic confirmate de utilizator. Accesoriile audio și alte profiluri nu sunt validate. |
+| Bluetooth | **Parțial** | ON după reboot; mouse BLE conectat prin HID, mișcare și clic confirmate de utilizator. Boxă A2DP stereo AAC confirmată auditiv după adăugarea modulului audio lipsă. HFP și microfonul Bluetooth rămân nevalidate. [Centru media](android81/LEO-MEDIA-CENTER.md). |
 | Hotspot | **Funcțional** | WPA2 pornit/oprit din Leo; DHCP și partajare mobilă active. Utilizatorul a confirmat acces web de pe alt telefon cu datele mobile ale clientului oprite. |
 
 ### Aplicații și alte componente hardware
@@ -139,8 +139,8 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Favorite | **Funcțional** | Marcaj Android STARRED, listă proprie și probă pe contact sintetic, curățat după verificare. |
 | Ecran de blocare Leo | **Funcțional** | Ceas, dată, baterie și ambele SIM-uri, cu tema/fundalul HOME. Blocare automată la stingere și expirarea combinației verificate. Previzualizări opționale de notificări, ascunse implicit; sus/jos schimbă notificarea. Deblocare: soft stânga → *. Protecție contra apăsărilor accidentale, fără PIN. |
 | Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
-| Muzică / Video Leo | **Parțial** | Bibliotecă și controale native; player retro cu vizualizator FFT real, confirmat manual; copertă MP3, coadă editabilă, shuffle/repeat și comenzi la blocare verificate cu probe locale; WMA redat prin serviciul Muzică Leo. MP3/FLAC/AAC verificate prin MediaPlayer. Redarea video și compatibilitatea tuturor fișierelor rămân de validat. |
-| Reportofon Leo | **Parțial** | Înregistrări reale AAC/M4A în intern și SD, finalizare și decodare validate; redarea probei SD a pornit prin Leo. Claritatea vocii și microfonul căștilor rămân neconfirmate. [Probe](android81/LEO-DAILY-TOOLS.md). |
+| Muzică / Video Leo | **Parțial** | Bibliotecă și controale native; player retro cu vizualizator FFT real, confirmat manual; copertă MP3, coadă editabilă, shuffle/repeat și comenzi la blocare verificate cu probe locale; WMA redat prin serviciul Muzică Leo. Bibliotecă pe artiști/albume, liste salvate, moduri persistente și acces „Acum se redă” din Home (0) instalate; artiști/albume, salvarea listei și accesul din Home confirmate manual. MP3/FLAC/AAC verificate prin MediaPlayer. Redarea video și compatibilitatea tuturor fișierelor rămân de validat. |
+| Reportofon Leo | **Parțial** | Înregistrări reale AAC/M4A în intern și SD, finalizare și decodare validate; redarea probei SD a pornit prin Leo. Indicatorul de nivel reacționează la voce și redenumirea funcționează, confirmate manual; alegerea locației intern/SD rămâne disponibilă. Claritatea vocii și microfonul căștilor rămân neconfirmate. [Probe](android81/LEO-DAILY-TOOLS.md). |
 | Căști cu fir | **Parțial** | Bipuri confirmate de utilizator în ambele părți; detectare ALSA input activată permanent; conectare automată după reboot și scoatere/reintroducere verificate. Microfonul căștilor și apelurile prin căști rămân netestate. [Corecție](android81/WIRED-HEADSET.md). |
 | Radio FM | **Parțial** | Recepție reală în căști confirmată pe 101,3 MHz. Radio FM Leo: acordaj, volum, favorite și sesiune root controlată; scanare cu rezultate salvate și selectarea canalelor confirmate. Redarea continuă pe difuzor este confirmată manual după filtrarea evenimentelor false ale mufei. Căștile rămân antena. Căutarea automată schimbă frecvența și numele RDS apare pe ecran, confirmate manual. Buffere PS/RT reale recepționate pe 101,3 MHz. Probele îndelungate rămân nevalidate. [Portare FM](android81/FM-INVESTIGATION.md). |
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
@@ -235,7 +235,7 @@ instrucțiuni validate pentru acest port.
 ## Probleme cunoscute
 
 - Corecție NetworkPolicy instalată; stabilitatea pornirii necesită observație suplimentară.
-- Wi-Fi și Bluetooth pornesc automat în noua ordine de inițializare; stabilitatea pe termen lung și accesoriile audio necesită probe. ADB are încă întreruperi care pot cere reconectarea cablului.
+- Wi-Fi și Bluetooth pornesc automat în noua ordine de inițializare; stabilitatea pe termen lung necesită probe; redarea pe boxă A2DP este confirmată. ADB are încă întreruperi care pot cere reconectarea cablului.
 - Cameră, GPS și integrarea senzorilor nefuncționale în auditul documentat.
 - WebView a prezentat crash GPU; un cont IMAP real și descărcarea inițială sunt confirmate; trimiterea SMTP rămâne nevalidată.
 - Aplicațiile Android nu sunt toate controlabile complet din taste; cursorul este o opțiune de acces.
@@ -417,3 +417,7 @@ semnale scanate și favorite. Căștile rămân antena la activarea difuzorului.
 [Implementare, probe și recompilare](android81/FM-INVESTIGATION.md).
 
 ![Radio FM Leo](android81/screenshots/leo-fm-tuner.png)
+
+### Centru media și recuperarea tastelor
+
+[Bibliotecă, liste, Acum se redă, reportofon, Bluetooth audio, profiluri și verificări de stabilitate](android81/LEO-MEDIA-CENTER.md). Include recompilarea A2DP și revenirea la configurația anterioară.

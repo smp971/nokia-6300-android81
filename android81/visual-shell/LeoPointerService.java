@@ -60,6 +60,7 @@ public final class LeoPointerService extends AccessibilityService {
         manager=(WindowManager)getSystemService(WINDOW_SERVICE);
         if(!screenWatching){android.content.IntentFilter f=new android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF);f.addAction(android.content.Intent.ACTION_SCREEN_ON);registerReceiver(screenReceiver,f);screenWatching=true;}
     }
+    static boolean connected(){return instance!=null;}
     public static boolean toggle() {
         if(instance==null) return false;
         instance.setActive(!instance.active); return true;
@@ -77,9 +78,10 @@ public final class LeoPointerService extends AccessibilityService {
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide"},new KeypadDialog.Action() {
+            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide","Acum se redă"},new KeypadDialog.Action() {
                 public void select(int which) {
-                    if(which==0) startActivity(new android.content.Intent(LeoPointerService.this,NotificationsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                    if(which==7) startActivity(new android.content.Intent(LeoPointerService.this,NowPlayingActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                    else if(which==0) startActivity(new android.content.Intent(LeoPointerService.this,NotificationsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
                     else if(which==1) setActive(!active);
                     else if(which==2) performGlobalAction(GLOBAL_ACTION_HOME);
                     else if(which==3) startActivity(new android.content.Intent(LeoPointerService.this,SettingsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
