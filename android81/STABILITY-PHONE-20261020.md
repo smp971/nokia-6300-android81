@@ -62,3 +62,30 @@ Patch-ul AOSP este exportat în `repro/patches/packages__apps__DeskClock.patch`,
 ## Următoarea probă utilă
 
 Capturarea stării thread-urilor adbd și a endpoint-urilor FunctionFS chiar în timpul pierderii transportului, înainte de reconectare, prin monitorizare independentă. Separat: retestare după reboot, telefonie SIM 2 și DTMF. Setarea permanentă a alimentării USB sau resetarea automată a gadgetului la fiecare apel nu sunt justificate de probele curente.
+
+
+## Captură suplimentară a transportului
+
+`usb-transport-observe.sh` citește metadate din `/proc` pentru procesele adbd: descriptorii deschiși, numele thread-urilor, `wchan`, syscall și stack kernel, plus starea UDC și alimentarea USB. Nu citește payload-ul endpoint-urilor FunctionFS și nu modifică configurația USB. Jurnalul rămâne local, cu director privat și lock împotriva rulării simultane; durata acceptată este 4–120 s, cu două secunde între eșantioane. Citirile adaugă timp, deci lansarea trebuie protejată de un timeout extern.
+
+Exemplul folosește utilitarele Android în namespace-ul framework, după copierea scriptului în `/data/local/tmp`:
+
+```sh
+setsid timeout -s TERM 135 /system/bin/sh /data/local/tmp/leo-usb-transport-observe.sh 120 </dev/null >/data/local/tmp/leo-usb-transport-launch.log 2>&1 &
+```
+
+Rezultatul este `/data/leo-stability/usb-transport.log`. Nu este un serviciu permanent. În această etapă, comanda host `adb -s 695d reconnect` a reprodus dispariția transportului fără apel sau repornirea telefonului; prin urmare, defectul nu este limitat la telefonie. Captura trebuie corelată cu reconectarea fizică înainte de atribuirea unei cauze.
+
+
+### Rezultatul capturii recuperate
+
+- Șase eșantioane, uptime 21932,04–21950,77 s, urmate de markerul `END`; lock-ul a fost eliberat. Durata solicitată de 12 s a inclus aproximativ 23 s cu citirile suplimentare.
+- Hostul a consemnat terminarea conexiunii la 21:28:45, aproximativ uptime 21938 s conform corelării ulterioare a ceasului host cu uptime-ul telefonului. Captura cuprinde eșantioane înainte și după acest moment; corelarea nu este o măsurare sincronizată la nivel de milisecundă.
+- La toate citirile: UDC `configured`, runtime `active`, alimentare `auto`, adbd PID 300. Descriptorii ep0/ep1/ep2 au rămas deschiși. Firul `usb ffs open` aștepta în futex; `←transport` în `ffs_epfile_io`, iar `→transport` în `unix_stream_read_generic`.
+- După reconectarea fizică, același proces adbd a servit din nou comenzi, cu fire de transport noi. Jurnalul său a consemnat `No such device`, închiderea și reinițializarea FunctionFS la scoaterea cablului.
+- Citirea stack-ului kernel nu este disponibilă pe acest kernel (`/proc/.../stack` absent). Stările `wchan` de mai sus apar și într-o conexiune sănătoasă inactivă: nu demonstrează singure un deadlock.
+- PC: platform-tools 37.0.1, backend raportat `LIBADBUSB`, driver Microsoft WinUSB 10.0.26100.9444. Inventarul descrie proba, fără a atribui automat vina driverului.
+
+**Concluzie:** pierderea transportului se reproduce independent de apel și nu oprește procesul adbd ori alimentarea controlerului. Captura nu separă încă o problemă de handshake/reconectare a hostului de una din gadget/FunctionFS. Nu justifică un patch speculativ al driverului sau un reset USB automat la fiecare apel. Următoarea comparație utilă este o captură host USB detaliată sau un backend/host alternativ, cu o cale independentă de recuperare pregătită înainte de probă.
+
+Jurnalele brute sunt păstrate numai în `output/usb-transport-baseline.log` și `output/usb-transport-adbd.log`, ignorate de Git. Nu s-au inițiat apeluri, nu s-au repornit Leo/Android și nu s-au modificat boot/recovery sau configurația USB în această etapă.
