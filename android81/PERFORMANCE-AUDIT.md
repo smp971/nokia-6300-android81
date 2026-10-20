@@ -73,3 +73,25 @@ Aceasta limitează blocarea uneltelor de pe PC. Nu repară întreruperile USB:
 după unele reporniri de framework este încă necesară reconectarea cablului.
 La ultima repornire completă, cu animația și configurația SD instalate, ADB a
 revenit fără intervenție. Nu este suficient pentru a declara problema rezolvată.
+
+
+## Cadre complete HWUI · 20 octombrie 2026
+
+Pentru antetele care dispăreau sau pâlpâiau în mai multe aplicații, proba cu
+redesenări suplimentare la pornire nu a fost suficientă și a fost eliminată.
+Modul debug.hwui.use_partial_updates=false a fost testat într-un proces Leo nou;
+jurnalul a confirmat Swap behavior 0. Utilizatorul a confirmat apoi că problema
+nu mai apare în navigarea manuală efectuată.
+
+Configurația a fost instalată în system/etc/init/leo-hwui-full-frame.rc și inclusă
+în device-common.mk pentru build-uri noi. install-hwui-full-frame.py verifică
+identitatea telefonului și hash-ul configurației, păstrează /system read-only la
+final și oferă --undo. Nu schimbă EGL/fence libraries și nu adaugă o buclă de
+redesenare; fiecare cadru produs de aplicație este desenat complet, cu GPU activ.
+Aceasta poate costa mai multă desenare per cadru. Nu există încă un benchmark
+comparabil al latenței, consumului sau cadrelor pentru noul mod. Numerele din
+secțiunea din 19 octombrie descriu configurația acelei probe.
+
+Persistența este configurată, dar nu s-a făcut un reboot separat pentru această
+validare. Nicio partiție boot/recovery nu a fost rescrisă. Detalii și limite în
+[nota vizuală](LEO-STYLE-EMAIL.md).

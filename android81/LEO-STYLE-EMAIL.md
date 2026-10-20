@@ -167,13 +167,21 @@ Personalizare a avut antetul vizibil în captura inițială. Accelerarea GPU și
 numărul de cadre cerute de aplicație nu sunt dezactivate sau mărite artificial.
 Aceasta nu modifică sincronizarea fence din SurfaceFlinger.
 
-Utilizatorul a ales verificarea manuală în aplicațiile afectate. La redactarea
-acestei note, rezultatul acelei probe este în așteptare. Nu este încă o corecție
-confirmată. Proprietatea de probă nu supraviețuiește repornirii.
+Utilizatorul a ales verificarea manuală în aplicațiile afectate. Utilizatorul a confirmat că antetul nu mai dispare și nu mai pâlpâie în navigarea
+manuală efectuată. Proprietatea temporară a fost apoi păstrată printr-o
+configurație init instalată pentru pornirile viitoare.
 
 install-hwui-full-frame.py și device/nokia/leo/init.leo.hwui.rc pregătesc o
-configurație reversibilă pentru pornirile viitoare, dar nu au fost instalate în
-această etapă. --undo elimină numai fișierul init deținut de unealtă și readuce
+configurație reversibilă pentru pornirile viitoare. Fișierul a fost instalat și
+verificat prin hash, iar device-common.mk îl include în recompilările noi.
+--undo elimină numai fișierul init deținut de unealtă și readuce
 proprietatea la valoarea upstream implicită; renderer-ele deja inițializate au
 nevoie de repornirea aplicației pentru a schimba efectiv modul de swap.
 Nu se repornesc framework-ul sau telefonul și nu se rescriu boot/recovery.
+
+
+La final, proprietatea era false, audio activ și baza APK de sistem sincronizată.
+Nu s-a repornit telefonul în această probă: existența configurației persistente
+este verificată, aplicarea ei după un reboot separat rămâne de observat. Confirmarea
+utilizatorului se referă la navigarea efectuată, nu la toate aplicațiile externe
+sau la o eliminare demonstrată a tuturor erorilor EGL/fence.

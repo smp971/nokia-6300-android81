@@ -1,6 +1,7 @@
 # Shared Nokia hardware bring-up configuration.
 DEVICE_PACKAGE_OVERLAYS += device/nokia/leo/overlay
 PRODUCT_COPY_FILES += \
+    device/nokia/leo/init.leo.hwui.rc:system/etc/init/leo-hwui-full-frame.rc \
     device/nokia/leo/leo-connectivity.xml:system/etc/permissions/leo-connectivity.xml \
     device/nokia/leo/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
 PRODUCT_COPY_FILES += \
