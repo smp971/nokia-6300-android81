@@ -135,7 +135,7 @@ Email arăta bara de stare și comenzile de jos, dar regiunea antetului era neag
 Titlul Conturi email exista în arborele de accesibilitate: nu lipsea din layout.
 Același aspect fusese observat la prima afișare a paginii Personalizare.
 
-LeoActivity solicită acum redesenarea întregii ferestre după schimbarea paginii,
+Prima încercare a solicitat redesenarea întregii ferestre după schimbarea paginii,
 în următorul cadru și încă o dată la 120 și 320 ms. Este o compensare limitată
 pentru prezentarea inițială incompletă, nu o demonstrație că driverul Adreno a
 fost reparat. Callback-urile ignoră paginile înlocuite sau distruse; nu există
@@ -151,3 +151,29 @@ aplicațiile Android externe sau utilizarea îndelungată.
 Baza de sistem a fost sincronizată, iar Email Leo a fost redeschis. Captura
 contului real rămâne locală; în Git se actualizează numai captura Personalizare,
 care nu conține date personale.
+
+
+### Corecția inițială nu a rezolvat problema
+
+Utilizatorul a raportat ulterior că defectul continuă. Cele trei redesenări de
+pornire au fost eliminate: rezultatul din capturile anterioare nu era suficient
+pentru a declara corecția stabilă.
+
+Proba următoare setează temporar debug.hwui.use_partial_updates=false, apoi
+reinstalează Leo pentru inițializarea unui renderer nou. AOSP EglManager selectează
+astfel SwapBehavior::Discard, cu buffer age zero și desenarea întregii suprafețe
+pentru fiecare cadru produs. Jurnalul noului proces confirmă Swap behavior 0;
+Personalizare a avut antetul vizibil în captura inițială. Accelerarea GPU și
+numărul de cadre cerute de aplicație nu sunt dezactivate sau mărite artificial.
+Aceasta nu modifică sincronizarea fence din SurfaceFlinger.
+
+Utilizatorul a ales verificarea manuală în aplicațiile afectate. La redactarea
+acestei note, rezultatul acelei probe este în așteptare. Nu este încă o corecție
+confirmată. Proprietatea de probă nu supraviețuiește repornirii.
+
+install-hwui-full-frame.py și device/nokia/leo/init.leo.hwui.rc pregătesc o
+configurație reversibilă pentru pornirile viitoare, dar nu au fost instalate în
+această etapă. --undo elimină numai fișierul init deținut de unealtă și readuce
+proprietatea la valoarea upstream implicită; renderer-ele deja inițializate au
+nevoie de repornirea aplicației pentru a schimba efectiv modul de swap.
+Nu se repornesc framework-ul sau telefonul și nu se rescriu boot/recovery.

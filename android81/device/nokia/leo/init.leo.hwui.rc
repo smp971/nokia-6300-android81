@@ -1,0 +1,5 @@
+# Legacy Adreno: avoid reusing damaged/preserved regions of previous UI buffers.
+# This redraws the whole surface only when the app produces a frame; it does
+# not add a render loop or disable GPU acceleration.
+on post-fs-data
+    setprop debug.hwui.use_partial_updates false
