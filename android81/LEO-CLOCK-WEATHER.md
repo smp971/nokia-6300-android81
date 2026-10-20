@@ -56,6 +56,7 @@ datele vechi cu valori inventate; schimbarea orașului elimină prognoza celui v
 - Cronometru: start, tură la aproximativ 3,2 secunde, pauză la aproximativ 5,2 secunde;
   resetat la final. Nu s-au creat alarme de trezire în această probă.
 - Aceeași versiune APK este instalată și sincronizată în baza privilegiată; /system read-only.
+- Utilizatorul a verificat manual filele Ceas și Meteo și a confirmat că sunt în regulă, fără suprapuneri sau taste nefuncționale raportate în această probă.
 
 Proba nouă nu repetă declanșarea sonoră a alarmei sau un reboot. Backend-ul
 alarmei avea confirmări anterioare; folosirea de durată, căutarea altor orașe
