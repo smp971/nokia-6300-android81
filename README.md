@@ -64,7 +64,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
 | Pornire și repornire | **Parțial** | Corecție NetworkPolicy instalată; după recuperare nu s-a raportat ANR. Proba de autostart conectivitate a fost urmată de 900E; cauza rămâne în investigare. |
 | USB / ADB / root | **Parțial** | Diagnostic, instalare și control funcționale; după unele reporniri conexiunea cere reconectarea cablului. Uneltele au acum timeout pentru a evita așteptarea nelimitată. |
-| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 25 intrări pe trei pagini, pictograme colorate și scurtături pe Home, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
+| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 26 intrări pe trei pagini, pictograme colorate și scurtături pe Home, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
 | Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
 | Notificări native Leo | **Parțial** | Notificare sintetică citită, deschisă prin PendingIntent și eliminată din taste. Acțiunea SMS „Marchează ca citit” și limita temporală verificate local. Acțiuni și editor RemoteInput cu confirmare implementate; răspunsul real rămâne netestat. Previzualizări opționale la blocare, ascunse implicit. |
 | Configurări rapide Leo | **Parțial** | Wi-Fi și Bluetooth oprite/repornite din taste; luminozitate salvată și restaurată. Hotspot/SIM deschid paginile native; vibrator nedetectat. |
@@ -142,7 +142,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Muzică / Video Leo | **Parțial** | Bibliotecă și controale native; player retro cu vizualizator FFT real, confirmat manual; copertă MP3, coadă editabilă, shuffle/repeat și comenzi la blocare verificate cu probe locale; WMA redat prin serviciul Muzică Leo. MP3/FLAC/AAC verificate prin MediaPlayer. Redarea video și compatibilitatea tuturor fișierelor rămân de validat. |
 | Reportofon Leo | **Parțial** | Înregistrări reale AAC/M4A în intern și SD, finalizare și decodare validate; redarea probei SD a pornit prin Leo. Claritatea vocii și microfonul căștilor rămân neconfirmate. [Probe](android81/LEO-DAILY-TOOLS.md). |
 | Căști cu fir | **Parțial** | Bipuri confirmate de utilizator în ambele părți; detectare ALSA input activată permanent; conectare automată după reboot și scoatere/reintroducere verificate. Microfonul căștilor și apelurile prin căști rămân netestate. [Corecție](android81/WIRED-HEADSET.md). |
-| Radio FM | **Nefuncțional** | Driver QTI identificat prin V4L2; inițializarea Qualcomm, recepția și ruta audio nu sunt integrate. [Investigație](android81/FM-INVESTIGATION.md). |
+| Radio FM | **Parțial** | Recepție reală în căști confirmată pe 101,3 MHz. Radio FM Leo: acordaj, volum, favorite și sesiune root controlată; scanare cu rezultate salvate și comutare difuzor/căști verificate software. Confirmarea auditivă a difuzorului rămâne separată. RDS și probele îndelungate rămân nevalidate. [Portare FM](android81/FM-INVESTIGATION.md). |
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
 | Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
 | Email | **Parțial** | Email Leo: editor din taste și interfață pentru conturi/foldere/mesaje. Eroarea de resurse AOSP reparată; Meniu oferă configurare manuală și comenzi de compunere din taste. Sincronizare IMAP manuală implementată. Un cont real IMAP este salvat, cu 7 foldere și 10 mesaje descărcate. Trimiterea SMTP, sincronizarea manuală și marcarea ca citit rămân nevalidate. [Detalii](android81/LEO-STYLE-EMAIL.md). |
@@ -409,3 +409,11 @@ transmisie prin modem. Browserul afișează pagina publică de probă example.or
 ### Setări Leo: panouri noi inspirate de KaiOS
 
 [Sunet, ecran/taste, tastatură, stocare, baterie și notificări](android81/LEO-SETTINGS-EXPANSION.md). Instalate și verificate pe telefon; biblioteca de tonuri și valorile reale sunt folosite de servicii Android. Pauza multi-tap și modul inițial au trecut proba în editor real.
+
+### Radio FM Leo
+
+Recepție reală confirmată pe telefon, cu acordaj și volum din D-pad, listă de
+semnale scanate și favorite. Căștile rămân antena la activarea difuzorului.
+[Implementare, probe și recompilare](android81/FM-INVESTIGATION.md).
+
+![Radio FM Leo](android81/screenshots/leo-fm-tuner.png)

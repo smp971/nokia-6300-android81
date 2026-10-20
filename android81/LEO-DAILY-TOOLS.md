@@ -9,7 +9,7 @@ Probe pe TA-1286, 20 octombrie 2026. Aplicații native pentru taste; fără came
 | Contacte | VCF 2.1 QP / 3 UTF-8 / 4, import/export prin provider și filtrare după favoritul sintetic; căutare T9. | Importul adaugă copii; fără deduplicare. Nu am exportat agenda personală în probe. |
 | Reportofon | Înregistrare internă reală AAC mono, 16 kHz, 8,448 s; decodare completă și semnal audio prezent. SD: înregistrare 7,936 s finalizată și pornirea redării prin Muzică Leo. | Claritatea vocii și microfonul căștilor nu sunt confirmate. Utilizatorul nu a surprins redarea probei SD. |
 | Baterie | PowerManager a activat economisirea cu încărcarea simulată ca deconectată; proba a restaurat starea reală. Instrument local de măsurare prin două eșantioane. | Consumul real în repaus și autonomia nu sunt măsurate; USB era conectat. |
-| FM | `/dev/radio0` răspunde la QUERYCAP: `radio-iris`, `QTI FM Radio Transceiver`. | Recepția și sunetul FM neintegrate. Vezi [investigația FM](FM-INVESTIGATION.md). |
+| FM | `/dev/radio0` răspunde la QUERYCAP: `radio-iris`, `QTI FM Radio Transceiver`. | Recepție reală în căști confirmată ulterior pe 101,3 MHz; Radio FM Leo adăugat. Vezi [investigația FM](FM-INVESTIGATION.md). |
 
 ## Utilizare din taste
 

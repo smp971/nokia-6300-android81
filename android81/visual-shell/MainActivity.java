@@ -269,6 +269,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==25){startActivity(new Intent(MainActivity.this,FmActivity.class));return;}
             if(index==24){startActivity(new Intent(MainActivity.this,DiagnosticActivity.class));return;}
             if(index==23){startActivity(new Intent(MainActivity.this,TerminalActivity.class));return;}
             if(index==22){startActivity(new Intent(MainActivity.this,EmailActivity.class));return;}

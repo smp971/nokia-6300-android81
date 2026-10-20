@@ -13,4 +13,5 @@
     <instrumentation android:name="ro.leo.visual.RecorderTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.BatteryTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.HeadsetTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.FmTests" android:targetPackage="ro.leo.visual" />
 </manifest>
