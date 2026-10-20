@@ -50,10 +50,22 @@ abstract class LeoActivity extends Activity {
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
             bar.addView(label,new LinearLayout.LayoutParams(0,dp(34),1));
         }
-        root.addView(bar); setContentView(root);
+        root.addView(bar); setContentView(root); repaintNewPage(root);
         if(!form) root.post(new Runnable() { public void run() {
             ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(),0);
         }});
+    }
+    /** Legacy Adreno can retain incomplete static regions after content swaps.
+     * Redraw the complete window during initial buffer rotation only; no timer
+     * runs once the page is settled, and replaced pages cannot trigger redraws. */
+    private void repaintNewPage(final View page) {
+        final Runnable redraw=new Runnable(){public void run(){
+            if(root==page&&page.isAttachedToWindow()&&!isFinishing()&&!isDestroyed())
+                getWindow().getDecorView().invalidate();
+        }};
+        page.postOnAnimation(redraw);
+        page.postDelayed(redraw,120);
+        page.postDelayed(redraw,320);
     }
     void list(String title,final List<String> values,int selected,final Choice choice,String action,Runnable command) {
         begin(title); left=command;

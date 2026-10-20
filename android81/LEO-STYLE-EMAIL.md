@@ -126,3 +126,28 @@ Ulterior, utilizatorul a configurat un cont IMAP real direct pe telefon. O
 verificare numai de metadate a găsit un cont, șapte foldere și zece mesaje locale,
 confirmând descărcarea inițială. Trimiterea SMTP și citirea efectivă în Leo nu au
 fost validate în acea verificare. Nicio credențială sau adresă nu este publicată.
+
+
+## Antet negru în paginile Leo — 20 octombrie 2026
+
+Utilizatorul a semnalat lipsa barei din Email și din alte aplicații. Captura
+Email arăta bara de stare și comenzile de jos, dar regiunea antetului era neagră.
+Titlul Conturi email exista în arborele de accesibilitate: nu lipsea din layout.
+Același aspect fusese observat la prima afișare a paginii Personalizare.
+
+LeoActivity solicită acum redesenarea întregii ferestre după schimbarea paginii,
+în următorul cadru și încă o dată la 120 și 320 ms. Este o compensare limitată
+pentru prezentarea inițială incompletă, nu o demonstrație că driverul Adreno a
+fost reparat. Callback-urile ignoră paginile înlocuite sau distruse; nu există
+un ciclu continuu de redraw și nu sunt repornite framework-ul sau telefonul.
+
+După compilare și instalare, Email, Personalizare, Calculator, Notițe și Calendar
+au avut antetul vizibil. Capturile au arătat zero pixeli negri în regiunea
+interioară a antetului verificată; titlul Email și paginile de probă au fost
+inspectate vizual. Email și Personalizare folosesc componenta comună modificată;
+Calculator și Notițe păstrează desenarea proprie. Nu sunt validate toate
+aplicațiile Android externe sau utilizarea îndelungată.
+
+Baza de sistem a fost sincronizată, iar Email Leo a fost redeschis. Captura
+contului real rămâne locală; în Git se actualizează numai captura Personalizare,
+care nu conține date personale.
