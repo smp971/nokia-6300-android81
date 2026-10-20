@@ -26,7 +26,8 @@ import java.util.Locale;
 public final class MainActivity extends Activity {
     private Screen screen;
     private boolean offeredSetup;
-    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.invalidate();}};
+    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.reloadCards();screen.invalidate();}};
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){screen.reloadAppearance();screen.reloadCards();}};
     private int speedKey=-1;
     private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,"Tasta "+slot+" neatribuită · Contacte → Apelare rapidă",1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
@@ -55,9 +56,11 @@ public final class MainActivity extends Activity {
     }
     protected void onResume() {
         super.onResume();
-        UnreadState.watch(this);registerReceiver(badges,new android.content.IntentFilter(UnreadState.CHANGED));UnreadState.refresh(this);
+        UnreadState.watch(this);android.content.IntentFilter filter=new android.content.IntentFilter(UnreadState.CHANGED);filter.addAction("ro.leo.visual.MUSIC_CHANGED");filter.addAction(FmService.CHANGED);registerReceiver(badges,filter);UnreadState.refresh(this);
+        for(String name:new String[]{"appearance","weather","alarms"})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
         if(!offeredSetup&&!KeypadLockActivity.locked(this)&&!getSharedPreferences("setup",0).getBoolean("complete",false)){offeredSetup=true;startActivity(new Intent(this,SetupWizardActivity.class));}
         screen.reloadAppearance();
+        screen.reloadCards();
         if(KeypadLockActivity.locked(this)) startActivity(new Intent(this,KeypadLockActivity.class));
         subscriptions = (SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE);
         try { subscriptions.addOnSubscriptionsChangedListener(subscriptionListener); }
@@ -67,6 +70,7 @@ public final class MainActivity extends Activity {
     }
     protected void onPause() {
         handler.removeCallbacks(clock);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
+        for(String name:new String[]{"appearance","weather","alarms"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();
         super.onPause();
@@ -183,6 +187,9 @@ public final class MainActivity extends Activity {
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
         int shortcut=-1;
+        HomeCards.Card[] cards=new HomeCards.Card[0];int cardIndex;
+        void reloadCards(){HomeCards.Card[] next=HomeCards.read(MainActivity.this,System.currentTimeMillis());boolean changed=!HomeCards.signature(cards).equals(HomeCards.signature(next));cards=next;cardIndex=Math.min(cardIndex,Math.max(0,cards.length-1));if(shortcut>=4+cards.length)shortcut=-1;if(changed&&!grid)invalidate();}
+        void openCard(){if(cards.length==0)return;int type=cards[cardIndex].type;Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
         int[] shortcuts={0,2,6,22};
         int[] order=AppCatalog.parse("");
         float textScale=1f;
@@ -197,6 +204,7 @@ public final class MainActivity extends Activity {
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
         public boolean isOpaque(){return true;}
         void refresh() {
+            reloadCards();
             String previousTime=time,previousDate=date,first=simLabels[0],second=simLabels[1];
             java.util.TimeZone zone=java.util.TimeZone.getDefault();timeFormat.setTimeZone(zone);dateFormat.setTimeZone(zone);
             Date now = new Date();
@@ -246,10 +254,12 @@ public final class MainActivity extends Activity {
             }
         }
         boolean key(int key, int repeat) {
+            if(!grid&&cards.length>0&&key==KeyEvent.KEYCODE_STAR){if(repeat==0){cardIndex=(cardIndex+1)%cards.length;shortcut=4+cardIndex;invalidate();}return true;}
+            if(!grid&&cards.length>0&&key==KeyEvent.KEYCODE_POUND){if(repeat==0)openCard();return true;}
             if (key == KeyEvent.KEYCODE_BACK) { if (repeat == 0) { if(grid) onBackPressed(); else if(shortcut>=0){shortcut=-1;invalidate();}else open(1); } return true; }
             if (key == KeyEvent.KEYCODE_MENU) { if (repeat == 0) { if(grid) options(); else notifications(); } return true; }
             if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
-                if (repeat == 0) { if (grid) open(order[selected]); else if(shortcut>=0)open(shortcuts[shortcut]);else { grid = true; message = ""; invalidate(); } }
+                if (repeat == 0) { if (grid) open(order[selected]); else if(shortcut>=4)openCard();else if(shortcut>=0)open(shortcuts[shortcut]);else { grid = true; message = ""; invalidate(); } }
                 return true;
             }
             // Green opens the dialer only; this app never places a call.
@@ -261,7 +271,7 @@ public final class MainActivity extends Activity {
             }
             if(!grid&&key==KeyEvent.KEYCODE_DPAD_UP){if(repeat==0)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return true;}
             if(!grid&&key==KeyEvent.KEYCODE_DPAD_DOWN){if(repeat==0)notifications();return true;}
-            if(!grid&&(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){shortcut=(shortcut+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:shortcut<0?0:3)+4)%4;invalidate();return true;}
+            if(!grid&&(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){int count=4+cards.length;shortcut=(shortcut+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:shortcut<0?0:count-1)+count)%count;if(shortcut>=4)cardIndex=shortcut-4;invalidate();return true;}
             int delta = key == KeyEvent.KEYCODE_DPAD_UP ? -3 : key == KeyEvent.KEYCODE_DPAD_DOWN ? 3
                 : key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : key == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
             if (delta != 0) {
@@ -343,21 +353,23 @@ public final class MainActivity extends Activity {
             p.setStyle(Paint.Style.FILL); p.setShader(null);
             if (!grid) {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
-                round(output,10,10,230,showSims?151:118,4,wallpaper==null?palette.card:0xcc111827);
+                boolean cardLayout=cards.length>0,small=compactClock||cardLayout;
+                round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);
                 text(output,"L E O  ·  ACTIVE STANDBY",120,27,10,0xffeee8fa,Paint.Align.CENTER);
-                text(output,time,120,compactClock?64:86,compactClock?36:54,Color.WHITE,Paint.Align.CENTER);
-                text(output,date,120,compactClock?87:108,13,0xfff0e5f5,Paint.Align.CENTER);
+                text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);
+                text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);
                 for(int slot=0;showSims&&slot<2;slot++) {
                     String label = simLabels[slot]+(showDbm&&inService[slot]&&signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":""); p.setTypeface(regular); p.setTextSize(11);
                     while(label.length()>1 && p.measureText(label)>220) label=label.substring(0,label.length()-2)+"…";
-                    text(output,label,120,(compactClock?112:128)+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
+                    text(output,label,120,(small?112:128)+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
                 }
-                if(showUnread){round(output,12,158,228,187,4,wallpaper==null?palette.card:0xcc111827);
-                text(output,UnreadState.label(),120,177,12,Color.WHITE,Paint.Align.CENTER);}
+                if(showUnread){if(!cardLayout)round(output,12,158,228,187,4,wallpaper==null?palette.card:0xcc111827);
+                text(output,UnreadState.label(),120,cardLayout?149:177,cardLayout?10:12,Color.WHITE,Paint.Align.CENTER);}
+                if(cardLayout){HomeCards.Card card=cards[cardIndex];round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>205)main=main.substring(0,main.length()-2)+"…";text(output,main,120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>205)detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,120,204,10,0xffe2dbea,Paint.Align.CENTER);}
                 for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;
-                    if(shortcut==i)round(output,x-26,196,x+26,251,4,palette.card);
-                    output.save();output.translate(x,222);output.scale(.78f,.78f);icon(output,shortcuts[i],0,0);output.restore();
+                    if(shortcut==i)round(output,x-26,cardLayout?216:196,x+26,cardLayout?256:251,4,palette.card);
+                    output.save();output.translate(x,cardLayout?236:222);output.scale(cardLayout?.62f:.78f,cardLayout?.62f:.78f);icon(output,shortcuts[i],0,0);output.restore();
                     text(output,names[shortcuts[i]],x,263,10,Color.WHITE,Paint.Align.CENTER);
                 }
             } else {

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
+python3 "$TASK_DIR/prepare-audio-vibrator.py"
 source "$TASK_DIR/environment.sh"
 cd /root/android81-leo/src
 source build/envsetup.sh

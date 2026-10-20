@@ -24,11 +24,25 @@
       "sha256": "890ea8244d0d10719a17ea92cfb331a48753ebeaadda170f1200570aafeafcd5"
     },
     {
+      "path": "hardware/interfaces",
+      "revision": "706a84a7a7d9c5dcd2b651f608c14143e191aaef",
+      "files": [],
+      "patch": "patches/hardware__interfaces.patch",
+      "sha256": "0a456c2706c2bd44e15130a7ebfbee9f8513ccca88fa28894460268e212c492f"
+    },
+    {
       "path": "hardware/libhardware",
       "revision": "99f49b759d52a9f084e571357811a01ef041348f",
       "files": [],
       "patch": "patches/hardware__libhardware.patch",
       "sha256": "5b01104e62484f2ab21941985613a59bddcf8268b118cb25fecb8d551b7f6996"
+    },
+    {
+      "path": "packages/apps/DeskClock",
+      "revision": "7f5c202f55eb5ab756192257d1d2c4e6ec8c3d40",
+      "files": [],
+      "patch": "patches/packages__apps__DeskClock.patch",
+      "sha256": "b136763896ad50ca1ad2aaab7f6b08744e21f4f3b0eaa28e14ab4aea45f07308"
     },
     {
       "path": "packages/apps/Dialer",
@@ -91,13 +105,6 @@
       "files": [],
       "patch": "patches/system__core.patch",
       "sha256": "d007c1353e58a7fb7f6bae79ad3eb04bd44ebc1fc62f2afad3bdb5a343ba1180"
-    },
-    {
-      "path": "packages/apps/DeskClock",
-      "revision": "7f5c202f55eb5ab756192257d1d2c4e6ec8c3d40",
-      "files": [],
-      "patch": "patches/packages__apps__DeskClock.patch",
-      "sha256": "b136763896ad50ca1ad2aaab7f6b08744e21f4f3b0eaa28e14ab4aea45f07308"
     }
   ]
 }

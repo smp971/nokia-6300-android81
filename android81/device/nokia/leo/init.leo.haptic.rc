@@ -1,0 +1,5 @@
+# Stock Leo audio haptics: required before the audio HAL initializes.
+on post-fs-data
+    setprop vendor.audio.haptic_audio true
+    setprop vendor.audio.haptic_freq 157
+    setprop vendor.audio.haptic_ampl 100

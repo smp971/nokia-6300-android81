@@ -1,5 +1,10 @@
 # Telefon Leo · Night
 
+Actualizare 21 octombrie: utilizatorul a confirmat dispariția popupului și
+funcționarea apelului/comenzilor. Calea haptică audio a fost între timp validată
+fizic și integrată în API-ul Android. [Corecția și probele noi](LEO-HOME-HAPTICS.md).
+Investigația de vibrații de la finalul acestui document descrie etapa anterioară.
+
 Interfață nativă pentru ecranul 240 × 320, inspirată de varianta **Leo Night**
 aleasă pentru proiect: fundal întunecat, accent turcoaz, trei favorite colorate.
 Ecranul Telefon păstrează taburile Apelare / Istoric / Statistici și informațiile

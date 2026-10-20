@@ -1,0 +1,57 @@
+diff --git a/vibrator/1.0/default/Android.bp b/vibrator/1.0/default/Android.bp
+index d4200da..1edf466 100644
+--- a/vibrator/1.0/default/Android.bp
++++ b/vibrator/1.0/default/Android.bp
+@@ -25,6 +25,8 @@ cc_library_shared {
+         "liblog",
+         "libutils",
+         "libhardware",
++        "libaudioclient",
++        "libcutils",
+         "android.hardware.vibrator@1.0",
+     ],
+ }
+diff --git a/vibrator/1.0/default/Vibrator.cpp b/vibrator/1.0/default/Vibrator.cpp
+index 19cf3dc..b3bd128 100644
+--- a/vibrator/1.0/default/Vibrator.cpp
++++ b/vibrator/1.0/default/Vibrator.cpp
+@@ -21,6 +21,10 @@
+ #include <log/log.h>
+ 
+ #include <hardware/hardware.h>
++#include <media/AudioSystem.h>
++#include <utils/String8.h>
++#include <cutils/properties.h>
++#include <algorithm>
+ #include <hardware/vibrator.h>
+ 
+ #include "Vibrator.h"
+@@ -35,7 +39,16 @@ Vibrator::Vibrator(vibrator_device_t *device) : mDevice(device) {}
+ 
+ // Methods from ::android::hardware::vibrator::V1_0::IVibrator follow.
+ Return<Status> Vibrator::on(uint32_t timeout_ms) {
+-    int32_t ret = mDevice->vibrator_on(mDevice, timeout_ms);
++    // Leo speaker-haptic adapter: the stock PMIC path is not the physical actuator.
++    int32_t ret;
++    if (property_get_bool("vendor.audio.haptic_audio", false)) {
++        char command[96];
++        snprintf(command, sizeof(command), "vibrate_enabled=true;vibrate_duration=%u",
++                 std::max(1u, std::min(timeout_ms, 15000u)));
++        ret = AudioSystem::setParameters(String8(command));
++    } else {
++        ret = mDevice->vibrator_on(mDevice, timeout_ms);
++    }
+     if (ret != 0) {
+         ALOGE("on command failed : %s", strerror(-ret));
+         return Status::UNKNOWN_ERROR;
+@@ -44,7 +57,9 @@ Return<Status> Vibrator::on(uint32_t timeout_ms) {
+ }
+ 
+ Return<Status> Vibrator::off()  {
+-    int32_t ret = mDevice->vibrator_off(mDevice);
++    int32_t ret = property_get_bool("vendor.audio.haptic_audio", false)
++        ? AudioSystem::setParameters(String8("vibrate_enabled=false"))
++        : mDevice->vibrator_off(mDevice);
+     if (ret != 0) {
+         ALOGE("off command failed : %s", strerror(-ret));
+         return Status::UNKNOWN_ERROR;

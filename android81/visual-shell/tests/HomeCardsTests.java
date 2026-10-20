@@ -1,0 +1,13 @@
+package ro.leo.visual;
+import android.app.*;import android.content.*;import android.os.*;import java.util.*;
+/** Offline snapshots only. Does not create scheduled alarms, network requests or media playback. */
+public final class HomeCardsTests extends Instrumentation {
+ private void check(boolean b,String s){if(!b)throw new AssertionError(s);}
+ private void restore(SharedPreferences p,Map<String,?> m){SharedPreferences.Editor e=p.edit().clear();for(Map.Entry<String,?> x:m.entrySet()){Object v=x.getValue();if(v instanceof String)e.putString(x.getKey(),(String)v);else if(v instanceof Boolean)e.putBoolean(x.getKey(),(Boolean)v);else if(v instanceof Integer)e.putInt(x.getKey(),(Integer)v);else if(v instanceof Long)e.putLong(x.getKey(),(Long)v);else if(v instanceof Float)e.putFloat(x.getKey(),(Float)v);else if(v instanceof Set)e.putStringSet(x.getKey(),(Set<String>)v);}e.commit();}
+ public void onCreate(Bundle b){start();}
+ public void onStart(){Context c=getTargetContext();SharedPreferences a=c.getSharedPreferences("appearance",0),w=c.getSharedPreferences("weather",0),alarms=AlarmScheduler.state(c);Map<String,?> aa=a.getAll(),ww=w.getAll(),al=alarms.getAll();Bundle out=new Bundle();try{
+  for(String key:HomeCards.KEYS)a.edit().putBoolean(key,true).commit();alarms.edit().putString("items","[]").commit();w.edit().putString("city","Fixture").putString("data","").commit();HomeCards.Card[] cards=HomeCards.read(c,System.currentTimeMillis());check(cards.length==3&&cards[0].type==0&&cards[1].type==1&&cards[2].type==2,"three stable card types");check(cards[0].main.equals("Prognoză neîncărcată"),"missing forecast is not zero degrees");check(cards[1].main.equals("Nicio alarmă activă"),"empty alarms");
+  w.edit().putString("data","{\"current\":{\"temperature_2m\":-5.2,\"weather_code\":73}}").putLong("updated",1700000000000L).commit();cards=HomeCards.read(c,System.currentTimeMillis());check(cards[0].main.contains("-5°C")&&cards[0].main.contains("Ninsoare")&&cards[0].detail.startsWith("Cache"),"cached conditions labelled");
+  a.edit().putBoolean("home-weather",false).commit();cards=HomeCards.read(c,System.currentTimeMillis());check(cards.length==2&&cards[0].type==1,"hide weather retains alarm type");for(String key:HomeCards.KEYS)a.edit().putBoolean(key,false).commit();check(HomeCards.read(c,System.currentTimeMillis()).length==0,"all cards can be disabled");out.putString("result","PASS 6 Home card snapshot and preference checks");
+ }catch(Throwable e){out.putString("error",android.util.Log.getStackTraceString(e));}finally{restore(a,aa);restore(w,ww);restore(alarms,al);}finish(out.containsKey("error")?Activity.RESULT_CANCELED:Activity.RESULT_OK,out);}
+}
