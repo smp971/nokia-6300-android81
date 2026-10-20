@@ -8,7 +8,7 @@ nu sunt executate și interfața nu depinde de WebView.
 | Personalizare | Setări → Aspect → Personalizare: ordinea aplicațiilor, patru scurtături Home, text normal/mărit, previzualizări la blocare, acces la teme | Textul mărit acoperă listele/formularele comune și Home, nu toate ecranele Android sau desenele specializate. |
 | Telefon | Potriviri locale T9 după nume și număr; statistici pe SIM | Cache de maximum 1.000 de numere, cinci potriviri; statistici din ultimele 5.000 de apeluri locale, fără valoare de facturare. |
 | Notificări | Acțiunile aplicației, editor RemoteInput cu confirmare, previzualizări opționale la blocare | Acțiunile depind de notificarea sursă; răspunsurile reale nu sunt validate. |
-| Email | Meniu din taste în configurarea/compunerea AOSP, sus/jos între câmpuri, cerere de sincronizare IMAP și marcare ca citit | Cont real IMAP/SMTP, citire sincronizată, ciorne și trimitere încă nevalidate. |
+| Email | Meniu din taste în configurarea/compunerea AOSP, sus/jos între câmpuri, cerere de sincronizare IMAP și marcare ca citit | Cont IMAP real și descărcarea inițială confirmate; afișarea corpului în Leo, sincronizarea manuală, ciornele și SMTP rămân nevalidate. |
 | Cameră | Enumerare HAL izolată și diagnostic al inițializării senzorului | Încă nefuncțională; [audit](CAMERA-PORT-AUDIT.md). |
 | Stabilitate | Măsurare CPU/memorie/baterie/USB fără schimbări de alimentare | Un minut pe USB nu validează autonomia sau stabilitatea pe termen lung. |
 
@@ -87,3 +87,15 @@ fișiere Java suplimentare; apply.py --check-only le recunoaște în checkout.
 | Personalizare | Configurare email din taste |
 | --- | --- |
 | ![Personalizare Leo](screenshots/leo-personalization.png) | ![Tip de cont email](screenshots/leo-email-keypad-setup.png) |
+
+
+## Configurare reală IMAP confirmată
+
+Utilizatorul a introdus datele direct pe telefon și a confirmat finalizarea.
+Interogările ulterioare, limitate la identificatori tehnici și număr de intrări,
+au găsit un cont, șapte foldere și zece mesaje locale. Înainte de configurare nu
+exista un cont. Acest rezultat confirmă salvarea contului și descărcarea inițială
+prin IMAP. Nu s-au citit adrese, parole, subiecte sau corpuri de mesaje în probă.
+Email Leo a fost deschis pe telefon pentru verificarea vizuală de către utilizator.
+Nu s-a trimis un email; SMTP, ciornele, sincronizarea manuală și marcarea ca citit
+necesită încă probe separate.

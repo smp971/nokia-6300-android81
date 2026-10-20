@@ -120,3 +120,9 @@ adaptate, dar nu validează toate paginile sau un cont IMAP/SMTP real.
 Surse canonice: email-keypad/LeoEmailKeys.java, patch-email-keypad.py.
 build-email-resources.sh aplică atât corecția de resurse, cât și comenzile din
 taste. Snapshotul AOSP exportă și modificările Email/UnifiedEmail necesare.
+
+
+Ulterior, utilizatorul a configurat un cont IMAP real direct pe telefon. O
+verificare numai de metadate a găsit un cont, șapte foldere și zece mesaje locale,
+confirmând descărcarea inițială. Trimiterea SMTP și citirea efectivă în Leo nu au
+fost validate în acea verificare. Nicio credențială sau adresă nu este publicată.

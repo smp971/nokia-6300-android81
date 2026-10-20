@@ -141,7 +141,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
 | Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
-| Email | **Parțial** | Email Leo: editor din taste și interfață pentru conturi/foldere/mesaje. Eroarea de resurse AOSP reparată; Meniu oferă configurare manuală și comenzi de compunere din taste. Sincronizare IMAP manuală implementată. Conturile reale, sincronizarea și trimiterea rămân netestate. [Detalii](android81/LEO-STYLE-EMAIL.md). |
+| Email | **Parțial** | Email Leo: editor din taste și interfață pentru conturi/foldere/mesaje. Eroarea de resurse AOSP reparată; Meniu oferă configurare manuală și comenzi de compunere din taste. Sincronizare IMAP manuală implementată. Un cont real IMAP este salvat, cu 7 foldere și 10 mesaje descărcate. Trimiterea SMTP, sincronizarea manuală și marcarea ca citit rămân nevalidate. [Detalii](android81/LEO-STYLE-EMAIL.md). |
 | Cameră | **Nefuncțional** | Android raportează zero dispozitive. Audit offline: 23 componente originale și 16 biblioteci Android, fără dependențe declarate lipsă; încărcarea izolată a HAL-ului QCamera a reușit pe telefon. Enumerarea fără hardware dă zero camere; cu nodurile camerei, proba a așteptat în inițializarea senzorului din kernel. Daemonul și captura rămân neintegrate. [Audit](android81/CAMERA-PORT-AUDIT.md). |
 | GPS / localizare reală | **Nefuncțional** | Fără provider GPS funcțional sau fix real confirmat. |
 | Senzori Android | **Nefuncțional** | SensorService nu detectează senzori; descrie integrarea software, nu inventarul fizic. |
@@ -230,7 +230,7 @@ instrucțiuni validate pentru acest port.
 - Corecție NetworkPolicy instalată; stabilitatea pornirii necesită observație suplimentară.
 - Wi-Fi și Bluetooth pornesc automat în noua ordine de inițializare; stabilitatea pe termen lung și accesoriile audio necesită probe. ADB are încă întreruperi care pot cere reconectarea cablului.
 - Cameră, GPS și integrarea senzorilor nefuncționale în auditul documentat.
-- WebView a prezentat crash GPU; autentificarea și mesajele reale Email rămân nevalidate.
+- WebView a prezentat crash GPU; un cont IMAP real și descărcarea inițială sunt confirmate; trimiterea SMTP rămâne nevalidată.
 - Aplicațiile Android nu sunt toate controlabile complet din taste; cursorul este o opțiune de acces.
 - SIM 2, audio la apel inițiat după recuperare, accesorii audio, autonomia și încărcarea completă necesită probe; MMS neimplementat.
 - Înregistrarea IMS experimentală nu validează VoLTE sau VoWiFi.
