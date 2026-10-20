@@ -12,11 +12,11 @@ import java.util.*;
 
 public final class FilesActivity extends LeoActivity {
     private File base,current;
-    private File selected;
+    private File selected;private final LinkedHashSet<File> marked=new LinkedHashSet<File>();private final ArrayList<File> clipboard=new ArrayList<File>();private File sourceBoundary;private boolean cut;
     private final ArrayList<File> entries=new ArrayList<File>();
     protected void onCreate(Bundle state) { super.onCreate(state); locations(); }
     private void locations() {
-        base=null; current=null; selected=null;
+        base=null; current=null; selected=null;marked.clear();
         final ArrayList<File> values=new ArrayList<File>(); ArrayList<String> labels=new ArrayList<String>();
         for(Map.Entry<String,File> root:LeoFileProvider.roots(this).entrySet()) {
             values.add(root.getValue()); labels.add(root.getKey().equals("phone")?"Memorie telefon":root.getKey().equals("leo")?"Documente Leo":"Card SD");
@@ -39,7 +39,7 @@ public final class FilesActivity extends LeoActivity {
             final boolean inaccessible=contents==null;
             ui(new Runnable() { public void run() {
                 entries.clear(); entries.addAll(found); ArrayList<String> labels=new ArrayList<String>();
-                for(File file:found) labels.add((file.isDirectory()?"▸ ":"")+file.getName()+(file.isDirectory()?"":"\n"+file.length()+" octeți"));
+                for(File file:found) labels.add((marked.contains(file)?"✓ ":file.isDirectory()?"▸ ":"")+file.getName()+(file.isDirectory()?"":"\n"+file.length()+" octeți"));
                 list(directory.equals(base)?"Fișiere":directory.getName(),labels,0,new Choice() { public void pick(int i) {
                     selected=entries.get(i); if(selected.isDirectory()) browse(selected); else fileOptions(selected);
                 } },"Opțiuni",new Runnable() { public void run() { directoryOptions(); } });
@@ -53,15 +53,34 @@ public final class FilesActivity extends LeoActivity {
         File target=new File(current,name); if(!LeoFileProvider.inside(base,target)) throw new IOException(); return target;
     }
     private void directoryOptions() {
-        String[] actions=current.equals(base)?new String[]{"Folder nou","Fișier text nou","Reîmprospătează"}
-            :new String[]{"Folder nou","Fișier text nou","Reîmprospătează","Redenumește folderul","Șterge folderul gol"};
-        options("Fișiere",actions,new Choice() { public void pick(int i) {
-            if(i==0) nameForm(null); else if(i==1) textFile(null); else if(i==2) browse(current);
-            else if(i==3) nameForm(current);
-            else options("Ștergi folderul gol?",new String[]{"Păstrează","Șterge"},new Choice() { public void pick(int yes) {
-                if(yes==1) { File parent=current.getParentFile(); if(current.delete()) browse(parent); else notice("Folderul nu este gol sau accesul este refuzat"); }
+        final ArrayList<String> actions=new ArrayList<String>(Arrays.asList("Folder nou","Fișier text nou","Reîmprospătează","Caută în această stocare","Marchează fișierele de aici","Selecție · "+marked.size(),"Lipește aici · "+clipboard.size()));if(!current.equals(base)){actions.add("Redenumește folderul");actions.add("Șterge folderul gol");}
+        options("Fișiere",actions.toArray(new String[0]),new Choice(){public void pick(int i){if(i==0)nameForm(null);else if(i==1)textFile(null);else if(i==2)browse(current);else if(i==3)search();else if(i==4){for(File f:entries)if(f.isFile()&&marked.size()<100)marked.add(f);browse(current);}else if(i==5)selection();else if(i==6)paste();else if(i==7)nameForm(current);else options("Ștergi folderul gol?",new String[]{"Păstrează","Șterge"},new Choice(){public void pick(int yes){if(yes==1){File parent=current.getParentFile();if(current.delete())browse(parent);else notice("Folderul nu este gol sau accesul este refuzat");}}});}});
+    }
+    private void selection(){options("Selecție · "+marked.size(),new String[]{"Copiază selecția","Mută selecția","Anulează marcajele"},new Choice(){public void pick(int i){if(i==2){marked.clear();browse(current);}else prepareTransfer(new ArrayList<File>(marked),i==1);}});}
+    private void prepareTransfer(List<File> files,boolean move){if(files.isEmpty()){notice("Marchează întâi fișierele");return;}clipboard.clear();clipboard.addAll(files);sourceBoundary=base;cut=move;locations();notice("Alege destinația, apoi Opțiuni → Lipește aici. Numele existente nu sunt suprascrise.");}
+    private void paste(){if(clipboard.isEmpty()){notice("Niciun fișier de lipit");return;}final File from=sourceBoundary,to=base,folder=current;final ArrayList<File> files=new ArrayList<File>(clipboard);final boolean move=cut;options((move?"Muți ":"Copiezi ")+files.size()+" fișiere aici?",new String[]{"Anulează","Continuă"},new Choice(){public void pick(int yes){if(yes!=1)return;begin("Transfer fișiere");root.addView(text("Se copiază și se verifică…",18));footer("","","Înapoi");back=new Runnable(){public void run(){notice("Transfer în curs");}};worker.execute(new Runnable(){public void run(){int ok=0;String problem="";for(File f:files)try{FileTransfers.transfer(from,f,to,folder,move);ok++;}catch(IOException e){problem=e.getMessage();}final int count=ok;final String error=problem;ui(new Runnable(){public void run(){clipboard.clear();browse(folder);notice(count+" / "+files.size()+" finalizate"+(error.isEmpty()?"":" · "+error));}});}});}});}
+    private void search() {
+        final File boundary=base, previous=current;
+        LinearLayout panel=fields("Caută fișiere");
+        final EditText query=field(panel,"O parte din numele fișierului","",InputType.TYPE_CLASS_TEXT);
+        left=new Runnable(){public void run(){
+            final String term=query.getText().toString().trim();
+            if(term.isEmpty()){notice("Scrie ce cauți");return;}
+            worker.execute(new Runnable(){public void run(){
+                try {
+                    final List<File> found=FileTransfers.search(boundary,term);
+                    ui(new Runnable(){public void run(){
+                        ArrayList<String> names=new ArrayList<String>();
+                        for(File f:found)names.add(f.getName()+"\n"+f.getParentFile().getName());
+                        list("Rezultate · "+found.size(),names,0,new Choice(){public void pick(int i){current=found.get(i).getParentFile();fileOptions(found.get(i));}},"",null);
+                        back=new Runnable(){public void run(){browse(previous);}};
+                        notice("Până la 5.000 intrări / 200 rezultate");
+                    }});
+                } catch(IOException e){ui(new Runnable(){public void run(){notice("Căutare întreruptă");}});}
             }});
-        }});
+        }};
+        back=new Runnable(){public void run(){browse(previous);}};
+        footer("Caută","Editor","Șterge");query.requestFocus();
     }
     private void nameForm(final File source) {
         LinearLayout fields=fields(source==null?"Folder nou":"Redenumește"); final EditText name=field(fields,"Nume",source==null?"":source.getName(),InputType.TYPE_CLASS_TEXT);
@@ -78,8 +97,9 @@ public final class FilesActivity extends LeoActivity {
         back=new Runnable() { public void run() { browse(current); } }; footer("Salvează","","Șterge"); name.requestFocus();
     }
     private void fileOptions(final File file) {
-        options(file.getName(),new String[]{"Deschide","Editează text UTF-8","Redenumește","Șterge"},new Choice() { public void pick(int i) {
+        options(file.getName(),new String[]{"Deschide","Editează text UTF-8","Redenumește","Șterge","Copiază","Mută",marked.contains(file)?"Demarchează":"Marchează"},new Choice() { public void pick(int i) {
             if(i==0) open(file); else if(i==1) textFile(file); else if(i==2) nameForm(file);
+            else if(i==4||i==5)prepareTransfer(Arrays.asList(file),i==5);else if(i==6){if(!marked.remove(file)){if(marked.size()>=100){notice("Maximum 100 fișiere în selecție");return;}marked.add(file);}browse(current);}
             else options("Ștergi fișierul?",new String[]{"Păstrează","Șterge"},new Choice() { public void pick(int yes) {
                 if(yes==1) { if(!file.delete()) notice("Ștergerea a eșuat; folderele trebuie să fie goale"); browse(current); }
             }});

@@ -13,7 +13,7 @@ public final class ContactsActivity extends LeoActivity {
     private final ArrayList<Entry> entries=new ArrayList<Entry>();
     private String filter="";
     private int selected;
-    private boolean favorites;
+    private boolean favorites,managingFavorites;
     private static final class Entry { long data,raw,contact; String name,number; boolean starred; }
     protected void onCreate(Bundle state) { super.onCreate(state); favorites=getIntent().getBooleanExtra("favorites",false); load(); }
     private void load() {
@@ -36,9 +36,9 @@ public final class ContactsActivity extends LeoActivity {
     private void show() {
         ArrayList<String> labels=new ArrayList<String>();
         for(Entry e:entries) labels.add((e.starred?"★ ":"")+(e.name==null?"Fără nume":e.name)+"\n"+e.number);
-        list(favorites?"Favorite":filter.isEmpty()?"Contacte":"Rezultate",labels,selected,new Choice() { public void pick(int i) { selected=i;int slot=getIntent().getIntExtra("speed_slot",0);Entry e=entries.get(i);int favorite=getIntent().getIntExtra("dialer_slot",-1);if(favorite>=0&&favorite<3){getSharedPreferences("dialer-favorites",0).edit().putString("name"+favorite,e.name==null?"":e.name).putString("number"+favorite,e.number).apply();notice("Favoritul "+(favorite+1)+" salvat");finish();}else if(slot>=2&&slot<=9){getSharedPreferences("speed-dial",0).edit().putString("name"+slot,e.name).putString("number"+slot,e.number).apply();notice("Tasta "+slot+" atribuită");finish();}else detail(e); } },"Opțiuni",new Runnable() {
-            public void run() { options("Contacte",new String[]{"Contact nou","Caută","Toate contactele","Favorite","Import / export VCF","Apelare rapidă"},new Choice() {
-                public void pick(int i) { if(i==0) edit(null); else if(i==1) options("Caută",new String[]{"Nume / număr","Cifre T9"},new Choice(){public void pick(int mode){search(mode==1);}}); else if(i==4)startActivity(new Intent(ContactsActivity.this,VCardActivity.class));else if(i==5)startActivity(new Intent(ContactsActivity.this,SpeedDialActivity.class));else { filter=""; favorites=i==3; selected=0; load(); } }
+        list(managingFavorites?"OK schimbă favoritul":favorites?"Favorite":filter.isEmpty()?"Contacte":"Rezultate",labels,selected,new Choice() { public void pick(int i) { selected=i;if(managingFavorites){Entry chosen=entries.get(i);try{ContentValues v=new ContentValues();v.put(ContactsContract.Contacts.STARRED,chosen.starred?0:1);getContentResolver().update(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,chosen.contact),v,null,null);load();}catch(RuntimeException e){notice("Favoritul nu poate fi modificat");}return;}int slot=getIntent().getIntExtra("speed_slot",0);Entry e=entries.get(i);int favorite=getIntent().getIntExtra("dialer_slot",-1);if(favorite>=0&&favorite<3){getSharedPreferences("dialer-favorites",0).edit().putString("name"+favorite,e.name==null?"":e.name).putString("number"+favorite,e.number).apply();notice("Favoritul "+(favorite+1)+" salvat");finish();}else if(slot>=2&&slot<=9){getSharedPreferences("speed-dial",0).edit().putString("name"+slot,e.name).putString("number"+slot,e.number).apply();notice("Tasta "+slot+" atribuită");finish();}else detail(e); } },"Opțiuni",new Runnable() {
+            public void run() { options("Contacte",new String[]{"Contact nou","Caută","Toate contactele","Favorite","Import / export VCF","Apelare rapidă",managingFavorites?"Încheie administrarea":"Administrează favoritele"},new Choice() {
+                public void pick(int i) { if(i==6){managingFavorites=!managingFavorites;favorites=false;filter="";load();}else if(i==0) edit(null); else if(i==1) options("Caută",new String[]{"Nume / număr","Cifre T9"},new Choice(){public void pick(int mode){search(mode==1);}}); else if(i==4)startActivity(new Intent(ContactsActivity.this,VCardActivity.class));else if(i==5)startActivity(new Intent(ContactsActivity.this,SpeedDialActivity.class));else { filter=""; favorites=i==3; selected=0; load(); } }
             }); }
         });
     }
@@ -49,11 +49,12 @@ public final class ContactsActivity extends LeoActivity {
     }
     private void detail(final Entry entry) {
         ArrayList<String> actions=new ArrayList<String>(); actions.add("Apelează\n"+entry.number); actions.add("Mesaj SMS"); actions.add("Editează"); actions.add("Șterge contactul");
-        actions.add(entry.starred?"Elimină din favorite":"Adaugă la favorite");
+        actions.add(entry.starred?"Elimină din favorite":"Adaugă la favorite");actions.add("Exportă acest contact VCF");
         list(entry.name==null?"Contact":entry.name,actions,0,new Choice() { public void pick(int i) {
             if(i==0) startActivity(new Intent(ContactsActivity.this,PhoneActivity.class).putExtra("number",entry.number));
             else if(i==1) startActivity(new Intent(ContactsActivity.this,MessagesActivity.class).putExtra("number",entry.number));
             else if(i==2) edit(entry);
+            else if(i==5)startActivity(new Intent(ContactsActivity.this,VCardActivity.class).putExtra("contact",entry.contact));
             else if(i==4) {try{ContentValues value=new ContentValues();value.put(ContactsContract.Contacts.STARRED,entry.starred?0:1);getContentResolver().update(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,entry.contact),value,null,null);load();}catch(RuntimeException denied){notice("Favoritul nu poate fi modificat");}}
             else options("Ștergi contactul?",new String[]{"Păstrează","Șterge definitiv"},new Choice() { public void pick(int c) {
                 if(c==1) { try { getContentResolver().delete(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,entry.contact),null,null); load(); }

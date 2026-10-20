@@ -61,3 +61,6 @@
 **/adbkey*
 *.pem
 *.key
+
+!/android81/fm-runtime/
+!/android81/fm-runtime/*.c

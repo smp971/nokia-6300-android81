@@ -21,10 +21,11 @@ public final class SmsStatusReceiver extends BroadcastReceiver {
                 store.outgoing(token,saved.getString("number",""),saved.getString("body",""),saved.getLong("date",System.currentTimeMillis()),saved.getInt("sub",-1));
                 store.completed(token,success);
             }
+            if(success)try(DraftStore drafts=new DraftStore(context)){drafts.sent(saved.getString("draft-id",null),saved.getString("number",""),saved.getString("body",""));}
             SharedPreferences draft=context.getSharedPreferences("sms-draft",0);
-            if(success && draft.getString("number","").equals(saved.getString("number","")) && draft.getString("body","").equals(saved.getString("body",""))) draft.edit().clear().commit();
-            String number=saved.getString("number",""); saved.edit().clear().putString("status",success?"SMS trimis":"Trimitere eșuată sau parțială; verifică înainte de reîncercare").commit();
-            SmsReceiver.notify(context,success?"SMS trimis":"SMS netrimis complet; ciornă păstrată",number);
+            if(success && draft.getString("number","").equals(saved.getString("number","")) && draft.getString("body","").equals(saved.getString("body",""))) draft.edit().clear().putBoolean("migrated-multiple",true).commit();
+            String number=saved.getString("number",""); saved.edit().clear().putString("status",success?"SMS trimis către rețea · livrare neconfirmată":"Trimitere eșuată sau parțială; verifică înainte de reîncercare").commit();
+            SmsReceiver.notify(context,success?"SMS trimis către rețea":"SMS netrimis complet; ciornă păstrată",number);
         } catch(JSONException invalid) { }
         catch(RuntimeException unavailable) {
             // Keep temporary state for recovery instead of discarding the message.

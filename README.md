@@ -37,6 +37,8 @@ sistemul original; shell-ul nu depinde de WebView.
 
 **Actualizări Leo:** [personalizare, T9, notificări, email și măsurători](android81/LEO-UPGRADES-20261020.md).
 
+**Unelte zilnice:** [fișiere intern/SD, ciorne multiple, favorite, reportofon și probă de baterie](android81/LEO-DAILY-TOOLS.md).
+
 **Cuprins:** [Funcții](#tabelul-funcțiilor) · [Capturi](#capturi) ·
 [Instalare](#instalare) · [Pornire și recuperare](#pornire-și-recuperare) ·
 [Probleme](#probleme-cunoscute) · [Dezvoltare](#dezvoltare) ·
@@ -77,7 +79,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Accelerare Adreno | **Funcțional** | Renderer Qualcomm și test Android HARDWARE bitmap verificate, inclusiv după reboot. |
 | Fluiditate generală | **Parțial** | Listele Leo reutilizează rândurile și actualizează numai selecția: p95 HWUI Configurări 7–8 → 5 ms în probe controlate. Prezentarea la aproximativ 29 Hz și erorile EGL rămân; nu este latența completă tastă–ecran. Cadrele complete HWUI au eliminat dispariția/pâlpâirea antetului în proba manuală din 20 octombrie; fără benchmark comparabil nou. [Măsurători](android81/PERFORMANCE-AUDIT.md). |
 | Profil pentru memorie redusă | **Funcțional** | `low_ram` și zRAM verificate software; nu înseamnă că orice aplicație rulează fluent. |
-| Baterie / alimentare USB | **Parțial** | Nivel, tensiune, temperatură și alimentare citite. Șapte eșantioane pe USB: 98,46% idle + iowait, fără eșec ADB; autonomia și ciclul complet de încărcare rămân netestate. |
+| Baterie / alimentare USB | **Parțial** | Nivel, tensiune, temperatură și alimentare citite. Șapte eșantioane pe USB: 98,46% idle + iowait, fără eșec ADB; economisire PowerManager verificată cu deconectare simulată; probă locală start/stop implementată. Consumul real în repaus și autonomia rămân nemăsurate. |
 | Card microSD FAT32 | **Parțial** | Aproximativ 32 GB, PUBLIC/VISIBLE după reboot; folder și fișier UTF-8 create din Fișiere Leo, citire prin provider verificată. Configurația vold reparată fără formatare; scoaterea la cald și alte carduri sunt netestate. |
 | MTP | **Funcțional în probe** | Transfer PC → memoria internă / microSD → PC, hash identic; confirmat și de utilizator. Pornire/oprire din Setări Leo → Rețele → Transfer USB, cu ADB în ambele moduri. Transferurile mari rămân netestate. [Detalii](android81/MEDIA-RUNTIME.md). |
 | Iluminarea tastelor | **Funcțional** | Pornire la apăsare fizică, nivel 20/40 și timeout de 8 secunde; iluminare confirmată de utilizator. |
@@ -122,11 +124,11 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Calculator Leo | **Funcțional** | Instalat; 29 cazuri JVM trecute; priorități, zecimale și împărțire la zero verificate pe telefon. |
 | Notițe Leo | **Funcțional** | Scriere multi-tap, salvare/redeschidere, editare fără duplicare, ciornă și ștergere confirmată testate pe nota de probă; fără teste de volum sau pierdere a alimentării. |
 | Contacte Leo | **Funcțional** | Creare, căutare, editare și ștergere verificate pe un contact local de probă. Contactele sincronizate și structurile complexe rămân nevalidate. |
-| Contacte · T9 / VCF / apelare rapidă | **Parțial** | Parser VCF 2.1 quoted-printable, 3.0 UTF-8 și 4.0; import/export prin provider și căutare T9 verificate pe date sintetice. Importul adaugă copii, fără deduplicare. Menținerea tastei 9 a deschis numărul sintetic pentru confirmare, fără apel real. |
+| Contacte · T9 / VCF / apelare rapidă | **Parțial** | Parser VCF 2.1 quoted-printable, 3.0 UTF-8 și 4.0; import/export prin provider și căutare T9 verificate pe date sintetice. Administrare favorite și export doar favorit/contact ales; filtru verificat pe contact sintetic. Importul adaugă copii, fără deduplicare. Menținerea tastei 9 a deschis numărul sintetic pentru confirmare, fără apel real. |
 | Telefon Leo | **Parțial** | Taste fizice, trei favorite, istoric, telemetrie și alegere SIM. Potriviri T9 locale și statistici pe SIM implementate; fără apel inițiat în această etapă. [Detalii](android81/LEO-UPGRADES-20261020.md). |
 | Ceas Leo | **Parțial** | Oră/cronometru testate; temporizatorul și alarma proprie au declanșat în fundal, inclusiv după terminarea procesului. Utilizatorul confirmă sunetul temporizatorului. Recuperarea la reboot și celelalte rute/volume nu sunt validate. |
 | Calendar Leo | **Parțial** | Interfață nativă, lună/agendă; salvare de eveniment în calendarul local Android verificată. Creare, persistență după reboot, editare și ștergere verificate; fără recurențe/remindere. |
-| Fișiere Leo | **Parțial** | Folder și text UTF-8 create; provider read-only și respingere acces în afara rădăcinii verificate. Persistență după reboot, editare text, redenumire de fișier și ștergere fișier/folder gol verificate; deschiderea externă depinde de aplicațiile instalate. |
+| Fișiere Leo | **Parțial** | Editare text, redenumire, selecție multiplă și căutare; copiere intern → SD / mutare SD → intern cu SHA-256 și conflict fără suprascriere verificate. Fișiere obișnuite, maximum 2 GiB; fără copiere recursivă. [Detalii](android81/LEO-DAILY-TOOLS.md). |
 | Galerie Leo | **Funcțional** | Miniaturi, vizualizare și zoom verificate cu imagine sintetică. Până la 500 imagini; fără albume/editor foto. |
 | Fundaluri și teme Leo | **Funcțional** | Nouă teme cu previzualizare/anulare, patru fundaluri incluse, imagine din Galerie și paletă comună. Personalizare pentru ordinea aplicațiilor, patru scurtături Home și text normal/mărit; dimensiunea nu acoperă toate ecranele Android. |
 | Convertor Leo | **Funcțional** | Șase categorii; 137 verificări JVM și probă 100 °C → 212 °F pe telefon. |
@@ -138,7 +140,9 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Ecran de blocare Leo | **Funcțional** | Ceas, dată, baterie și ambele SIM-uri, cu tema/fundalul HOME. Blocare automată la stingere și expirarea combinației verificate. Previzualizări opționale de notificări, ascunse implicit; sus/jos schimbă notificarea. Deblocare: soft stânga → *. Protecție contra apăsărilor accidentale, fără PIN. |
 | Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
 | Muzică / Video Leo | **Parțial** | Bibliotecă și controale native; player retro cu vizualizator FFT real, confirmat manual; copertă MP3, coadă editabilă, shuffle/repeat și comenzi la blocare verificate cu probe locale; WMA redat prin serviciul Muzică Leo. MP3/FLAC/AAC verificate prin MediaPlayer. Redarea video și compatibilitatea tuturor fișierelor rămân de validat. |
-| Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
+| Reportofon Leo | **Parțial** | Înregistrări reale AAC/M4A în intern și SD, finalizare și decodare validate; redarea probei SD a pornit prin Leo. Claritatea vocii și microfonul căștilor rămân neconfirmate. [Probe](android81/LEO-DAILY-TOOLS.md). |
+| Căști cu fir | **Parțial** | Bipuri confirmate de utilizator în ambele părți; detectare ALSA input activată permanent; conectare automată după reboot și scoatere/reintroducere verificate. Microfonul căștilor și apelurile prin căști rămân netestate. [Corecție](android81/WIRED-HEADSET.md). |
+| Radio FM | **Nefuncțional** | Driver QTI identificat prin V4L2; inițializarea Qualcomm, recepția și ruta audio nu sunt integrate. [Investigație](android81/FM-INVESTIGATION.md). |
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
 | Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
 | Email | **Parțial** | Email Leo: editor din taste și interfață pentru conturi/foldere/mesaje. Eroarea de resurse AOSP reparată; Meniu oferă configurare manuală și comenzi de compunere din taste. Sincronizare IMAP manuală implementată. Un cont real IMAP este salvat, cu 7 foldere și 10 mesaje descărcate. Trimiterea SMTP, sincronizarea manuală și marcarea ca citit rămân nevalidate. [Detalii](android81/LEO-STYLE-EMAIL.md). |

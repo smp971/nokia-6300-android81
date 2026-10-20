@@ -118,5 +118,8 @@
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/pointer_service" />
         </service>
+        <receiver android:name=".BatterySessionReceiver" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.ACTION_POWER_CONNECTED"/><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter>
+        </receiver>
     </application>
 </manifest>

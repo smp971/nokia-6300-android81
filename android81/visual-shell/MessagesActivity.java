@@ -22,7 +22,7 @@ import java.text.Normalizer;
 
 /** SMS reader/composer; no automatic transmission and no change of default SMS app. */
 public final class MessagesActivity extends LeoActivity {
-    private String current="";
+    private String current="",draftId;
     private boolean composing;
     private boolean preview;
     private boolean viewingMessages;
@@ -118,8 +118,8 @@ public final class MessagesActivity extends LeoActivity {
         list("Mesaje",labels,0,new Choice() { public void pick(int i) {
             load(rows.get(i).address);
         } },"Opțiuni",new Runnable() { public void run() {
-            options("Mesaje",new String[]{"SMS nou","Caută în mesaje"},new Choice() { public void pick(int i) {
-                if(i==0)compose("");else search("",messages);
+            options("Mesaje",new String[]{"SMS nou","Caută în mesaje","Ciorne salvate"},new Choice() { public void pick(int i) {
+                if(i==0)compose("");else if(i==1)search("",messages);else drafts();
             }});
         } });
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
@@ -127,7 +127,7 @@ public final class MessagesActivity extends LeoActivity {
         if(!status.isEmpty()) root.addView(text(status,14),1);
     }
     private String state(Message m) {
-        return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"Primit":m.type==Telephony.Sms.MESSAGE_TYPE_SENT?"Trimis":m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?"Eșuat":"În așteptare";
+        return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"Primit":m.type==Telephony.Sms.MESSAGE_TYPE_SENT?"Trimis către rețea":m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?"Eșuat":"În așteptare";
     }
     private String messageSim(Message m) { return preview?"SIM "+(m.sub+1):sim(m.sub); }
     private void detail(final String address,final ArrayList<Message> rows,final int index) {
@@ -263,12 +263,10 @@ public final class MessagesActivity extends LeoActivity {
     }
     private void forward(final Message message) {
         if(message.body.length()>1000) { notice("Mesaj prea lung: limita editorului este 1.000 caractere. Poți copia textul integral.");return; }
-        final Runnable open=new Runnable() { public void run() { editor("",message.body,true); } };
-        SharedPreferences draft=getSharedPreferences("sms-draft",0);
-        if(!preview && (!draft.getString("number","").isEmpty() || !draft.getString("body","").isEmpty())) {
-            options("Există deja o ciornă",new String[]{"Păstrează ciorna","Înlocuiește cu redirecționarea"},new Choice() { public void pick(int i) { if(i==1)open.run(); } });
-        } else open.run();
+        draftId=null;
+        editor("",message.body,true);
     }
+
     private void paintBubble(View view,boolean selected) {
         if(!(view instanceof LinearLayout))return;
         LinearLayout row=(LinearLayout)view;boolean received=Boolean.TRUE.equals(row.getTag());
@@ -286,16 +284,9 @@ public final class MessagesActivity extends LeoActivity {
         }
         conversation("Conversație demo",messages);
     }
-    private void saveDraft() {
-        if(preview)return;
-        if(recipient!=null && body!=null) getSharedPreferences("sms-draft",0).edit().putString("number",recipient.getText().toString()).putString("body",body.getText().toString()).apply();
-    }
-    private void compose(String address) {
-        if(preview) { notice("Demonstrație locală · fără trimitere SMS"); return; }
-        SharedPreferences draft=getSharedPreferences("sms-draft",0);
-        boolean reuse=address.isEmpty() || address.equals(draft.getString("number",""));
-        editor(address.isEmpty()?draft.getString("number",""):address,reuse?draft.getString("body",""):"",false);
-    }
+    private void saveDraft(){if(preview||recipient==null||body==null)return;String number=recipient.getText().toString(),text=body.getText().toString();try(DraftStore store=new DraftStore(this)){if(number.isEmpty()&&text.isEmpty()){if(draftId!=null)store.remove(draftId);draftId=null;}else draftId=store.save(draftId,number,text);}catch(RuntimeException failure){notice("Ciorna nu poate fi salvată");}}
+    private void compose(String address){if(preview){notice("Demonstrație locală · fără trimitere SMS");return;}DraftStore.Draft existing=null;if(!address.isEmpty())try(DraftStore store=new DraftStore(this)){existing=store.forNumber(address);}draftId=existing==null?null:existing.id;editor(address,existing==null?"":existing.body,false);}
+    private void drafts(){viewingMessages=false;loadingMessages=false;composing=false;final List<DraftStore.Draft> all;try(DraftStore store=new DraftStore(this)){all=store.all();}ArrayList<String> labels=new ArrayList<String>();for(DraftStore.Draft d:all)labels.add((d.number.isEmpty()?"SMS nou":d.number)+"\n"+d.body);list("Ciorne · "+all.size(),labels,0,new Choice(){public void pick(final int at){final DraftStore.Draft d=all.get(at);options("Ciornă",new String[]{"Continuă editarea","Șterge ciorna"},new Choice(){public void pick(int action){if(action==0){draftId=d.id;editor(d.number,d.body,false);}else options("Ștergi această ciornă?",new String[]{"Păstrează","Șterge"},new Choice(){public void pick(int yes){if(yes==1){try(DraftStore store=new DraftStore(MessagesActivity.this)){store.remove(d.id);}drafts();}}});}});}},"SMS nou",new Runnable(){public void run(){compose("");}});back=new Runnable(){public void run(){load(current);}};}
     private void editor(String number,String initialBody,boolean forwarded) {
         viewingMessages=false;loadingMessages=false;
         LinearLayout fields=fields(forwarded?"Redirecționare":"SMS nou"); composing=true;
@@ -307,7 +298,7 @@ public final class MessagesActivity extends LeoActivity {
         back=new Runnable() { public void run() {
             if(preview) { composing=false;demo();return; }
             saveDraft(); options("Ciornă SMS",new String[]{"Continuă","Păstrează și închide","Șterge ciorna"},new Choice() { public void pick(int i) {
-                if(i==1) load(current); else if(i==2) { getSharedPreferences("sms-draft",0).edit().clear().apply(); load(current); }
+                if(i==1) load(current); else if(i==2) { try(DraftStore store=new DraftStore(MessagesActivity.this)){if(draftId!=null)store.remove(draftId);}draftId=null;composing=false;load(current); }
             }});
         }};
         footer("Trimite","Următor","Șterge"); (number.isEmpty()?recipient:body).requestFocus();
@@ -344,7 +335,7 @@ public final class MessagesActivity extends LeoActivity {
         long date=System.currentTimeMillis();int sub=manager.getSubscriptionId();
         try(SmsStore store=new SmsStore(this)) { store.outgoing(token,number,text,date,sub); }
         catch(RuntimeException unavailable) { notice("Arhiva SMS nu poate fi salvată; mesajul nu a fost trimis");return; }
-        if(!getSharedPreferences("sms-outgoing",0).edit().putString("token",token).putString("parts",states.toString()).putString("number",number).putString("body",text).putLong("date",date).putInt("sub",sub).commit()) {
+        if(!getSharedPreferences("sms-outgoing",0).edit().putString("token",token).putString("parts",states.toString()).putString("number",number).putString("body",text).putString("draft-id",draftId==null?"":draftId).putLong("date",date).putInt("sub",sub).commit()) {
             try(SmsStore store=new SmsStore(this)) { store.completed(token,false); }
             catch(RuntimeException unavailable) { android.util.Log.w("LeoSms","Cannot update unsent archive entry"); }
             notice("Starea SMS nu poate fi salvată; mesajul nu a fost trimis");return;

@@ -9,4 +9,8 @@
     <instrumentation android:name="ro.leo.visual.ProfileTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.SettingsTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.keypad.ImeSettingsTests" android:targetPackage="ro.leo.keypad" />
+    <instrumentation android:name="ro.leo.visual.StorageDraftTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.RecorderTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.BatteryTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.HeadsetTests" android:targetPackage="ro.leo.visual" />
 </manifest>

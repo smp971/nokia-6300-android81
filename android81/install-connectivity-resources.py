@@ -1,15 +1,19 @@
-"""Install the WLAN tethering resource overlay after checking all resource IDs.
+"""Install Leo framework resource values after checking all resource IDs.
 
 Only framework-res.apk is replaced. Framework JARs and their ART companions are
 untouched. The current APK is verified and retained in ignored output.
 """
 from pathlib import Path
+import argparse
 import hashlib
 import re
 import shlex
 import subprocess
 import zipfile
 
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--profile',choices=['connectivity','headset'],default='connectivity')
+args=parser.parse_args()
 ROOT=Path(__file__).resolve().parent
 ADB=['D:/ROMS/platform-tools/adb.exe','-s','695d']
 def native(*command):
@@ -26,10 +30,10 @@ def resources(path):
 assert 'androidboot.serialno=695d' in native('/system/bin/cat','/proc/cmdline')
 assert native('/system/bin/getprop','sys.boot_completed')=='1'
 destination='/system/framework/framework-res.apk'
-folder=ROOT/'output/connectivity-repair'
+folder=ROOT/('output/'+args.profile+'-repair')
 folder.mkdir(exist_ok=True)
-before=folder/'framework-res-before.apk'
 expected=native('/system/bin/sha256sum',destination).split()[0]
+before=folder/('framework-res-before-'+expected+'.apk')
 if not before.exists():
     native('/system/bin/cp',destination,'/tmp/leo-framework-res-before.apk')
     subprocess.run(ADB+['pull','/tmp/leo-framework-res-before.apk',str(before)],check=True,capture_output=True)

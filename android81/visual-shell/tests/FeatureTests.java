@@ -48,13 +48,15 @@ public final class FeatureTests extends Instrumentation {
                 ArrayList<ContentProviderOperation> ops=entries.get(0).constructInsertOperations(c.getContentResolver(),null);
                 ContentProviderResult[] inserted=c.getContentResolver().applyBatch(ContactsContract.AUTHORITY,ops);raw=ContentUris.parseId(inserted[0].uri);long contact=-1;
                 try(Cursor row=c.getContentResolver().query(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI,raw),new String[]{ContactsContract.RawContacts.CONTACT_ID},null,null,null)){check(row!=null&&row.moveToFirst(),"import raw");contact=row.getLong(0);}
-                VCardComposer composer=new VCardComposer(c,VCardConfig.VCARD_TYPE_V30_GENERIC,"UTF-8");String exported;try{check(composer.init(ContactsContract.Contacts._ID+"=?",new String[]{""+contact}),"export selected");exported=composer.createOneEntry();}finally{composer.terminate();}
+                ContentValues star=new ContentValues();star.put(ContactsContract.Contacts.STARRED,1);c.getContentResolver().update(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,contact),star,null,null);
+                try(Cursor saved=c.getContentResolver().query(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,contact),new String[]{ContactsContract.Contacts.STARRED},null,null,null)){check(saved!=null&&saved.moveToFirst()&&saved.getInt(0)==1,"fixture favorite saved");}
+                VCardComposer composer=new VCardComposer(c,VCardConfig.VCARD_TYPE_V30_GENERIC,"UTF-8");String exported;try{check(composer.init(ContactsContract.Contacts._ID+"=? AND "+ContactsContract.Contacts.STARRED+"=1",new String[]{""+contact}),"export selected");exported=composer.createOneEntry();}finally{composer.terminate();}
                 ArrayList<VCardEntry> round=VCardActivity.parse(exported.getBytes("UTF-8"));check(round.size()==1&&round.get(0).getDisplayName().contains("Ștefan"),"VCF provider round trip");check(ContactKeys.digits(round.get(0).getPhoneList().get(0).getNumber()).equals("10000000001"),"roundtrip phone");
                 check(ContactKeys.matches("Ștefan Țară","10000000001","783326"),"T9 match");
                 try(SmsStore s=new SmsStore(c)){s.received("leo-six-fixture-core-old",address,"Fixture read",1,-1);ContentValues old=new ContentValues();old.put("date",100L);s.getWritableDatabase().update("inbox",old,"hash=?",new String[]{"leo-six-fixture-core-old"});s.received("leo-six-fixture-core-new",address,"Fixture new",2,-1);}
                 check(unread(c,address)==2,"SMS new unread");UnreadState.readThread(c,address,100L);for(int n=0;n<50&&unread(c,address)!=1;n++)SystemClock.sleep(100);check(unread(c,address)==1,"read watermark preserves newer SMS");
                 try(SmsStore s=new SmsStore(c)){s.getWritableDatabase().delete("inbox","hash LIKE ? AND address=?",new String[]{"leo-six-fixture-core-%",address});}
-                UnreadState.refresh(c);result.putString("result","PASS VCF 2.1 QP / 3 UTF8 / 4, provider import/export roundtrip, T9, SMS read watermark");
+                UnreadState.refresh(c);result.putString("result","PASS VCF 2.1 QP / 3 UTF8 / 4, provider import/export + favorite filter roundtrip, T9, SMS read watermark");
             }
             if(raw>=0){c.getContentResolver().delete(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI,raw),null,null);raw=-1;}
             finish(Activity.RESULT_OK,result);

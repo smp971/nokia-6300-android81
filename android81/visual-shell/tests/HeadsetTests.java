@@ -1,0 +1,11 @@
+package ro.leo.visual;
+import android.app.*;import android.content.*;import android.media.*;import android.os.*;
+/** Six low-level beeps after human readiness; temporary connection state restored. */
+public final class HeadsetTests extends Instrumentation {
+    public void onCreate(Bundle b){start();}
+    public void onStart(){Context c=getTargetContext();AudioManager audio=(AudioManager)c.getSystemService(Context.AUDIO_SERVICE);int volume=audio.getStreamVolume(AudioManager.STREAM_MUSIC);AudioTrack track=null;Bundle result=new Bundle();boolean connected=false;java.lang.reflect.Method setter=null;try{
+        setter=AudioManager.class.getDeclaredMethod("setWiredDeviceConnectionState",int.class,int.class,String.class,String.class);setter.setAccessible(true);setter.invoke(audio,4,1,"","Leo jack probe");connected=true;SystemClock.sleep(700);audio.setStreamVolume(AudioManager.STREAM_MUSIC,Math.max(1,Math.min(3,audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC))),0);
+        int rate=48000;short[] pcm=new short[rate*2*6];for(int i=0;i<rate*6;i++){double t=(double)i/rate;double phase=t%1;double fade=phase<.45?Math.max(0,Math.min(1,Math.min(phase/.02,(.45-phase)/.02))):0;short v=(short)(32767*.08*fade*Math.sin(2*Math.PI*600*t));pcm[2*i]=v;pcm[2*i+1]=v;}
+        track=new AudioTrack(AudioManager.STREAM_MUSIC,rate,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT,pcm.length*2,AudioTrack.MODE_STATIC);track.write(pcm,0,pcm.length);track.play();SystemClock.sleep(800);AudioDeviceInfo route=track.getRoutedDevice();if(route==null||route.getType()!=AudioDeviceInfo.TYPE_WIRED_HEADSET)throw new AssertionError("Headset route not selected");SystemClock.sleep(5300);if(track.getPlaybackHeadPosition()<rate*5)throw new AssertionError("playback stalled");result.putString("result","PASS wired headset route and PCM playback frames; audibility needs human confirmation");
+    }catch(Throwable e){result.putString("error",android.util.Log.getStackTraceString(e));}finally{if(track!=null)track.release();audio.setStreamVolume(AudioManager.STREAM_MUSIC,volume,0);if(connected)try{setter.invoke(audio,4,0,"","Leo jack probe");}catch(Exception e){result.putString("restore_error",e.toString());}}finish(result.containsKey("error")||result.containsKey("restore_error")?Activity.RESULT_CANCELED:Activity.RESULT_OK,result);}
+}

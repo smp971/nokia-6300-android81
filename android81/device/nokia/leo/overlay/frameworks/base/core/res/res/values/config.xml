@@ -3,4 +3,6 @@
     <string-array translatable="false" name="config_tether_wifi_regexs">
         <item>wlan[0-9]+</item>
     </string-array>
+    <!-- ALSA MBHC publishes SW_HEADPHONE_INSERT / SW_MICROPHONE_INSERT via input; no h2w switch. -->
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
 </resources>
