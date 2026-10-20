@@ -1,16 +1,9 @@
 package ro.leo.visual;
-import android.content.*;
-import android.os.Bundle;
-import java.util.*;
-
+import android.content.*;import android.os.Bundle;import android.graphics.*;import android.view.*;import android.widget.*;import java.util.*;
 public final class WallpaperActivity extends LeoActivity {
-    protected void onCreate(Bundle state) { super.onCreate(state); show(); }
-    private void show() {
-        ArrayList<String> values=new ArrayList<String>(Arrays.asList(Appearance.THEMES)); values.add("Imagine din Galerie"); values.add("Elimină imaginea de fundal");
-        list("Fundaluri și teme",values,0,new Choice() { public void pick(int i) {
-            if(i<Appearance.THEMES.length) { getSharedPreferences("appearance",0).edit().putInt("theme",i).putBoolean("warm",i==1).apply(); show();notice("Tema aplicată în Home și aplicațiile Leo"); }
-            else if(i==Appearance.THEMES.length) startActivity(new Intent(WallpaperActivity.this,GalleryActivity.class).putExtra("wallpaper",true));
-            else options("Elimini fundalul?",new String[]{"Păstrează","Elimină"},new Choice() { public void pick(int yes) { if(yes==1) { if(Appearance.wallpaper(WallpaperActivity.this).exists()&&!Appearance.wallpaper(WallpaperActivity.this).delete()) notice("Nu poate fi eliminat"); else notice("Fundal eliminat"); } } });
-        } },"",null);
-    }
+    private int stock=-1;
+    protected void onCreate(Bundle state){super.onCreate(state);show();}
+    private void show(){stock=-1;ArrayList<String> values=new ArrayList<String>(Arrays.asList(Appearance.THEMES));values.add("Fundaluri incluse · 4 modele");values.add("Imagine din Galerie");values.add("Elimină imaginea de fundal");list("Fundaluri și teme",values,0,new Choice(){public void pick(int i){if(i<Appearance.THEMES.length){getSharedPreferences("appearance",0).edit().putInt("theme",i).putBoolean("warm",i==1).apply();show();notice("Tema aplicată în Home și aplicațiile Leo");}else if(i==Appearance.THEMES.length)preview(0);else if(i==Appearance.THEMES.length+1)startActivity(new Intent(WallpaperActivity.this,GalleryActivity.class).putExtra("wallpaper",true));else options("Elimini fundalul?",new String[]{"Păstrează","Elimină"},new Choice(){public void pick(int yes){if(yes==1){if(Appearance.wallpaper(WallpaperActivity.this).exists()&&!Appearance.wallpaper(WallpaperActivity.this).delete())notice("Nu poate fi eliminat");else notice("Fundal eliminat");}}});}},"",null);}
+    private void preview(int which){stock=Math.floorMod(which,StockWallpapers.NAMES.length);begin(StockWallpapers.NAMES[stock]);root.addView(new View(this){protected void onDraw(Canvas c){StockWallpapers.draw(c,stock,getWidth(),getHeight());}},new LinearLayout.LayoutParams(-1,0,1));left=new Runnable(){public void run(){try{StockWallpapers.apply(WallpaperActivity.this,stock);notice("Fundal aplicat pe Home și ecranul blocat");}catch(java.io.IOException e){notice("Fundalul nu a putut fi salvat");}}};back=new Runnable(){public void run(){show();}};footer("Aplică","← / → model","Înapoi");}
+    public boolean onKeyDown(int key,KeyEvent e){if(stock>=0){if(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){preview(stock+(key==KeyEvent.KEYCODE_DPAD_LEFT?-1:1));return true;}if(key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER){if(e.getRepeatCount()==0&&left!=null)left.run();return true;}}return super.onKeyDown(key,e);}
 }

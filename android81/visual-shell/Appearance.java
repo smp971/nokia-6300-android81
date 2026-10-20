@@ -7,8 +7,8 @@ import java.io.*;
 
 final class Appearance {
     static float textScale(Context c){return c.getSharedPreferences("appearance",0).getBoolean("large-text",false)?1.15f:1f;}
-    static final String[] THEMES={"Violet","Apus","Ocean","Pădure","Clasic · Albastru","Coral"};
-    static final int[][] COLORS={{0xff241047,0xff593185,0xffbc6e91},{0xff243959,0xff98707c,0xffedb17c},{0xff081d36,0xff17628b,0xff58b6be},{0xff102d28,0xff3c7657,0xffaac47e},{0xff091a37,0xff205cb4,0xff5fc9ed},{0xff32182c,0xffa44162,0xffffad83}};
+    static final String[] THEMES={"Violet","Apus","Ocean","Pădure","Clasic · Albastru","Coral","S60 · Rubiniu","Electro · Jad","LCD · Chihlimbar"};
+    static final int[][] COLORS={{0xff241047,0xff593185,0xffbc6e91},{0xff243959,0xff98707c,0xffedb17c},{0xff081d36,0xff17628b,0xff58b6be},{0xff102d28,0xff3c7657,0xffaac47e},{0xff091a37,0xff205cb4,0xff5fc9ed},{0xff32182c,0xffa44162,0xffffad83},{0xff280d2b,0xff9c255f,0xffff779f},{0xff061f28,0xff08796b,0xff83f1b0},{0xff2e2212,0xff79633a,0xffffd085}};
     static final class Palette {
         final int background,bar,card,accent,selection,ink;
         final int[] gradient;

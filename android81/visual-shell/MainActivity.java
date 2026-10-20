@@ -122,7 +122,7 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare"}, new KeypadDialog.Action() {
+                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile"}, new KeypadDialog.Action() {
               public void select(int which) {
                 if (which == 0) {
                     startActivity(new Intent(MainActivity.this,WallpaperActivity.class));
@@ -135,6 +135,7 @@ public final class MainActivity extends Activity {
                 else if (which == 3) new AlertDialog.Builder(MainActivity.this).setTitle("Leo Visual")
                     .setMessage("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare.")
                     .setPositiveButton("OK", null).show();
+                else if(which==7)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class).putExtra("order",true));
                 else if(which==6)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class));
                 else if(which==5)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));
                 else if (which == 4) {
@@ -262,6 +263,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==23){startActivity(new Intent(MainActivity.this,TerminalActivity.class));return;}
             if(index==22){startActivity(new Intent(MainActivity.this,EmailActivity.class));return;}
             if(index==19){startActivity(new Intent(MainActivity.this,BrowserActivity.class));return;}
             if(index==20){startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return;}

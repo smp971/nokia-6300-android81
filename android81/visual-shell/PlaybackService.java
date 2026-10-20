@@ -49,6 +49,8 @@ public final class PlaybackService extends Service implements AudioManager.OnAud
     void seek(int delta){if(ready&&player!=null)try{player.seekTo(Math.max(0,Math.min(player.getDuration(),player.getCurrentPosition()+delta)));}catch(IllegalStateException ignored){}}
     int position(){try{return ready&&player!=null?player.getCurrentPosition():0;}catch(IllegalStateException ignored){return 0;}}
     int duration(){try{return ready&&player!=null?player.getDuration():0;}catch(IllegalStateException ignored){return 0;}}
+    int audioSession(){try{return ready&&player!=null?player.getAudioSessionId():0;}catch(IllegalStateException ignored){return 0;}}
+    boolean playing(){try{return ready&&player!=null&&player.isPlaying();}catch(IllegalStateException ignored){return false;}}
     public void onAudioFocusChange(int focus){if(focus<=0&&ready&&player!=null)try{player.pause();state="Pauză · alt sunet";}catch(IllegalStateException ignored){}}
     private void release(){generation++;ready=false;if(player!=null){player.release();player=null;}if(wma!=null){wma.cancel();wma=null;}}
     public void onDestroy(){release();audio.abandonAudioFocus(this);stopForeground(true);if("Redare".equals(state)||state.startsWith("Pauză")||state.startsWith("Se pregătește"))state="Oprit";instance=null;super.onDestroy();}

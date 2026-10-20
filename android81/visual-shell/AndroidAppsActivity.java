@@ -39,13 +39,21 @@ public final class AndroidAppsActivity extends Activity {
     }
     protected void onResume() {
         super.onResume();
-        ComponentName previous=apps.isEmpty()?null:apps.get(selected).component;
+        palette=Appearance.palette(this);
+        getWindow().setStatusBarColor(palette.bar);
+        ComponentName previous=apps.isEmpty()?null:apps.get(Math.max(0,Math.min(selected,apps.size()-1))).component;
         apps.clear();
+        HashSet<String> homePackages=new HashSet<String>();
+        for(ResolveInfo home:getPackageManager().queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0)) {
+            homePackages.add(home.activityInfo.packageName);
+        }
         HashSet<ComponentName> seen=new HashSet<ComponentName>();
         for(ResolveInfo info:getPackageManager().queryIntentActivities(
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),0)) {
             if(!info.activityInfo.exported || !info.activityInfo.enabled
-                    || getPackageName().equals(info.activityInfo.packageName)) continue;
+                    || getPackageName().equals(info.activityInfo.packageName)
+                    || homePackages.contains(info.activityInfo.packageName)) continue;
             ComponentName component=new ComponentName(info.activityInfo.packageName,info.activityInfo.name);
             if(!seen.add(component)) continue;
             Entry item=new Entry(); item.component=component;

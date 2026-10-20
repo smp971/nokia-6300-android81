@@ -1,0 +1,10 @@
+# Owner-enabled local root broker. Its own SO_PEERCRED check permits only Leo.
+service leo_terminal_root /system/bin/leo-terminal-root --serve
+    class late_start
+    user root
+    group root
+    seclabel u:r:init:s0
+    disabled
+
+on property:sys.boot_completed=1
+    start leo_terminal_root

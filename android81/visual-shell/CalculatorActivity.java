@@ -19,6 +19,7 @@ public final class CalculatorActivity extends Activity {
         getWindow().setStatusBarColor(palette.bar);
         face=new Face(); setContentView(face);
     }
+    protected void onResume(){super.onResume();palette=Appearance.palette(this);if(face!=null)face.invalidate();}
     protected void onSaveInstanceState(Bundle state) {
         state.putString("expression",expression); state.putBoolean("result",result); super.onSaveInstanceState(state);
     }
@@ -70,27 +71,19 @@ public final class CalculatorActivity extends Activity {
         void text(Canvas c,String value,float x,float y,int size,int color,Paint.Align align) {
             p.setTextSize(size); p.setColor(color); p.setTextAlign(align); c.drawText(value,x,y,p);
         }
+        final RetroStyle art=new RetroStyle();
         protected void onDraw(Canvas c) {
-            c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(palette.background);
-            text(c,"Calculator",120,28,18,Color.WHITE,Paint.Align.CENTER);
-            p.setColor(palette.card);c.drawRoundRect(8,48,232,143,12,12,p);
-            p.setColor(palette.accent);c.drawRoundRect(8,48,12,143,2,2,p);
+            c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);art.title(c,"LEO CALC",palette.accent);
+            art.panel(c,10,54,230,149,0xffd4e9c6,0xff8eaa91);
+            art.text(c,"CALCULATOR  /  LEO CLASSIC",22,73,10,0xff314c40,Paint.Align.LEFT);
             String shown=expression.isEmpty()?"0":expression.replace('*','×').replace('/','÷');
-            p.setTextSize(24);
-            if(p.measureText(shown)>216) {
-                while(shown.length()>1 && p.measureText("…"+shown)>216) shown=shown.substring(1);
-                shown="…"+shown;
-            }
-            text(c,shown,228,99,24,Color.WHITE,Paint.Align.RIGHT);
-            text(c,message,120,131,12,palette.accent,Paint.Align.CENTER);
+            if(shown.length()>18)shown="…"+shown.substring(shown.length()-17);
+            art.digits(c,shown,218,121,0xff183a30);art.fit(c,message.isEmpty()?"Introduceți o expresie":message,120,140,11,196,0xff345349,Paint.Align.CENTER);
             String[] keys={"↑  +","↓  −","←  ×","→  ÷"};
-            for(int i=0;i<4;i++){float x=8+i*57;p.setColor(palette.card);c.drawRoundRect(x,158,x+53,198,8,8,p);text(c,keys[i],x+26,184,15,palette.accent,Paint.Align.CENTER);}
-            text(c,"0–9 cifre · * zecimal · # șterge tot",120,220,12,0xffd3bddf,Paint.Align.CENTER);
-            text(c,"Tasta Înapoi: ieșire",120,249,12,0xffd3bddf,Paint.Align.CENTER);
-            p.setColor(palette.bar); c.drawRect(0,276,240,302,p);
-            text(c,"Opțiuni",7,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(c,"=",120,293,16,palette.accent,Paint.Align.CENTER);
-            text(c,"Șterge",233,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
+            for(int i=0;i<4;i++){float x=10+i*57;art.panel(c,x,166,x+49,205,Appearance.mix(palette.card,Color.WHITE,.16f),palette.card);art.text(c,keys[i],x+24,192,16,Color.WHITE,Paint.Align.CENTER);}
+            art.text(c,"0–9 cifre  ·  * zecimal",120,229,14,Color.WHITE,Paint.Align.CENTER);
+            art.text(c,"# șterge tot  ·  OK rezultat",120,250,13,palette.accent,Paint.Align.CENTER);
+            p.setColor(palette.bar);c.drawRect(0,276,240,302,p);art.text(c,"Opțiuni",7,293,12,Color.WHITE,Paint.Align.LEFT);art.text(c,"=",120,294,20,palette.accent,Paint.Align.CENTER);art.text(c,"Șterge",233,293,12,Color.WHITE,Paint.Align.RIGHT);c.restore();
         }
     }
 }

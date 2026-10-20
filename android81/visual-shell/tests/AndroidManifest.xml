@@ -3,4 +3,5 @@
     <application android:label="Leo local feature checks" android:allowBackup="false" />
     <instrumentation android:name="ro.leo.visual.FeatureTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.UpgradeTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.RetroTests" android:targetPackage="ro.leo.visual" />
 </manifest>
