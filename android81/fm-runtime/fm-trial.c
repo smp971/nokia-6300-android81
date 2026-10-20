@@ -66,10 +66,57 @@ static int session_scan(int radio){
     if(control(radio,V4L2_CID_AUDIO_MUTE,0))return 1;
     return dprintf(session_fd,"DONE %u %d\n",selected_khz,rssi)<0?1:0;
 }
+/* Metadata FIFOs are nonblocking; never dequeue the blocking event FIFO (1). */
+static int rds_enabled;
+static int rds_buffer(int radio,unsigned index,unsigned char *data){
+    struct v4l2_buffer b={0};b.type=V4L2_BUF_TYPE_PRIVATE;b.memory=V4L2_MEMORY_USERPTR;b.index=index;b.length=128;b.m.userptr=(unsigned long)data;
+    if(ioctl(radio,VIDIOC_DQBUF,&b))return -1;
+    return b.bytesused<=128?(int)b.bytesused:-1;
+}
+static void rds_clear(int radio){unsigned char data[128];for(unsigned index=2;index<=3;index++)for(int n=0;n<4;n++)if(rds_buffer(radio,index,data)<=0)break;}
+static void rds_poll(int radio){
+    if(!rds_enabled)return;
+    for(unsigned index=2;index<=3;index++){
+        unsigned char data[128];int size=rds_buffer(radio,index,data);if(size<5)continue;
+        unsigned length=index==3?(unsigned)(data[0]&15)*8:data[0];
+        if(length>(unsigned)(size-5)||!length||length>(index==3?96u:64u))continue;
+        /* PS can contain several eight-character versions: show only the first. */
+        if(index==3)length=8;
+        printf("RDS_DATA kind=%s frequency=%u bytes=%u\n",index==3?"PS":"RT",selected_khz,length);
+        dprintf(session_fd,"%s %u ",index==3?"PS":"RT",selected_khz);
+        for(unsigned n=0;n<length;n++)dprintf(session_fd,"%02x",data[5+n]);
+        dprintf(session_fd,"\n");
+    }
+}
+static int session_seek(int radio,int direction){
+    if(control(radio,V4L2_CID_AUDIO_MUTE,3))return 1;
+    if(dprintf(session_fd,"SEEKING\n")<0)return 1;
+    unsigned origin=selected_khz,khz=origin,previous_khz=origin,target=origin;int before=-128,previous=-128,found=0;
+    for(int step=0;step<206;step++){
+        if(!scan_peer_alive())return 1;
+        struct pollfd incoming={session_fd,POLLIN,0};while(poll(&incoming,1,0)>0&&(incoming.revents&POLLIN)){char command[64];if(line(session_fd,command,sizeof(command),100)||!strcmp(command,"Q"))return 1;incoming.revents=0;}
+        khz=direction>0?(khz>=108000?87500:khz+100):(khz<=87500?108000:khz-100);
+        struct v4l2_frequency f={0};f.type=V4L2_TUNER_RADIO;f.frequency=khz*16;if(ioctl(radio,VIDIOC_S_FREQUENCY,&f))return 1;
+        usleep(40000);struct v4l2_tuner t={0};if(ioctl(radio,VIDIOC_G_TUNER,&t))return 1;int rssi=(int)(int8_t)t.signal;
+        int distance=abs((int)previous_khz-(int)origin);if(distance>10250)distance=20600-distance;
+        if(step>=2&&distance>=300&&previous>=-85&&previous>=before&&previous>rssi){target=previous_khz;found=1;break;}
+        before=previous;previous=rssi;previous_khz=khz;
+    }
+    struct v4l2_frequency f={0};f.type=V4L2_TUNER_RADIO;f.frequency=target*16;if(ioctl(radio,VIDIOC_S_FREQUENCY,&f))return 1;
+    selected_khz=target;usleep(300000);rds_clear(radio);struct v4l2_tuner t={0};int rssi=ioctl(radio,VIDIOC_G_TUNER,&t)?-128:(int)(int8_t)t.signal;
+    if(control(radio,V4L2_CID_AUDIO_MUTE,0))return 1;
+    return dprintf(session_fd,"SEEKDONE %u %d %d\n",target,rssi,found)<0?1:0;
+}
 static int session_loop(int radio){
+    rds_enabled=!control(radio,V4L2_CID_PRIVATE_BASE+0xf,1)&&!control(radio,V4L2_CID_PRIVATE_BASE+0x10,7);
+    printf("RDS_ENABLED=%d\n",rds_enabled);rds_clear(radio);
     struct v4l2_tuner tuner={0};int measured=ioctl(radio,VIDIOC_G_TUNER,&tuner)?-128:(int)(int8_t)tuner.signal;if(dprintf(session_fd,"READY %u %d\n",selected_khz,measured)<0)return -1;
-    for(;;){char command[64];if(line(session_fd,command,sizeof(command),18000))return 0;if(!strcmp(command,"P"))continue;if(!strcmp(command,"S")){if(session_scan(radio))return 0;continue;}if(!strcmp(command,"Q"))return 0;unsigned khz;if(command[0]!='T'||valid_frequency(command+1,&khz)){dprintf(session_fd,"ERROR invalid-command\n");continue;}
-        struct v4l2_frequency f={0};f.type=V4L2_TUNER_RADIO;f.frequency=khz*16;if(ioctl(radio,VIDIOC_S_FREQUENCY,&f)){dprintf(session_fd,"ERROR tune\n");continue;}usleep(80000);selected_khz=khz;memset(&tuner,0,sizeof(tuner));measured=ioctl(radio,VIDIOC_G_TUNER,&tuner)?-128:(int)(int8_t)tuner.signal;if(dprintf(session_fd,"STATUS %u %d\n",khz,measured)<0)return 0;
+    for(;;){char command[64];if(line(session_fd,command,sizeof(command),18000))return 0;
+        if(!strcmp(command,"P")){rds_poll(radio);continue;}
+        if(!strcmp(command,"S")){if(session_scan(radio))return 0;rds_clear(radio);continue;}
+        if(!strcmp(command,"U")||!strcmp(command,"D")){if(session_seek(radio,command[0]=='U'?1:-1))return 0;continue;}
+        if(!strcmp(command,"Q"))return 0;unsigned khz;if(command[0]!='T'||valid_frequency(command+1,&khz)){dprintf(session_fd,"ERROR invalid-command\n");continue;}
+        struct v4l2_frequency f={0};f.type=V4L2_TUNER_RADIO;f.frequency=khz*16;if(ioctl(radio,VIDIOC_S_FREQUENCY,&f)){dprintf(session_fd,"ERROR tune\n");continue;}usleep(300000);selected_khz=khz;rds_clear(radio);memset(&tuner,0,sizeof(tuner));measured=ioctl(radio,VIDIOC_G_TUNER,&tuner)?-128:(int)(int8_t)tuner.signal;if(dprintf(session_fd,"STATUS %u %d\n",khz,measured)<0)return 0;
     }
 }
 static int worker(void){
