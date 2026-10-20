@@ -83,6 +83,7 @@ Fișierele muzicale și coperta din capturi sunt probe originale silențioase, f
 ```powershell
 wsl -d kaios -- bash /mnt/d/ROMS/nokia-6300-ta1286-dump/android81/test-music-queue.sh
 wsl -d kaios -- bash /mnt/d/ROMS/nokia-6300-ta1286-dump/android81/build-visual-shell.sh
+wsl -d kaios -- bash /mnt/d/ROMS/nokia-6300-ta1286-dump/android81/build-keypad-ime.sh
 wsl -d kaios -- bash /mnt/d/ROMS/nokia-6300-ta1286-dump/android81/build-six-feature-tests.sh
 wsl -d kaios -- python3 /mnt/d/ROMS/nokia-6300-ta1286-dump/android81/generate-daily-fixtures.py --cover-mp3
 ```

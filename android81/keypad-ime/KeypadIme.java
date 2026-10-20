@@ -20,7 +20,7 @@ public final class KeypadIme extends InputMethodService {
     private final Handler handler=new Handler();
     private final SparseBooleanArray consumed=new SparseBooleanArray();
     private TextView strip;
-    private int pending=-1, index, mode, inputClass;
+    private int pending=-1, index, mode, inputClass,commitDelay=850;
     private boolean editing;
     private boolean password;
     private String sequence="";
@@ -42,7 +42,9 @@ public final class KeypadIme extends InputMethodService {
         inputClass=info.inputType & InputType.TYPE_MASK_CLASS;
         int variation=info.inputType & InputType.TYPE_MASK_VARIATION;
         password=(inputClass==InputType.TYPE_CLASS_TEXT && (variation==InputType.TYPE_TEXT_VARIATION_PASSWORD || variation==InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD || variation==InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD)) || (inputClass==InputType.TYPE_CLASS_NUMBER && variation==InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-        mode=password?0:Math.max(0,Math.min(4,getSharedPreferences("keypad",0).getInt("mode",0)));
+        int configured=android.provider.Settings.Secure.getInt(getContentResolver(),"leo_keypad_default_mode",-1);
+        mode=password?0:Math.max(0,Math.min(4,configured<0?getSharedPreferences("keypad",0).getInt("mode",0):configured));
+        commitDelay=Math.max(400,Math.min(1500,android.provider.Settings.Secure.getInt(getContentResolver(),"leo_keypad_multitap_ms",850)));
         editing=inputClass!=InputType.TYPE_NULL; updateStrip();
     }
     public void onFinishInput() { finishLetter(); editing=false; super.onFinishInput(); }
@@ -70,7 +72,7 @@ public final class KeypadIme extends InputMethodService {
         String text=letters.substring(index%letters.length(), index%letters.length()+1);
         if(mode==1) text=text.toUpperCase(new Locale("ro"));
         connection.setComposingText(text,1);
-        handler.removeCallbacks(commit); handler.postDelayed(commit,850);
+        handler.removeCallbacks(commit); handler.postDelayed(commit,commitDelay);
     }
     private void erase() {
         InputConnection connection=getCurrentInputConnection(); if(connection==null) return;

@@ -91,3 +91,5 @@ Detalii despre implementările noi, comenzi și criteriile de validare:
 [Contacte, Telefon, Mesaje și alarme](LEO-SYSTEM-APPS.md).
 
 [Suita nouă: implementare, verificări și limite](LEO-APP-SUITE.md).
+
+Actualizare Setări: [panourile KaiOS inspectate și adaptarea Leo](LEO-SETTINGS-EXPANSION.md), cu șase categorii, tonuri, ecran/taste, opțiuni IME, stocare și baterie. Tabelul de etapă de mai sus descrie starea inițială; documentația nouă și README urmăresc starea curentă.

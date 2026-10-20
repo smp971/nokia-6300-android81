@@ -13,7 +13,7 @@ public final class QuickSettingsActivity extends LeoActivity {
     private final int[] streams={AudioManager.STREAM_MUSIC,AudioManager.STREAM_RING,AudioManager.STREAM_ALARM,AudioManager.STREAM_VOICE_CALL};
     private final BroadcastReceiver updates=new BroadcastReceiver(){public void onReceive(Context c,Intent i){if(volumePage)volumes(volumeSelected);else show();}};
     protected void onCreate(Bundle b){super.onCreate(b);}
-    protected void onResume(){super.onResume();IntentFilter f=new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);f.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);f.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);registerReceiver(updates,f);show();}
+    protected void onResume(){super.onResume();IntentFilter f=new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);f.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);f.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);registerReceiver(updates,f);if(volumePage||getIntent().getBooleanExtra("volumes",false))volumes(volumeSelected);else show();}
     protected void onPause(){unregisterReceiver(updates);super.onPause();}
     private void show(){
         volumePage=false;

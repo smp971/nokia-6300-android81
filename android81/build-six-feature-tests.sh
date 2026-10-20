@@ -7,7 +7,7 @@ JAVA=/usr/lib/jvm/java-8-openjdk-amd64/bin
 mkdir -p "$BUILD/classes"
 VCARD="$SRC/out/target/common/obj/JAVA_LIBRARIES/com.android.vcard_intermediates/classes.jar"
 "$SRC/out/host/linux-x86/bin/aapt" package -f -M "$TASK_DIR/visual-shell/tests/AndroidManifest.xml" -I "$SRC/prebuilts/sdk/27/android.jar" -F "$BUILD/base.apk"
-"$JAVA/javac" -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "$SRC/prebuilts/sdk/27/android.jar" -classpath "$TASK_DIR/output/leo-visual-classes.jar:$VCARD" -d "$BUILD/classes" "$TASK_DIR/visual-shell/tests/"*.java
+"$JAVA/javac" -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "$SRC/prebuilts/sdk/27/android.jar" -classpath "$TASK_DIR/output/leo-visual-classes.jar:$TASK_DIR/output/leo-keypad-classes.jar:$VCARD" -d "$BUILD/classes" "$TASK_DIR/visual-shell/tests/"*.java
 "$JAVA/java" -jar "$SRC/prebuilts/sdk/tools/lib/dx.jar" --dex --output="$BUILD/classes.dex" "$BUILD/classes"
 cp "$BUILD/base.apk" "$BUILD/unsigned.apk"
 (cd "$BUILD" && "$SRC/out/host/linux-x86/bin/aapt" add unsigned.apk classes.dex)

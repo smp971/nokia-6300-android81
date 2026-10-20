@@ -130,7 +130,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Galerie Leo | **Funcțional** | Miniaturi, vizualizare și zoom verificate cu imagine sintetică. Până la 500 imagini; fără albume/editor foto. |
 | Fundaluri și teme Leo | **Funcțional** | Nouă teme cu previzualizare/anulare, patru fundaluri incluse, imagine din Galerie și paletă comună. Personalizare pentru ordinea aplicațiilor, patru scurtături Home și text normal/mărit; dimensiunea nu acoperă toate ecranele Android. |
 | Convertor Leo | **Funcțional** | Șase categorii; 137 verificări JVM și probă 100 °C → 212 °F pe telefon. |
-| Setări Leo / profiluri | **Parțial** | Patru taburi din D-pad, pagini native de conectivitate, SIM, timp, localizare și aplicații. APN, operator avansat și permisiuni folosesc Android. Vibrator detectat software, fără vibrație fizică. |
+| Setări Leo / profiluri | **Parțial** | Șase categorii din D-pad, cu pagini native pentru ecran/taste, tonuri, tastatură, notificări, baterie și stocare, pe lângă conectivitate, SIM, timp și aplicații. APN, operator avansat și permisiuni folosesc Android. Vibrator detectat software, fără vibrație fizică. |
 | Preferințe SIM din Leo | **Parțial** | Salvare apeluri/SMS pe SIM 1 verificată fără trafic de probă; schimbarea efectivă a SIM-ului de date și SIM 2 rămân de verificat. |
 | Dată și oră din taste | **Parțial** | Oră automată, format 12/24 și respingerea datei invalide verificate. Aplicarea manuală a unei date valide/altui fus nu a fost testată. |
 | Aplicații / permisiuni din Leo | **Parțial** | Listă uzuală/completă, informații și starea permisiunilor; administrarea completă se deschide în Android. |
@@ -349,7 +349,7 @@ de aici provin din proiectul Android Leo, nu din acea pagină.
 
 ### Setări Leo organizate pe categorii
 
-Stânga/dreapta schimbă tabul, sus/jos selectează o intrare, OK deschide submeniul.
+Stânga/dreapta schimbă tabul, sus/jos selectează o intrare, OK deschide submeniul. Versiunea curentă are șase categorii: [pagini noi, probe și capturi](android81/LEO-SETTINGS-EXPANSION.md). Capturile de mai jos arată versiunea anterioară cu patru categorii.
 
 | Rețele | Aspect |
 | --- | --- |
@@ -401,3 +401,7 @@ transmisie prin modem. Browserul afișează pagina publică de probă example.or
 ### Experiență zilnică: șase îmbunătățiri
 
 [Fluiditate măsurată, stil comun, Muzică, notificări, personalizare și Diagnostic Leo](android81/LEO-DAILY-EXPERIENCE.md). Include capturi de pe telefon și comparația verificată în grilă: mediană cadru 8 ms înainte/după, fără câștig general de viteză demonstrat. Profilurile comune și exportul local de diagnostic sunt instalate.
+
+### Setări Leo: panouri noi inspirate de KaiOS
+
+[Sunet, ecran/taste, tastatură, stocare, baterie și notificări](android81/LEO-SETTINGS-EXPANSION.md). Instalate și verificate pe telefon; biblioteca de tonuri și valorile reale sunt folosite de servicii Android. Pauza multi-tap și modul inițial au trecut proba în editor real.

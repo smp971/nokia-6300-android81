@@ -13,7 +13,7 @@ public final class DownloadsActivity extends LeoActivity {
     private boolean wifiOnly=true;
     private static final class Entry { long id;int state;String title;long bytes,total; }
     protected void onCreate(Bundle state) { super.onCreate(state);manager=(DownloadManager)getSystemService(DOWNLOAD_SERVICE);wifiOnly=getSharedPreferences("downloads",0).getBoolean("wifi",true); }
-    protected void onResume() { super.onResume(); if(manager!=null) load(); }
+    protected void onResume() { super.onResume();wifiOnly=getSharedPreferences("downloads",0).getBoolean("wifi",true); if(manager!=null) load(); }
     private void load() {
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Entry> entries=new ArrayList<Entry>(); final ArrayList<String> labels=new ArrayList<String>();

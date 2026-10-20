@@ -67,6 +67,12 @@
         <activity android:name=".GalleryActivity" android:exported="false" android:label="Gallery Leo" android:screenOrientation="portrait" />
         <activity android:name=".WallpaperActivity" android:exported="false" android:label="Wallpaper Leo" android:screenOrientation="portrait" />
         <activity android:name=".ConverterActivity" android:exported="false" android:label="Converter Leo" android:screenOrientation="portrait" />
+        <activity android:name=".InputSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".SoundSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".DisplaySettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".StorageSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".BatterySettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".NotificationSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".SettingsActivity" android:exported="false" android:label="Settings Leo" android:screenOrientation="portrait" />
         <activity android:name=".ConnectivityActivity" android:exported="false" android:label="Conectivitate Leo" android:screenOrientation="portrait" />
         <activity android:name=".MobileSettingsActivity" android:exported="false" android:label="SIM-uri Leo" android:screenOrientation="portrait" />
