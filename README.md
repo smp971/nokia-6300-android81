@@ -46,7 +46,7 @@ Limitele și scenariile rămase sunt indicate separat.
 | --- | --- |
 | 🏠 **Home și navigare** | Leo este launcherul principal. D-pad, softkey-uri, meniu global, notificări, blocare taste și mouse din taste. |
 | ⌨️ **Scriere** | Multi-tap și T9 local de bază, majuscule, diacritice, simboluri și ștergere din tastatura fizică. |
-| 📞 **Apeluri primite** | Ecran complet, răspuns și închidere din taste; sonerie, receptor și conversație în ambele sensuri confirmate pe apel real. |
+| 📞 **Apeluri pe SIM 1** | Apel primit și două apeluri inițiate cu sunet în ambele sensuri, confirmate real; răspuns și închidere din taste. USB s-a întrerupt la apelurile inițiate. |
 | 👥 **Contacte și SMS** | Contacte locale, căutare, favorite; trimitere și recepție SMS pe SIM 1 confirmate în probele anterioare. Conversații Leo cu bule și ciorne locale. |
 | 🌐 **Conectivitate** | Date LTE pe SIM 1, Wi-Fi și hotspot cu Internet verificat de pe un alt telefon. Ambele SIM-uri sunt afișate și înregistrate pentru voce. |
 | 🔊 **Audio** | Difuzor, receptor, căști stereo cu fir și boxă Bluetooth A2DP. Bipuri pe boxă confirmate după integrarea modulului audio lipsă. |
@@ -62,7 +62,7 @@ Limitele și scenariile rămase sunt indicate separat.
 pentru muzică și FM, volum și acces la player. În meniul principal sunt **26 de intrări**;
 aplicațiile Android instalate au propria listă, iar compatibilitatea cu tastele variază.
 
-Pentru SMS pe SIM 2, apeluri inițiate, VoLTE/VoWiFi și probe după repornire, consultă
+Pentru telefonia pe SIM 2, DTMF, VoLTE/VoWiFi și probe după repornire, consultă
 limitele de mai jos. [Matricea tehnică și probele anterioare](README.archive-2026-10-20.md#tabelul-funcțiilor)
 păstrează detaliile fiecărei funcții.
 
@@ -76,7 +76,7 @@ confirmarea unei funcții se bazează pe proba ei separată.
 | --- | --- | --- |
 | **Sistem și hardware** | Android pornește intern; integrarea hardware este încă parțială | Boot complet, Android 8.1.0, profil low-RAM activ și audioserver în funcțiune verificate din nou. Adreno și tastatura au probe documentate. Camera, GPS și vibrația fizică rămân deschise. |
 | **Interfața Leo** | Shell nativ adaptat la taste, cu un set consistent de aplicații | Home, bare softkey, T9 și meniuri comune. Serviciul tastelor era legat la procesul curent. Recuperarea sa limitată este implementată; eliminarea tuturor blocajelor nu este demonstrată. |
-| **Telefonie** | Funcțiile de bază au rezultate reale, cu acoperire incompletă | Apel primit bidirecțional, SMS și LTE pe SIM 1. Apelul inițiat cu audio după ultimele corecții, SIM 2 și IMS au nevoie de probe distincte. |
+| **Telefonie** | Funcțiile de bază au rezultate reale, cu acoperire incompletă | Apel primit și două apeluri inițiate bidirecționale, SMS și LTE pe SIM 1. SIM 2, DTMF și IMS au nevoie de probe distincte. [Probe noi](android81/STABILITY-PHONE-20261020.md). |
 | **Media** | Una dintre zonele cele mai avansate ale portului | Muzică, căști, FM/RDS și A2DP au confirmări reale. Modulul A2DP este încărcat în politica audio. Microfonul Bluetooth, apelurile prin accesorii și toate variantele de codec nu sunt validate. |
 | **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | 90 fișiere Java în shell, plus 16 clase de instrumentare; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
 | **Recompilare** | Există o bază reproductibilă documentată, încă netestată integral pe un PC curat | Toate cele **590 de proiecte AOSP** din manifest au revizii SHA fixate. Arborele AOSP, dump-ul și componentele proprietare necesare sunt intrări separate. |
@@ -93,8 +93,8 @@ Ordinea de mai jos pune folosirea zilnică înaintea adăugării unor meniuri no
 
 | Prioritate | De lucru | Cum știm că este gata |
 | --- | --- | --- |
-| **1 · Stabilitate** | Blocaje Leo, întreruperi ADB/USB, pornire și repornire | Serii documentate de porniri și navigare, cu recuperare verificată și fără pierderea controlului din taste. |
-| **2 · Telefonie completă** | Apeluri inițiate cu audio, DTMF, respingere, ambele SIM-uri, SMS și rute de apel | Matrice de apeluri și mesaje reale, repetată după reboot. VoLTE și VoWiFi validate separat. |
+| **1 · Stabilitate** | Blocaje Leo, întreruperi ADB/USB, pornire și repornire; DeskClock stock corectat, STOP fără alarmă activă verificat, reboot încă de testat | Serii documentate de porniri și navigare, cu recuperare verificată și fără pierderea controlului din taste. |
+| **2 · Telefonie completă** | Apeluri pe SIM 2, DTMF, respingere, SMS și rute de apel; apelurile inițiate pe SIM 1 au acum două confirmări audio | Matrice de apeluri și mesaje reale, repetată după reboot. VoLTE și VoWiFi validate separat. |
 | **3 · Autonomie** | Consum în repaus, suspendare, încărcare și utilizare pe baterie | Măsurători fără alimentare USB și sesiuni mai lungi, cu metodă și rezultate publicate. |
 | **4 · Hardware rămas** | Vibrație, cameră, GPS și integrarea senzorilor | Probe pe hardware real; camera rămâne momentan în afara etapei active, la cererea utilizatorului. |
 | **5 · Aplicații și accesibilitate** | T9 mai bun, email SMTP, browser/WebView, aplicații Android dificil de folosit din taste | Trimitere reală de email, scenarii T9 mai largi și fluxuri complete controlabile din taste. |
@@ -149,6 +149,7 @@ android81/
 | Vrei să urmărești… | Începe de aici |
 | --- | --- |
 | Sursele și recompilarea | [REBUILD](android81/REBUILD.md), [configurația dispozitivului](android81/device/nokia/leo/) |
+| Stabilitate și apeluri inițiate | [Probe SIM 1, întreruperea USB și DeskClock](android81/STABILITY-PHONE-20261020.md) |
 | Ultimele șase îmbunătățiri | [Centrul media, A2DP și recuperarea tastelor](android81/LEO-MEDIA-CENTER.md) |
 | FM, scanare, RDS și difuzor | [Portarea FM](android81/FM-INVESTIGATION.md) |
 | Shell-ul și aplicațiile pentru taste | [Leo Visual](android81/VISUAL-SHELL.md), [aplicațiile de sistem](android81/LEO-SYSTEM-APPS.md) |

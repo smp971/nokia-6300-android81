@@ -91,6 +91,13 @@
       "files": [],
       "patch": "patches/system__core.patch",
       "sha256": "d007c1353e58a7fb7f6bae79ad3eb04bd44ebc1fc62f2afad3bdb5a343ba1180"
+    },
+    {
+      "path": "packages/apps/DeskClock",
+      "revision": "7f5c202f55eb5ab756192257d1d2c4e6ec8c3d40",
+      "files": [],
+      "patch": "patches/packages__apps__DeskClock.patch",
+      "sha256": "b136763896ad50ca1ad2aaab7f6b08744e21f4f3b0eaa28e14ab4aea45f07308"
     }
   ]
 }

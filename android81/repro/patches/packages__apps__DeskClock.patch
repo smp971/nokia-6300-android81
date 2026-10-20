@@ -1,0 +1,68 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 34d82420bf78fcab79dfd901cc61a12e4bfd7f90..5f30699d5563fc666f907ee0425fc4ed1dbbea5d 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -172,6 +172,11 @@
+             android:name=".alarms.AlarmStateManager"
+             android:directBootAware="true" />
+ 
++        <receiver
++            android:name=".alarms.AlarmService$StopReceiver"
++            android:exported="false"
++            android:directBootAware="true" />
++
+         <service
+             android:name=".alarms.AlarmService"
+             android:directBootAware="true" />
+diff --git a/src/com/android/deskclock/alarms/AlarmService.java b/src/com/android/deskclock/alarms/AlarmService.java
+index b9a97db1b1c8a13474e052d225f857d1400aa774..63d4f28eb03b061717f47f320460eb8317f44f04 100644
+--- a/src/com/android/deskclock/alarms/AlarmService.java
++++ b/src/com/android/deskclock/alarms/AlarmService.java
+@@ -93,12 +93,27 @@ public class AlarmService extends Service {
+      * @param context application context
+      * @param instance you are trying to stop
+      */
++    private static AlarmService sRunningService;
++
++    // Explicit, non-exported receiver: a STOP must never start a background service.
++    public static final class StopReceiver extends BroadcastReceiver {
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            if (!STOP_ALARM_ACTION.equals(intent.getAction())) return;
++            final AlarmService service = sRunningService;
++            if (service == null) return;
++            final long instanceId = AlarmInstance.getId(intent.getData());
++            if (service.mCurrentAlarm != null
++                    && service.mCurrentAlarm.mId != instanceId) return;
++            service.stopCurrentAlarm();
++            service.stopSelf();
++        }
++    }
++
+     public static void stopAlarm(Context context, AlarmInstance instance) {
+-        final Intent intent = AlarmInstance.createIntent(context, AlarmService.class, instance.mId)
++        final Intent intent = AlarmInstance.createIntent(context, StopReceiver.class, instance.mId)
+                 .setAction(STOP_ALARM_ACTION);
+-
+-        // We don't need a wake lock here, since we are trying to kill an alarm
+-        context.startService(intent);
++        context.sendBroadcast(intent);
+     }
+ 
+     private TelephonyManager mTelephonyManager;
+@@ -174,6 +189,7 @@ public class AlarmService extends Service {
+     @Override
+     public void onCreate() {
+         super.onCreate();
++        sRunningService = this;
+         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+ 
+         // Register the broadcast receiver
+@@ -233,6 +249,7 @@ public class AlarmService extends Service {
+     public void onDestroy() {
+         LogUtils.v("AlarmService.onDestroy() called");
+         super.onDestroy();
++        if (sRunningService == this) sRunningService = null;
+         if (mCurrentAlarm != null) {
+             stopCurrentAlarm();
+         }
