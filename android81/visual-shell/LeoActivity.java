@@ -22,6 +22,7 @@ abstract class LeoActivity extends Activity {
     Runnable left,back;
     boolean form;
     Appearance.Palette palette;
+    private String listTitle;private java.util.ArrayList<String> listRows;private BaseAdapter listAdapter;
     protected void onCreate(Bundle state) {
         super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -34,6 +35,7 @@ abstract class LeoActivity extends Activity {
     }
     void begin(String title) {
         form=false; left=null; back=null;
+        listTitle=null;listRows=null;listAdapter=null;
         palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
         TextView heading=text(title,21); heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
@@ -47,6 +49,7 @@ abstract class LeoActivity extends Activity {
         String[] values={a,b,c};
         for(int i=0;i<3;i++) {
             TextView label=text(values[i],13); label.setSingleLine(true);
+            if(i==1)label.setTextColor(palette.accent);
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
             bar.addView(label,new LinearLayout.LayoutParams(0,dp(34),1));
         }
@@ -57,12 +60,13 @@ abstract class LeoActivity extends Activity {
     }
     void list(String title,final List<String> values,int selected,final Choice choice,String action,Runnable command) {
         begin(title); left=command;
+        listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
         final ListView list=new ListView(this); list.setPadding(dp(6),0,dp(6),0); list.setDividerHeight(dp(3));
         list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
         final BaseAdapter adapter=new BaseAdapter() {
-            public int getCount() { return values.size(); }
-            public Object getItem(int i) { return values.get(i); }
+            public int getCount() { return rows.size(); }
+            public Object getItem(int i) { return rows.get(i); }
             public long getItemId(int i) { return i; }
             public View getView(int i,View reuse,android.view.ViewGroup parent) {
                 TextView label;
@@ -70,11 +74,14 @@ abstract class LeoActivity extends Activity {
                 else {
                     label=text("",18); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
                     label.setMinHeight(dp(52)); label.setGravity(Gravity.CENTER_VERTICAL);
+                    android.graphics.drawable.StateListDrawable surfaces=new android.graphics.drawable.StateListDrawable();
+                    surfaces.addState(new int[]{android.R.attr.state_selected},Appearance.surface(palette.selection,dp(7)));
+                    surfaces.addState(new int[]{},Appearance.surface(palette.card,dp(7)));label.setBackground(surfaces);
                 }
-                label.setText(values.get(i));label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setCompoundDrawablePadding(dp(9)); paintSelection(label,i==focused[0]); return label;
+                label.setText(rows.get(i));label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setCompoundDrawablePadding(dp(9)); paintSelection(label,i==focused[0]); return label;
             }
         };
-        list.setAdapter(adapter);
+        listAdapter=adapter;list.setAdapter(adapter);
         list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> p,View v,int i,long id) {
                 int previous=focused[0]; focused[0]=i;
@@ -95,11 +102,12 @@ abstract class LeoActivity extends Activity {
         list.requestFocus(); list.setSelection(focused[0]);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }
+    boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;listRows.clear();listRows.addAll(rows);listAdapter.notifyDataSetChanged();return true;}
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
     void onListSelection(String title,int index){}
     private void paintSelection(View row,boolean selected) {
         if(!(row instanceof TextView)) return;
-        row.setBackground(Appearance.surface(selected?palette.selection:palette.card,dp(7)));
+        row.setSelected(selected);
         ((TextView)row).setTextColor(selected?palette.ink:Color.WHITE);
     }
     LinearLayout fields(String title) {
@@ -136,7 +144,8 @@ abstract class LeoActivity extends Activity {
     }
     void notice(String value) { Toast.makeText(this,value,Toast.LENGTH_LONG).show(); }
     void ui(final Runnable action) { runOnUiThread(new Runnable() { public void run() { if(!isFinishing() && !isDestroyed()) action.run(); } }); }
-    public boolean dispatchKeyEvent(KeyEvent event) {
+    public boolean dispatchKeyEvent(KeyEvent event) {long start=android.os.SystemClock.elapsedRealtimeNanos();try{return dispatchLeoKey(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
+    private boolean dispatchLeoKey(KeyEvent event) {
         if(event.getKeyCode()==KeyEvent.KEYCODE_MENU && left!=null) {
             if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) left.run(); return true;
         }

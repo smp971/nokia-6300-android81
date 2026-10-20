@@ -13,7 +13,7 @@ public final class MediaActivity extends LeoActivity {
     private final Handler handler=new Handler();private MusicFace face;private boolean resumed;
     private final Runnable refresh=new Runnable(){public void run(){if(resumed&&playerScreen&&face!=null){face.tick();PlaybackService s=PlaybackService.instance;handler.postDelayed(this,s!=null&&s.playing()?125:1000);}}};
     static String format(int ms){int s=ms/1000;return String.format(Locale.ROOT,"%d:%02d",s/60,s%60);}
-    protected void onCreate(Bundle state){super.onCreate(state);video="video".equals(getIntent().getStringExtra("kind"));if(!video&&getIntent().getData()!=null){startService(new Intent(this,PlaybackService.class).setData(getIntent().getData()).putExtra("title",getIntent().getData().getLastPathSegment()));now();}else load();}
+    protected void onCreate(Bundle state){super.onCreate(state);video="video".equals(getIntent().getStringExtra("kind"));if(!video&&getIntent().getData()!=null){startService(new Intent(this,PlaybackService.class).setData(getIntent().getData()).putExtra("title",getIntent().getData().getLastPathSegment()));now();}else if(getIntent().getBooleanExtra("now",false))now();else load();}
     protected void onResume(){super.onResume();resumed=true;if(face!=null)face.appearance();if(playerScreen){handler.removeCallbacks(refresh);handler.post(refresh);}}
     protected void onPause(){resumed=false;handler.removeCallbacks(refresh);if(face!=null)face.release();super.onPause();}
     private void load(){
@@ -39,13 +39,14 @@ public final class MediaActivity extends LeoActivity {
     private void play(){
         if(video){startActivity(new Intent(this,VideoActivity.class).setData(uris.get(selected)).putExtra("title",titles.get(selected).split("\n")[0]));return;}
         if(!PlaybackService.hardwareReady()){notice("Driverul audio este inactiv; biblioteca rămâne disponibilă");return;}
-        startService(new Intent(this,PlaybackService.class).setData(uris.get(selected)).putExtra("title",titles.get(selected).split("\n")[0]));now();
+        ArrayList<String> sources=new ArrayList<String>(),names=new ArrayList<String>();for(int i=0;i<uris.size();i++){sources.add(uris.get(i).toString());names.add(titles.get(i).split("\n")[0]);}startService(new Intent(this,PlaybackService.class).putStringArrayListExtra("queue",sources).putStringArrayListExtra("titles",names).putExtra("index",selected));now();
     }
     private void now(){
-        playerScreen=true;face=new MusicFace(this);setContentView(face);
-        left=new Runnable(){public void run(){options("Redare",new String[]{"Bibliotecă","Oprește","Piesa anterioară","Piesa următoare"},new Choice(){public void pick(int i){if(i==0)library();else if(i==1){stopService(new Intent(MediaActivity.this,PlaybackService.class));library();}else if(!uris.isEmpty()){selected=Math.max(0,Math.min(uris.size()-1,selected+(i==2?-1:1)));play();}}});}};
-        back=new Runnable(){public void run(){handler.removeCallbacks(refresh);library();}};handler.removeCallbacks(refresh);handler.post(refresh);
+        playerScreen=true;if(face!=null)face.release();face=new MusicFace(this);setContentView(face);
+        left=new Runnable(){public void run(){final PlaybackService service=PlaybackService.instance;options("Redare",new String[]{"Bibliotecă","Coada de redare","Piesa anterioară","Piesa următoare",service!=null&&service.queue.shuffle?"Aleatoriu · pornit":"Aleatoriu · oprit","Repetare","Oprește"},new Choice(){public void pick(int i){PlaybackService s=PlaybackService.instance;if(i==0)load();else if(i==6){stopService(new Intent(MediaActivity.this,PlaybackService.class));load();}else if(s==null)notice("Nu există redare activă");else if(i==1)queue();else if(i==2||i==3)s.next(i==3);else if(i==4)s.modes(!s.queue.shuffle,s.queue.repeat);else options("Repetare",new String[]{"Fără repetare","Repetă lista","Repetă piesa"},new Choice(){public void pick(int n){PlaybackService s=PlaybackService.instance;if(s!=null)s.modes(s.queue.shuffle,n);}});}});}};
+        back=new Runnable(){public void run(){handler.removeCallbacks(refresh);load();}};handler.removeCallbacks(refresh);handler.post(refresh);
     }
+    private void queue(){playerScreen=false;handler.removeCallbacks(refresh);if(face!=null)face.release();final PlaybackService s=PlaybackService.instance;if(s==null){load();return;}ArrayList<String> labels=new ArrayList<String>();for(int i=0;i<s.queue.titles.size();i++)labels.add((i==s.queue.index?"▶ ":"")+s.queue.titles.get(i));list("Coada de redare",labels,Math.max(0,s.queue.index),new Choice(){public void pick(final int at){options("Piesa "+(at+1),new String[]{"Redă","Mută mai sus","Mută mai jos","Elimină din coadă"},new Choice(){public void pick(int action){if(PlaybackService.instance!=s){load();return;}if(action==0){s.choose(at);now();}else{if(action==3)s.remove(at);else s.move(at,action==1?Math.max(0,at-1):Math.min(s.queue.titles.size()-1,at+1));queue();}}});}},"Player",new Runnable(){public void run(){now();}});back=new Runnable(){public void run(){now();}};}
     public boolean onKeyDown(int key,KeyEvent event){
         if(playerScreen){PlaybackService s=PlaybackService.instance;
             if(key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER){if(event.getRepeatCount()==0&&s!=null){s.toggle();if(face!=null)face.tick();}return true;}

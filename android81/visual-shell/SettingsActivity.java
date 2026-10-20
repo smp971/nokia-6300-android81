@@ -23,11 +23,11 @@ public final class SettingsActivity extends LeoActivity {
     private void show() {
         rememberSelection(); categories=true;
         AudioManager audio=(AudioManager)getSystemService(AUDIO_SERVICE);
-        String profile=audio.getRingerMode()==AudioManager.RINGER_MODE_SILENT?"Silențios":audio.getRingerMode()==AudioManager.RINGER_MODE_VIBRATE?"Vibrații":"Normal";
+        String profile=SoundProfiles.current(this);
         String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă","Transfer USB"},
             {"Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9","Personalizare"},
             {"Blocarea tastelor","Permisiuni și aplicații","Localizare"},
-            {"Dată și oră","Stocare","Despre telefon","Setări Android","Configurare inițială"}};
+            {"Dată și oră","Stocare","Despre telefon","Setări Android","Configurare inițială","Diagnostic Leo"}};
         list("Setări Leo",Arrays.asList(rows[category]),selections[category],new Choice(){public void pick(int i){
             selections[category]=i;
             if(category==0) {
@@ -41,7 +41,7 @@ public final class SettingsActivity extends LeoActivity {
             } else if(category==2) {
                 startActivity(new Intent(SettingsActivity.this,i==0?KeypadLockSettingsActivity.class:i==1?AppSettingsActivity.class:PrivacySettingsActivity.class));
             } else {
-                if(i==0) startActivity(new Intent(SettingsActivity.this,DateTimeSettingsActivity.class)); else if(i==1) storage();
+                if(i==5){startActivity(new Intent(SettingsActivity.this,DiagnosticActivity.class));return;}if(i==0) startActivity(new Intent(SettingsActivity.this,DateTimeSettingsActivity.class)); else if(i==1) storage();
                 else if(i==2) page("Despre Leo",Build.MODEL+"\nAndroid "+Build.VERSION.RELEASE+" · API "+Build.VERSION.SDK_INT+"\nShell nativ pentru taste\n"+Build.DISPLAY);
                 else if(i==3)launch(Settings.ACTION_SETTINGS);else startActivity(new Intent(SettingsActivity.this,SetupWizardActivity.class));
             }
@@ -82,12 +82,8 @@ public final class SettingsActivity extends LeoActivity {
     private void timeout() { options("Stingerea ecranului",new String[]{"30 secunde","1 minut","5 minute","30 minute"},new Choice() { public void pick(int i) {
         if(!writable()) return; try { Settings.System.putInt(getContentResolver(),Settings.System.SCREEN_OFF_TIMEOUT,new int[]{30000,60000,300000,1800000}[i]);notice("Interval salvat"); } catch(SecurityException denied) { notice("Acces refuzat"); }
     }}); }
-    private void profiles() { final boolean vibration=((Vibrator)getSystemService(VIBRATOR_SERVICE)).hasVibrator();options("Profil sunet",new String[]{"Normal",vibration?"Vibrații":"Vibrații · indisponibile","Silențios"},new Choice() { public void pick(int i) {
-        if(i==1&&!vibration){notice("Android nu detectează vibratorul");return;}
-        NotificationManager notifications=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        if(!notifications.isNotificationPolicyAccessGranted()) { notice("Permite accesul Leo la Nu deranjați");launch(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);return; }
-        try { ((AudioManager)getSystemService(AUDIO_SERVICE)).setRingerMode(i==0?AudioManager.RINGER_MODE_NORMAL:i==1?AudioManager.RINGER_MODE_VIBRATE:AudioManager.RINGER_MODE_SILENT);show(); } catch(SecurityException denied) { notice("Profilul nu poate fi schimbat"); }
-    }}); }
+    private void profiles(){SoundProfiles.select(this,new Runnable(){public void run(){show();}});}
+
     private String capacity(java.io.File dir) {
         try { StatFs stat=new StatFs(dir.getPath());return android.text.format.Formatter.formatFileSize(this,stat.getAvailableBytes())+" liber / "+android.text.format.Formatter.formatFileSize(this,stat.getTotalBytes()); } catch(RuntimeException unavailable) { return "indisponibil"; }
     }

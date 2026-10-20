@@ -62,9 +62,9 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Android pe memoria internă | **Funcțional** | `/system` read-only, `/data` read-write; sistemul nu mai depinde de cardul SD. |
 | Pornire și repornire | **Parțial** | Corecție NetworkPolicy instalată; după recuperare nu s-a raportat ANR. Proba de autostart conectivitate a fost urmată de 900E; cauza rămâne în investigare. |
 | USB / ADB / root | **Parțial** | Diagnostic, instalare și control funcționale; după unele reporniri conexiunea cere reconectarea cablului. Uneltele au acum timeout pentru a evita așteptarea nelimitată. |
-| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 24 intrări pe trei pagini, pictograme colorate și scurtături pe Home, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
+| Leo Visual / HOME | **Funcțional** | Shell implicit nativ; listă/grilă cu 25 intrări pe trei pagini, pictograme colorate și scurtături pe Home, preferințe salvate și bară de acțiuni. Leo clasic eliminat pentru utilizatorul activ. |
 | Meniu global | **Funcțional** | Tasta Meniu dedicată deschide comenzile peste alte aplicații; stil comun „Alege / Înapoi”. |
-| Notificări native Leo | **Parțial** | Notificare sintetică citită, deschisă prin PendingIntent și eliminată din taste. Acțiuni și editor RemoteInput cu confirmare implementate; răspunsul real rămâne netestat. Previzualizări opționale la blocare, ascunse implicit. |
+| Notificări native Leo | **Parțial** | Notificare sintetică citită, deschisă prin PendingIntent și eliminată din taste. Acțiunea SMS „Marchează ca citit” și limita temporală verificate local. Acțiuni și editor RemoteInput cu confirmare implementate; răspunsul real rămâne netestat. Previzualizări opționale la blocare, ascunse implicit. |
 | Configurări rapide Leo | **Parțial** | Wi-Fi și Bluetooth oprite/repornite din taste; luminozitate salvată și restaurată. Hotspot/SIM deschid paginile native; vibrator nedetectat. |
 | Indicatoare SMS / apeluri pierdute | **Parțial** | SMS și apel pierdut sintetice afișate pe Home și pe ecranul blocat, apoi confirmate separat la citire. Marcarea conversației păstrează un SMS mai nou. Fără apel/SMS real inițiat în această probă. |
 | Configurare inițială | **Parțial** | Șapte pagini native; navigare și finalizare verificate. Leo rămâne în română; limba Android se schimbă separat. |
@@ -128,7 +128,7 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Calendar Leo | **Parțial** | Interfață nativă, lună/agendă; salvare de eveniment în calendarul local Android verificată. Creare, persistență după reboot, editare și ștergere verificate; fără recurențe/remindere. |
 | Fișiere Leo | **Parțial** | Folder și text UTF-8 create; provider read-only și respingere acces în afara rădăcinii verificate. Persistență după reboot, editare text, redenumire de fișier și ștergere fișier/folder gol verificate; deschiderea externă depinde de aplicațiile instalate. |
 | Galerie Leo | **Funcțional** | Miniaturi, vizualizare și zoom verificate cu imagine sintetică. Până la 500 imagini; fără albume/editor foto. |
-| Fundaluri și teme Leo | **Funcțional** | Nouă teme, patru fundaluri incluse, imagine din Galerie și paletă comună. Personalizare pentru ordinea aplicațiilor, patru scurtături Home și text normal/mărit; dimensiunea nu acoperă toate ecranele Android. |
+| Fundaluri și teme Leo | **Funcțional** | Nouă teme cu previzualizare/anulare, patru fundaluri incluse, imagine din Galerie și paletă comună. Personalizare pentru ordinea aplicațiilor, patru scurtături Home și text normal/mărit; dimensiunea nu acoperă toate ecranele Android. |
 | Convertor Leo | **Funcțional** | Șase categorii; 137 verificări JVM și probă 100 °C → 212 °F pe telefon. |
 | Setări Leo / profiluri | **Parțial** | Patru taburi din D-pad, pagini native de conectivitate, SIM, timp, localizare și aplicații. APN, operator avansat și permisiuni folosesc Android. Vibrator detectat software, fără vibrație fizică. |
 | Preferințe SIM din Leo | **Parțial** | Salvare apeluri/SMS pe SIM 1 verificată fără trafic de probă; schimbarea efectivă a SIM-ului de date și SIM 2 rămân de verificat. |
@@ -137,11 +137,14 @@ Nu sunt stările portului postmarketOS și nu garantează toate scenariile de ut
 | Favorite | **Funcțional** | Marcaj Android STARRED, listă proprie și probă pe contact sintetic, curățat după verificare. |
 | Ecran de blocare Leo | **Funcțional** | Ceas, dată, baterie și ambele SIM-uri, cu tema/fundalul HOME. Blocare automată la stingere și expirarea combinației verificate. Previzualizări opționale de notificări, ascunse implicit; sus/jos schimbă notificarea. Deblocare: soft stânga → *. Protecție contra apăsărilor accidentale, fără PIN. |
 | Descărcări Leo | **Parțial** | Interfață DownloadManager implementată și deschisă; transferul efectiv nu a fost validat. |
-| Muzică / Video Leo | **Parțial** | Bibliotecă și controale native; player retro cu vizualizator FFT real, confirmat manual; WMA redat prin serviciul Muzică Leo. MP3/FLAC/AAC verificate prin MediaPlayer. Redarea video și compatibilitatea tuturor fișierelor rămân de validat. |
+| Muzică / Video Leo | **Parțial** | Bibliotecă și controale native; player retro cu vizualizator FFT real, confirmat manual; copertă MP3, coadă editabilă, shuffle/repeat și comenzi la blocare verificate cu probe locale; WMA redat prin serviciul Muzică Leo. MP3/FLAC/AAC verificate prin MediaPlayer. Redarea video și compatibilitatea tuturor fișierelor rămân de validat. |
 | Reportofon Leo | **Parțial** | AAC/M4A, pauză, serviciu foreground și listă implementate; microfonul nu este pornit fără placă audio. Înregistrarea reală rămâne nevalidată. |
 | WebView Android | **Parțial** | HTML local afișat, dar ulterior crash GPU în audit. Nu este motorul browserului text Leo. |
 | Browser text Leo | **Parțial** | HTTPS example.org, favorite și istoric verificate pe telefon. Reader HTML/text fără JavaScript, formulare web sau motor modern complet. |
 | Email | **Parțial** | Email Leo: editor din taste și interfață pentru conturi/foldere/mesaje. Eroarea de resurse AOSP reparată; Meniu oferă configurare manuală și comenzi de compunere din taste. Sincronizare IMAP manuală implementată. Un cont real IMAP este salvat, cu 7 foldere și 10 mesaje descărcate. Trimiterea SMTP, sincronizarea manuală și marcarea ca citit rămân nevalidate. [Detalii](android81/LEO-STYLE-EMAIL.md). |
+| Diagnostic Leo | **Funcțional** | Baterie, RAM/PSS, stocare, stare pentru ambele SIM-uri și timpi UI; derulare și export local verificate. Raport cu câmpuri limitate, fără logcat sau identificatori personali. |
+| Profiluri sonore Leo | **Funcțional** | Normal, Silențios, Exterior, Noapte și niveluri personale; nivelurile și restaurarea au fost verificate. Noapte permite explicit alarmele în DND. |
+| Terminal Leo | **Funcțional** | Text din taste, comenzi shell și `su` pentru UID-ul Leo; fără PTY. [Detalii](android81/LEO-RETRO-UI.md). |
 | Cameră | **Nefuncțional** | Android raportează zero dispozitive. Audit offline: 23 componente originale și 16 biblioteci Android, fără dependențe declarate lipsă; încărcarea izolată a HAL-ului QCamera a reușit pe telefon. Enumerarea fără hardware dă zero camere; cu nodurile camerei, proba a așteptat în inițializarea senzorului din kernel. Daemonul și captura rămân neintegrate. [Audit](android81/CAMERA-PORT-AUDIT.md). |
 | GPS / localizare reală | **Nefuncțional** | Fără provider GPS funcțional sau fix real confirmat. |
 | Senzori Android | **Nefuncțional** | SensorService nu detectează senzori; descrie integrarea software, nu inventarul fizic. |
@@ -394,3 +397,7 @@ transmisie prin modem. Browserul afișează pagina publică de probă example.or
 ### Personalizare retro și terminal
 
 [Muzică, Calculator, teme, fundaluri, volum, terminal și HOME Leo](android81/LEO-RETRO-UI.md). Terminalul și controlul volumului au fost confirmate din taste; vizualizatorul a fost confirmat în redare. Launcher3 este păstrat, dar dezactivat pentru utilizatorul activ.
+
+### Experiență zilnică: șase îmbunătățiri
+
+[Fluiditate măsurată, stil comun, Muzică, notificări, personalizare și Diagnostic Leo](android81/LEO-DAILY-EXPERIENCE.md). Include capturi de pe telefon și comparația verificată în grilă: mediană cadru 8 ms înainte/după, fără câștig general de viteză demonstrat. Profilurile comune și exportul local de diagnostic sunt instalate.

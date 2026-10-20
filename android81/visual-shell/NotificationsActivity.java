@@ -8,6 +8,8 @@ import java.util.*;
 
 public final class NotificationsActivity extends LeoActivity {
     private String detailKey;
+    private String selectedKey;
+    private final ArrayList<String> keys=new ArrayList<String>();
     private final BroadcastReceiver updates=new BroadcastReceiver(){public void onReceive(Context c,Intent i){
         if(detailKey!=null)for(StatusBarNotification n:LeoNotificationService.snapshot())if(detailKey.equals(n.getKey()))return;
         show();
@@ -18,11 +20,11 @@ public final class NotificationsActivity extends LeoActivity {
     private String safe(CharSequence s){String v=s==null?"":s.toString();return v.length()>250?v.substring(0,250)+"…":v;}
     private String app(StatusBarNotification n){try{return getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(n.getPackageName(),0)).toString();}catch(Exception e){return n.getPackageName();}}
     private void show(){
-        detailKey=null;
+        detailKey=null;keys.clear();
         if(LeoNotificationService.active==null){begin("Notificări");root.addView(text("Serviciul de notificări nu este conectat. Accesul Leo trebuie activat de instalatorul sistemului.",18),new LinearLayout.LayoutParams(-1,0,1));left=new Runnable(){public void run(){try{LeoNotificationService.reconnect(NotificationsActivity.this);notice("Reconectare cerută");}catch(RuntimeException e){notice("Acces indisponibil");}}};footer("Reîncearcă","","Înapoi");return;}
         final List<StatusBarNotification> all=LeoNotificationService.snapshot();ArrayList<String> labels=new ArrayList<String>();
-        for(StatusBarNotification n:all)labels.add(app(n)+"\n"+safe(n.getNotification().extras.getCharSequence(Notification.EXTRA_TITLE)));
-        list("Notificări · "+all.size(),labels,0,new Choice(){public void pick(int i){detail(all.get(i));}},"",null);
+        int selection=0;for(StatusBarNotification n:all){if(n.getKey().equals(selectedKey))selection=keys.size();keys.add(n.getKey());labels.add((missed(n)?"Apel pierdut · ":"")+app(n)+"\n"+safe(n.getNotification().extras.getCharSequence(Notification.EXTRA_TITLE)));}
+        list("Notificări · "+all.size(),labels,selection,new Choice(){public void pick(int i){detail(all.get(i));}},"Opțiuni",new Runnable(){public void run(){options("Notificări",new String[]{"Actualizează","Apeluri pierdute în Leo"},new Choice(){public void pick(int i){if(i==0)show();else startActivity(new Intent(NotificationsActivity.this,PhoneActivity.class).putExtra("history",true));}});}});
     }
     private void detail(final StatusBarNotification n){
         detailKey=n.getKey();
@@ -33,13 +35,17 @@ public final class NotificationsActivity extends LeoActivity {
             ArrayList<String> labels=new ArrayList<String>();labels.add("Deschide");labels.add(n.isClearable()?"Elimină":"Permanentă · nu se elimină");
             if(actions!=null)for(Notification.Action action:actions)labels.add(safe(action.title));
             options("Notificare",labels.toArray(new String[0]),new Choice(){public void pick(int i){
-                if(i==0){try{if(n.getNotification().contentIntent==null){notice("Fără acțiune de deschidere");return;}n.getNotification().contentIntent.send();}catch(PendingIntent.CanceledException e){notice("Notificarea a expirat");show();}}
+                if(i==0)open(n);
                 else if(i==1){if(LeoNotificationService.dismiss(n))show();}
                 else if(actions!=null&&i-2<actions.length)notificationAction(n,actions[i-2]);
             }});
         }};
-        back=new Runnable(){public void run(){show();}};footer("Acțiuni","","Înapoi");
+        back=new Runnable(){public void run(){show();}};footer("Acțiuni","Deschide","Înapoi");
     }
+    void onListSelection(String title,int index){if(index>=0&&index<keys.size())selectedKey=keys.get(index);}
+    private boolean missed(StatusBarNotification n){return "missed_call".equals(n.getNotification().category)||("com.android.dialer".equals(n.getPackageName())&&"phone_missed_call".equals(n.getNotification().getChannelId()));}
+    private void open(StatusBarNotification n){try{if(missed(n)){startActivity(new Intent(this,PhoneActivity.class).putExtra("history",true));return;}if(n.getNotification().contentIntent==null){notice("Fără acțiune de deschidere");return;}n.getNotification().contentIntent.send();}catch(PendingIntent.CanceledException e){notice("Notificarea a expirat");show();}}
+    public boolean onKeyDown(int key,android.view.KeyEvent e){if(detailKey!=null&&(key==android.view.KeyEvent.KEYCODE_DPAD_CENTER||key==android.view.KeyEvent.KEYCODE_ENTER)){if(e.getRepeatCount()==0)for(StatusBarNotification n:LeoNotificationService.snapshot())if(detailKey.equals(n.getKey())){open(n);break;}return true;}return super.onKeyDown(key,e);}
     private void notificationAction(final StatusBarNotification notification,final Notification.Action action){
         if(action.actionIntent==null){notice("Acțiune indisponibilă");return;}
         android.app.RemoteInput[] inputs=action.getRemoteInputs();android.app.RemoteInput editable=null;if(inputs!=null)for(android.app.RemoteInput input:inputs)if(input.getAllowFreeFormInput()){editable=input;break;}

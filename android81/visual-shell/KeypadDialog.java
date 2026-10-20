@@ -32,6 +32,8 @@ final class KeypadDialog extends Dialog {
             public boolean isOpaque(){return true;}
             void text(Canvas c,String value,float x,float y,int size,int color,Paint.Align align) {
                 paint.setTextSize(size); paint.setColor(color); paint.setTextAlign(align);
+                float max=align==Paint.Align.LEFT?218:220;
+                if(paint.measureText(value)>max){int count=paint.breakText(value,true,max-paint.measureText("…"),null);value=value.substring(0,count)+"…";}
                 c.drawText(value,x,y,paint);
             }
             protected void onDraw(Canvas c) {
@@ -49,7 +51,9 @@ final class KeypadDialog extends Dialog {
                     text(c,items[index],15,top+23,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
                 }
                 paint.setColor(palette.bar); c.drawRect(0,250,240,280,paint);
-                text(c,"Alege",120,270,13,Color.WHITE,Paint.Align.CENTER);
+                paint.setColor(palette.accent);c.drawRect(0,250,240,251,paint);
+                text(c,(selected+1)+" / "+items.length,12,245,10,palette.accent,Paint.Align.LEFT);
+                text(c,"Alege",120,270,13,palette.accent,Paint.Align.CENTER);
                 text(c,"Înapoi",233,270,12,Color.WHITE,Paint.Align.RIGHT);
                 c.restore();
             }

@@ -26,7 +26,7 @@ import java.util.Locale;
 public final class MainActivity extends Activity {
     private Screen screen;
     private boolean offeredSetup;
-    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){if(!screen.grid)screen.invalidate();}};
+    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.invalidate();}};
     private int speedKey=-1;
     private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,"Tasta "+slot+" neatribuită · Contacte → Apelare rapidă",1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
@@ -110,6 +110,7 @@ public final class MainActivity extends Activity {
             screen.grid = false; screen.message = ""; screen.invalidate();
         }
     }
+    public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){handler.removeCallbacks(speed);speedKey=-1;return true;}return super.onKeyUp(key,event);}
     public boolean onKeyDown(int key, KeyEvent event) {
         if(!screen.grid&&key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9){if(event.getRepeatCount()==0){speedKey=key;handler.postDelayed(speed,650);}return true;}
@@ -161,6 +162,7 @@ public final class MainActivity extends Activity {
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
         final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
         Bitmap wallpaper;
+        long wallpaperStamp=-1,wallpaperSize=-1;
         int theme;
         Shader gradient=violet;
         void reloadAppearance() {
@@ -168,8 +170,12 @@ public final class MainActivity extends Activity {
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
             gradient=new LinearGradient(0,0,240,302,Appearance.COLORS[theme],null,Shader.TileMode.CLAMP);
-            if(wallpaper!=null) {wallpaper.recycle();wallpaper=null;}
-            if(Appearance.wallpaper(MainActivity.this).isFile()) wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(MainActivity.this).getPath());
+            java.io.File file=Appearance.wallpaper(MainActivity.this);long stamp=file.lastModified(),size=file.length();
+            if(stamp!=wallpaperStamp||size!=wallpaperSize){
+                if(wallpaper!=null){wallpaper.recycle();wallpaper=null;}
+                if(file.isFile())wallpaper=BitmapFactory.decodeFile(file.getPath());
+                wallpaperStamp=stamp;wallpaperSize=size;
+            }
             invalidate();
         }
         boolean grid;
@@ -263,6 +269,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index==24){startActivity(new Intent(MainActivity.this,DiagnosticActivity.class));return;}
             if(index==23){startActivity(new Intent(MainActivity.this,TerminalActivity.class));return;}
             if(index==22){startActivity(new Intent(MainActivity.this,EmailActivity.class));return;}
             if(index==19){startActivity(new Intent(MainActivity.this,BrowserActivity.class));return;}
@@ -319,9 +326,9 @@ public final class MainActivity extends Activity {
         }
         void line(Canvas c,float x1,float y1,float x2,float y2) { c.drawLine(x1,y1,x2,y2,p); }
         final IconArt artwork=new IconArt();
-        void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);}
+        void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);int count=index==0?UnreadState.calls:index==2?UnreadState.sms:0;if(count>0){round(c,x+5,y-28,x+29,y-8,8,0xffd93657);text(c,count>9?"9+":""+count,x+17,y-13,11,Color.WHITE,Paint.Align.CENTER);}}
         protected void onDraw(Canvas output) {
-            super.onDraw(output);
+            long drawStart=android.os.SystemClock.elapsedRealtimeNanos();super.onDraw(output);
             output.drawColor(palette.background);
             output.save(); output.scale(getWidth()/240f,getHeight()/302f);
             p.setStyle(Paint.Style.FILL); p.setShader(gradient); output.drawRect(0,0,240,302,p); p.setShader(null);
@@ -385,7 +392,7 @@ public final class MainActivity extends Activity {
             text(output,grid?"Opțiuni":"Notificări",8,293,11,Color.WHITE,Paint.Align.LEFT);
             text(output,grid?"Deschide":shortcut>=0?"Deschide":"Meniu",120,293,12,palette.selection,Paint.Align.CENTER);
             text(output,grid||shortcut>=0?"Înapoi":"Contacte",232,293,11,Color.WHITE,Paint.Align.RIGHT);
-            output.restore();
+            output.restore();UiMetrics.draw(android.os.SystemClock.elapsedRealtimeNanos()-drawStart);
         }
     }
 }

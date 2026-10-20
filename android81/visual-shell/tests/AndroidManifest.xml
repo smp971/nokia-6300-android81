@@ -4,4 +4,7 @@
     <instrumentation android:name="ro.leo.visual.FeatureTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.UpgradeTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.RetroTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.JourneyTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.DailyTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.ProfileTests" android:targetPackage="ro.leo.visual" />
 </manifest>

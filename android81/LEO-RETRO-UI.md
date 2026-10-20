@@ -5,7 +5,7 @@
 - Muzică: titlu desenat, cadran, progres și 12 benzi FFT din sesiunea MediaPlayer. Captura este limitată la 8 Hz, eliberată în fundal; indisponibilitatea efectului este afișată explicit. Fără animație care simulează sunetul și fără captură din microfon.
 - Calculator: afișaj LCD, cifre cu șapte segmente și aspect inspirat de telefoanele clasice; motorul de calcul existent este păstrat.
 - Nouă teme și patru fundaluri originale desenate în Canvas. Fundalul se aplică numai la alegerea utilizatorului; imaginea proprie din Galerie rămâne disponibilă.
-- Meniu aplicații: 24 intrări, inclusiv Terminal; Opțiuni → Reordonează aplicațiile folosește ordinea salvată existentă.
+- Meniu aplicații: 25 intrări, inclusiv Terminal și Diagnostic; Opțiuni → Reordonează aplicațiile folosește ordinea salvată existentă.
 - Configurări rapide: pictograme colorate și Volum. Sus/jos alege Muzică, Sonerie, Alarmă sau Apel; stânga/dreapta schimbă nivelul real, OK deschide alegerea nivelului.
 
 | Calculator | Configurări rapide |
@@ -52,3 +52,5 @@ Reactivarea nu schimbă automat HOME: Leo rămâne implicit până este aleasă 
 - Instrumentarea RetroTests a fost compilată, dar nu executată: utilizatorul a ales verificarea manuală după instalare. Nu sunt revendicate probe automate de redare sau navigare pe telefon.
 
 Sursele grafice, testele și scripturile de compilare sunt în repository; imaginile runtime, configurația UID și datele personale rămân în directorul local ignorat `output`.
+
+Extensiile și probele automate ulterioare sunt documentate în [Experiența zilnică Leo](LEO-DAILY-EXPERIENCE.md). Acestea au verificat și coperta, coada, profilurile și previzualizarea temelor.

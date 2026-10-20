@@ -29,9 +29,15 @@ public final class SmsReceiver extends BroadcastReceiver {
     static void notify(Context context,String title,String number) {
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.createNotificationChannel(new NotificationChannel("leo-sms","Mesaje Leo",NotificationManager.IMPORTANCE_DEFAULT));
-        Intent open=new Intent(context,MessagesActivity.class).putExtra("thread",number);
+        manager.notify("leo-sms",number.hashCode(),build(context,title,number));
+    }
+    static Notification build(Context context,String title,String number){
+        Intent open=new Intent(context,MessagesActivity.class).setData(new android.net.Uri.Builder().scheme("leo-thread").authority("local").appendPath(number).build()).putExtra("thread",number);
         PendingIntent click=PendingIntent.getActivity(context,number.hashCode(),open,PendingIntent.FLAG_UPDATE_CURRENT);
-        manager.notify("leo-sms",number.hashCode(),new Notification.Builder(context,"leo-sms").setSmallIcon(android.R.drawable.stat_notify_chat)
-            .setCategory(Notification.CATEGORY_MESSAGE).setContentTitle(title).setContentText("Deschide Mesaje Leo").setContentIntent(click).setAutoCancel(true).build());
+        Intent read=new Intent(context,NotificationReadReceiver.class).setData(open.getData()).putExtra("thread",number).putExtra("through",System.currentTimeMillis());
+        PendingIntent mark=PendingIntent.getBroadcast(context,number.hashCode(),read,PendingIntent.FLAG_UPDATE_CURRENT);
+        return new Notification.Builder(context,"leo-sms").setSmallIcon(android.R.drawable.stat_notify_chat)
+            .setCategory(Notification.CATEGORY_MESSAGE).setContentTitle(title).setContentText("Deschide Mesaje Leo").setContentIntent(click).setAutoCancel(true)
+            .addAction(new Notification.Action.Builder(null,"Marchează ca citit",mark).build()).build();
     }
 }

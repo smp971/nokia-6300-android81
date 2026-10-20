@@ -37,7 +37,7 @@ public final class PhoneActivity extends LeoActivity {
         super.onCreate(state);
         network=new NetworkTelemetry(this,new Runnable(){public void run(){if(page==0&&networkText!=null)networkText.setText(network.summary());}});
         dial(state==null?getIntent().getStringExtra("number"):state.getString("number"));
-        if(state!=null&&state.getInt("page")!=0)switchPage(state.getInt("page"));
+        if(state!=null&&state.getInt("page")!=0)switchPage(state.getInt("page"));else if(getIntent().getBooleanExtra("history",false))switchPage(1);
     }
     protected void onResume(){super.onResume();network.start();loadPhonebook();if(page==0&&favoriteRow!=null)favoriteCards();}
     protected void onPause(){network.stop();matchHandler.removeCallbacks(findMatches);super.onPause();}
