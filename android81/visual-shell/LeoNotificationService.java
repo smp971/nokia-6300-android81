@@ -7,6 +7,33 @@ import java.util.*;
 
 /** Ephemeral view of Android notifications; never persists their contents. */
 public final class LeoNotificationService extends NotificationListenerService {
+    /** Refresh only our component after Oreo retains a dead service binding.
+     * This never grants notification access or changes another listener. */
+    static void reconnect(final Context context){
+        final ComponentName own=new ComponentName(context,LeoNotificationService.class);
+        requestRebind(own);
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable(){public void run(){
+            if(active!=null)return;
+            final android.content.pm.PackageManager pm=context.getPackageManager();
+            final int original=pm.getComponentEnabledSetting(own);
+            if(original!=android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT&&original!=android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED)return;
+            pm.setComponentEnabledSetting(own,android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,android.content.pm.PackageManager.DONT_KILL_APP);
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable(){public void run(){
+                pm.setComponentEnabledSetting(own,original,android.content.pm.PackageManager.DONT_KILL_APP);
+                requestRebind(own);
+            }},500);
+        }},500);
+    }
+    static String[] preview(Context context,int selected){
+        int mode=context.getSharedPreferences("appearance",0).getInt("lock-preview",0);if(mode==0)return new String[]{"",""};
+        ArrayList<StatusBarNotification> available=new ArrayList<StatusBarNotification>();for(StatusBarNotification n:snapshot())if(n.getNotification().visibility!=Notification.VISIBILITY_SECRET)available.add(n);
+        if(available.isEmpty())return new String[]{"",""};StatusBarNotification item=available.get(Math.floorMod(selected,available.size()));Notification n=item.getNotification();
+        android.app.KeyguardManager keyguard=(android.app.KeyguardManager)context.getSystemService(Context.KEYGUARD_SERVICE);
+        if(keyguard!=null&&keyguard.isDeviceLocked()&&n.visibility!=Notification.VISIBILITY_PUBLIC){if(n.publicVersion==null)return new String[]{"Notificare privată","Deblochează pentru conținut"};n=n.publicVersion;}
+        CharSequence title=n.extras.getCharSequence(Notification.EXTRA_TITLE),body=n.extras.getCharSequence(Notification.EXTRA_TEXT);
+        return new String[]{clip(title==null?item.getPackageName():title.toString()),mode==2&&body!=null?clip(body.toString()):"Sus / jos · alte notificări"};
+    }
+    private static String clip(String text){return text.length()>34?text.substring(0,33)+"…":text;}
     static final String CHANGED="ro.leo.visual.NOTIFICATIONS_CHANGED";
     static volatile LeoNotificationService active;
     private final LinkedHashMap<String,StatusBarNotification> items=new LinkedHashMap<String,StatusBarNotification>();

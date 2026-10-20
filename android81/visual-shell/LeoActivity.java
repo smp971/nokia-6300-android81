@@ -29,7 +29,7 @@ abstract class LeoActivity extends Activity {
     protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
     int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     TextView text(String value,int size) {
-        TextView view=new TextView(this); view.setText(value); view.setTextSize(size);
+        TextView view=new TextView(this); view.setText(value); view.setTextSize(size*Appearance.textScale(this));
         view.setTextColor(Color.WHITE); view.setPadding(dp(8),dp(4),dp(8),dp(4)); return view;
     }
     void begin(String title) {
@@ -106,7 +106,7 @@ abstract class LeoActivity extends Activity {
     }
     EditText field(LinearLayout fields,String label,String value,int type) {
         fields.addView(text(label,15)); EditText edit=new EditText(this); edit.setId(View.generateViewId());
-        edit.setTextSize(19); edit.setTextColor(Color.WHITE); edit.setHintTextColor(0xffd3bddf);
+        edit.setTextSize(19*Appearance.textScale(this)); edit.setTextColor(Color.WHITE); edit.setHintTextColor(0xffd3bddf);
         edit.setBackground(Appearance.fieldSurface(palette,dp(7)));edit.setPadding(dp(10),dp(8),dp(10),dp(8)); edit.setInputType(type); edit.setText(value);
         if((type&InputType.TYPE_TEXT_FLAG_MULTI_LINE)==0) edit.setSingleLine(true);
         // setSingleLine replaces the transformation; restore masking for password fields.

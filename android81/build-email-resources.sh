@@ -4,6 +4,7 @@ TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$TASK_DIR/environment.sh"
 SRC=/root/android81-leo/src
 python3 "$TASK_DIR/patch-email-resources.py" --source "$SRC"
+python3 "$TASK_DIR/patch-email-keypad.py"
 cd "$SRC"
 source build/envsetup.sh
 lunch aosp_leo_go-eng

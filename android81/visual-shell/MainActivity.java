@@ -122,7 +122,7 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide"}, new KeypadDialog.Action() {
+                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare"}, new KeypadDialog.Action() {
               public void select(int which) {
                 if (which == 0) {
                     startActivity(new Intent(MainActivity.this,WallpaperActivity.class));
@@ -135,6 +135,7 @@ public final class MainActivity extends Activity {
                 else if (which == 3) new AlertDialog.Builder(MainActivity.this).setTitle("Leo Visual")
                     .setMessage("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare.")
                     .setPositiveButton("OK", null).show();
+                else if(which==6)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class));
                 else if(which==5)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));
                 else if (which == 4) {
                     screen.list=!screen.list;
@@ -153,7 +154,7 @@ public final class MainActivity extends Activity {
         final Path path = new Path();
         final Typeface regular = Typeface.create("sans-serif", Typeface.NORMAL);
         final Typeface light = Typeface.create("sans-serif-light", Typeface.NORMAL);
-        final String[] names = {"Telefon", "Contacte", "Mesaje", "Ceas", "Calculator", "Galerie", "Muzică", "Fișiere", "Setări", "Aplicații Android", "Notițe", "Calendar", "Video", "Reportofon", "Convertor", "Descărcări", "Fundaluri", "Favorite", "Blocare taste", "Browser text", "Configurări rapide", "Configurare", "Email"};
+        final String[] names = AppCatalog.NAMES;
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
 
         final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
@@ -162,6 +163,7 @@ public final class MainActivity extends Activity {
         int theme;
         Shader gradient=violet;
         void reloadAppearance() {
+            order=AppCatalog.order(MainActivity.this);shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
             gradient=new LinearGradient(0,0,240,302,Appearance.COLORS[theme],null,Shader.TileMode.CLAMP);
@@ -174,7 +176,9 @@ public final class MainActivity extends Activity {
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
         int shortcut=-1;
-        final int[] shortcuts={0,2,6,22};
+        int[] shortcuts={0,2,6,22};
+        int[] order=AppCatalog.parse("");
+        float textScale=1f;
         Appearance.Palette palette=Appearance.palette(MainActivity.this);
         String time = "", date = "", message = "";
         final String[] simLabels = {"SIM 1: se verifică", "SIM 2: se verifică"};
@@ -231,7 +235,7 @@ public final class MainActivity extends Activity {
             if (key == KeyEvent.KEYCODE_BACK) { if (repeat == 0) { if(grid) onBackPressed(); else if(shortcut>=0){shortcut=-1;invalidate();}else open(1); } return true; }
             if (key == KeyEvent.KEYCODE_MENU) { if (repeat == 0) { if(grid) options(); else notifications(); } return true; }
             if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
-                if (repeat == 0) { if (grid) open(selected); else if(shortcut>=0)open(shortcuts[shortcut]);else { grid = true; message = ""; invalidate(); } }
+                if (repeat == 0) { if (grid) open(order[selected]); else if(shortcut>=0)open(shortcuts[shortcut]);else { grid = true; message = ""; invalidate(); } }
                 return true;
             }
             // Green opens the dialer only; this app never places a call.
@@ -306,7 +310,7 @@ public final class MainActivity extends Activity {
         }
         void text(Canvas c, String s, float x, float y, float size, int color, Paint.Align align) {
             p.setShader(null); p.setStyle(Paint.Style.FILL); p.setTypeface(regular);
-            p.setTextSize(size); p.setColor(color); p.setTextAlign(align); c.drawText(s, x, y, p);
+            p.setTextSize(size*(size<26?textScale:1f));while(p.measureText(s)>220&&p.getTextSize()>9)p.setTextSize(p.getTextSize()-1); p.setColor(color); p.setTextAlign(align); c.drawText(s, x, y, p);
         }
         void round(Canvas c, float l, float t, float r, float b, float radius, int color) {
             p.setShader(null); p.setColor(color); p.setStyle(Paint.Style.FILL); box.set(l,t,r,b); c.drawRoundRect(box,radius,radius,p);
@@ -347,14 +351,14 @@ public final class MainActivity extends Activity {
             } else {
                 p.setColor(0xbb000000); output.drawRect(0,0,240,276,p);
                 p.setColor(palette.bar);output.drawRect(0,0,240,34,p);
-                text(output,names[selected],120,25,18,Color.WHITE,Paint.Align.CENTER);
+                text(output,names[order[selected]],120,25,18,Color.WHITE,Paint.Align.CENTER);
                 if(list) {
                     int first=Math.max(0,Math.min(names.length-5,selected-2));
                     for(int row=0;row<5;row++) {
                         int i=first+row; float y=60+row*42;
                         if(i==selected) round(output,7,y-19,233,y+19,7,palette.selection);
-                        output.save(); output.translate(32,y); output.scale(.65f,.65f); icon(output,i,0,0); output.restore();
-                        text(output,names[i],57,y+5,14,i==selected?palette.ink:0xffe8e1f1,Paint.Align.LEFT);
+                        output.save(); output.translate(32,y); output.scale(.65f,.65f); icon(output,order[i],0,0); output.restore();
+                        text(output,names[order[i]],57,y+5,14,i==selected?palette.ink:0xffe8e1f1,Paint.Align.LEFT);
                     }
                     text(output,(selected+1)+" / "+names.length,120,267,10,0xffd3bddf,Paint.Align.CENTER);
                 } else {
@@ -363,8 +367,8 @@ public final class MainActivity extends Activity {
                     int cell=i%9;
                     float x=40+(cell%3)*80, y=67+(cell/3)*76;
                     if(i==selected) round(output,x-34,y-31,x+34,y+44,10,palette.selection);
-                    icon(output,i,x,y);
-                    String label=i==9?"Android":names[i];p.setTextSize(10);
+                    icon(output,order[i],x,y);
+                    String label=order[i]==9?"Android":names[order[i]];p.setTextSize(10*textScale);
                     if(p.measureText(label)>70){while(label.length()>1&&p.measureText(label+"…")>70)label=label.substring(0,label.length()-1);label+="…";}
                     text(output,label,x,y+39,10,i==selected?palette.ink:0xffe8e1f1,Paint.Align.CENTER);
                 }

@@ -6,6 +6,7 @@ import android.util.AtomicFile;
 import java.io.*;
 
 final class Appearance {
+    static float textScale(Context c){return c.getSharedPreferences("appearance",0).getBoolean("large-text",false)?1.15f:1f;}
     static final String[] THEMES={"Violet","Apus","Ocean","Pădure","Clasic · Albastru","Coral"};
     static final int[][] COLORS={{0xff241047,0xff593185,0xffbc6e91},{0xff243959,0xff98707c,0xffedb17c},{0xff081d36,0xff17628b,0xff58b6be},{0xff102d28,0xff3c7657,0xffaac47e},{0xff091a37,0xff205cb4,0xff5fc9ed},{0xff32182c,0xffa44162,0xffffad83}};
     static final class Palette {

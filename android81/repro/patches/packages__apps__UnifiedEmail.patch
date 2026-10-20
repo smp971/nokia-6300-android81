@@ -25,3 +25,19 @@ index 34586dd1bee2cd727f1017070b1d348609486710..882c03d5b0e42fbed46ca69bbbc3c437
 -    android:src="@drawable/ic_next_24dp" />
 +<inset xmlns:android="http://schemas.android.com/apk/res/android"
 +    android:drawable="@drawable/ic_next_24dp" />
+diff --git a/src/com/android/mail/compose/ComposeActivity.java b/src/com/android/mail/compose/ComposeActivity.java
+index b4805f690a811a2b265115b8550390165be9290e..5196d2e85028b75e3033fc83605112997f873944 100644
+--- a/src/com/android/mail/compose/ComposeActivity.java
++++ b/src/com/android/mail/compose/ComposeActivity.java
+@@ -144,6 +144,11 @@ public class ComposeActivity extends AppCompatActivity
+         AttachmentAddedOrDeletedListener, OnAccountChangedListener,
+         LoaderManager.LoaderCallbacks<Cursor>, TextView.OnEditorActionListener,
+         RecipientEditTextView.RecipientEntryItemClickedListener, View.OnFocusChangeListener {
++    @Override public boolean dispatchKeyEvent(android.view.KeyEvent event) {
++        if (com.android.mail.utils.LeoEmailKeys.dispatch(this, event, true)) return true;
++        return super.dispatchKeyEvent(event);
++    }
++
+     /**
+      * An {@link Intent} action that launches {@link ComposeActivity}, but is handled as if the
+      * {@link Activity} were launched with no special action.

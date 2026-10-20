@@ -13,6 +13,7 @@ import java.util.*;
 /** Accidental-key guard for Leo, not a PIN or Android security lock. */
 public final class KeypadLockActivity extends LeoActivity {
     private long armed;
+    private int previewIndex;
     private LockView screen;
     private final Handler handler=new Handler();
     private final Runnable disarm=new Runnable(){public void run(){armed=0;if(screen!=null)screen.invalidate();}};
@@ -30,7 +31,7 @@ public final class KeypadLockActivity extends LeoActivity {
         super.onResume();visible=true;IntentFilter f=new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         f.addAction(Intent.ACTION_TIME_CHANGED);f.addAction(Intent.ACTION_TIMEZONE_CHANGED);f.addAction(Intent.ACTION_SCREEN_ON);
         f.addAction("android.intent.action.SERVICE_STATE");f.addAction("android.intent.action.SIM_STATE_CHANGED");f.addAction("android.intent.action.ACTION_SUBINFO_RECORD_UPDATED");
-        f.addAction(UnreadState.CHANGED);UnreadState.watch(this);UnreadState.refresh(this);
+        f.addAction(UnreadState.CHANGED);f.addAction(LeoNotificationService.CHANGED);UnreadState.watch(this);UnreadState.refresh(this);
         registerReceiver(changes,f);handler.removeCallbacks(minute);handler.post(minute);
     }
     protected void onPause(){visible=false;unregisterReceiver(changes);handler.removeCallbacks(minute);handler.removeCallbacks(disarm);armed=0;super.onPause();}
@@ -45,6 +46,7 @@ public final class KeypadLockActivity extends LeoActivity {
     public boolean dispatchKeyEvent(KeyEvent event) {
         int key=event.getKeyCode();
         if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0) {
+            if(key==KeyEvent.KEYCODE_DPAD_DOWN||key==KeyEvent.KEYCODE_DPAD_UP){previewIndex+=key==KeyEvent.KEYCODE_DPAD_DOWN?1:-1;screen.refresh();return true;}
             if(key==KeyEvent.KEYCODE_MENU) { armed=SystemClock.elapsedRealtime();handler.removeCallbacks(disarm);handler.postDelayed(disarm,3000);screen.invalidate(); }
             else if(key==KeyEvent.KEYCODE_STAR && armed>0 && SystemClock.elapsedRealtime()-armed<=3000) { unlock(this);finish(); }
             else {armed=0;screen.invalidate();}
@@ -60,6 +62,7 @@ public final class KeypadLockActivity extends LeoActivity {
         int battery;
         boolean charging;
         String time="",date="";
+        String[] preview={"",""};
         final String[] sims={"SIM 1 · se verifică","SIM 2 · se verifică"};
         LockView(){
             super(KeypadLockActivity.this);setFocusable(true);setFocusableInTouchMode(true);requestFocus();
@@ -70,6 +73,7 @@ public final class KeypadLockActivity extends LeoActivity {
         void refresh(){
             Date now=new Date();time=android.text.format.DateFormat.getTimeFormat(KeypadLockActivity.this).format(now);
             date=new java.text.SimpleDateFormat("EEEE, d MMMM",new Locale("ro")).format(now);
+            preview=LeoNotificationService.preview(KeypadLockActivity.this,previewIndex);
             TelephonyManager base=(TelephonyManager)getSystemService(TELEPHONY_SERVICE);
             List<SubscriptionInfo> active=null;
             try{active=SubscriptionManager.from(KeypadLockActivity.this).getActiveSubscriptionInfoList();}catch(RuntimeException ignored){}
@@ -108,10 +112,14 @@ public final class KeypadLockActivity extends LeoActivity {
             label(c,date,120,115,13,0xfff0e8f7,Paint.Align.CENTER);
             label(c,sims[0],120,147,12,0xfff0e8f7,Paint.Align.CENTER);label(c,sims[1],120,167,12,0xfff0e8f7,Paint.Align.CENTER);
             label(c,UnreadState.label(),120,190,12,Color.WHITE,Paint.Align.CENTER);
-            paint.setColor(0x99150e24);c.drawRoundRect(new RectF(12,207,228,283),10,10,paint);
+            boolean hasPreview=!preview[0].isEmpty();
+            if(hasPreview){paint.setColor(0x77100f1d);c.drawRoundRect(10,199,230,242,8,8,paint);label(c,preview[0],120,216,12,Color.WHITE,Paint.Align.CENTER);label(c,preview[1],120,233,11,0xffe3d4ef,Paint.Align.CENTER);}
+            paint.setColor(0x99150e24);c.drawRoundRect(new RectF(12,hasPreview?248:207,228,hasPreview?297:283),10,10,paint);
+            if(!hasPreview){
             paint.setColor(0xfff5eefb);c.drawRoundRect(new RectF(112,205,128,220),3,3,paint);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2);c.drawArc(new RectF(114,196,126,213),180,180,false,paint);paint.setStyle(Paint.Style.FILL);
-            label(c,armed>0?"Apasă acum *":"Taste blocate",120,237,17,Color.WHITE,Paint.Align.CENTER);
-            label(c,armed>0?"Ai 3 secunde":"Soft stânga, apoi *",120,259,12,0xffe3d4ef,Paint.Align.CENTER);
+            }
+            label(c,armed>0?"Apasă acum *":"Taste blocate",120,hasPreview?268:237,17,Color.WHITE,Paint.Align.CENTER);
+            label(c,armed>0?"Ai 3 secunde":"Soft stânga, apoi *",120,hasPreview?286:259,12,0xffe3d4ef,Paint.Align.CENTER);
             label(c,"Deblochează",10,311,12,Color.WHITE,Paint.Align.LEFT);label(c,"*",230,311,15,Color.WHITE,Paint.Align.RIGHT);
             c.restore();
         }

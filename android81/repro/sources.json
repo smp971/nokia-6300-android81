@@ -51,6 +51,13 @@
       "sha256": "2f289b7588f859a53d9cac3e278069b4d799123d7fdc91b7abb44b6ab93e1f2a"
     },
     {
+      "path": "packages/apps/Email",
+      "revision": "28d89e76b41022f5e85e9aed47f17e9a103f7241",
+      "files": [],
+      "patch": "patches/packages__apps__Email.patch",
+      "sha256": "a4c7d2db0c827ace2697b32a2ff33f00b55a7ccb4add4963b4f813b8a7b51725"
+    },
+    {
       "path": "packages/apps/Settings",
       "revision": "77016f3005c73412b5c0f244da01fb9a3151b1c5",
       "files": [],
@@ -60,9 +67,16 @@
     {
       "path": "packages/apps/UnifiedEmail",
       "revision": "11034d99fb55b1a4bf2ab9e52c315cc51a45389c",
-      "files": [],
+      "files": [
+        {
+          "path": "src/com/android/mail/utils/LeoEmailKeys.java",
+          "source": "files/packages/apps/UnifiedEmail/src/com/android/mail/utils/LeoEmailKeys.java",
+          "sha256": "153ccb21c58e48ae3af78e86bd55e6980cba91a6f50f03c42376c2ca14a37d15",
+          "mode": 420
+        }
+      ],
       "patch": "patches/packages__apps__UnifiedEmail.patch",
-      "sha256": "458df7d58597a476870f5f023975507d89edaba85d1c2a3b20d5359f3d1fb355"
+      "sha256": "58d6a9cd4cac285583cb40fae9fb71af8157a3e9c9d472c755d13ce1a922a294"
     },
     {
       "path": "packages/services/Telephony",

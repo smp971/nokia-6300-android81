@@ -25,7 +25,7 @@ public final class SettingsActivity extends LeoActivity {
         AudioManager audio=(AudioManager)getSystemService(AUDIO_SERVICE);
         String profile=audio.getRingerMode()==AudioManager.RINGER_MODE_SILENT?"Silențios":audio.getRingerMode()==AudioManager.RINGER_MODE_VIBRATE?"Vibrații":"Normal";
         String[][] rows={{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă","Transfer USB"},
-            {"Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9"},
+            {"Profil · "+profile,"Luminozitate","Stingerea ecranului","Fundaluri și teme","Tastatură și T9","Personalizare"},
             {"Blocarea tastelor","Permisiuni și aplicații","Localizare"},
             {"Dată și oră","Stocare","Despre telefon","Setări Android","Configurare inițială"}};
         list("Setări Leo",Arrays.asList(rows[category]),selections[category],new Choice(){public void pick(int i){
@@ -36,6 +36,7 @@ public final class SettingsActivity extends LeoActivity {
             } else if(category==1) {
                 if(i==0) profiles(); else if(i==1) brightness(); else if(i==2) timeout();
                 else if(i==3) startActivity(new Intent(SettingsActivity.this,WallpaperActivity.class));
+                else if(i==5) startActivity(new Intent(SettingsActivity.this,PersonalizationActivity.class));
                 else page("Tastatură Leo","# schimbă abc / ABC / 123 / T9 / T9 ABC.\nT9: o apăsare pentru fiecare literă, * schimbă sugestia, 0 acceptă și adaugă spațiu.\nDicționar românesc local de bază; fără învățare automată.");
             } else if(category==2) {
                 startActivity(new Intent(SettingsActivity.this,i==0?KeypadLockSettingsActivity.class:i==1?AppSettingsActivity.class:PrivacySettingsActivity.class));

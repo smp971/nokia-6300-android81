@@ -92,9 +92,9 @@ bash android81/build-visual-shell.sh
 
 Ultima variantă Leo a fost recompilată, instalată și verificată pe telefon.
 Rețeta `repro/build-apps.sh` a fost rulată cu succes pe checkout-ul actual: a
-pregătit uneltele și a recompilat ambele APK-uri. Separat, cele nouă patch-uri
+pregătit uneltele și a recompilat ambele APK-uri. Separat, cele zece patch-uri
 au trecut o probă de aplicare pe fișierele upstream originale; rezultatul pentru
-toate cele 23 de fișiere modificate a coincis cu sursele de dezvoltare. Această
+toate cele 25 de fișiere modificate a coincis cu sursele de dezvoltare. Această
 probă nu înlocuiește validarea completă pe un host nou.
 `build-visual-shell.sh` include automat toate fișierele Java din `visual-shell/`.
 Semnarea folosește cheile de dezvoltare AOSP din checkout, nu chei private ale
@@ -104,13 +104,20 @@ utilizatorului. Nu înlocui semnatarul unei aplicații instalate păstrând date
 
 | Componentă | Rețetă |
 | --- | --- |
-| Email AOSP, resurse vectoriale corectate | `build-email-resources.sh` |
+| Email AOSP, resurse corectate și comenzi din taste | `build-email-resources.sh` |
 | Interfața Android pentru apeluri din taste | `build-call-keypad.sh` |
 | Reînnoirea ADB la schimbarea modului USB | `build-usb-adbd-renew.sh` |
 | Lumina tastelor | `build-keylight.sh` |
 | Decodor WMA Leo | `build-wma-decoder.sh` |
 | Kernel UHID | `fetch-leo-kernel.sh`, `build-kernel-uhid.sh` |
 | Sistemul AOSP experimental | `build-framework-diagnostic.sh` |
+
+`build-six-feature-tests.sh` compilează separat verificările pe dispozitiv,
+inclusiv UpgradeTests pentru reordonare, scurtături, T9 și notificări/blocare.
+APK-ul de producție nu include aceste date sau puncte de intrare de test.
+Instrumentarea pornește/oprește procesul Leo; după ea trebuie verificată
+reconectarea serviciilor de notificări și accesibilitate. Probele folosesc
+contacte/notificări sintetice și restaurează preferințele locale.
 
 FFmpeg 4.4.8 este descărcat de rețeta WMA și verificat cu SHA-256 fixat în script;
 opțiunile de configurare și notificarea LGPL sunt documentate în

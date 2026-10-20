@@ -1,0 +1,16 @@
+diff --git a/src/com/android/email/activity/setup/AccountSetupActivity.java b/src/com/android/email/activity/setup/AccountSetupActivity.java
+index 1f6ab4e9fdf6cf29aa78b409950a82a69c1c342e..0c3ddab981fc27ca241ab7fd65a59074717b3e92 100644
+--- a/src/com/android/email/activity/setup/AccountSetupActivity.java
++++ b/src/com/android/email/activity/setup/AccountSetupActivity.java
+@@ -25,6 +25,11 @@ import android.os.Bundle;
+  * automatically as required
+  */
+ public class AccountSetupActivity extends Activity implements SetupDataFragment.SetupDataContainer {
++    @Override public boolean dispatchKeyEvent(android.view.KeyEvent event) {
++        if (com.android.mail.utils.LeoEmailKeys.dispatch(this, event, false)) return true;
++        return super.dispatchKeyEvent(event);
++    }
++
+     protected SetupDataFragment mSetupData;
+ 
+     private static final String SETUP_DATA_FRAGMENT_TAG = "setupData";

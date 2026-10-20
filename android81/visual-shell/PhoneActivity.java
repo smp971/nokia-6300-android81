@@ -20,6 +20,13 @@ import java.util.Date;
 
 public final class PhoneActivity extends LeoActivity {
     private EditText number;
+    private Button matches;
+    private final android.os.Handler matchHandler=new android.os.Handler();
+    private final ArrayList<ContactMatch> phonebook=new ArrayList<ContactMatch>();
+    private final ArrayList<ContactMatch> candidates=new ArrayList<ContactMatch>();
+    private static final class ContactMatch {String name,number,keys,digits;}
+    private final Runnable findMatches=new Runnable(){public void run(){updateMatches();}};
+
     private LinearLayout favoriteRow;
     private TextView networkText;
     private NetworkTelemetry network;
@@ -32,8 +39,8 @@ public final class PhoneActivity extends LeoActivity {
         dial(state==null?getIntent().getStringExtra("number"):state.getString("number"));
         if(state!=null&&state.getInt("page")!=0)switchPage(state.getInt("page"));
     }
-    protected void onResume(){super.onResume();network.start();if(page==0&&favoriteRow!=null)favoriteCards();}
-    protected void onPause(){network.stop();super.onPause();}
+    protected void onResume(){super.onResume();network.start();loadPhonebook();if(page==0&&favoriteRow!=null)favoriteCards();}
+    protected void onPause(){network.stop();matchHandler.removeCallbacks(findMatches);super.onPause();}
     protected void onDestroy(){generation++;super.onDestroy();}
     protected void onSaveInstanceState(Bundle state) {
         state.putString("number",number==null?draft:number.getText().toString());state.putInt("page",page);super.onSaveInstanceState(state);
@@ -70,11 +77,28 @@ public final class PhoneActivity extends LeoActivity {
         number.setTextSize(26);number.setTextColor(Color.WHITE);number.setGravity(Gravity.CENTER);
         number.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(32)});
         number.setBackground(Appearance.fieldSurface(palette,dp(10)));fields.addView(number,new LinearLayout.LayoutParams(-1,dp(60)));number.setSelection(number.length());
+        matches=new Button(this);matches.setAllCaps(false);matches.setTextSize(13);matches.setTextColor(palette.accent);matches.setBackground(Appearance.fieldSurface(palette,dp(7)));matches.setVisibility(View.GONE);
+        matches.setOnClickListener(new View.OnClickListener(){public void onClick(View view){final ArrayList<ContactMatch> found=new ArrayList<ContactMatch>(candidates);ArrayList<String> labels=new ArrayList<String>();for(ContactMatch match:found)labels.add(match.name+"\n"+match.number);options("Contacte găsite",labels.toArray(new String[0]),new Choice(){public void pick(int i){number.setText(found.get(i).number);number.setSelection(number.length());number.requestFocus();}});}});fields.addView(matches,new LinearLayout.LayoutParams(-1,dp(38)));
+        number.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence v,int st,int count,int after){}public void afterTextChanged(android.text.Editable v){matchHandler.removeCallbacks(findMatches);matchHandler.postDelayed(findMatches,120);}public void onTextChanged(CharSequence v,int start,int before,int count){}});
         TextView heading=text("FAVORITE",12);heading.setTextColor(palette.accent);fields.addView(heading);
         favoriteRow=new LinearLayout(this);fields.addView(favoriteRow,new LinearLayout.LayoutParams(-1,dp(90)));favoriteCards();
         TextView hint=text("Tastează numărul · Verde pentru apel",12);hint.setGravity(Gravity.CENTER);hint.setTextColor(palette.accent);fields.addView(hint);
-        number.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(e.getAction()==KeyEvent.ACTION_DOWN){if(key==KeyEvent.KEYCODE_DPAD_DOWN){favoriteRow.getChildAt(0).requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP){((LinearLayout)root.getChildAt(1)).getChildAt(0).requestFocus();return true;}}return false;}});
-        left=new Runnable(){public void run(){menu();}};footer("Opțiuni","Verde: apel","Înapoi");tabs();number.requestFocus();
+        number.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(e.getAction()==KeyEvent.ACTION_DOWN){if(key==KeyEvent.KEYCODE_DPAD_DOWN){if(matches.getVisibility()==View.VISIBLE)matches.requestFocus();else favoriteRow.getChildAt(0).requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP){((LinearLayout)root.getChildAt(1)).getChildAt(0).requestFocus();return true;}}return false;}});
+        left=new Runnable(){public void run(){menu();}};footer("Opțiuni","Verde: apel","Înapoi");tabs();number.requestFocus();updateMatches();
+    }
+    private void loadPhonebook(){
+        worker.execute(new Runnable(){public void run(){final ArrayList<ContactMatch> found=new ArrayList<ContactMatch>();
+            try(Cursor c=getContentResolver().query(android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,new String[]{"display_name","data1"},null,null,"display_name COLLATE LOCALIZED ASC")){
+                while(c!=null&&c.moveToNext()&&found.size()<1000){ContactMatch match=new ContactMatch();match.name=c.getString(0)==null?"Contact":c.getString(0);match.number=c.getString(1)==null?"":c.getString(1);match.keys=ContactKeys.t9(match.name);match.digits=ContactKeys.digits(match.number);if(!match.digits.isEmpty())found.add(match);}
+                ui(new Runnable(){public void run(){phonebook.clear();phonebook.addAll(found);if(page==0)updateMatches();}});
+            }catch(RuntimeException denied){ui(new Runnable(){public void run(){phonebook.clear();if(page==0)updateMatches();}});}
+        }});
+    }
+    private void updateMatches(){
+        if(page!=0||number==null||matches==null)return;String query=ContactKeys.digits(number.getText().toString());candidates.clear();
+        if(query.length()>=2)for(ContactMatch contact:phonebook)if(contact.keys.contains(query)||contact.digits.contains(query)||PhoneNumberUtils.compare(contact.number,number.getText().toString())){candidates.add(contact);if(candidates.size()>=5)break;}
+        matches.setVisibility(candidates.isEmpty()?View.GONE:View.VISIBLE);
+        if(!candidates.isEmpty())matches.setText(candidates.get(0).name+(candidates.size()>1?" · "+candidates.size()+" potriviri":" · OK pentru contact"));
     }
     private void favoriteCards(){
         if(favoriteRow==null)return;favoriteRow.removeAllViews();final android.content.SharedPreferences prefs=getSharedPreferences("dialer-favorites",0);
@@ -137,10 +161,12 @@ public final class PhoneActivity extends LeoActivity {
     private void stats(){
         page=2;networkText=null;final int token=++generation;
         worker.execute(new Runnable(){public void run(){
-            final long[] values=new long[7];long cutoff=System.currentTimeMillis()-7L*86400000L;
-            try(Cursor c=getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.TYPE,CallLog.Calls.DURATION,CallLog.Calls.DATE},null,null,CallLog.Calls.DATE+" DESC")){
-                while(c!=null&&c.moveToNext()&&values[0]<5000){int type=c.getInt(0);long duration=Math.max(0,c.getLong(1));values[0]++;if(type==CallLog.Calls.INCOMING_TYPE)values[1]++;else if(type==CallLog.Calls.OUTGOING_TYPE)values[2]++;else if(type==CallLog.Calls.MISSED_TYPE)values[3]++;values[4]+=duration;if(c.getLong(2)>=cutoff){values[5]++;values[6]+=duration;}}
-                ui(new Runnable(){public void run(){if(token!=generation)return;list("Statistici apeluri",java.util.Arrays.asList("Total · "+values[0]+" apeluri","Primite · "+values[1],"Efectuate · "+values[2],"Pierdute · "+values[3],"Durată totală · "+duration(values[4]),"Ultimele 7 zile · "+values[5]+" apeluri","Durată 7 zile · "+duration(values[6]),"Jurnal local · max. 5000 intrări"),0,new Choice(){public void pick(int i){notice("Statistici din jurnalul local, nu facturare operator");}},"Actualizează",new Runnable(){public void run(){stats();}});tabs();back=new Runnable(){public void run(){dial(draft);}};}});
+            final long[] values=new long[7];final java.util.LinkedHashMap<String,long[]> perSim=new java.util.LinkedHashMap<String,long[]>();final java.util.HashMap<String,String> simNames=new java.util.HashMap<String,String>();
+            try{java.util.List<android.telephony.SubscriptionInfo> subscriptions=android.telephony.SubscriptionManager.from(PhoneActivity.this).getActiveSubscriptionInfoList();if(subscriptions!=null)for(android.telephony.SubscriptionInfo sim:subscriptions){String label="SIM "+(sim.getSimSlotIndex()+1);simNames.put(""+sim.getSubscriptionId(),label);if(sim.getIccId()!=null)simNames.put(sim.getIccId(),label);}}catch(RuntimeException ignored){}
+            long cutoff=System.currentTimeMillis()-7L*86400000L;
+            try(Cursor c=getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.TYPE,CallLog.Calls.DURATION,CallLog.Calls.DATE,CallLog.Calls.PHONE_ACCOUNT_ID},null,null,CallLog.Calls.DATE+" DESC")){
+                while(c!=null&&c.moveToNext()&&values[0]<5000){int type=c.getInt(0);long duration=Math.max(0,c.getLong(1));values[0]++;String label=simNames.get(c.getString(3));if(label==null)label="SIM / cont neidentificat";long[] sim=perSim.get(label);if(sim==null){sim=new long[4];perSim.put(label,sim);}sim[0]++;sim[1]+=duration;if(type==CallLog.Calls.OUTGOING_TYPE)sim[2]++;if(type==CallLog.Calls.MISSED_TYPE)sim[3]++;if(type==CallLog.Calls.INCOMING_TYPE)values[1]++;else if(type==CallLog.Calls.OUTGOING_TYPE)values[2]++;else if(type==CallLog.Calls.MISSED_TYPE)values[3]++;values[4]+=duration;if(c.getLong(2)>=cutoff){values[5]++;values[6]+=duration;}}
+                ui(new Runnable(){public void run(){if(token!=generation)return;final ArrayList<String> rows=new ArrayList<String>(java.util.Arrays.asList("Total · "+values[0]+" apeluri","Primite · "+values[1],"Efectuate · "+values[2],"Pierdute · "+values[3],"Durată totală · "+duration(values[4]),"Ultimele 7 zile · "+values[5]+" apeluri","Durată 7 zile · "+duration(values[6]),"Jurnal local · max. 5000 intrări"));for(java.util.Map.Entry<String,long[]> entry:perSim.entrySet()){long[] sim=entry.getValue();rows.add(entry.getKey()+" · "+sim[0]+" apeluri");rows.add(entry.getKey()+" · durată "+duration(sim[1]));rows.add(entry.getKey()+" · efectuate "+sim[2]+" / pierdute "+sim[3]);}list("Statistici apeluri",rows,0,new Choice(){public void pick(int i){notice("Statistici din jurnalul local, nu facturare operator");}},"Actualizează",new Runnable(){public void run(){stats();}});tabs();back=new Runnable(){public void run(){dial(draft);}};}});
             }catch(RuntimeException e){ui(new Runnable(){public void run(){if(token==generation){dial(draft);notice("Statisticile nu pot fi citite");}}});}
         }});
     }

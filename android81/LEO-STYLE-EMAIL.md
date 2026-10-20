@@ -105,3 +105,18 @@ running. The user then navigated the menu on the phone and confirmed that the
 header no longer flickers in this check. Longer use remains to be observed.
 This reduces avoidable redraw/composition work; it does not establish that a
 graphics-driver or panel problem has been eliminated.
+
+
+## Extindere din taste — 20 octombrie 2026
+
+[Raportul noii etape](LEO-UPGRADES-20261020.md) descrie personalizarea Home/grilei,
+T9 în dialer, statisticile pe SIM și previzualizările de notificări. Controalele
+AOSP Email au acum un meniu pentru configurare manuală și trimitere/ciornă din
+taste, cu confirmare la trimitere; sus/jos schimbă câmpurile cu o singură linie.
+Sincronizarea IMAP selectată și marcarea mesajului ca citit sunt implementate
+în frontend. Aceste schimbări înlocuiesc nevoia de mouse pentru comenzile
+adaptate, dar nu validează toate paginile sau un cont IMAP/SMTP real.
+
+Surse canonice: email-keypad/LeoEmailKeys.java, patch-email-keypad.py.
+build-email-resources.sh aplică atât corecția de resurse, cât și comenzile din
+taste. Snapshotul AOSP exportă și modificările Email/UnifiedEmail necesare.
