@@ -79,3 +79,28 @@ opened. Favorites assignment with a real contact and live mail remain untested.
 Audio stayed active and MTP/ADB stayed connected. This is a visual/functionality
 check, not a latency or battery benchmark. Some specialized and external Android
 screens still retain their existing layouts.
+
+## Intermittent menu-header flicker — 20 October 2026
+
+The user observed the application-name header flickering after opening the menu.
+The idle-grid capture reproduced no changing header pixels: all 20 frames matched
+before the change. There was no new crash in the collected crash buffer; older
+Email resource failures were retained in that buffer and are not new failures.
+
+HOME had been invalidating its whole View for signal and badge callbacks even
+while the grid was visible, where neither value is drawn. Telemetry now updates
+its cache without invalidating the grid, identical signal values are ignored,
+and Home redraws only when displayed values change. Explicit navigation still
+invalidates the View, including returning through a new HOME intent.
+
+The custom HOME View now declares and paints an opaque background, with a solid
+grid title strip. Keypad dialogs also paint opaque surfaces and use a matching
+window/status-bar background, with dimming and window animations disabled.
+
+The APK compiled, installed and was synchronized to the system base. Another 20
+idle-grid frames had identical header pixels after the change. The options menu
+and grid were visually inspected. One uiautomator dump returned a null root;
+screenshots and ADB still worked, and SurfaceFlinger/system_server remained
+running. Physical confirmation of the intermittent flicker remains pending.
+This reduces avoidable redraw/composition work; it does not establish that a
+graphics-driver or panel problem has been eliminated.

@@ -20,14 +20,16 @@ final class KeypadDialog extends Dialog {
     private int selected;
     private boolean centerPressed,backPressed;
     private View content;
+    private final Appearance.Palette palette;
 
     KeypadDialog(Context context, String title, String[] items, Action action) {
         super(context);
-        final Appearance.Palette palette=Appearance.palette(context);
+        palette=Appearance.palette(context);
         this.title=title; this.items=items; this.action=action;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         content=new View(context) {
             final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+            public boolean isOpaque(){return true;}
             void text(Canvas c,String value,float x,float y,int size,int color,Paint.Align align) {
                 paint.setTextSize(size); paint.setColor(color); paint.setTextAlign(align);
                 c.drawText(value,x,y,paint);
@@ -56,7 +58,11 @@ final class KeypadDialog extends Dialog {
     }
     public void show() {
         super.show();
-        getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().setStatusBarColor(palette.bar);
+        WindowManager.LayoutParams attributes=getWindow().getAttributes();attributes.windowAnimations=0;getWindow().setAttributes(attributes);
         getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.MATCH_PARENT);
     }
     public boolean onKeyDown(int key,KeyEvent event) {

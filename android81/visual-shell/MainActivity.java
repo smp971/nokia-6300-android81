@@ -26,7 +26,7 @@ import java.util.Locale;
 public final class MainActivity extends Activity {
     private Screen screen;
     private boolean offeredSetup;
-    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.invalidate();}};
+    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){if(!screen.grid)screen.invalidate();}};
     private int speedKey=-1;
     private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,"Tasta "+slot+" neatribuită · Contacte → Apelare rapidă",1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
@@ -89,7 +89,7 @@ public final class MainActivity extends Activity {
                 PhoneStateListener listener = new PhoneStateListener() {
                     public void onServiceStateChanged(ServiceState state) { screen.refresh(); }
                     public void onDataConnectionStateChanged(int state, int type) { screen.refresh(); }
-                    public void onSignalStrengthsChanged(android.telephony.SignalStrength strength){if(slot>=0&&slot<2){screen.signalDbm[slot]=NetworkTelemetry.dbm(strength);screen.refresh();}}
+                    public void onSignalStrengthsChanged(android.telephony.SignalStrength strength){if(slot>=0&&slot<2){int dbm=NetworkTelemetry.dbm(strength);if(screen.signalDbm[slot]!=dbm){screen.signalDbm[slot]=dbm;screen.refresh();}}}
                 };
                 phones.add(phone); phoneListeners.add(listener);
                 phone.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
@@ -103,7 +103,7 @@ public final class MainActivity extends Activity {
     }
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent); setIntent(intent);
-        screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();
+        screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();screen.invalidate();
     }
     public void onBackPressed() {
         if (screen.grid || !screen.message.isEmpty()) {
@@ -163,7 +163,7 @@ public final class MainActivity extends Activity {
         Shader gradient=violet;
         void reloadAppearance() {
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
-            palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);
+            palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
             gradient=new LinearGradient(0,0,240,302,Appearance.COLORS[theme],null,Shader.TileMode.CLAMP);
             if(wallpaper!=null) {wallpaper.recycle();wallpaper=null;}
             if(Appearance.wallpaper(MainActivity.this).isFile()) wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(MainActivity.this).getPath());
@@ -180,12 +180,15 @@ public final class MainActivity extends Activity {
         final String[] simLabels = {"SIM 1: se verifică", "SIM 2: se verifică"};
         final int[] signalDbm={Integer.MIN_VALUE,Integer.MIN_VALUE};
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
+        public boolean isOpaque(){return true;}
         void refresh() {
+            String previousTime=time,previousDate=date,first=simLabels[0],second=simLabels[1];
             Date now = new Date();
             time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(now);
             date = new SimpleDateFormat("EEEE, d MMMM", new Locale("ro")).format(now);
             updateSims();
-            invalidate();
+            // Telemetry is cached while the grid is visible; it has no pixels there.
+            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)))invalidate();
         }
         void updateSims() {
             TelephonyManager base = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
@@ -313,6 +316,7 @@ public final class MainActivity extends Activity {
         void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);}
         protected void onDraw(Canvas output) {
             super.onDraw(output);
+            output.drawColor(palette.background);
             output.save(); output.scale(getWidth()/240f,getHeight()/302f);
             p.setStyle(Paint.Style.FILL); p.setShader(gradient); output.drawRect(0,0,240,302,p); p.setShader(null);
             if (!grid) {
@@ -342,6 +346,7 @@ public final class MainActivity extends Activity {
                 }
             } else {
                 p.setColor(0xbb000000); output.drawRect(0,0,240,276,p);
+                p.setColor(palette.bar);output.drawRect(0,0,240,34,p);
                 text(output,names[selected],120,25,18,Color.WHITE,Paint.Align.CENTER);
                 if(list) {
                     int first=Math.max(0,Math.min(names.length-5,selected-2));
