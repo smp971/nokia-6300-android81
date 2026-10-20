@@ -101,6 +101,7 @@ The APK compiled, installed and was synchronized to the system base. Another 20
 idle-grid frames had identical header pixels after the change. The options menu
 and grid were visually inspected. One uiautomator dump returned a null root;
 screenshots and ADB still worked, and SurfaceFlinger/system_server remained
-running. Physical confirmation of the intermittent flicker remains pending.
+running. The user then navigated the menu on the phone and confirmed that the
+header no longer flickers in this check. Longer use remains to be observed.
 This reduces avoidable redraw/composition work; it does not establish that a
 graphics-driver or panel problem has been eliminated.
