@@ -59,7 +59,6 @@ public final class KeypadLockActivity extends LeoActivity {
     private final class LockView extends View {
         final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
         final Path mountain=new Path();
-        final Shader background;
         Bitmap wallpaper;
         int battery;
         boolean charging;
@@ -69,7 +68,6 @@ public final class KeypadLockActivity extends LeoActivity {
         LockView(){
             super(KeypadLockActivity.this);setFocusable(true);setFocusableInTouchMode(true);requestFocus();
             int theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
-            background=new LinearGradient(0,0,240,320,Appearance.COLORS[theme],null,Shader.TileMode.CLAMP);
             if(Appearance.wallpaper(KeypadLockActivity.this).isFile())wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(KeypadLockActivity.this).getPath());
         }
         void refresh(){
@@ -104,7 +102,7 @@ public final class KeypadLockActivity extends LeoActivity {
         }
         protected void onDraw(Canvas c){
             c.save();c.scale(getWidth()/240f,getHeight()/320f);
-            paint.setShader(background);c.drawRect(0,0,240,320,paint);paint.setShader(null);
+            paint.setShader(null);paint.setColor(palette.background);c.drawRect(0,0,240,320,paint);paint.setShader(null);
             if(wallpaper!=null){paint.setColor(Color.WHITE);c.drawBitmap(wallpaper,null,new RectF(0,0,240,320),paint);paint.setColor(0x66000000);c.drawRect(0,0,240,320,paint);}
             else{paint.setColor(0x5530204a);mountain.reset();mountain.moveTo(0,238);mountain.lineTo(68,155);mountain.lineTo(135,234);mountain.lineTo(188,176);mountain.lineTo(240,224);mountain.lineTo(240,320);mountain.lineTo(0,320);mountain.close();c.drawPath(mountain,paint);}
             label(c,"LEO",12,23,11,0xffefe7fa,Paint.Align.LEFT);

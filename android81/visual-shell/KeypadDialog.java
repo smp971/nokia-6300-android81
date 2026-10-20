@@ -46,7 +46,7 @@ final class KeypadDialog extends Dialog {
                     int index=first+row; float top=42+row*39;
                     if(index==selected) {
                         paint.setColor(palette.selection);
-                        c.drawRoundRect(new RectF(6,top,234,top+35),6,6,paint);
+                        c.drawRoundRect(new RectF(6,top,234,top+35),3,3,paint);
                     }
                     text(c,items[index],15,top+23,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
                 }

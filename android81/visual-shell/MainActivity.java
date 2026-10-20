@@ -161,17 +161,13 @@ public final class MainActivity extends Activity {
         final String[] names = AppCatalog.NAMES;
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
 
-        final LinearGradient violet = new LinearGradient(0,0,240,302,new int[]{0xff241047,0xff593185,0xffbc6e91},null,Shader.TileMode.CLAMP);
-        final LinearGradient sunset = new LinearGradient(0,0,240,302,new int[]{0xff243959,0xff98707c,0xffedb17c},null,Shader.TileMode.CLAMP);
         Bitmap wallpaper;
         long wallpaperStamp=-1,wallpaperSize=-1;
         int theme;
-        Shader gradient=violet;
         void reloadAppearance() {
             order=AppCatalog.order(MainActivity.this);shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
-            gradient=new LinearGradient(0,0,240,302,Appearance.COLORS[theme],null,Shader.TileMode.CLAMP);
             java.io.File file=Appearance.wallpaper(MainActivity.this);long stamp=file.lastModified(),size=file.length();
             if(stamp!=wallpaperStamp||size!=wallpaperSize){
                 if(wallpaper!=null){wallpaper.recycle();wallpaper=null;}
@@ -325,7 +321,7 @@ public final class MainActivity extends Activity {
             p.setTextSize(size*(size<26?textScale:1f));while(p.measureText(s)>220&&p.getTextSize()>9)p.setTextSize(p.getTextSize()-1); p.setColor(color); p.setTextAlign(align); c.drawText(s, x, y, p);
         }
         void round(Canvas c, float l, float t, float r, float b, float radius, int color) {
-            p.setShader(null); p.setColor(color); p.setStyle(Paint.Style.FILL); box.set(l,t,r,b); c.drawRoundRect(box,radius,radius,p);
+            p.setShader(null); p.setColor(color); p.setStyle(Paint.Style.FILL); box.set(l,t,r,b); c.drawRoundRect(box,Math.min(radius,4),Math.min(radius,4),p);
         }
         void line(Canvas c,float x1,float y1,float x2,float y2) { c.drawLine(x1,y1,x2,y2,p); }
         final IconArt artwork=new IconArt();
@@ -334,16 +330,10 @@ public final class MainActivity extends Activity {
             long drawStart=android.os.SystemClock.elapsedRealtimeNanos();super.onDraw(output);
             output.drawColor(palette.background);
             output.save(); output.scale(getWidth()/240f,getHeight()/302f);
-            p.setStyle(Paint.Style.FILL); p.setShader(gradient); output.drawRect(0,0,240,302,p); p.setShader(null);
+            p.setStyle(Paint.Style.FILL); p.setShader(null);
             if (!grid) {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
-                else {
-                p.setColor(0x25ffffff); output.drawCircle(192,149,37,p);
-                path.reset(); path.moveTo(0,238); path.lineTo(74,137); path.lineTo(147,238); path.close(); p.setColor(Appearance.mix(palette.gradient[0],palette.gradient[1],.4f)); output.drawPath(path,p);
-                path.reset(); path.moveTo(78,254); path.lineTo(172,157); path.lineTo(240,235); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(Appearance.mix(palette.gradient[0],Color.BLACK,.1f)); output.drawPath(path,p);
-                path.reset(); path.moveTo(0,261); path.cubicTo(75,224,140,290,240,245); path.lineTo(240,302); path.lineTo(0,302); path.close(); p.setColor(palette.bar); output.drawPath(path,p);
-                }
-                round(output,10,10,230,151,15,0x28000000);
+                round(output,10,10,230,151,4,wallpaper==null?palette.card:0xcc111827);
                 text(output,"L E O  ·  ACTIVE STANDBY",120,27,10,0xffeee8fa,Paint.Align.CENTER);
                 text(output,time,120,86,54,Color.WHITE,Paint.Align.CENTER);
                 text(output,date,120,108,13,0xfff0e5f5,Paint.Align.CENTER);
@@ -352,16 +342,16 @@ public final class MainActivity extends Activity {
                     while(label.length()>1 && p.measureText(label)>220) label=label.substring(0,label.length()-2)+"…";
                     text(output,label,120,128+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
                 }
-                round(output,12,158,228,187,9,0x35000000);
+                round(output,12,158,228,187,4,wallpaper==null?palette.card:0xcc111827);
                 text(output,UnreadState.label(),120,177,12,Color.WHITE,Paint.Align.CENTER);
                 for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;
-                    if(shortcut==i)round(output,x-26,196,x+26,251,10,0x55ffffff);
+                    if(shortcut==i)round(output,x-26,196,x+26,251,4,palette.card);
                     output.save();output.translate(x,222);output.scale(.78f,.78f);icon(output,shortcuts[i],0,0);output.restore();
                     text(output,names[shortcuts[i]],x,263,10,Color.WHITE,Paint.Align.CENTER);
                 }
             } else {
-                p.setColor(0xbb000000); output.drawRect(0,0,240,276,p);
+                p.setColor(palette.background); output.drawRect(0,0,240,276,p);
                 p.setColor(palette.bar);output.drawRect(0,0,240,34,p);
                 text(output,names[order[selected]],120,25,18,Color.WHITE,Paint.Align.CENTER);
                 if(list) {

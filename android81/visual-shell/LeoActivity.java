@@ -40,7 +40,7 @@ abstract class LeoActivity extends Activity {
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
         TextView heading=text(title,21); heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(29)),null,null,null);heading.setCompoundDrawablePadding(dp(10));
-        heading.setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,new int[]{palette.card,palette.background}));
+        heading.setBackgroundColor(palette.card);
         root.addView(heading,new LinearLayout.LayoutParams(-1,dp(42)));
         View accent=new View(this);accent.setBackgroundColor(palette.accent);root.addView(accent,new LinearLayout.LayoutParams(-1,dp(2)));
     }

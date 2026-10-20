@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 20 octombrie 2026** · [Ultima etapă implementată](https://github.com/smp971/nokia-6300-android81/commit/827a478)
+**Actualizat: 20 octombrie 2026** · [Tema flat](android81/LEO-FLAT-THEME.md)
 
 [Ce funcționează](#ce-poți-face-deja) · [Capturi](#leo-în-imagini) ·
 [Audit](#auditul-proiectului) · [Ce urmează](#ce-mai-avem-de-construit) ·
@@ -25,17 +25,15 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 ## Leo în imagini
 
-Capturi reale de pe telefon, făcute pe **20 octombrie 2026**, după instalarea
-centrului media. Apasă o imagine pentru dimensiunea originală.
+Capturi reale de pe telefon, făcute pe **20 octombrie 2026**, cu noul aspect flat.
+Culori uniforme, pictograme fără reflexe și selecții clare pentru D-pad.
+Apasă o imagine pentru dimensiunea originală.
 
-| Acasă · ambele SIM-uri | Aplicații · din taste | Biblioteca muzicală |
+| Acasă · ambele SIM-uri | Aplicații · din taste | Setări cu taburi |
 | :---: | :---: | :---: |
-| <a href="android81/screenshots/leo-20261020-home.png"><img src="android81/screenshots/leo-20261020-home.png" width="180" alt="Home Leo cu starea ambelor SIM-uri"></a> | <a href="android81/screenshots/leo-20261020-apps.png"><img src="android81/screenshots/leo-20261020-apps.png" width="180" alt="Meniul colorat al aplicațiilor Leo"></a> | <a href="android81/screenshots/leo-20261020-music.png"><img src="android81/screenshots/leo-20261020-music.png" width="180" alt="Bibliotecă pe artiști, albume și liste"></a> |
-| **Setări cu taburi** | **Reportofon** | **Radio FM** |
-| <a href="android81/screenshots/leo-20261020-settings.png"><img src="android81/screenshots/leo-20261020-settings.png" width="180" alt="Setări Leo organizate pe categorii"></a> | <a href="android81/screenshots/leo-20261020-recorder.png"><img src="android81/screenshots/leo-20261020-recorder.png" width="180" alt="Reportofon Leo după salvarea unei înregistrări"></a> | <a href="android81/screenshots/leo-20261020-radio.png"><img src="android81/screenshots/leo-20261020-radio.png" width="180" alt="Acordajul FM; radioul este oprit și căștile sunt deconectate în captură"></a> |
-
-În captura FM, căștile sunt deconectate și radioul este oprit. Numele RDS apare
-când postul este recepționat; căștile rămân antena inclusiv la redarea pe difuzor.
+| <a href="android81/screenshots/leo-flat-20261020-home.png"><img src="android81/screenshots/leo-flat-20261020-home.png" width="180" alt="Home Leo flat"></a> | <a href="android81/screenshots/leo-flat-20261020-apps.png"><img src="android81/screenshots/leo-flat-20261020-apps.png" width="180" alt="Pictograme flat"></a> | <a href="android81/screenshots/leo-flat-20261020-settings.png"><img src="android81/screenshots/leo-flat-20261020-settings.png" width="180" alt="Setări Leo flat"></a> |
+| **Player muzical** | **Calculator** | **Meniul de opțiuni** |
+| <a href="android81/screenshots/leo-flat-20261020-music.png"><img src="android81/screenshots/leo-flat-20261020-music.png" width="180" alt="Player în pauză, fără piesă selectată"></a> | <a href="android81/screenshots/leo-flat-20261020-calculator.png"><img src="android81/screenshots/leo-flat-20261020-calculator.png" width="180" alt="Calculator Leo flat"></a> | <a href="android81/screenshots/leo-flat-20261020-menu.png"><img src="android81/screenshots/leo-flat-20261020-menu.png" width="180" alt="Opțiunile playerului din taste"></a> |
 
 ## Ce poți face deja
 

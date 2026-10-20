@@ -8,9 +8,7 @@ final class IconArt {
     private void round(Canvas c,float l,float t,float r,float b,float radius,int color){p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(color);c.drawRoundRect(l,t,r,b,radius,radius,p);}
     private void line(Canvas c,float a,float b,float x,float y){c.drawLine(a,b,x,y,p);}
         void draw(Canvas c,int index,float x,float y) {
-            p.setShader(null); p.setColor(0x25000000); p.setStyle(Paint.Style.FILL); c.drawRoundRect(x-25,y-23,x+25,y+27,13,13,p);
-            round(c,x-25,y-25,x+25,y+25,13,COLORS[index]);
-            round(c,x-23,y-23,x+23,y-1,11,0x45ffffff);
+            round(c,x-25,y-25,x+25,y+25,8,COLORS[index]);
             c.save(); c.translate(x,y); p.setColor(Color.WHITE); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(2.8f); p.setStrokeCap(Paint.Cap.ROUND);
             switch(index) {
                 case 25: c.drawRoundRect(-14,-7,14,12,3,3,p);line(c,-10,-8,8,-17);c.drawCircle(-5,3,5,p);line(c,4,-1,10,-1);line(c,4,5,10,5);break;
