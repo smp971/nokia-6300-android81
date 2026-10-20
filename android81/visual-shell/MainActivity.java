@@ -89,7 +89,7 @@ public final class MainActivity extends Activity {
                 PhoneStateListener listener = new PhoneStateListener() {
                     public void onServiceStateChanged(ServiceState state) { screen.refresh(); }
                     public void onDataConnectionStateChanged(int state, int type) { screen.refresh(); }
-                    public void onSignalStrengthsChanged(android.telephony.SignalStrength strength){if(slot>=0&&slot<2){int dbm=NetworkTelemetry.dbm(strength);if(screen.signalDbm[slot]!=dbm){screen.signalDbm[slot]=dbm;screen.refresh();}}}
+                    public void onSignalStrengthsChanged(android.telephony.SignalStrength strength){if(slot>=0&&slot<2){int dbm=NetworkTelemetry.dbm(strength);if(screen.signalDbm[slot]!=dbm){screen.signalDbm[slot]=dbm;if(!screen.grid)screen.invalidate();}}}
                 };
                 phones.add(phone); phoneListeners.add(listener);
                 phone.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
@@ -165,6 +165,8 @@ public final class MainActivity extends Activity {
         long wallpaperStamp=-1,wallpaperSize=-1;
         int theme;
         void reloadAppearance() {
+            android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
+            compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);showDbm=appearance.getBoolean("home-dbm",true);
             order=AppCatalog.order(MainActivity.this);shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
@@ -185,16 +187,21 @@ public final class MainActivity extends Activity {
         int[] order=AppCatalog.parse("");
         float textScale=1f;
         Appearance.Palette palette=Appearance.palette(MainActivity.this);
+        boolean compactClock,showSims=true,showUnread=true,showDbm=true;
+        final SimpleDateFormat timeFormat=new SimpleDateFormat("HH:mm",Locale.getDefault());
+        final SimpleDateFormat dateFormat=new SimpleDateFormat("EEEE, d MMMM",new Locale("ro"));
         String time = "", date = "", message = "";
         final String[] simLabels = {"SIM 1: se verifică", "SIM 2: se verifică"};
         final int[] signalDbm={Integer.MIN_VALUE,Integer.MIN_VALUE};
+        final boolean[] inService={false,false};
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
         public boolean isOpaque(){return true;}
         void refresh() {
             String previousTime=time,previousDate=date,first=simLabels[0],second=simLabels[1];
+            java.util.TimeZone zone=java.util.TimeZone.getDefault();timeFormat.setTimeZone(zone);dateFormat.setTimeZone(zone);
             Date now = new Date();
-            time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(now);
-            date = new SimpleDateFormat("EEEE, d MMMM", new Locale("ro")).format(now);
+            time = timeFormat.format(now);
+            date = dateFormat.format(now);
             updateSims();
             // Telemetry is cached while the grid is visible; it has no pixels there.
             if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)))invalidate();
@@ -202,6 +209,7 @@ public final class MainActivity extends Activity {
         void updateSims() {
             TelephonyManager base = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
             for(int slot=0;slot<2;slot++) {
+                inService[slot]=false;
                 String prefix = "SIM " + (slot+1) + ": ";
                 try {
                     int sim = base.getSimState(slot);
@@ -221,12 +229,13 @@ public final class MainActivity extends Activity {
                         String name = carrier.isEmpty() ? "operator" : carrier;
                         if(service == null) simLabels[slot] = prefix + "se verifică";
                         else if(service.getState() == ServiceState.STATE_IN_SERVICE) {
+                            inService[slot]=true;
                             int type = phone.getDataNetworkType();
                             String rat = type == TelephonyManager.NETWORK_TYPE_LTE ? " · 4G"
                                 : (type == TelephonyManager.NETWORK_TYPE_UMTS || type == TelephonyManager.NETWORK_TYPE_HSDPA
                                 || type == TelephonyManager.NETWORK_TYPE_HSUPA || type == TelephonyManager.NETWORK_TYPE_HSPA
                                 || type == TelephonyManager.NETWORK_TYPE_HSPAP) ? " · 3G" : " · conectat";
-                            simLabels[slot] = prefix + name + rat+(signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":"");
+                            simLabels[slot] = prefix + name + rat;
                         } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = prefix + "doar urgențe";
                         else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = prefix + "radio oprit";
                         else simLabels[slot] = prefix + "fără serviciu";
@@ -333,17 +342,17 @@ public final class MainActivity extends Activity {
             p.setStyle(Paint.Style.FILL); p.setShader(null);
             if (!grid) {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
-                round(output,10,10,230,151,4,wallpaper==null?palette.card:0xcc111827);
+                round(output,10,10,230,showSims?151:118,4,wallpaper==null?palette.card:0xcc111827);
                 text(output,"L E O  ·  ACTIVE STANDBY",120,27,10,0xffeee8fa,Paint.Align.CENTER);
-                text(output,time,120,86,54,Color.WHITE,Paint.Align.CENTER);
-                text(output,date,120,108,13,0xfff0e5f5,Paint.Align.CENTER);
-                for(int slot=0;slot<2;slot++) {
-                    String label = simLabels[slot]; p.setTypeface(regular); p.setTextSize(11);
+                text(output,time,120,compactClock?64:86,compactClock?36:54,Color.WHITE,Paint.Align.CENTER);
+                text(output,date,120,compactClock?87:108,13,0xfff0e5f5,Paint.Align.CENTER);
+                for(int slot=0;showSims&&slot<2;slot++) {
+                    String label = simLabels[slot]+(showDbm&&inService[slot]&&signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":""); p.setTypeface(regular); p.setTextSize(11);
                     while(label.length()>1 && p.measureText(label)>220) label=label.substring(0,label.length()-2)+"…";
-                    text(output,label,120,128+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
+                    text(output,label,120,(compactClock?112:128)+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
                 }
-                round(output,12,158,228,187,4,wallpaper==null?palette.card:0xcc111827);
-                text(output,UnreadState.label(),120,177,12,Color.WHITE,Paint.Align.CENTER);
+                if(showUnread){round(output,12,158,228,187,4,wallpaper==null?palette.card:0xcc111827);
+                text(output,UnreadState.label(),120,177,12,Color.WHITE,Paint.Align.CENTER);}
                 for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;
                     if(shortcut==i)round(output,x-26,196,x+26,251,4,palette.card);

@@ -15,6 +15,9 @@ public final class LeoCallPreview extends Activity implements LeoCallKeys.Host {
   public void onCreate(Bundle state) {
     super.onCreate(state);
     status = new TextView(this);
+    status.setBackgroundColor(0xff141025);
+    status.setTextColor(android.graphics.Color.WHITE);
+    getWindow().setStatusBarColor(0xff0f0b1c);
     status.setGravity(Gravity.CENTER);
     status.setTextSize(20);
     setContentView(status);

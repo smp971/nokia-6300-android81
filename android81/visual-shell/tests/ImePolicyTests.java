@@ -1,0 +1,8 @@
+package ro.leo.keypad;
+import android.app.*;import android.os.*;import android.text.InputType;import android.view.inputmethod.EditorInfo;
+/** No activity launch or editor text; checks the actual IME learning policy. */
+public final class ImePolicyTests extends Instrumentation {
+ public void onCreate(Bundle b){start();}
+ private void check(boolean b){if(!b)throw new AssertionError("learning policy");}
+ public void onStart(){Bundle out=new Bundle();try{EditorInfo i=new EditorInfo();i.inputType=InputType.TYPE_CLASS_TEXT;check(KeypadIme.learningAllowed(i));for(int v:new int[]{InputType.TYPE_TEXT_VARIATION_PASSWORD,InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD,InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS,InputType.TYPE_TEXT_VARIATION_URI}){i.inputType=InputType.TYPE_CLASS_TEXT|v;check(!KeypadIme.learningAllowed(i));}i.inputType=InputType.TYPE_CLASS_TEXT;i.imeOptions=EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING;check(!KeypadIme.learningAllowed(i));i.imeOptions=0;i.inputType=InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;check(!KeypadIme.learningAllowed(i));for(int type:new int[]{InputType.TYPE_CLASS_PHONE,InputType.TYPE_CLASS_NUMBER,InputType.TYPE_CLASS_DATETIME,InputType.TYPE_NULL}){i.inputType=type;check(!KeypadIme.learningAllowed(i));}out.putString("result","PASS learning allowed only in eligible text fields; password, address, numeric and opt-out fields excluded");}catch(Throwable e){out.putString("error",android.util.Log.getStackTraceString(e));}finish(out.containsKey("error")?Activity.RESULT_CANCELED:Activity.RESULT_OK,out);}
+}

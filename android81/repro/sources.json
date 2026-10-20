@@ -37,13 +37,13 @@
         {
           "path": "java/com/android/incallui/LeoCallKeys.java",
           "source": "files/packages/apps/Dialer/java/com/android/incallui/LeoCallKeys.java",
-          "sha256": "342b0f8aa8cb7f87e2f8850360cbde2fc0b075ebd9fb32011294438897701f1e",
+          "sha256": "612a1be89b6d604c31c52e8aa3744aa0cc2edc27d0e47be7a62b1e7251e1db8d",
           "mode": 420
         },
         {
           "path": "java/com/android/incallui/LeoCallPreview.java",
           "source": "files/packages/apps/Dialer/java/com/android/incallui/LeoCallPreview.java",
-          "sha256": "c37b11a3c8d8778567c38de0aa344c26cd97e6f3d4ddf836ec571797d5bd278e",
+          "sha256": "4e72d61642435070540f93769e223d8d977f12d1ba7e765fd5a7cbb9a28668f6",
           "mode": 420
         }
       ],

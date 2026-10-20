@@ -37,7 +37,8 @@ public final class LeoCallKeys {
     original.setLayoutParams(originalParams);
     bar = new TextView(activity);
     bar.setTextColor(Color.WHITE);
-    bar.setBackgroundColor(Color.rgb(12, 20, 30));
+    bar.setBackgroundColor(0xff171126);
+    bar.setPadding(6, 4, 6, 4);
     bar.setTextSize(12);
     bar.setGravity(Gravity.CENTER);
     FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, height, Gravity.BOTTOM);
@@ -56,7 +57,12 @@ public final class LeoCallKeys {
             : "Difuzor: " + (host.speaker() ? "pornit" : "oprit"))
             + " ▶\nOpțiuni          OK          Închide"
         : "Apel în curs de conectare\n                              Anulează";
-    if (!text.contentEquals(bar.getText())) bar.setText(text);
+    if (!text.contentEquals(bar.getText())) {
+      android.text.SpannableString flat = new android.text.SpannableString(text);
+      int end = text.indexOf('\n');
+      if (end > 0) flat.setSpan(new android.text.style.ForegroundColorSpan(0xfff1b8d4), 0, end, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+      bar.setText(flat);
+    }
   }
   public boolean key(KeyEvent event) {
     int key = event.getKeyCode();

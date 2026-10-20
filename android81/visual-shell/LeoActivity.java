@@ -102,7 +102,7 @@ abstract class LeoActivity extends Activity {
         list.requestFocus(); list.setSelection(focused[0]);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }
-    boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;listRows.clear();listRows.addAll(rows);listAdapter.notifyDataSetChanged();return true;}
+    boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;if(listRows.equals(rows))return true;listRows.clear();listRows.addAll(rows);listAdapter.notifyDataSetChanged();return true;}
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
     void onListSelection(String title,int index){}
     private void paintSelection(View row,boolean selected) {

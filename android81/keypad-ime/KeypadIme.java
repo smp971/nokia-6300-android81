@@ -25,6 +25,10 @@ public final class KeypadIme extends InputMethodService {
     private boolean password;
     private String sequence="";
     private int candidate;
+    private final PersonalWords personal=new PersonalWords();
+    private boolean learn;
+    private String cachedSequence=null;
+    private java.util.List<String> cachedWords=java.util.Collections.emptyList();
     private final Runnable commit=new Runnable() { public void run() { finishLetter(); } };
 
     public View onCreateInputView() {
@@ -43,26 +47,33 @@ public final class KeypadIme extends InputMethodService {
         int variation=info.inputType & InputType.TYPE_MASK_VARIATION;
         password=(inputClass==InputType.TYPE_CLASS_TEXT && (variation==InputType.TYPE_TEXT_VARIATION_PASSWORD || variation==InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD || variation==InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD)) || (inputClass==InputType.TYPE_CLASS_NUMBER && variation==InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         int configured=android.provider.Settings.Secure.getInt(getContentResolver(),"leo_keypad_default_mode",-1);
-        mode=password?0:Math.max(0,Math.min(4,configured<0?getSharedPreferences("keypad",0).getInt("mode",0):configured));
+        mode=(password||(info.inputType&InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)!=0)?0:Math.max(0,Math.min(4,configured<0?getSharedPreferences("keypad",0).getInt("mode",0):configured));
         commitDelay=Math.max(400,Math.min(1500,android.provider.Settings.Secure.getInt(getContentResolver(),"leo_keypad_multitap_ms",850)));
+        personal.load(getSharedPreferences("personal-words",0).getString("words",""));cachedSequence=null;
+        learn=learningAllowed(info)&&android.provider.Settings.Secure.getInt(getContentResolver(),"leo_keypad_learn_choices",0)==1;
         editing=inputClass!=InputType.TYPE_NULL; updateStrip();
     }
+    static boolean learningAllowed(EditorInfo info){int type=info.inputType&InputType.TYPE_MASK_CLASS,v=info.inputType&InputType.TYPE_MASK_VARIATION;if(type!=InputType.TYPE_CLASS_TEXT||(info.imeOptions&EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)!=0||(info.inputType&InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)!=0)return false;return v!=InputType.TYPE_TEXT_VARIATION_PASSWORD&&v!=InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD&&v!=InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD&&v!=InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS&&v!=InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS&&v!=InputType.TYPE_TEXT_VARIATION_URI;}
     public void onFinishInput() { finishLetter(); editing=false; super.onFinishInput(); }
     public void onDestroy() { handler.removeCallbacks(commit); super.onDestroy(); }
     private void updateStrip() {
         if(strip!=null) strip.setText(inputClass==InputType.TYPE_CLASS_PHONE || inputClass==InputType.TYPE_CLASS_NUMBER
             || inputClass==InputType.TYPE_CLASS_DATETIME ? "123 · Taste numerice"
-            : (mode==0?"abc":mode==1?"ABC":mode==2?"123":mode==3?"T9":"T9 ABC")+" · # mod · "+(sequence.isEmpty()?"0 spațiu":suggestion()+" · * următor"));
+            : (mode==0?"abc":mode==1?"ABC":mode==2?"123":mode==3?"T9":"T9 ABC")+" · # mod · "+(sequence.isEmpty()?"0 spațiu":suggestion()+" · "+(candidate%suggestions().size()+1)+"/"+suggestions().size()+" · * următor"));
     }
-    private String suggestion() { java.util.List<String> words=PredictiveDictionary.candidates(sequence);if(words.isEmpty())return "";String word=words.get(candidate%words.size());return mode==4?word.toUpperCase(new Locale("ro")):word; }
+    private java.util.List<String> suggestions(){if(!sequence.equals(cachedSequence)){cachedWords=personal.candidates(sequence);cachedSequence=sequence;}return cachedWords;}
+    private String suggestion() { java.util.List<String> words=suggestions();if(words.isEmpty())return "";String word=words.get(candidate%words.size());return mode==4?word.toUpperCase(new Locale("ro")):word; }
     private void predict(int digit) {
-        if(sequence.length()>=24) finishLetter();
+        if(sequence.length()>=32) finishLetter();
         sequence+=(char)('0'+digit);candidate=0;getCurrentInputConnection().setComposingText(suggestion(),1);updateStrip();
     }
     private void finishLetter() {
         handler.removeCallbacks(commit);
         InputConnection connection=getCurrentInputConnection();
-        if((pending!=-1 || !sequence.isEmpty()) && connection!=null) connection.finishComposingText();
+        if((pending!=-1 || !sequence.isEmpty()) && connection!=null){
+            if(learn&&!sequence.isEmpty()&&personal.add(suggestion())){getSharedPreferences("personal-words",0).edit().putString("words",personal.save()).apply();cachedSequence=null;}
+            connection.finishComposingText();
+        }
         pending=-1; index=0; sequence=""; candidate=0; updateStrip();
     }
     private void letter(int digit) {

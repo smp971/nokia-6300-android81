@@ -53,7 +53,7 @@ public final class PhoneActivity extends LeoActivity {
         LinearLayout tabs=new LinearLayout(this);tabs.setBackgroundColor(palette.bar);
         for(int i=0;i<tabNames.length;i++){
             final int index=i;TextView tab=text(tabNames[i],13);tab.setPadding(0,0,0,0);tab.setGravity(Gravity.CENTER);tab.setFocusable(true);
-            android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},Appearance.surface(palette.accent,dp(5)));states.addState(new int[]{},Appearance.surface(i==page?palette.card:palette.bar,dp(5)));tab.setBackground(states);tab.setTextColor(Color.WHITE);
+            android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},Appearance.surface(palette.selection,dp(3)));states.addState(new int[]{},Appearance.surface(i==page?palette.card:palette.bar,dp(5)));tab.setBackground(states);tab.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_focused},new int[]{}},new int[]{palette.ink,Color.WHITE}));
             tab.setOnClickListener(new View.OnClickListener(){public void onClick(View v){switchPage(index);}});
             tab.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){if(e.getAction()==KeyEvent.ACTION_DOWN&&e.getRepeatCount()==0)switchPage((index+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:2))%3);return true;}return false;}});
             tabs.addView(tab,new LinearLayout.LayoutParams(0,dp(28),1));

@@ -5,6 +5,7 @@
             <intent-filter><action android:name="android.view.InputMethod" /></intent-filter>
             <meta-data android:name="android.view.im" android:resource="@xml/method" />
         </service>
+        <activity android:name=".DictionaryActivity" android:exported="true" android:label="Dicționar Leo" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".EditorTestActivity" android:exported="false" android:launchMode="singleTask" android:label="Test tastatură" android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
     </application>
 </manifest>

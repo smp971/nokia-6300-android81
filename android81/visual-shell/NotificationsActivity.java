@@ -23,14 +23,18 @@ public final class NotificationsActivity extends LeoActivity {
         detailKey=null;keys.clear();
         if(LeoNotificationService.active==null){begin("Notificări");root.addView(text("Serviciul de notificări nu este conectat. Accesul Leo trebuie activat de instalatorul sistemului.",18),new LinearLayout.LayoutParams(-1,0,1));left=new Runnable(){public void run(){try{LeoNotificationService.reconnect(NotificationsActivity.this);notice("Reconectare cerută");}catch(RuntimeException e){notice("Acces indisponibil");}}};footer("Reîncearcă","","Înapoi");return;}
         final List<StatusBarNotification> all=LeoNotificationService.snapshot();ArrayList<String> labels=new ArrayList<String>();
-        int selection=0;for(StatusBarNotification n:all){if(n.getKey().equals(selectedKey))selection=keys.size();keys.add(n.getKey());labels.add((missed(n)?"Apel pierdut · ":"")+app(n)+"\n"+safe(n.getNotification().extras.getCharSequence(Notification.EXTRA_TITLE)));}
-        list("Notificări · "+all.size(),labels,selection,new Choice(){public void pick(int i){detail(all.get(i));}},"Opțiuni",new Runnable(){public void run(){options("Notificări",new String[]{"Actualizează","Apeluri pierdute în Leo"},new Choice(){public void pick(int i){if(i==0)show();else startActivity(new Intent(NotificationsActivity.this,PhoneActivity.class).putExtra("history",true));}});}});
+        int selection=0;for(StatusBarNotification n:all){if(n.getKey().equals(selectedKey))selection=keys.size();keys.add(n.getKey());labels.add((missed(n)?"Apel pierdut · ":"")+app(n)+"\n"+safe(n.getNotification().extras.getCharSequence(Notification.EXTRA_TITLE))+" · "+safe(n.getNotification().extras.getCharSequence(Notification.EXTRA_TEXT)));}
+        list("Notificări · "+all.size(),labels,selection,new Choice(){public void pick(int i){detail(all.get(i));}},"Opțiuni",new Runnable(){public void run(){options("Notificări",new String[]{"Acțiuni pentru selecție","Actualizează","Apeluri pierdute în Leo","Elimină notificările nepermanente"},new Choice(){public void pick(int i){if(i==0){StatusBarNotification n=selected();if(n!=null)actions(n);else notice("Selectează o notificare");}else if(i==1)show();else if(i==2)startActivity(new Intent(NotificationsActivity.this,PhoneActivity.class).putExtra("history",true));else options("Elimini notificările?",new String[]{"Păstrează","Elimină doar cele nepermanente"},new Choice(){public void pick(int yes){if(yes==1){for(StatusBarNotification n:LeoNotificationService.snapshot())LeoNotificationService.dismiss(n);show();}}});}});}});
     }
     private void detail(final StatusBarNotification n){
         detailKey=n.getKey();
         begin(app(n));ScrollView scroll=new ScrollView(this);Notification a=n.getNotification();CharSequence body=a.extras.getCharSequence(Notification.EXTRA_BIG_TEXT);if(body==null)body=a.extras.getCharSequence(Notification.EXTRA_TEXT);
         scroll.addView(text(safe(a.extras.getCharSequence(Notification.EXTRA_TITLE))+"\n\n"+safe(body),18));root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        left=new Runnable(){public void run(){
+        left=new Runnable(){public void run(){actions(n);}};
+        back=new Runnable(){public void run(){show();}};footer("Acțiuni","Deschide","Înapoi");
+    }
+    private StatusBarNotification selected(){for(StatusBarNotification n:LeoNotificationService.snapshot())if(n.getKey().equals(selectedKey))return n;return null;}
+    private void actions(final StatusBarNotification n){
             final Notification.Action[] actions=n.getNotification().actions;
             ArrayList<String> labels=new ArrayList<String>();labels.add("Deschide");labels.add(n.isClearable()?"Elimină":"Permanentă · nu se elimină");
             if(actions!=null)for(Notification.Action action:actions)labels.add(safe(action.title));
@@ -39,8 +43,6 @@ public final class NotificationsActivity extends LeoActivity {
                 else if(i==1){if(LeoNotificationService.dismiss(n))show();}
                 else if(actions!=null&&i-2<actions.length)notificationAction(n,actions[i-2]);
             }});
-        }};
-        back=new Runnable(){public void run(){show();}};footer("Acțiuni","Deschide","Înapoi");
     }
     void onListSelection(String title,int index){if(index>=0&&index<keys.size())selectedKey=keys.get(index);}
     private boolean missed(StatusBarNotification n){return "missed_call".equals(n.getNotification().category)||("com.android.dialer".equals(n.getPackageName())&&"phone_missed_call".equals(n.getNotification().getChannelId()));}

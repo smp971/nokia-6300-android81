@@ -270,8 +270,8 @@ public final class MessagesActivity extends LeoActivity {
     private void paintBubble(View view,boolean selected) {
         if(!(view instanceof LinearLayout))return;
         LinearLayout row=(LinearLayout)view;boolean received=Boolean.TRUE.equals(row.getTag());
-        GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(9));
-        background.setColor(received?palette.card:Appearance.mix(palette.gradient[1],palette.background,.15f));
+        GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(3));
+        background.setColor(received?palette.card:Appearance.mix(palette.card,palette.accent,.22f));
         background.setStroke(dp(2),selected?palette.accent:Color.TRANSPARENT);
         row.getChildAt(1).setBackground(background);
     }

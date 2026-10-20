@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual.tests">
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
-    <application android:label="Leo local feature checks" android:allowBackup="false" />
+    <application android:label="Leo local feature checks" android:allowBackup="false"><receiver android:name="ro.leo.visual.NotificationFixture" android:exported="false" /></application>
     <instrumentation android:name="ro.leo.visual.FeatureTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.UpgradeTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.RetroTests" android:targetPackage="ro.leo.visual" />
@@ -14,4 +14,5 @@
     <instrumentation android:name="ro.leo.visual.BatteryTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.HeadsetTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.FmTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.keypad.ImePolicyTests" android:targetPackage="ro.leo.keypad" />
 </manifest>
