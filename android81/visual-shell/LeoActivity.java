@@ -146,10 +146,19 @@ abstract class LeoActivity extends Activity {
     void ui(final Runnable action) { runOnUiThread(new Runnable() { public void run() { if(!isFinishing() && !isDestroyed()) action.run(); } }); }
     public boolean dispatchKeyEvent(KeyEvent event) {long start=android.os.SystemClock.elapsedRealtimeNanos();try{return dispatchLeoKey(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     private boolean dispatchLeoKey(KeyEvent event) {
+        if(isJackNavigationNoise(event)) return true;
         if(event.getKeyCode()==KeyEvent.KEYCODE_MENU && left!=null) {
             if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) left.run(); return true;
         }
         return super.dispatchKeyEvent(event);
+    }
+    // This codec emits BTN_4/BTN_5 during analog route changes. Generic.kcm
+    // falls back to DPAD_CENTER, which must never activate a foreground button.
+    static boolean isJackNavigationNoise(KeyEvent event) {
+        int scan=event.getScanCode();
+        android.view.InputDevice device=event.getDevice();
+        return (scan==259 || scan==260) && device!=null
+            && "msm8909-snd-card Button Jack".equals(device.getName());
     }
     public void onBackPressed() { if(back!=null) back.run(); else finish(); }
 }

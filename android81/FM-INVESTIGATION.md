@@ -90,3 +90,11 @@ Acestea sunt repere de implementare; comenzile private și comportamentul au fos
 Utilizatorul a confirmat lista scanată și selectarea frecvențelor, dar a raportat oprirea sunetului după aproximativ o secundă pe difuzor. Jurnalul HAL confirmă activarea rutei speaker, urmată de închiderea sesiunii de aplicație; motivul exact nu era înregistrat în versiunea inițială. Serviciul înregistrează acum motivul opririi în tagul `LeoFM`, fără date personale.
 
 Testul mut a fost extins: selectează activarea difuzorului din meniul real, apoi verifică dacă sesiunea rămâne activă încă opt secunde. A trecut pe telefon, la fel și revenirea la căști. Această probă nu confirmă audibilitatea sau rezolvarea incidentului manual; repetarea de către utilizator rămâne necesară.
+
+### Evenimente false ale butoanelor mufei
+
+La proba manuală ulterioară, `LeoFM` a raportat `Stop: Oprit` imediat după `routing=2`: era comanda de oprire a aplicației, fără o pierdere de focus sau o eroare Iris. InputReader identifică `msm8909-snd-card Button Jack` cu `Generic.kl`; scan 260 devine `BUTTON_5`, iar `Generic.kcm` din AOSP îl transformă prin fallback în `DPAD_CENTER`. Jurnalele anterioare conțin astfel de evenimente cu scan 260, device 5 și flag 0x400 (fallback). `BUTTON_4` are același fallback.
+
+Leo ignoră acum scanurile 259/260 numai de la dispozitivul cu numele exact `msm8909-snd-card Button Jack`, atât în activități și meniurile contextuale, cât și în serviciul global al tastelor. Tastatura matrix, OK fizic și evenimentele obișnuite ale telecomenzii de căști rămân pe traseul existent. Nu se rescrie keylayout-ul sistemului.
+
+Proba FM injectează explicit evenimentul de fallback OK cu dispozitivul real al mufei după selectarea difuzorului, apoi așteaptă opt secunde înainte să verifice redarea. Audibilitatea continuă pe difuzor trebuie verificată manual după instalare. După instrumentare, serviciul de accesibilitate este reconectat și pagina FM este redeschisă; testul nu trebuie să lase utilizatorul cu tastele indisponibile.

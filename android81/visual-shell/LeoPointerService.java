@@ -122,6 +122,7 @@ public final class LeoPointerService extends AccessibilityService {
         }
     }
     protected boolean onKeyEvent(KeyEvent event) {
+        if(LeoActivity.isJackNavigationNoise(event)) return true;
         int key=event.getKeyCode();
         boolean guard=KeypadLockActivity.locked(this);
         boolean call=false;

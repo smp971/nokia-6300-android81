@@ -69,6 +69,10 @@ final class KeypadDialog extends Dialog {
         WindowManager.LayoutParams attributes=getWindow().getAttributes();attributes.windowAnimations=0;getWindow().setAttributes(attributes);
         getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.MATCH_PARENT);
     }
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if(LeoActivity.isJackNavigationNoise(event)) return true;
+        return super.dispatchKeyEvent(event);
+    }
     public boolean onKeyDown(int key,KeyEvent event) {
         if(key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) {
             selected=Math.max(0,Math.min(items.length-1,selected+(key==KeyEvent.KEYCODE_DPAD_UP?-1:1)));
