@@ -28,4 +28,5 @@
     <instrumentation android:name="ro.leo.visual.ComfortTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.ProjectFlowTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.OrganizerTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.BrowserNavigationTests" android:targetPackage="ro.leo.visual" />
 </manifest>

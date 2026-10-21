@@ -26,7 +26,7 @@ public final class KeypadIme extends InputMethodService {
     private String sequence="";
     private int candidate;
     private final PersonalWords personal=new PersonalWords();
-    private boolean learn;
+    private boolean learn,capitalizeSentence;private int capsMode;
     private String cachedSequence=null;
     private java.util.List<String> cachedWords=java.util.Collections.emptyList();
     private final Runnable commit=new Runnable() { public void run() { finishLetter(); } };
@@ -51,7 +51,7 @@ public final class KeypadIme extends InputMethodService {
         commitDelay=Math.max(400,Math.min(1500,android.provider.Settings.Secure.getInt(getContentResolver(),"leo_keypad_multitap_ms",850)));
         personal.load(getSharedPreferences("personal-words",0).getString("words",""));cachedSequence=null;
         learn=learningAllowed(info)&&android.provider.Settings.Secure.getInt(getContentResolver(),"leo_keypad_learn_choices",0)==1;
-        editing=inputClass!=InputType.TYPE_NULL; updateStrip();
+        capsMode=info.inputType&(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES|InputType.TYPE_TEXT_FLAG_CAP_WORDS|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);capitalizeSentence=false;editing=inputClass!=InputType.TYPE_NULL; updateStrip();
     }
     static boolean learningAllowed(EditorInfo info){int type=info.inputType&InputType.TYPE_MASK_CLASS,v=info.inputType&InputType.TYPE_MASK_VARIATION;if(type!=InputType.TYPE_CLASS_TEXT||(info.imeOptions&EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)!=0||(info.inputType&InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)!=0)return false;return v!=InputType.TYPE_TEXT_VARIATION_PASSWORD&&v!=InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD&&v!=InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD&&v!=InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS&&v!=InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS&&v!=InputType.TYPE_TEXT_VARIATION_URI;}
     public void onFinishInput() { finishLetter(); editing=false; super.onFinishInput(); }
@@ -59,12 +59,13 @@ public final class KeypadIme extends InputMethodService {
     private void updateStrip() {
         if(strip!=null) strip.setText(inputClass==InputType.TYPE_CLASS_PHONE || inputClass==InputType.TYPE_CLASS_NUMBER
             || inputClass==InputType.TYPE_CLASS_DATETIME ? "123 · Taste numerice"
-            : (mode==0?"abc":mode==1?"ABC":mode==2?"123":mode==3?"T9":"T9 ABC")+" · # mod · "+(sequence.isEmpty()?"0 spațiu":suggestion()+" · "+(candidate%suggestions().size()+1)+"/"+suggestions().size()+" · * următor"));
+            : (mode==0?"abc":mode==1?"ABC":mode==2?"123":mode==3?"T9":"T9 ABC")+" · # mod · "+(sequence.isEmpty()?"0 spațiu":suggestion()+" · "+(candidate%suggestions().size()+1)+"/"+suggestions().size()+" · * următor / ținut: anterior"));
     }
     private java.util.List<String> suggestions(){if(!sequence.equals(cachedSequence)){cachedWords=personal.candidates(sequence);cachedSequence=sequence;}return cachedWords;}
-    private String suggestion() { java.util.List<String> words=suggestions();if(words.isEmpty())return "";String word=words.get(candidate%words.size());return mode==4?word.toUpperCase(new Locale("ro")):word; }
+    private String suggestion() { java.util.List<String> words=suggestions();if(words.isEmpty())return "";String word=words.get(candidate%words.size());return PredictiveDictionary.cased(word,mode,capitalizeSentence); }
     private void predict(int digit) {
         if(sequence.length()>=32) finishLetter();
+        if(sequence.isEmpty()){InputConnection c=getCurrentInputConnection();capitalizeSentence=capsMode!=0&&c!=null&&c.getCursorCapsMode(capsMode)!=0;}
         sequence+=(char)('0'+digit);candidate=0;getCurrentInputConnection().setComposingText(suggestion(),1);updateStrip();
     }
     private void finishLetter() {
@@ -111,7 +112,7 @@ public final class KeypadIme extends InputMethodService {
         boolean enter=key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER;
         if(digit>=0 || key==KeyEvent.KEYCODE_POUND || key==KeyEvent.KEYCODE_STAR || erase || enter) {
             consumed.put(key,true);
-            if(event.getRepeatCount()>0) { if(erase) erase(); return true; }
+            if(event.getRepeatCount()>0) { if(erase) erase();else if(event.getRepeatCount()==1&&key==KeyEvent.KEYCODE_STAR&&mode>=3&&!sequence.isEmpty()){candidate=Math.floorMod(candidate-2,suggestions().size());getCurrentInputConnection().setComposingText(suggestion(),1);updateStrip();}return true; }
             InputConnection connection=getCurrentInputConnection();
             if(erase) erase();
             else if(key==KeyEvent.KEYCODE_POUND) { finishLetter(); mode=(mode+1)%(password?3:5);if(!password)getSharedPreferences("keypad",0).edit().putInt("mode",mode).apply();updateStrip(); }

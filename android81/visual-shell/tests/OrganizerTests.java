@@ -40,7 +40,7 @@ public final class OrganizerTests extends Instrumentation {
    a=open(new Intent(c,PlaylistEditorActivity.class).putExtra("name",key));check(((List)get(a,"rows")).size()==1,"playlist editor loads original reference");close(a);a=null;
    a=open(SoundScheduleActivity.class);check(((List)get(a,"listRows")).size()==8,"sound schedule and alarm selection visible without toggling");close(a);a=null;
    FaultLedger.record(c,"Fixture",new IOException("private text must never be recorded"));String error=FaultLedger.report(c);check(error.contains("IOException")&&!error.contains("private text"),"error report keeps type only");
-   String report=DiagnosticActivity.collect(c,"SIM · fixture");check(report.contains("Leo 0.2.0-dev")&&report.contains("Servicii:"),"diagnostic includes app version and services");
+   String report=DiagnosticActivity.collect(c,"SIM · fixture");check(report.contains("Leo "+c.getPackageManager().getPackageInfo(c.getPackageName(),0).versionName)&&report.contains("Servicii:"),"diagnostic includes app version and services");
    a=open(DiagnosticActivity.class);for(int n=0;n<30&&((String)get(a,"report")).isEmpty();n++)SystemClock.sleep(100);call(a,"export",new Class<?>[]{});check(((Boolean)get(a,"form")),"diagnostic export opens editable preview");close(a);a=null;
    result.putString("result","PASS "+checks+" organizer device checks; local fixtures only");
   }catch(Throwable e){result.putString("error",android.util.Log.getStackTraceString(e));}

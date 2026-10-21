@@ -9,5 +9,22 @@ final class PersonalWords {
  void remove(String word){words.remove(word);}
  List<String> words(){return new ArrayList<String>(words.keySet());}
  String save(){StringBuilder out=new StringBuilder();for(Map.Entry<String,Integer> e:words.entrySet())out.append(e.getKey()).append('\t').append(e.getValue()).append('\n');return out.toString();}
- List<String> candidates(final String sequence){final ArrayList<String> result=new ArrayList<String>();if(sequence.isEmpty())return result;for(String word:PredictiveDictionary.candidates(sequence))if(!word.equals(sequence))result.add(word);for(String word:words.keySet())if(PredictiveDictionary.digits(word).startsWith(sequence)&&!result.contains(word))result.add(word);Collections.sort(result,new Comparator<String>(){public int compare(String a,String b){boolean ae=PredictiveDictionary.digits(a).equals(sequence),be=PredictiveDictionary.digits(b).equals(sequence);if(ae!=be)return ae?-1:1;return Integer.compare(words.containsKey(b)?words.get(b):0,words.containsKey(a)?words.get(a):0);}});if(result.size()>12)return new ArrayList<String>(result.subList(0,12));if(result.isEmpty()&&!sequence.isEmpty())result.add(sequence);return result;}
+ int count(String word){Integer n=words.get(word);return n==null?0:n;}
+ boolean replace(String before,String after){String next=clean(after);if(!words.containsKey(before)||next.isEmpty()||!before.equals(next)&&words.containsKey(next))return false;int n=count(before);words.remove(before);words.put(next,n);return true;}
+ void resetRanking(){for(String word:new ArrayList<String>(words.keySet()))words.put(word,1);}
+ List<String> candidates(final String sequence){
+  final ArrayList<String> result=new ArrayList<String>(PredictiveDictionary.matches(sequence));
+  if(sequence==null||!sequence.matches("[2-9]{1,32}"))return result;
+  final HashMap<String,String> codes=new HashMap<String,String>();
+  for(String word:words.keySet())if(PredictiveDictionary.digits(word).startsWith(sequence)&&!result.contains(word))result.add(word);
+  final HashMap<String,Integer> order=new HashMap<String,Integer>();
+  for(int i=0;i<result.size();i++){String word=result.get(i);codes.put(word,PredictiveDictionary.digits(word));order.put(word,i);}
+  Collections.sort(result,new Comparator<String>(){public int compare(String a,String b){
+   boolean ae=codes.get(a).equals(sequence),be=codes.get(b).equals(sequence);if(ae!=be)return ae?-1:1;
+   int frequency=Integer.compare(count(b),count(a));if(frequency!=0)return frequency;
+   int length=Integer.compare(codes.get(a).length(),codes.get(b).length());return length!=0?length:Integer.compare(order.get(a),order.get(b));
+  }});
+  if(result.size()>12)return new ArrayList<String>(result.subList(0,12));
+  if(result.isEmpty())result.add(sequence);return result;
+ }
 }

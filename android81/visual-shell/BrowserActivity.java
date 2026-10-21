@@ -5,6 +5,10 @@ import android.os.Bundle;
 import android.text.*;
 import android.text.style.URLSpan;
 import android.widget.*;
+import android.view.*;
+import android.graphics.Color;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import org.json.*;
 import java.net.*;
 import java.io.*;
@@ -16,18 +20,66 @@ import java.util.regex.*;
 public final class BrowserActivity extends LeoActivity {
     private String current="leo:home",title="Browser text";
     private Spanned document;
+    private ScrollView scroll;private TextView body;private View readingRoot;
+    private int scrollY,linkIndex=-1,font=17,match=-1;private String search="";
+    private final ArrayList<URLSpan> pageLinks=new ArrayList<URLSpan>();
+    private final ArrayDeque<Page> trail=new ArrayDeque<Page>();
+    private static final class Page {String url,title;Spanned text;int y,link;}
     private volatile int generation;
     private volatile HttpURLConnection connection;
-    protected void onCreate(Bundle b){super.onCreate(b);home();}
+    protected void onCreate(Bundle b){super.onCreate(b);font=Math.max(14,Math.min(26,getSharedPreferences("browser",0).getInt("font",17)));home();}
     protected void onDestroy(){generation++;HttpURLConnection c=connection;if(c!=null)c.disconnect();super.onDestroy();}
-    private void home(){generation++;current="leo:home";title="Browser text";document=Html.fromHtml("<h2>Leo · Web în mod text</h2><p>Adrese, căutare, linkuri, favorite și istoric, din taste.</p><p>Pagini simple: text HTML. Fără JavaScript, formulare web, video sau descărcări. Unele site-uri necesită un motor complet.</p><p><a href='https://example.org/'>Deschide example.org</a></p>",Html.FROM_HTML_MODE_LEGACY);display();}
-    private void display(){begin(title);ScrollView scroll=new ScrollView(this);TextView body=text(document.toString(),17);body.setText(document);body.setTextIsSelectable(false);scroll.addView(body);scroll.setFocusable(true);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));left=new Runnable(){public void run(){menu();}};footer("Opțiuni","Derulare","Înapoi");scroll.requestFocus();back=new Runnable(){public void run(){if(current.equals("leo:home"))finish();else home();}};}
-    private void menu(){options("Browser text",new String[]{"Adresă / căutare","Linkuri în pagină","Adaugă la favorite","Favorite","Istoric","Reîncarcă","Pagina de start"},new Choice(){public void pick(int i){if(i==0)address();else if(i==1)links();else if(i==2){if(current.startsWith("http")){remember("bookmarks",30);notice("Favorit salvat");}else notice("Deschide întâi o pagină web");}else if(i==3||i==4)stored(i==3?"bookmarks":"history");else if(i==5){if(current.equals("leo:home"))home();else fetch(current);}else home();}});}
-    private void address(){LinearLayout p=fields("Adresă / căutare");final EditText value=field(p,"URL sau cuvinte",current.startsWith("http")?current:"",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);left=new Runnable(){public void run(){String s=value.getText().toString().trim();if(s.isEmpty())return;try{if(!s.contains("://")){if(s.contains(" ")||!s.contains("."))s="https://lite.duckduckgo.com/lite/?q="+URLEncoder.encode(s,"UTF-8");else s="https://"+s;}fetch(s);}catch(Exception e){notice("Adresă invalidă");}}};back=new Runnable(){public void run(){display();}};footer("Deschide","","Șterge");value.requestFocus();}
-    private static URL checked(String value)throws IOException{URL u=new URL(value);if(!(u.getProtocol().equals("http")||u.getProtocol().equals("https"))||u.getHost().isEmpty()||u.getUserInfo()!=null)throw new IOException("Doar adrese HTTP/HTTPS fără autentificare în URL");return u;}
+    private void home(){generation++;trail.clear();scrollY=0;linkIndex=-1;search="";match=-1;current="leo:home";title="Browser text";document=Html.fromHtml("<h2>Leo · Web în mod text</h2><p>0 adresă · 2 caută în pagină · 8 următorul rezultat. Stânga/dreapta sau 4/6 aleg linkul, 5 îl deschide. */# schimbă textul, 1/3 început/sfârșit.</p><p>Pagini simple: text HTML. Fără JavaScript, formulare web, video sau descărcări. Unele site-uri necesită un motor complet.</p><p><a href='https://example.org/'>Deschide example.org</a></p>",Html.FROM_HTML_MODE_LEGACY);display();}
+    private void display(){
+        begin(title);readingRoot=root;scroll=new ScrollView(this);body=text("",font);body.setTextIsSelectable(false);scroll.addView(body);scroll.setFocusable(true);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        pageLinks.clear();for(URLSpan span:document.getSpans(0,document.length(),URLSpan.class))if(pageLinks.size()<150&&document.getSpanEnd(span)>document.getSpanStart(span)){try{resolveLink(span);pageLinks.add(span);}catch(Exception ignored){}}
+        if(linkIndex>=pageLinks.size())linkIndex=-1;paintDocument();
+        left=new Runnable(){public void run(){captureScroll();menu();}};footer("Opțiuni","4 / 6 linkuri","Înapoi");scroll.requestFocus();
+        final int y=scrollY;final ScrollView target=scroll;target.post(new Runnable(){public void run(){if(scroll==target&&root==readingRoot)target.scrollTo(0,y);}});
+        back=new Runnable(){public void run(){backPage();}};
+    }
+    private String resolveLink(URLSpan span)throws IOException{return current.equals("leo:home")?checked(span.getURL()).toExternalForm():BrowserRules.resolve(current,span.getURL());}
+    private void captureScroll(){if(root==readingRoot&&scroll!=null)scrollY=scroll.getScrollY();}
+    private void rememberPage(){
+        if(document==null)return;Page page=new Page();page.url=current;page.title=title;page.text=document;page.y=scrollY;page.link=linkIndex;trail.addLast(page);
+        int total=0;for(Page p:trail)total+=p.text.length();while(trail.size()>3||total>262144){Page old=trail.removeFirst();total-=old.text.length();}
+    }
+    private void backPage(){
+        generation++;HttpURLConnection c=connection;if(c!=null)c.disconnect();
+        if(!trail.isEmpty()){Page page=trail.removeLast();current=page.url;title=page.title;document=page.text;scrollY=page.y;linkIndex=page.link;match=-1;search="";display();}
+        else if(!current.equals("leo:home"))home();else finish();
+    }
+    private void paintDocument(){
+        SpannableString painted=new SpannableString(document);int start=-1,end=-1;
+        if(match>=0&&match+search.length()<=document.length()){start=match;end=match+search.length();}
+        else if(linkIndex>=0&&linkIndex<pageLinks.size()){URLSpan span=pageLinks.get(linkIndex);start=document.getSpanStart(span);end=document.getSpanEnd(span);}
+        if(start>=0&&end>start){painted.setSpan(new BackgroundColorSpan(palette.selection),start,end,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);painted.setSpan(new ForegroundColorSpan(palette.ink),start,end,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);}
+        body.setText(painted);
+    }
+    private void reveal(final int at){final TextView target=body;final ScrollView scroller=scroll;target.post(new Runnable(){public void run(){if(body!=target||root!=readingRoot)return;android.text.Layout layout=target.getLayout();if(layout!=null)scroller.smoothScrollTo(0,Math.max(0,layout.getLineTop(layout.getLineForOffset(Math.max(0,Math.min(at,document.length()))))-dp(24)));}});}
+    private void selectLink(int step){if(pageLinks.isEmpty()){notice("Pagina nu are linkuri HTTP/HTTPS");return;}match=-1;linkIndex=linkIndex<0?(step<0?pageLinks.size()-1:0):CircularNavigation.step(linkIndex,step,pageLinks.size());paintDocument();reveal(document.getSpanStart(pageLinks.get(linkIndex)));notice("Link "+(linkIndex+1)+" / "+pageLinks.size());}
+    private void openLink(){if(linkIndex<0||linkIndex>=pageLinks.size()){selectLink(1);return;}try{fetch(resolveLink(pageLinks.get(linkIndex)));}catch(Exception e){notice("Link indisponibil");}}
+    private void zoom(int step){captureScroll();font=Math.max(14,Math.min(26,font+step));getSharedPreferences("browser",0).edit().putInt("font",font).apply();body.setTextSize(font*Appearance.textScale(this));if(linkIndex>=0)reveal(document.getSpanStart(pageLinks.get(linkIndex)));else{final int y=scrollY;body.post(new Runnable(){public void run(){scroll.scrollTo(0,y);}});}notice("Text · "+font);}
+    private void searchPage(){LinearLayout f=fields("Caută în pagină");final EditText q=field(f,"Text",search,InputType.TYPE_CLASS_TEXT);q.setFilters(new InputFilter[]{new InputFilter.LengthFilter(128)});left=new Runnable(){public void run(){search=q.getText().toString().trim();match=-1;display();nextMatch();}};back=new Runnable(){public void run(){display();}};footer("Caută","Editor","Șterge");q.requestFocus();}
+    private void nextMatch(){if(search.isEmpty()){searchPage();return;}match=BrowserRules.find(document.toString(),search,match<0?0:match+1);paintDocument();if(match>=0)reveal(match);else notice("Textul nu apare în pagină");}
+    public boolean onKeyDown(int key,KeyEvent e){
+        if(root==readingRoot){
+            if(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_6||key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){if(e.getRepeatCount()==0)selectLink(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_DPAD_LEFT?-1:1);return true;}
+            if(key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER){if(e.getRepeatCount()==0)openLink();return true;}
+            if(key==KeyEvent.KEYCODE_STAR||key==KeyEvent.KEYCODE_POUND){if(e.getRepeatCount()==0)zoom(key==KeyEvent.KEYCODE_STAR?-1:1);return true;}
+            if(key==KeyEvent.KEYCODE_1||key==KeyEvent.KEYCODE_3){if(e.getRepeatCount()==0){scroll.fullScroll(key==KeyEvent.KEYCODE_1?View.FOCUS_UP:View.FOCUS_DOWN);}return true;}
+            if(key==KeyEvent.KEYCODE_2){if(e.getRepeatCount()==0){captureScroll();searchPage();}return true;}
+            if(key==KeyEvent.KEYCODE_8){if(e.getRepeatCount()==0)nextMatch();return true;}
+            if(key==KeyEvent.KEYCODE_0){if(e.getRepeatCount()==0){captureScroll();address();}return true;}
+        }
+        return super.onKeyDown(key,e);
+    }
+    private void menu(){options("Browser text",new String[]{"Adresă / căutare","Linkuri în pagină","Adaugă la favorite","Favorite","Istoric","Reîncarcă","Pagina de start","Caută în pagină · 2","Următorul rezultat · 8","Text mai mare · #","Text mai mic · *","Înapoi în paginile deschise","Ajutor taste"},new Choice(){public void pick(int i){if(i==7)searchPage();else if(i==8){display();nextMatch();}else if(i==9||i==10){display();zoom(i==9?1:-1);}else if(i==11)backPage();else if(i==12)notice("0 adresă · 2 caută · 8 rezultat · 4/6 link · 5 deschide · */# text · 1/3 început/sfârșit · D-pad derulează");else if(i==0)address();else if(i==1)links();else if(i==2){if(current.startsWith("http")){remember("bookmarks",30);notice("Favorit salvat");}else notice("Deschide întâi o pagină web");}else if(i==3||i==4)stored(i==3?"bookmarks":"history");else if(i==5){if(current.equals("leo:home"))home();else fetch(current);}else home();}});}
+    private void address(){LinearLayout p=fields("Adresă / căutare");final EditText value=field(p,"URL sau cuvinte",current.startsWith("http")?current:"",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);left=new Runnable(){public void run(){String s=value.getText().toString().trim();if(s.isEmpty())return;try{fetch(BrowserRules.address(s));}catch(Exception e){notice("Adresă invalidă");}}};back=new Runnable(){public void run(){display();}};footer("Deschide","","Șterge");value.requestFocus();}
+    private static URL checked(String value)throws IOException{return BrowserRules.checked(value);}
     private void fetch(final String destination){
         try{checked(destination);}catch(IOException e){notice("Adresă HTTP/HTTPS invalidă");return;}
-        final int token=++generation;final HttpURLConnection old=connection;if(old!=null)old.disconnect();
+        captureScroll();final int token=++generation;final HttpURLConnection old=connection;if(old!=null)old.disconnect();
         begin("Browser text");root.addView(text("Se încarcă…\nÎnapoi: anulează",18),new LinearLayout.LayoutParams(-1,0,1));back=new Runnable(){public void run(){generation++;HttpURLConnection c=connection;if(c!=null)c.disconnect();display();}};footer("","","Anulează");
         worker.execute(new Runnable(){public void run(){try{
             URL url=checked(destination);String html=null;
@@ -35,7 +87,7 @@ public final class BrowserActivity extends LeoActivity {
                 if(Thread.currentThread().isInterrupted()||token!=generation)return;
                 HttpURLConnection c=(HttpURLConnection)url.openConnection();connection=c;c.setInstanceFollowRedirects(false);c.setConnectTimeout(12000);c.setReadTimeout(12000);c.setRequestProperty("User-Agent","LeoText/1.0 (Android 8.1; text reader)");c.setRequestProperty("Accept","text/html,text/plain;q=0.9");
                 try{
-                    int status=c.getResponseCode();if(status>=300&&status<400){String location=c.getHeaderField("Location");if(location==null||redirects==5)throw new IOException("Redirecționare invalidă");URL next=checked(new URL(url,location).toString());if(url.getProtocol().equals("https")&&!next.getProtocol().equals("https"))throw new IOException("Redirecționare HTTPS spre HTTP refuzată");url=next;continue;}
+                    int status=c.getResponseCode();if(status>=300&&status<400){String location=c.getHeaderField("Location");if(location==null||redirects==5)throw new IOException("Redirecționare invalidă");URL next=BrowserRules.redirect(url,location);url=next;continue;}
                     if(status<200||status>=300)throw new IOException("HTTP "+status);
                     String type=c.getContentType();if(type==null)type="text/html";if(!(type.toLowerCase(Locale.ROOT).startsWith("text/html")||type.toLowerCase(Locale.ROOT).startsWith("text/plain")))throw new IOException("Format nesuportat; folosește o pagină text");
                     ByteArrayOutputStream bytes=new ByteArrayOutputStream();try(InputStream in=c.getInputStream()){byte[] buf=new byte[8192];int n;while((n=in.read(buf))!=-1){if(token!=generation||Thread.currentThread().isInterrupted())return;if(bytes.size()+n>1048576)throw new IOException("Pagina depășește 1 MiB");bytes.write(buf,0,n);}}
@@ -45,11 +97,12 @@ public final class BrowserActivity extends LeoActivity {
             }
             if(html==null)throw new IOException("Pagină goală");
             String clean=html.replaceAll("(?is)<(script|style|noscript)\\b[^>]*>.*?</\\1\\s*>","");
-            final Spanned parsed=Html.fromHtml(clean,Html.FROM_HTML_MODE_LEGACY);final String loaded=url.toString();
-            ui(new Runnable(){public void run(){if(token!=generation)return;current=loaded;title=URI.create(loaded).getHost();document=parsed;remember("history",50);display();}});
+            final Spanned parsed=Html.fromHtml(clean,Html.FROM_HTML_MODE_LEGACY);if(parsed.length()>262144)throw new IOException("Textul depășește 256 KiB de caractere");final String loaded=url.toString();
+            ui(new Runnable(){public void run(){if(token!=generation)return;if(!loaded.equals(current))rememberPage();current=loaded;title=checkedTitle(loaded);document=parsed;scrollY=0;linkIndex=-1;match=-1;search="";remember("history",50);display();}});
         }catch(final Exception e){ui(new Runnable(){public void run(){if(token!=generation)return;display();notice("Pagina nu poate fi citită: "+(e instanceof javax.net.ssl.SSLException?"TLS / certificat incompatibil":e.getMessage()));}});}}});
     }
-    private void links(){final ArrayList<String> urls=new ArrayList<String>(),labels=new ArrayList<String>();for(URLSpan span:document.getSpans(0,document.length(),URLSpan.class)){if(urls.size()>=150)break;try{String u=new URL(checked(current),span.getURL()).toString();checked(u);urls.add(u);labels.add(document.subSequence(document.getSpanStart(span),document.getSpanEnd(span)).toString()+"\n"+u);}catch(Exception e){try{String u=checked(span.getURL()).toString();urls.add(u);labels.add(u);}catch(Exception ignored){}}}
+    private static String checkedTitle(String url){try{return new URL(url).getHost();}catch(Exception e){return "Browser text";}}
+    private void links(){final ArrayList<String> urls=new ArrayList<String>(),labels=new ArrayList<String>();for(URLSpan span:document.getSpans(0,document.length(),URLSpan.class)){if(urls.size()>=150)break;try{String u=resolveLink(span);urls.add(u);labels.add(document.subSequence(document.getSpanStart(span),document.getSpanEnd(span)).toString()+"\n"+u);}catch(Exception e){try{String u=checked(span.getURL()).toString();urls.add(u);labels.add(u);}catch(Exception ignored){}}}
         list("Linkuri · "+urls.size(),labels,0,new Choice(){public void pick(int i){fetch(urls.get(i));}},"",null);back=new Runnable(){public void run(){display();}};
     }
     private JSONArray records(String key){try{return new JSONArray(getSharedPreferences("browser",0).getString(key,"[]"));}catch(JSONException e){return new JSONArray();}}
