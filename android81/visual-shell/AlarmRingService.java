@@ -29,7 +29,7 @@ public final class AlarmRingService extends Service {
             .setOngoing(true).addAction(new Notification.Action.Builder(null,"Oprește",stop).build()).build());
         if(!ringing) {
             ringing=true; wake=((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"Leo:alarm"); wake.acquire(190000);
-            try {
+            if(SoundSchedule.allowAlarm(this,intent==null?-1:intent.getIntExtra("alarm_id",-1))) try {
                 player=new MediaPlayer(); player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
                 player.setDataSource(this,RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)); player.setLooping(true); player.prepare(); player.start();
             } catch(Exception noFile) {

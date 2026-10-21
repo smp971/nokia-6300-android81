@@ -2,6 +2,8 @@
 
 21 octombrie 2026 · prima versiune numerotată a aplicațiilor: **0.1.0-dev / cod 1**.
 
+Etapa este inclusă acum și în pachetul **0.2.0-dev**: [Organizator Leo](LEO-ORGANIZER.md).
+
 **Stare: implementat și compilat pe PC. Instalarea și probele Android sunt în
  așteptare: Nokia nu este disponibil în ADB în această etapă.** Nu sunt publicate
 capturi noi pentru interfețe care nu au fost încă inspectate pe aparat.

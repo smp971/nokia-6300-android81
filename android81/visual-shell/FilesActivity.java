@@ -122,6 +122,7 @@ public final class FilesActivity extends LeoActivity {
             if(mime!=null&&mime.startsWith("image/")){startActivity(new Intent(this,GalleryActivity.class).setData(uri).putExtra("title",file.getName()));return;}
             if(mime!=null&&mime.startsWith("video/")){startActivity(new Intent(this,VideoActivity.class).setData(uri).putExtra("title",file.getName()));return;}
             if((mime!=null&&mime.startsWith("audio/"))||extension.equals("wma")){startActivity(new Intent(this,MediaActivity.class).setData(uri).putExtra("title",file.getName()));return;}
+            if(file.getName().toLowerCase(Locale.ROOT).endsWith(".ics")){startActivity(new Intent(this,CalendarToolsActivity.class).putExtra("file",file.getAbsolutePath()));return;}
             if(file.getName().endsWith(".leo-people.json")){startActivity(new Intent(this,PeopleBackupActivity.class).putExtra("file",file.getAbsolutePath()));return;}
             if(file.getName().endsWith(".leo-backup.json")){startActivity(new Intent(this,BackupActivity.class).putExtra("file",file.getAbsolutePath()));return;}
             view.setDataAndType(uri,mime==null?"application/octet-stream":mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

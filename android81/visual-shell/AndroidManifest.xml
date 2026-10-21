@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="1" android:versionName="0.1.0-dev">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="2" android:versionName="0.2.0-dev">
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -156,5 +156,9 @@
         <activity android:name=".QuickHomeActivity" android:exported="false" />
         <activity android:name=".FmActivity" android:exported="false" />
         <service android:name=".FmService" android:exported="false" />
+        <activity android:name=".CalendarToolsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".PlaylistEditorActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".SoundScheduleActivity" android:exported="false" android:screenOrientation="portrait" />
+        <receiver android:name=".SoundScheduleReceiver" android:exported="false" />
     </application>
 </manifest>

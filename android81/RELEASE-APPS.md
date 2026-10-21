@@ -1,8 +1,11 @@
-# Pachetul aplicațiilor Leo · 0.1.0-dev
+# Pachetul aplicațiilor Leo · 0.2.0-dev
 
 Acesta actualizează **Leo Visual și Leo Keypad** peste un port Leo Android 8.1
 existent. Nu este un ROM instalabil și nu conține boot/recovery, modem, dump,
 firmware proprietar sau datele utilizatorului.
+
+Versiunea 0.2.0-dev include și etapa 0.1.0-dev. Instalarea pe Nokia este încă în
+așteptarea conexiunii ADB; [stare și limite](LEO-ORGANIZER.md).
 
 ## Recompilare
 
@@ -35,14 +38,14 @@ folosită de proiect, pentru compatibilitatea actualizărilor.
 
 ## Rezultat și verificare
 
-`leo-apps-0.1.0-dev/` conține:
+`leo-apps-0.2.0-dev/` conține:
 
 - `leo-visual.apk` și `leo-keypad-ime.apk`;
 - `manifest.json`: versiune, țintă, dimensiuni/hash-uri, commit, starea arborelui,
   hash-urile surselor și ale intrărilor de build;
 - `install-app-bundle.py` și `README.txt`.
 
-Se produce și `leo-apps-0.1.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
+Se produce și `leo-apps-0.2.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
 extras, pe Windows sau Linux:
 
 ```bash

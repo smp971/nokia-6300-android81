@@ -27,8 +27,8 @@ public final class CalendarActivity extends LeoActivity {
     private void showMonth() {
         ++pageGeneration;month=true;loadDots(); begin("Calendar"); face=new MonthFace(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable() { public void run() {
-            options("Calendar",new String[]{"Eveniment nou","Azi","Agenda Leo"},new Choice() { public void pick(int i) {
-                if(i==0) edit(null); else if(i==1) { day.setTimeInMillis(System.currentTimeMillis()); showMonth(); } else events(true);
+            options("Calendar",new String[]{"Eveniment nou","Azi","Agenda Leo","Instrumente · săptămână, căutare, ICS"},new Choice() { public void pick(int i) {
+                if(i==3) startActivity(new Intent(CalendarActivity.this,CalendarToolsActivity.class)); else if(i==0) edit(null); else if(i==1) { day.setTimeInMillis(System.currentTimeMillis()); showMonth(); } else events(true);
             }});
         }};
         footer("Opțiuni","Ziua","Înapoi"); face.setFocusable(true); face.requestFocus();
