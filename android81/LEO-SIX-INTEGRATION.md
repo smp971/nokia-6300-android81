@@ -121,3 +121,22 @@ a listei înainte de marcarea cu 5, fără a aștepta callback-ul de desenare.
 Baza APK privilegiată a fost sincronizată, cu sistemul remontat doar pentru
 copiere și readus read-only. Nu s-au scris imagini boot/recovery și nu s-au
 schimbat drivere. Bufferul crash era gol la încheierea verificărilor.
+
+### Playerul muzical, în același stil
+
+Playerul Muzică Leo folosește acum aceleași suprafețe Material, copertă de
+76×76 în coordonate logice, titlu pe două rânduri, progres și comenzi vizibile
+ca Media curentă. Vizualizatorul FFT existent a fost păstrat, într-un card
+separat; continuă să folosească sesiunea playerului, fără captură de microfon.
+
+Comenzile anterioare rămân: OK redare/pauză, stânga/dreapta deplasare de 10 secunde,
+sus/jos volum, soft stânga Opțiuni și soft dreapta Bibliotecă. Au fost adăugate
+4 = piesa anterioară, 5 = redare/pauză, 6 = piesa următoare; apăsarea lungă
+nu repetă schimbarea piesei. Coada, shuffle, repeat și salvarea listelor folosesc
+în continuare serviciul existent. Nu s-au schimbat decodorul ori ruta audio.
+
+Extinderea `MediaDashboardTests` verifică cele două dashboard-uri și noul player:
+**9 verificări silențioase**, inclusiv împărțirea titlului lung, deschiderea
+playerului nativ și comenzile într-o sesiune goală. Captura nouă este demonstrativă,
+cu titlu fictiv și fără redare. Vizualizatorul activ și redarea reală nu au fost
+retestate fizic în această modificare vizuală.

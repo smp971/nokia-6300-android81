@@ -67,9 +67,9 @@ Capturile folosesc exclusiv date fictive; [funcții și limite](android81/LEO-SI
 „Media curentă” reunește Muzică și FM; capturile următoare sunt demonstrații vizuale,
 fără redare audio pornită de probă.
 
-| Media curentă · Muzică | Media curentă · FM |
-| :---: | :---: |
-| <img src="android81/screenshots/leo-material-music.png" width="180" alt="Dashboard muzical Material, demonstrație"> | <img src="android81/screenshots/leo-material-fm.png" width="180" alt="Dashboard FM Material, demonstrație"> |
+| Media curentă · Muzică | Player muzical | Media curentă · FM |
+| :---: | :---: | :---: |
+| <img src="android81/screenshots/leo-material-music.png" width="180" alt="Dashboard muzical Material, demonstrație"> | <img src="android81/screenshots/leo-material-player.png" width="180" alt="Player muzical Material, demonstrație fără redare"> | <img src="android81/screenshots/leo-material-fm.png" width="180" alt="Dashboard FM Material, demonstrație"> |
 
 ## Ce poți face deja
 
@@ -91,7 +91,7 @@ Limitele și scenariile rămase sunt indicate separat.
 | 🌐 **Conectivitate** | Date LTE pe SIM 1, Wi-Fi și hotspot cu Internet verificat de pe un alt telefon. Ambele SIM-uri sunt afișate și înregistrate pentru voce. |
 | 🔊 **Audio** | Difuzor, receptor, căști stereo cu fir și boxă Bluetooth A2DP. Bipuri pe boxă confirmate după integrarea modulului audio lipsă. |
 | 📳 **Vibrații** | Calea haptică audio KaiOS este activată: trei impulsuri confirmate fizic. API-ul Android este adaptat și verificat prin HAL/PCM; proprietățile și biblioteca se încarcă după reboot. |
-| 🎵 **Muzică** | Player cu vizualizator real și copertă; artiști, albume, liste salvate, coadă editabilă, shuffle/repeat persistente. Fișiere de probă MP3, FLAC, AAC, OGG și WMA v2 redate. |
+| 🎵 **Muzică** | Player Material în același stil cu Media curentă: copertă mare, titlu pe două rânduri, progres, comenzi 4/5/6 și vizualizator audio real; artiști, albume, liste salvate, coadă editabilă, shuffle/repeat persistente. Fișiere de probă MP3, FLAC, AAC, OGG și WMA v2 redate. |
 | 📻 **Radio FM** | Acordaj, căutare înainte/înapoi, canale scanate, favorite, căști/difuzor și nume RDS afișat, confirmate manual. |
 | 🎙️ **Reportofon** | Înregistrări AAC/M4A, pauză, salvare intern/SD, indicator care reacționează la voce și redenumire confirmată. |
 | 📂 **Fișiere și transfer** | Fișiere interne și SD, selecție multiplă cu `5`, căutare, sortare și spațiu disponibil; imagini deschise în Galeria Leo cu zoom și deplasare. Copiere/mutare verificate prin hash anterior; USB MTP confirmat. |
