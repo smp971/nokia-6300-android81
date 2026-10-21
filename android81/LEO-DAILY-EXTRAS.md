@@ -59,7 +59,8 @@ arhivă veche sunt păstrate la restaurare. Conturile, parolele, fișierele muzi
 APK-urile și mediile propriu-zise nu sunt incluse: favoritele sunt referințe la URI-uri
 sau componente Android și pot deveni indisponibile pe alt sistem.
 
-Categoriile selectabile sunt Aspect/Ceas, Favorite, Notițe, Tastatură și Calendar.
+Categoriile selectabile sunt Aspect/Ceas, Favorite, Notițe, Tastatură și Calendar. Categoria Notițe include
+și șabloanele SMS adăugate în [etapa următoare](LEO-COMFORT.md).
 Categoriile nebifate își păstrează valorile actuale. Arhiva de Contacte/SMS rămâne
 separată. Fișierele de backup sunt personale și necriptate.
 

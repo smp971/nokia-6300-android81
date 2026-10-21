@@ -24,7 +24,8 @@ public final class PhoneActivity extends LeoActivity {
     private final android.os.Handler matchHandler=new android.os.Handler();
     private final ArrayList<ContactMatch> phonebook=new ArrayList<ContactMatch>();
     private final ArrayList<ContactMatch> candidates=new ArrayList<ContactMatch>();
-    private static final class ContactMatch {String name,number,keys,digits;}
+    private static final class ContactMatch {String name,number,keys,digits,photo;long id;}
+    private final android.util.LruCache<String,Bitmap> contactImages=new android.util.LruCache<String,Bitmap>(12);private final java.util.HashSet<String> imagePending=new java.util.HashSet<String>();private int phonebookGeneration;
     private final Runnable findMatches=new Runnable(){public void run(){updateMatches();}};
 
     private LinearLayout favoriteRow;
@@ -45,7 +46,7 @@ public final class PhoneActivity extends LeoActivity {
     protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);dial(intentNumber(i));if(i.getBooleanExtra("history",false))switchPage(1);}
     protected void onResume(){super.onResume();network.start();loadPhonebook();if(page==0&&favoriteRow!=null){favoriteCards();loadRecent();}}
     protected void onPause(){network.stop();matchHandler.removeCallbacks(findMatches);super.onPause();}
-    protected void onDestroy(){generation++;super.onDestroy();}
+    protected void onDestroy(){generation++;phonebookGeneration++;super.onDestroy();}
     protected void onSaveInstanceState(Bundle state) {
         state.putString("number",number==null?draft:number.getText().toString());state.putInt("page",page);super.onSaveInstanceState(state);
     }
@@ -77,14 +78,14 @@ public final class PhoneActivity extends LeoActivity {
     private void dial(String initial) {
         page=0;generation++;draft=initial==null?"":initial;LinearLayout fields=fields("Telefon");
         fields.setPadding(dp(6),dp(6),dp(6),dp(4));networkText=null;
-        simChips=new TextView[2];for(int i=0;i<2;i++){TextView chip=text("",13);chip.setSingleLine();chip.setEllipsize(android.text.TextUtils.TruncateAt.END);chip.setGravity(Gravity.CENTER_VERTICAL);chip.setPadding(dp(7),0,dp(7),0);chip.setTextColor(i==0?0xff62e8cf:0xffc4a5ff);chip.setBackground(Appearance.surface(i==0?0xff183c38:0xff312344,dp(4)));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(26));lp.bottomMargin=dp(4);fields.addView(chip,lp);simChips[i]=chip;}updateSimChips();
+        simChips=new TextView[2];for(int i=0;i<2;i++){TextView chip=text("",13);chip.setSingleLine();chip.setEllipsize(android.text.TextUtils.TruncateAt.END);chip.setGravity(Gravity.CENTER_VERTICAL);chip.setPadding(dp(7),0,dp(7),0);chip.setTextColor(i==0?0xff62e8cf:0xffc4a5ff);chip.setBackground(Appearance.surface(Appearance.mix(palette.card,i==0?0xff62e8cf:0xffc4a5ff,.10f),dp(4)));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(26));lp.bottomMargin=dp(4);fields.addView(chip,lp);simChips[i]=chip;}updateSimChips();
         number=new EditText(this);number.setId(View.generateViewId());number.setInputType(InputType.TYPE_CLASS_PHONE);number.setSingleLine(true);
         number.setText(draft);number.setHint("Introdu numărul");number.setHintTextColor(0xffa8b6c9);
         number.setTextSize(23);number.setTextColor(Color.WHITE);number.setGravity(Gravity.CENTER);number.setPadding(dp(5),0,dp(5),0);
         number.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(32)});
         number.setBackground(PhoneTheme.focus(palette,palette.card));fields.addView(number,new LinearLayout.LayoutParams(-1,dp(46)));number.setSelection(number.length());
         matches=new Button(this);matches.setAllCaps(false);matches.setTextSize(13);matches.setTextColor(palette.accent);matches.setBackground(Appearance.fieldSurface(palette,dp(7)));matches.setVisibility(View.GONE);matches.setPadding(dp(5),0,dp(5),0);matches.setMinHeight(0);matches.setMinimumHeight(0);
-        matches.setOnClickListener(new View.OnClickListener(){public void onClick(View view){final ArrayList<ContactMatch> found=new ArrayList<ContactMatch>(candidates);ArrayList<String> labels=new ArrayList<String>();for(ContactMatch match:found)labels.add(match.name+"\n"+match.number);options("Contacte găsite",labels.toArray(new String[0]),new Choice(){public void pick(int i){number.setText(found.get(i).number);number.setSelection(number.length());number.requestFocus();}});}});fields.addView(matches,new LinearLayout.LayoutParams(-1,dp(38)));
+        matches.setOnClickListener(new View.OnClickListener(){public void onClick(View view){final ArrayList<ContactMatch> found=new ArrayList<ContactMatch>(candidates);ArrayList<String> labels=new ArrayList<String>();for(ContactMatch match:found)labels.add(match.name+"\n"+match.number);options("Contacte găsite",labels.toArray(new String[0]),new Choice(){public void pick(int i){number.setText(found.get(i).number);number.setSelection(number.length());number.requestFocus();}});}});fields.addView(matches,new LinearLayout.LayoutParams(-1,dp(52)));
         number.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence v,int st,int count,int after){}public void afterTextChanged(android.text.Editable v){if(localCode())return;matchHandler.removeCallbacks(findMatches);matchHandler.postDelayed(findMatches,120);}public void onTextChanged(CharSequence v,int start,int before,int count){}});
 
         favoriteRow=new LinearLayout(this);LinearLayout.LayoutParams favoritesLayout=new LinearLayout.LayoutParams(-1,dp(76));favoritesLayout.topMargin=dp(6);favoritesLayout.bottomMargin=dp(6);fields.addView(favoriteRow,favoritesLayout);favoriteCards();
@@ -98,26 +99,27 @@ public final class PhoneActivity extends LeoActivity {
     private boolean localCode(){if(number==null||!"*#06#".equals(number.getText().toString()))return false;number.setText("");showDeviceIds();return true;}
     private void showDeviceIds(){android.telephony.TelephonyManager phone=(android.telephony.TelephonyManager)getSystemService(TELEPHONY_SERVICE);ArrayList<String> rows=new ArrayList<String>();for(int slot=0;slot<2;slot++){String value=null;try{value=phone.getImei(slot);}catch(RuntimeException ignored){}rows.add("SIM "+(slot+1)+": "+(value==null||value.isEmpty()?"Indisponibil":value));}options("IMEI · dispozitiv",rows.toArray(new String[0]),new Choice(){public void pick(int i){}});}
     private void loadPhonebook(){
-        worker.execute(new Runnable(){public void run(){final ArrayList<ContactMatch> found=new ArrayList<ContactMatch>();
-            try(Cursor c=getContentResolver().query(android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,new String[]{"display_name","data1"},null,null,"display_name COLLATE LOCALIZED ASC")){
-                while(c!=null&&c.moveToNext()&&found.size()<1000){ContactMatch match=new ContactMatch();match.name=c.getString(0)==null?"Contact":c.getString(0);match.number=c.getString(1)==null?"":c.getString(1);match.keys=ContactKeys.t9(match.name);match.digits=ContactKeys.digits(match.number);if(!match.digits.isEmpty())found.add(match);}
-                ui(new Runnable(){public void run(){phonebook.clear();phonebook.addAll(found);if(page==0)updateMatches();}});
-            }catch(RuntimeException denied){ui(new Runnable(){public void run(){phonebook.clear();if(page==0)updateMatches();}});}
+        final int request=++phonebookGeneration;worker.execute(new Runnable(){public void run(){final ArrayList<ContactMatch> found=new ArrayList<ContactMatch>();
+            try(Cursor c=getContentResolver().query(android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,new String[]{"display_name","data1","contact_id","photo_thumb_uri"},null,null,"display_name COLLATE LOCALIZED ASC")){
+                while(c!=null&&c.moveToNext()&&found.size()<1000){ContactMatch match=new ContactMatch();match.name=c.getString(0)==null?"Contact":c.getString(0);match.number=c.getString(1)==null?"":c.getString(1);match.id=c.getLong(2);match.photo=c.getString(3);match.keys=ContactKeys.t9(match.name);match.digits=ContactKeys.digits(match.number);if(!match.digits.isEmpty())found.add(match);}
+                ui(new Runnable(){public void run(){if(request!=phonebookGeneration)return;phonebook.clear();phonebook.addAll(found);if(page==0)updateMatches();}});
+            }catch(RuntimeException denied){ui(new Runnable(){public void run(){if(request!=phonebookGeneration)return;phonebook.clear();if(page==0)updateMatches();}});}
         }});
     }
     private void updateMatches(){
         if(page!=0||number==null||matches==null)return;String query=ContactKeys.digits(number.getText().toString());candidates.clear();
-        if(query.length()>=2)for(ContactMatch contact:phonebook)if(contact.keys.contains(query)||contact.digits.contains(query)||PhoneNumberUtils.compare(contact.number,number.getText().toString())){candidates.add(contact);if(candidates.size()>=5)break;}
-        matches.setVisibility(candidates.isEmpty()?View.GONE:View.VISIBLE);
-        if(!candidates.isEmpty())matches.setText(candidates.get(0).name+(candidates.size()>1?" · "+candidates.size()+" potriviri":" · OK pentru contact"));
+        if(query.length()>=2){ArrayList<ContactMatch> found=new ArrayList<ContactMatch>();for(ContactMatch contact:phonebook)if(ContactKeys.rank(contact.name,contact.number,query)<4)found.add(contact);final String needle=query;java.util.Collections.sort(found,new java.util.Comparator<ContactMatch>(){public int compare(ContactMatch a,ContactMatch b){return Integer.compare(ContactKeys.rank(a.name,a.number,needle),ContactKeys.rank(b.name,b.number,needle));}});for(ContactMatch match:found){candidates.add(match);if(candidates.size()>=5)break;}}
+        matches.setVisibility(candidates.isEmpty()?View.GONE:View.VISIBLE);matches.setCompoundDrawables(null,null,null,null);
+        if(!candidates.isEmpty()){ContactMatch first=candidates.get(0);boolean exact=ContactKeys.rank(first.name,first.number,query)==0;matches.setText(first.name+"\n"+(exact?"Număr cunoscut · ":"")+(candidates.size()>1?candidates.size()+" potriviri · OK":"OK: alege contactul"));contactImage(first);}
     }
+    private void contactImage(final ContactMatch match){final String key=match.id+":"+match.photo;Bitmap cached=contactImages.get(key);android.graphics.drawable.Drawable art=cached==null?new AvatarArt(match.name,dp(36)):new android.graphics.drawable.BitmapDrawable(getResources(),cached);art.setBounds(0,0,dp(36),dp(36));matches.setCompoundDrawables(art,null,null,null);matches.setCompoundDrawablePadding(dp(5));if(cached==null&&match.photo!=null&&imagePending.add(key))worker.execute(new Runnable(){public void run(){Bitmap b=null;try{b=Appearance.decode(PhoneActivity.this,Uri.parse(match.photo),64);int side=Math.min(b.getWidth(),b.getHeight());if(b.getWidth()!=b.getHeight()){Bitmap square=Bitmap.createBitmap(b,(b.getWidth()-side)/2,(b.getHeight()-side)/2,side,side);if(square!=b)b.recycle();b=square;}}catch(Exception|OutOfMemoryError ignored){}final Bitmap image=b;runOnUiThread(new Runnable(){public void run(){imagePending.remove(key);if(isFinishing()||isDestroyed()){if(image!=null)image.recycle();return;}if(image!=null){contactImages.put(key,image);if(!candidates.isEmpty()&&candidates.get(0)==match&&page==0)contactImage(match);}}});}});}
     private void favoriteCards(){
         if(favoriteRow==null)return;favoriteRow.removeAllViews();final android.content.SharedPreferences prefs=getSharedPreferences("dialer-favorites",0);
         for(int i=0;i<3;i++){
             final int slot=i;String name=prefs.getString("name"+i,""),value=prefs.getString("number"+i,"");
             Button card=new Button(this);card.setText(value.isEmpty()?"Adaugă":name.isEmpty()?"Favorit "+(i+1):name);card.setTextSize(13);card.setAllCaps(false);card.setPadding(dp(3),dp(6),dp(3),dp(5));card.setGravity(Gravity.CENTER);card.setMaxLines(2);card.setEllipsize(android.text.TextUtils.TruncateAt.END);card.setMinimumWidth(0);card.setMinWidth(0);
             android.graphics.drawable.Drawable icon=new PhoneTheme.Avatar(slot,dp(28));card.setCompoundDrawables(null,icon,null,null);card.setCompoundDrawablePadding(dp(5));
-            card.setBackground(PhoneTheme.focus(palette,new int[]{0xff39213e,0xff223a36,0xff20384e}[slot]));
+            card.setBackground(PhoneTheme.focus(palette,Appearance.mix(palette.card,palette.accent,.08f+slot*.05f)));
             card.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_focused},new int[]{}},new int[]{palette.ink,Color.WHITE}));
             card.setContentDescription("Favorit "+(i+1)+" · "+(value.isEmpty()?"Adaugă contact":name));
             card.setOnClickListener(new View.OnClickListener(){public void onClick(View v){String value=prefs.getString("number"+slot,"");if(value.isEmpty())pickFavorite(slot);else{number.setText(value);number.setSelection(number.length());number.requestFocus();}}});

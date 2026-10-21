@@ -143,6 +143,11 @@
         <receiver android:name=".BatterySessionReceiver" android:exported="false">
             <intent-filter><action android:name="android.intent.action.ACTION_POWER_CONNECTED"/><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter>
         </receiver>
+        <activity android:name=".DeskClockActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ThemePacksActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".LyricsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".HelpActivity" android:exported="false" android:screenOrientation="portrait" />
+        <receiver android:name=".MusicSleepReceiver" android:exported="false" />
         <activity android:name=".QuickHomeActivity" android:exported="false" />
         <activity android:name=".FmActivity" android:exported="false" />
         <service android:name=".FmService" android:exported="false" />
