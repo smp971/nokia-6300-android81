@@ -39,11 +39,12 @@ public final class LeoFileProvider extends ContentProvider {
             while(relative.startsWith(File.separator)) relative=relative.substring(1);
             return new Uri.Builder().scheme("content").authority("ro.leo.visual.files").appendPath(root.getKey()).appendPath(relative).build();
         }
+        File cache=new File(c.getCacheDir(),"shared");if(inside(cache,file))return new Uri.Builder().scheme("content").authority("ro.leo.visual.files").appendPath("share").appendPath(file.getName()).build();
         throw new FileNotFoundException();
     }
     private File resolve(Uri uri) throws IOException {
         List<String> segments=uri.getPathSegments(); if(segments.size()!=2) throw new FileNotFoundException();
-        File base=roots(getContext()).get(segments.get(0)); if(base==null) throw new FileNotFoundException();
+        File base=segments.get(0).equals("share")?new File(getContext().getCacheDir(),"shared"):roots(getContext()).get(segments.get(0)); if(base==null) throw new FileNotFoundException();
         File file=new File(base,segments.get(1)); if(!inside(base,file)) throw new FileNotFoundException(); return file;
     }
     public boolean onCreate() { return true; }

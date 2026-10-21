@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
-SRC=/root/android81-leo/src
-BUILD="$(mktemp -d /root/android81-leo/visual-shell-build.XXXXXX)"
-JAVA=/usr/lib/jvm/java-8-openjdk-amd64/bin
+SRC="${LEO_AOSP_ROOT:-/root/android81-leo/src}"
+BUILD="$(mktemp -d "${TMPDIR:-/tmp}/leo-visual-build.XXXXXX")"
+JAVA="${LEO_JAVA_HOME:-/usr/lib/jvm/java-8-openjdk-amd64}/bin"
 VCARD="$SRC/out/target/common/obj/JAVA_LIBRARIES/com.android.vcard_intermediates/classes.jar"
 test -f "$VCARD"
 mkdir -p "$BUILD/classes"

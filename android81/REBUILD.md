@@ -12,6 +12,13 @@ instalabil, iar sistemul folosit pe telefon include componente proprietare din
 dump-ul original. O recompilare nu înseamnă că imaginile rezultate pot fi scrise
 direct pe partiții. Nicio comandă din `repro/` nu folosește ADB și nu flashează.
 
+## Recompilarea numai a aplicațiilor Leo
+
+Există un [generator de pachet numerotat](RELEASE-APPS.md), cu preflight, două APK-uri,
+manifest SHA-256 și instalator explicit. Scripturile aplicațiilor acceptă acum
+`LEO_AOSP_ROOT` și `LEO_JAVA_HOME`; valorile implicite rămân cele de mai jos.
+Acesta nu înlocuiește pregătirea arborelui AOSP și nu construiește un ROM complet.
+
 ## Mediul utilizat
 
 Build-urile actuale rulează în WSL/Linux x86-64, Ubuntu 22.04.5, cu Git 2.34.1,

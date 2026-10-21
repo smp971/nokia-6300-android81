@@ -30,16 +30,19 @@ public final class AppSettingsActivity extends LeoActivity {
         try{
             final PackageInfo info=getPackageManager().getPackageInfo(name,PackageManager.GET_PERMISSIONS);current=name;
             String label=info.applicationInfo.loadLabel(getPackageManager()).toString();
-            list(label,Arrays.asList("Deschide","Permisiuni · vezi starea","Modifică permisiuni (Android)","Informații pachet","Detalii Android"),0,new Choice(){public void pick(int i){
-                if(i==0){Intent intent=getPackageManager().getLaunchIntentForPackage(name);if(intent==null)notice("Pachet fără ecran de lansare");else startActivity(intent);}
+            list(label,Arrays.asList("Deschide","Permisiuni · vezi starea","Modifică permisiuni (Android)","Informații pachet","Detalii Android","Dezinstalează","Spațiu aplicație (Android)"),0,new Choice(){public void pick(int i){
+                if(i==5){if((info.applicationInfo.flags&ApplicationInfo.FLAG_SYSTEM)!=0||name.equals(getPackageName())||name.equals("ro.leo.keypad")){notice("Pachet de sistem sau componentă Leo protejată");return;}options("Dezinstalezi "+name+"?",new String[]{"Păstrează","Continuă în Android"},new Choice(){public void pick(int n){if(n==1)try{startActivity(new Intent(Intent.ACTION_UNINSTALL_PACKAGE,Uri.parse("package:"+name)));}catch(RuntimeException e){notice("Dezinstalarea nu este disponibilă");}}});}
+                else if(i==6)androidDetails(name);
+                else if(i==0){Intent intent=getPackageManager().getLaunchIntentForPackage(name);if(intent==null)notice("Pachet fără ecran de lansare");else startActivity(intent);}
                 else if(i==1)permissions(info);
                 else if(i==2){try{startActivity(new Intent("android.intent.action.MANAGE_APP_PERMISSIONS").putExtra("android.intent.extra.PACKAGE_NAME",name));}catch(RuntimeException missing){androidDetails(name);}}
-                else if(i==3)page("Informații pachet",name+"\nVersiune · "+info.versionName+" ("+info.versionCode+")\n"+((info.applicationInfo.flags&ApplicationInfo.FLAG_SYSTEM)!=0?"Aplicație de sistem":"Aplicație utilizator")+"\nAPK · "+android.text.format.Formatter.formatFileSize(AppSettingsActivity.this,new java.io.File(info.applicationInfo.sourceDir).length()));
+                else if(i==3)page("Informații pachet",name+"\nVersiune · "+info.versionName+" ("+info.versionCode+")\n"+((info.applicationInfo.flags&ApplicationInfo.FLAG_SYSTEM)!=0?"Aplicație de sistem":"Aplicație utilizator")+"\nAPK · "+android.text.format.Formatter.formatFileSize(AppSettingsActivity.this,codeBytes(info.applicationInfo)));
                 else androidDetails(name);
             }},"",null);
             back=new Runnable(){public void run(){load();}};
         }catch(PackageManager.NameNotFoundException gone){notice("Aplicația nu mai este instalată");load();}
     }
+    static long codeBytes(ApplicationInfo a){long total=new java.io.File(a.sourceDir).length();if(a.splitSourceDirs!=null)for(String path:a.splitSourceDirs)total+=new java.io.File(path).length();return total;}
     private void androidDetails(String name){try{startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+name)));}catch(RuntimeException missing){notice("Pagina Android este indisponibilă");}}
     private void permissions(PackageInfo info){
         StringBuilder lines=new StringBuilder();

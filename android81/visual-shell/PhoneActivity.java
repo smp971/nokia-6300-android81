@@ -161,7 +161,7 @@ public final class PhoneActivity extends LeoActivity {
                 while(c!=null && c.moveToNext() && labels.size()<100) {
                     String p=c.getString(0),name=c.getString(1); int type=c.getInt(3);
                     if(type==CallLog.Calls.MISSED_TYPE)missedDates.add(c.getLong(2));
-                    boolean allowed=c.getInt(5)==TelecomManager.PRESENTATION_ALLOWED;numbers.add(allowed?p:""); labels.add((!allowed?"Număr privat":name==null || name.isEmpty()?p:name)+"\n"+(type==CallLog.Calls.OUTGOING_TYPE?"Ieșit":type==CallLog.Calls.MISSED_TYPE?"Pierdut":"Primit")+" · "+accountSlot(c.getString(4))+" · "+date.format(new Date(c.getLong(2))));
+                    String only=getIntent().getStringExtra("history_number");if(only!=null&&!PhoneNumberUtils.compare(only,p))continue;boolean allowed=c.getInt(5)==TelecomManager.PRESENTATION_ALLOWED;numbers.add(allowed?p:""); labels.add((!allowed?"Număr privat":name==null || name.isEmpty()?p:name)+"\n"+(type==CallLog.Calls.OUTGOING_TYPE?"Ieșit":type==CallLog.Calls.MISSED_TYPE?"Pierdut":"Primit")+" · "+accountSlot(c.getString(4))+" · "+date.format(new Date(c.getLong(2))));
                 }
                 ui(new Runnable() { public void run() {
                     if(token!=generation)return;long through=0;

@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 21 octombrie 2026** · [Leo pentru fiecare zi](android81/LEO-COMFORT.md) · [Acces rapid și unelte personale](android81/LEO-DAILY-EXTRAS.md) · [Aplicațiile zilnice Material](android81/LEO-DAILY-POLISH.md) · [Integrare Leo · șase funcții](android81/LEO-SIX-INTEGRATION.md) · [Cinci aplicații îmbunătățite](android81/LEO-FIVE-APPS.md) · [Carduri Home și vibrații](android81/LEO-HOME-HAPTICS.md) · [Ceas și Meteo](android81/LEO-CLOCK-WEATHER.md) · [Telefon Leo Night](android81/LEO-NATIVE-PHONE.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
+**Actualizat: 21 octombrie 2026** · [Fluxuri noi · pregătite pentru testare](android81/LEO-PROJECT-FLOWS.md) · [Leo pentru fiecare zi](android81/LEO-COMFORT.md) · [Acces rapid și unelte personale](android81/LEO-DAILY-EXTRAS.md) · [Aplicațiile zilnice Material](android81/LEO-DAILY-POLISH.md) · [Integrare Leo · șase funcții](android81/LEO-SIX-INTEGRATION.md) · [Cinci aplicații îmbunătățite](android81/LEO-FIVE-APPS.md) · [Carduri Home și vibrații](android81/LEO-HOME-HAPTICS.md) · [Ceas și Meteo](android81/LEO-CLOCK-WEATHER.md) · [Telefon Leo Night](android81/LEO-NATIVE-PHONE.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
 
 [Ce funcționează](#ce-poți-face-deja) · [Capturi](#leo-în-imagini) ·
 [Audit](#auditul-proiectului) · [Ce urmează](#ce-mai-avem-de-construit) ·
@@ -101,6 +101,14 @@ rapid și șabloane, ceas de birou, colecții vizuale și versuri locale.
 | **Colecție · previzualizare** | **Versuri locale originale** | **Ajutor · taste** |
 | <img src="android81/screenshots/leo-comfort-themes.png" width="180" alt="Previzualizare Nordic"> | <img src="android81/screenshots/leo-comfort-lyrics.png" width="180" alt="Versuri originale de probă"> | <img src="android81/screenshots/leo-comfort-help.png" width="180" alt="Harta tastelor Home"> |
 
+**Etapă nouă · compilată, încă neinstalată pe Nokia:** Fișiere cu miniaturi și
+progres, partajare nativă comună, grupe/aniversări, carduri Home configurabile,
+previzualizare APK și pachet versionat **0.1.0-dev**.
+[Implementare și ce rămâne de verificat](android81/LEO-PROJECT-FLOWS.md) ·
+[Recompilare și pachet](android81/RELEASE-APPS.md).
+Cele 15 verificări offline au trecut; probele Android așteaptă conexiunea ADB.
+Nu există capturi noi pentru această etapă încă neinspectată pe aparat.
+
 ## Ce poți face deja
 
 **Home cu informații utile:** carduri opționale, fără servicii noi de polling.
@@ -152,7 +160,7 @@ confirmarea unei funcții se bazează pe proba ei separată.
 | **Interfața Leo** | Shell nativ adaptat la taste, cu un set consistent de aplicații | Home, bare softkey, T9 și meniuri comune. Serviciul tastelor era legat la procesul curent. Recuperarea sa limitată este implementată; eliminarea tuturor blocajelor nu este demonstrată. |
 | **Telefonie** | Funcțiile de bază au rezultate reale, cu acoperire incompletă | Apel primit și două apeluri inițiate bidirecționale, SMS și LTE pe SIM 1. SIM 2, DTMF și IMS au nevoie de probe distincte. [Probe noi](android81/STABILITY-PHONE-20261020.md). |
 | **Media** | Una dintre zonele cele mai avansate ale portului | Muzică, căști, FM/RDS și A2DP au confirmări reale. Modulul A2DP este încărcat în politica audio. Microfonul Bluetooth, apelurile prin accesorii și toate variantele de codec nu sunt validate. |
-| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | Inventar actualizat: 129 fișiere Java în shell, plus 29 fișiere Java de probe; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
+| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | Inventar actualizat: 136 fișiere Java în shell, plus 31 fișiere Java de probe Android și un fișier Java host; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
 | **Recompilare** | Există o bază reproductibilă documentată, încă netestată integral pe un PC curat | Toate cele **590 de proiecte AOSP** din manifest au revizii SHA fixate. Arborele AOSP, dump-ul și componentele proprietare necesare sunt intrări separate. |
 | **Verificare automată** | Există teste locale și probe pe telefon; lipsește încă o rulare continuă centralizată | Testele cozii muzicale au trecut în ultima etapă. Alte rezultate sunt legate în documentație. Repository-ul nu are workflow-uri GitHub Actions; suita completă nu a fost rerulată în acest audit. |
 | **Livrare și mentenanță** | Proiect de dezvoltare, încă fără release pentru instalare generală | Scripturile depind de mediul local și includ verificări pentru aparatul de dezvoltare. Lipsesc încă o procedură completă de release și un fișier LICENSE la rădăcină. |
@@ -229,6 +237,8 @@ android81/
 | --- | --- |
 | Sursele și recompilarea | [REBUILD](android81/REBUILD.md), [configurația dispozitivului](android81/device/nokia/leo/) |
 | Stabilitate și apeluri inițiate | [Probe SIM 1, întreruperea USB și DeskClock](android81/STABILITY-PHONE-20261020.md) |
+| Fluxuri noi · în așteptarea probelor Android | [Fișiere, partajare, contacte, Home și aplicații](android81/LEO-PROJECT-FLOWS.md) |
+| Pachet aplicații numerotat | [Release apps, manifest și verificare](android81/RELEASE-APPS.md) |
 | Leo pentru fiecare zi | [Telefon, SMS, ceas de birou, colecții, LRC și ajutor](android81/LEO-COMFORT.md) |
 | Acces rapid și unelte personale | [Ceas, Notițe, Galerie, Backup și Stocare](android81/LEO-DAILY-EXTRAS.md) |
 | Șase rafinări zilnice | [Home, notificări, T9, stil flat și măsurări](android81/LEO-DAILY-REFINEMENTS.md) |

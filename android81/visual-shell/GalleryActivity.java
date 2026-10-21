@@ -53,7 +53,8 @@ public final class GalleryActivity extends LeoActivity {
         }});
     }
     private void stopSlides(){slideshow=false;slides.removeCallbacks(advance);}
-    private void share(){if(images.isEmpty())return;stopSlides();Uri uri=images.get(selected);Intent send=new Intent(Intent.ACTION_SEND).setType("image/*").putExtra(Intent.EXTRA_STREAM,uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);send.setClipData(ClipData.newRawUri("Imagine",uri));try{startActivity(Intent.createChooser(send,"Trimite imaginea · Bluetooth dacă este disponibil"));}catch(RuntimeException e){notice("Nicio aplicație pentru partajare");}}
+    private void share(){if(images.isEmpty())return;stopSlides();ShareHubActivity.send(this,images.get(selected),"image/*",names.get(selected));}
+
     private void imageOptions() {
         stopSlides();
         options("Imagine",new String[]{"Deschide","Fundal Leo","Reîncarcă galeria","Informații imagine","Imaginea anterioară","Imaginea următoare","Slideshow","Interval slideshow","Rotește 90°","Partajează imaginea"},new Choice() { public void pick(int i) {

@@ -184,9 +184,9 @@ public final class NotesActivity extends Activity {
         if(readFailed)return;
         if(shown.isEmpty()){search();return;}
         final Note target=shown.get(selected);
-        new KeypadDialog(this,"Notiță",new String[]{"Deschide", "Șterge",target.pinned?"Desprinde":"Fixează sus","Caută text / T9","Exportă text","Arată toate"},new KeypadDialog.Action() {
+        new KeypadDialog(this,"Notiță",new String[]{"Deschide", "Șterge",target.pinned?"Desprinde":"Fixează sus","Caută text / T9","Exportă text","Arată toate","Partajează notița"},new KeypadDialog.Action() {
             public void select(int choice) {
-                if(choice==0) open(selected);
+                if(choice==6){try{ShareHubActivity.send(NotesActivity.this,ShareHubActivity.textFile(NotesActivity.this,target.body),"text/plain",title(target.body));}catch(Exception e){toast("Partajarea nu a putut fi pregătită");}}else if(choice==0) open(selected);
                 else if(choice==2){target.pinned=!target.pinned;if(!write(notes))target.pinned=!target.pinned;showList();}
                 else if(choice==3)search();
                 else if(choice==4)exportNote(target);

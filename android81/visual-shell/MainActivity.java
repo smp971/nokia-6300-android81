@@ -25,7 +25,7 @@ import java.util.Locale;
 /** Native HOME artwork and keypad layout; uses Android phone services. */
 public final class MainActivity extends Activity {
     private Screen screen;
-    private boolean offeredSetup;
+    private boolean offeredSetup;private boolean homeVisible;private int favoriteGeneration;private final java.util.concurrent.ExecutorService favoriteWorker=java.util.concurrent.Executors.newSingleThreadExecutor();
     private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.reloadCards();screen.invalidate();}};
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){screen.reloadAppearance();screen.reloadCards();}};
     private int speedKey=-1;
@@ -61,7 +61,7 @@ public final class MainActivity extends Activity {
         for(String name:new String[]{"appearance","weather","alarms"})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
         if(!offeredSetup&&!KeypadLockActivity.locked(this)&&!getSharedPreferences("setup",0).getBoolean("complete",false)){offeredSetup=true;startActivity(new Intent(this,SetupWizardActivity.class));}
         screen.reloadAppearance();
-        screen.reloadCards();
+        screen.reloadCards();homeVisible=true;loadHomeFavorites();
         if(KeypadLockActivity.locked(this)) startActivity(new Intent(this,KeypadLockActivity.class));
         subscriptions = (SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE);
         try { subscriptions.addOnSubscriptionsChangedListener(subscriptionListener); }
@@ -69,13 +69,15 @@ public final class MainActivity extends Activity {
         listenToPhones();
         handler.removeCallbacks(clock); handler.post(clock);
     }
-    protected void onPause() {
+    protected void onPause() {homeVisible=false;favoriteGeneration++;
         handler.removeCallbacks(clock);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
         for(String name:new String[]{"appearance","weather","alarms"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();
         super.onPause();
     }
+    protected void onDestroy(){favoriteWorker.shutdownNow();super.onDestroy();}
+    private void loadHomeFavorites(){if(!getSharedPreferences("appearance",0).getBoolean("home-favorites",false)){screen.favorites=new HomeFavorites.Entry[0];return;}final int request=++favoriteGeneration;favoriteWorker.execute(new Runnable(){public void run(){final HomeFavorites.Entry[] found=HomeFavorites.load(MainActivity.this);runOnUiThread(new Runnable(){public void run(){if(!homeVisible||request!=favoriteGeneration)return;screen.favorites=found;screen.favoriteIndex=Math.min(screen.favoriteIndex,Math.max(0,found.length-1));screen.reloadCards();screen.invalidate();}});}});}
     private void stopPhoneListeners() {
         for (int i=0;i<phones.size();i++) {
             try { phones.get(i).listen(phoneListeners.get(i), PhoneStateListener.LISTEN_NONE); }
@@ -119,6 +121,7 @@ public final class MainActivity extends Activity {
     public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){boolean quick=key==KeyEvent.KEYCODE_5&&speedKey==key;handler.removeCallbacks(speed);speedKey=-1;if(quick)startActivity(new Intent(this,QuickHomeActivity.class));return true;}return super.onKeyUp(key,event);}
     public boolean onKeyDown(int key, KeyEvent event) {
+        if(!screen.grid&&screen.shortcut>=4&&screen.cards.length>0){int type=screen.cards[screen.cardIndex].type;if((type==2||type==3)&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(event.getRepeatCount()==0){if(type==3){if(key==KeyEvent.KEYCODE_5)screen.openCard();else if(screen.favorites.length>0){screen.favoriteIndex=CircularNavigation.step(screen.favoriteIndex,key==KeyEvent.KEYCODE_4?-1:1,screen.favorites.length);screen.reloadCards();screen.invalidate();}}else{PlaybackService s=PlaybackService.instance;if(s!=null&&(s.playing()||!FmService.playing)){if(key==KeyEvent.KEYCODE_5)s.toggle();else s.next(key==KeyEvent.KEYCODE_6);}else if(FmService.playing){if(key==KeyEvent.KEYCODE_5)stopService(new Intent(this,FmService.class));else if(FmService.instance!=null)FmService.instance.seek(key==KeyEvent.KEYCODE_6);}screen.reloadCards();screen.invalidate();}}return true;}}
         if(!screen.grid&&key==KeyEvent.KEYCODE_1){if(event.getRepeatCount()==0)startActivity(new Intent(this,GlobalSearchActivity.class));return true;}
         if(!screen.grid&&key==KeyEvent.KEYCODE_0){if(event.getRepeatCount()==0)startActivity(new Intent(this,NowPlayingActivity.class));return true;}
         if(!screen.grid&&key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9){if(event.getRepeatCount()==0){speedKey=key;handler.postDelayed(speed,650);}return true;}
@@ -192,9 +195,9 @@ public final class MainActivity extends Activity {
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
         int shortcut=-1;
-        HomeCards.Card[] cards=new HomeCards.Card[0];int cardIndex;
-        void reloadCards(){HomeCards.Card[] next=HomeCards.read(MainActivity.this,System.currentTimeMillis());boolean changed=!HomeCards.signature(cards).equals(HomeCards.signature(next));cards=next;cardIndex=Math.min(cardIndex,Math.max(0,cards.length-1));if(shortcut>=4+cards.length)shortcut=-1;if(changed&&!grid)invalidate();}
-        void openCard(){if(cards.length==0)return;int type=cards[cardIndex].type;Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
+        HomeFavorites.Entry[] favorites=new HomeFavorites.Entry[0];int favoriteIndex;HomeCards.Card[] cards=new HomeCards.Card[0];int cardIndex;
+        void reloadCards(){HomeCards.Card[] next=HomeCards.read(MainActivity.this,System.currentTimeMillis());for(int n=0;n<next.length;n++)if(next[n].type==3&&favorites.length>0){HomeFavorites.Entry f=favorites[Math.min(favoriteIndex,favorites.length-1)];next[n]=new HomeCards.Card(3,"Favorit · "+(favoriteIndex+1)+" / "+favorites.length,f.name,"4 / 6 schimbă · OK deschide");}boolean changed=!HomeCards.signature(cards).equals(HomeCards.signature(next));cards=next;cardIndex=Math.min(cardIndex,Math.max(0,cards.length-1));if(shortcut>=4+cards.length)shortcut=-1;if(changed&&!grid)invalidate();}
+        void openCard(){if(cards.length==0)return;int type=cards[cardIndex].type;if(type==3){if(favorites.length>0)startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("contact_id",favorites[favoriteIndex].id));else startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
         int[] shortcuts={0,2,6,22};
         int[] order=AppCatalog.parse("");
         float textScale=1f;
@@ -373,7 +376,7 @@ public final class MainActivity extends Activity {
                 }
                 if(showUnread){if(!cardLayout)round(output,12,158,228,187,4,wallpaper==null?palette.card:0xcc111827);
                 text(output,UnreadState.label(),120,cardLayout?149:177,cardLayout?10:12,Color.WHITE,Paint.Align.CENTER);}
-                if(cardLayout){HomeCards.Card card=cards[cardIndex];round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>205)main=main.substring(0,main.length()-2)+"…";text(output,main,120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>205)detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,120,204,10,0xffe2dbea,Paint.Align.CENTER);}
+                if(cardLayout){HomeCards.Card card=cards[cardIndex];round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(card.type==3?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,card.type==3?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(card.type==3?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,card.type==3?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);}
                 for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;
                     if(shortcut==i)round(output,x-26,cardLayout?216:196,x+26,cardLayout?256:251,4,palette.card);

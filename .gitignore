@@ -15,6 +15,13 @@
 !/android81/*.c
 !/android81/VibrationAudioProbe.java
 !/android81/*.md
+!/android81/release-version.json
+!/android81/host-tests/
+/android81/host-tests/*
+!/android81/host-tests/*.java
+!/android81/tests/
+/android81/tests/*
+!/android81/tests/test_app_bundle.py
 !/android81/repro/
 !/android81/audio-abi/
 !/android81/app-tests/

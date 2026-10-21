@@ -1,0 +1,6 @@
+package ro.leo.visual;
+import android.app.Activity;import android.content.*;import android.net.Uri;import android.os.Bundle;import java.io.*;
+/** Test-only external UID target; disables itself after consuming a synthetic fixture. */
+public final class ShareProbeActivity extends Activity {
+ public void onCreate(Bundle b){super.onCreate(b);boolean read=false,write=false;Uri uri=getIntent().getParcelableExtra(Intent.EXTRA_STREAM);try(InputStream in=getContentResolver().openInputStream(uri)){ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] data=new byte[1024];int n;while((n=in.read(data))>0&&bytes.size()<4096)bytes.write(data,0,n);read=new String(bytes.toByteArray(),"UTF-8").equals("LEO LOCAL SHARE FIXTURE");}catch(Exception ignored){}try{android.os.ParcelFileDescriptor fd=getContentResolver().openFileDescriptor(uri,"w");write=fd!=null;if(fd!=null)fd.close();}catch(Exception ignored){}sendBroadcast(new Intent("ro.leo.visual.LOCAL_SHARE_PROBE").setPackage("ro.leo.visual").putExtra("read",read).putExtra("write",write));getPackageManager().setComponentEnabledSetting(new ComponentName(this,ShareProbeActivity.class),android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,android.content.pm.PackageManager.DONT_KILL_APP);finish();}
+}

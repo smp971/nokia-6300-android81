@@ -11,12 +11,13 @@ import java.nio.charset.*;
 import java.util.*;
 
 public final class FilesActivity extends LeoActivity {
+    private int browseGeneration;private boolean busy;private String artworkTitle="";private final RowArtwork artwork=new RowArtwork(this);
     private File base,current;private int focused,sort;private LinearLayout listing;
     private File selected;private final LinkedHashSet<File> marked=new LinkedHashSet<File>();private final ArrayList<File> clipboard=new ArrayList<File>();private File sourceBoundary;private boolean cut;
     private final ArrayList<File> entries=new ArrayList<File>();
     protected void onCreate(Bundle state) { super.onCreate(state);sort=getSharedPreferences("files-ui",0).getInt("sort",0);String folder=getIntent().getStringExtra("folder");if(folder!=null){try{File target=new File(folder);for(File candidate:LeoFileProvider.roots(this).values())if(LeoFileProvider.inside(candidate,target)&&target.isDirectory()){base=candidate;browse(target);return;}}catch(IOException ignored){}}locations(); }
     private void locations() {
-        base=null; current=null; selected=null;marked.clear();
+        browseGeneration++;base=null; current=null; selected=null;marked.clear();
         final ArrayList<File> values=new ArrayList<File>(); ArrayList<String> labels=new ArrayList<String>();
         for(Map.Entry<String,File> root:LeoFileProvider.roots(this).entrySet()) {
             values.add(root.getValue()); labels.add((root.getKey().equals("phone")?"Memorie telefon":root.getKey().equals("leo")?"Documente Leo":"Card SD")+"\nLiber · "+android.text.format.Formatter.formatFileSize(this,root.getValue().getUsableSpace()));
@@ -29,18 +30,19 @@ public final class FilesActivity extends LeoActivity {
     private void browse(final File directory) {
         try { if(base==null || !LeoFileProvider.inside(base,directory) || !directory.isDirectory()) { notice("Stocare indisponibilă"); return; } }
         catch(IOException invalid) { notice("Locație invalidă"); return; }
+        final int request=++browseGeneration;final File boundary=base;
         if(!directory.equals(current))focused=0;current=directory; selected=null;
         worker.execute(new Runnable() { public void run() {
             File[] contents=directory.listFiles(); final ArrayList<File> found=new ArrayList<File>();
             if(contents!=null) for(File file:contents) {
-                try { if(LeoFileProvider.inside(base,file) && !file.getName().startsWith(".leo-")) found.add(file); } catch(IOException ignored) { }
+                try { if(LeoFileProvider.inside(boundary,file) && !file.getName().startsWith(".leo-")) found.add(file); } catch(IOException ignored) { }
             }
             Collections.sort(found,new Comparator<File>() { public int compare(File a,File b) { if(a.isDirectory()!=b.isDirectory()) return a.isDirectory()?-1:1; return sort==1?Long.compare(b.lastModified(),a.lastModified()):sort==2?Long.compare(b.length(),a.length()):a.getName().compareToIgnoreCase(b.getName()); } });
             final boolean inaccessible=contents==null;
             ui(new Runnable() { public void run() {
-                entries.clear(); entries.addAll(found); ArrayList<String> labels=new ArrayList<String>();
+                if(request!=browseGeneration)return;entries.clear(); entries.addAll(found); ArrayList<String> labels=new ArrayList<String>();
                 for(File file:found) labels.add((marked.contains(file)?"✓ ":file.isDirectory()?"▸ ":"")+file.getName()+(file.isDirectory()?"":"\n"+file.length()+" octeți"));
-                list(directory.equals(base)?"Fișiere":directory.getName(),labels,Math.min(focused,Math.max(0,found.size()-1)),new Choice() { public void pick(int i) {
+                artworkTitle=directory.equals(base)?"Fișiere":directory.getName();list(artworkTitle,labels,Math.min(focused,Math.max(0,found.size()-1)),new Choice() { public void pick(int i) {
                     selected=entries.get(i); if(selected.isDirectory()) browse(selected); else fileOptions(selected);
                 } },"Opțiuni",new Runnable() { public void run() { directoryOptions(); } });listing=root;if(!entries.isEmpty())selected=entries.get(Math.min(focused,entries.size()-1));
                 back=new Runnable() { public void run() { if(directory.equals(base)) locations(); else browse(directory.getParentFile()); } };
@@ -58,7 +60,7 @@ public final class FilesActivity extends LeoActivity {
     }
     private void selection(){options("Selecție · "+marked.size(),new String[]{"Copiază selecția","Mută selecția","Anulează marcajele"},new Choice(){public void pick(int i){if(i==2){marked.clear();browse(current);}else prepareTransfer(new ArrayList<File>(marked),i==1);}});}
     private void prepareTransfer(List<File> files,boolean move){if(files.isEmpty()){notice("Marchează întâi fișierele");return;}clipboard.clear();clipboard.addAll(files);sourceBoundary=base;cut=move;locations();notice("Alege destinația, apoi Opțiuni → Lipește aici. Numele existente nu sunt suprascrise.");}
-    private void paste(){if(clipboard.isEmpty()){notice("Niciun fișier de lipit");return;}final File from=sourceBoundary,to=base,folder=current;final ArrayList<File> files=new ArrayList<File>(clipboard);final boolean move=cut;options((move?"Muți ":"Copiezi ")+files.size()+" fișiere aici?",new String[]{"Anulează","Continuă"},new Choice(){public void pick(int yes){if(yes!=1)return;begin("Transfer fișiere");root.addView(text("Se copiază și se verifică…",18));footer("","","Înapoi");back=new Runnable(){public void run(){notice("Transfer în curs");}};worker.execute(new Runnable(){public void run(){int ok=0;String problem="";for(File f:files)try{FileTransfers.transfer(from,f,to,folder,move);ok++;}catch(IOException e){problem=e.getMessage();}final int count=ok;final String error=problem;ui(new Runnable(){public void run(){clipboard.clear();browse(folder);notice(count+" / "+files.size()+" finalizate"+(error.isEmpty()?"":" · "+error));}});}});}});}
+    private void paste(){if(clipboard.isEmpty()){notice("Niciun fișier de lipit");return;}final File from=sourceBoundary,to=base,folder=current;final ArrayList<File> files=new ArrayList<File>(clipboard);final boolean move=cut;options((move?"Muți ":"Copiezi ")+files.size()+" fișiere aici?",new String[]{"Anulează","Continuă"},new Choice(){public void pick(int yes){if(yes!=1)return;busy=true;begin("Transfer fișiere");final TextView progressText=text("Se copiază și se verifică…",18);root.addView(progressText);final ProgressBar progressBar=new ProgressBar(FilesActivity.this,null,android.R.attr.progressBarStyleHorizontal);progressBar.setMax(100);root.addView(progressBar);footer("","","Înapoi");back=new Runnable(){public void run(){notice("Transfer în curs");}};worker.execute(new Runnable(){public void run(){int ok=0;String problem="";for(File f:files)try{final int index=ok;final String name=f.getName();FileTransfers.transfer(from,f,to,folder,move,new FileTransfers.Progress(){long last;public void update(final long done,final long total,final String phase){long now=android.os.SystemClock.elapsedRealtime();if(done!=total&&now-last<160)return;last=now;ui(new Runnable(){public void run(){progressText.setText((index+1)+" / "+files.size()+" · "+name+"\n"+phase+" · "+android.text.format.Formatter.formatFileSize(FilesActivity.this,done)+" / "+android.text.format.Formatter.formatFileSize(FilesActivity.this,total));progressBar.setProgress(total<=0?0:(int)Math.min(100,done*100/total));}});}});ok++;}catch(IOException e){problem=e.getMessage();}final int count=ok;final String error=problem;ui(new Runnable(){public void run(){busy=false;clipboard.clear();browse(folder);notice(count+" / "+files.size()+" finalizate"+(error.isEmpty()?"":" · "+error));}});}});}});}
     private void search() {
         final File boundary=base, previous=current;
         LinearLayout panel=fields("Caută fișiere");
@@ -97,7 +99,8 @@ public final class FilesActivity extends LeoActivity {
         back=new Runnable() { public void run() { browse(current); } }; footer("Salvează","","Șterge"); name.requestFocus();
     }
     private void fileOptions(final File file) {
-        options(file.getName(),new String[]{"Deschide","Editează text UTF-8","Redenumește","Șterge","Copiază","Mută",marked.contains(file)?"Demarchează":"Marchează","Informații"},new Choice() { public void pick(int i) {
+        options(file.getName(),new String[]{"Deschide","Editează text UTF-8","Redenumește","Șterge","Copiază","Mută",marked.contains(file)?"Demarchează":"Marchează","Informații","Deschide cu","Partajează","Instalează APK"},new Choice() { public void pick(int i) {
+            if(i==8||i==9){try{android.net.Uri uri=LeoFileProvider.uri(FilesActivity.this,file);String mime=getContentResolver().getType(uri);if(i==8)ShareHubActivity.view(FilesActivity.this,uri,mime);else ShareHubActivity.send(FilesActivity.this,uri,mime,file.getName());}catch(Exception e){notice("Fișier inaccesibil");}return;}if(i==10){apk(file);return;}
             if(i==0) open(file); else if(i==1) textFile(file); else if(i==2) nameForm(file);
             else if(i==7)metadata(file);else if(i==4||i==5)prepareTransfer(Arrays.asList(file),i==5);else if(i==6){if(!marked.remove(file)){if(marked.size()>=100){notice("Maximum 100 fișiere în selecție");return;}marked.add(file);}browse(current);}
             else options("Ștergi fișierul?",new String[]{"Păstrează","Șterge"},new Choice() { public void pick(int yes) {
@@ -108,13 +111,14 @@ public final class FilesActivity extends LeoActivity {
     void onListSelection(String title,int index){if(root==listing&&index>=0&&index<entries.size()){focused=index;selected=entries.get(index);}}
     public boolean dispatchKeyEvent(android.view.KeyEvent e){if(root==listing&&e.getKeyCode()==android.view.KeyEvent.KEYCODE_5){android.view.View v=getCurrentFocus();while(v!=null&&!(v instanceof android.widget.ListView)){android.view.ViewParent parent=v.getParent();v=parent instanceof android.view.View?(android.view.View)parent:null;}if(v instanceof android.widget.ListView){int at=((android.widget.ListView)v).getSelectedItemPosition();if(at>=0&&at<entries.size()){focused=at;selected=entries.get(at);}}}if(e.getKeyCode()==android.view.KeyEvent.KEYCODE_5&&root==listing&&selected!=null&&selected.isFile()){if(e.getAction()==android.view.KeyEvent.ACTION_DOWN)onKeyDown(e.getKeyCode(),e);return true;}return super.dispatchKeyEvent(e);}
     public boolean onKeyDown(int key,android.view.KeyEvent e){if(key==android.view.KeyEvent.KEYCODE_5&&root==listing&&selected!=null&&selected.isFile()){if(e.getRepeatCount()==0){if(!marked.remove(selected)){if(marked.size()>=100){notice("Maximum 100 fișiere");return true;}marked.add(selected);}browse(current);}return true;}return super.onKeyDown(key,e);}
-    private void metadata(final File f){ArrayList<String> rows=new ArrayList<String>();rows.add(f.isDirectory()?"Folder":"Fișier");if(f.isFile())rows.add("Mărime · "+android.text.format.Formatter.formatFileSize(this,f.length()));rows.add("Liber · "+android.text.format.Formatter.formatFileSize(this,f.getUsableSpace()));rows.add("Total · "+android.text.format.Formatter.formatFileSize(this,f.getTotalSpace()));rows.add("Modificat · "+new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new Date(f.lastModified())));rows.add("Selecție · "+marked.size()+" fișiere");list(f.getName(),rows,0,new Choice(){public void pick(int i){}},"",null);back=new Runnable(){public void run(){browse(current);}};}
+    private void metadata(final File f){ArrayList<String> rows=new ArrayList<String>();rows.add(f.isDirectory()?"Folder":"Fișier");if(f.isFile())rows.add("Mărime · "+android.text.format.Formatter.formatFileSize(this,f.length()));rows.add("Liber · "+android.text.format.Formatter.formatFileSize(this,f.getUsableSpace()));rows.add("Total · "+android.text.format.Formatter.formatFileSize(this,f.getTotalSpace()));rows.add("Modificat · "+new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new Date(f.lastModified())));rows.add("Cale · "+f.getAbsolutePath());rows.add("Acces · "+(f.canRead()?"citire ":"")+(f.canWrite()?"scriere":""));if(f.isFile())try{rows.add("Tip · "+getContentResolver().getType(LeoFileProvider.uri(this,f)));}catch(Exception ignored){}rows.add("Selecție · "+marked.size()+" fișiere");list(f.getName(),rows,0,new Choice(){public void pick(int i){}},"",null);back=new Runnable(){public void run(){browse(current);}};}
     private void open(File file) {
         try {
             android.net.Uri uri=LeoFileProvider.uri(this,file);
             Intent view=new Intent(Intent.ACTION_VIEW);
             String extension=file.getName().contains(".")?file.getName().substring(file.getName().lastIndexOf('.')+1).toLowerCase(Locale.ROOT):"";
             String mime=android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            if(extension.equals("apk")){apk(file);return;}
             if(mime!=null&&mime.startsWith("image/")){startActivity(new Intent(this,GalleryActivity.class).setData(uri).putExtra("title",file.getName()));return;}
             if(mime!=null&&mime.startsWith("video/")){startActivity(new Intent(this,VideoActivity.class).setData(uri).putExtra("title",file.getName()));return;}
             if((mime!=null&&mime.startsWith("audio/"))||extension.equals("wma")){startActivity(new Intent(this,MediaActivity.class).setData(uri).putExtra("title",file.getName()));return;}
@@ -124,6 +128,9 @@ public final class FilesActivity extends LeoActivity {
             startActivity(view);
         } catch(Exception failure) { notice("Nicio aplicație disponibilă pentru acest fișier"); }
     }
+    private void apk(File f){if(!f.getName().toLowerCase(Locale.ROOT).endsWith(".apk")){notice("Alege un fișier APK");return;}startActivity(new Intent(this,ApkInstallActivity.class).putExtra("file",f.getAbsolutePath()));}
+    android.graphics.drawable.Drawable rowIcon(String title,int at){if(!title.equals(artworkTitle)||at<0||at>=entries.size())return null;File f=entries.get(at);String n=f.getName().toLowerCase(Locale.ROOT);if(f.isFile()&&n.matches(".*\\.(png|jpe?g|webp|gif|bmp)$"))try{return artwork.get(f.getPath()+":"+f.lastModified(),LeoFileProvider.uri(this,f),"▧");}catch(IOException ignored){}return new AppBadge(f.isDirectory()?"Fișiere":n.endsWith(".apk")?"Setări":n.matches(".*\\.(mp3|flac|aac|m4a|wma|ogg)$")?"Muzică":"Fișier",dp(32));}
+    public void onBackPressed(){if(busy){notice("Transfer în curs; așteaptă verificarea");return;}super.onBackPressed();}
     private void textFile(final File source) {
         String initial="";
         if(source!=null) {
