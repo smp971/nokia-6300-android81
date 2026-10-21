@@ -14,8 +14,9 @@ public final class AlarmRingActivity extends LeoActivity {
         LeoPointerService.prepareForAlarm();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED|WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         begin("Alarmă"); TextView label=text(getIntent().getStringExtra("label"),28); label.setGravity(Gravity.CENTER);
-        root.addView(label,new LinearLayout.LayoutParams(-1,0,1)); left=new Runnable() { public void run() { stop(); } }; footer("Oprește","Oprește","Înapoi");
+        root.addView(label,new LinearLayout.LayoutParams(-1,0,1)); left=new Runnable() { public void run() { int id=getIntent().getIntExtra("alarm_id",-1);if(id>=0)AlarmScheduler.snooze(AlarmRingActivity.this,id);stop(); } }; footer(getIntent().getIntExtra("alarm_id",-1)>=0?"Amână":"Oprește","Oprește","Oprește");
     }
+    protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);recreate();}
     private void stop() { stopService(new Intent(this,AlarmRingService.class)); finish(); }
     protected void onResume() { super.onResume(); watch.post(check); }
     protected void onPause() { watch.removeCallbacks(check); super.onPause(); }

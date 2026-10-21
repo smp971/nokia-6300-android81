@@ -21,7 +21,7 @@ public final class AlarmRingService extends Service {
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         NotificationChannel channel=new NotificationChannel("leo-alarm","Alarme Leo",NotificationManager.IMPORTANCE_HIGH);
         channel.setSound(null,null); manager.createNotificationChannel(channel);
-        Intent show=new Intent(this,AlarmRingActivity.class).putExtra("label",label).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent show=new Intent(this,AlarmRingActivity.class).putExtra("label",label).putExtra("alarm_id",intent==null?-1:intent.getIntExtra("alarm_id",-1)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent open=PendingIntent.getActivity(this,101,show,PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent stop=PendingIntent.getService(this,102,new Intent(this,AlarmRingService.class).setAction("stop"),PendingIntent.FLAG_UPDATE_CURRENT);
         startForeground(310,new Notification.Builder(this,"leo-alarm").setSmallIcon(android.R.drawable.ic_lock_idle_alarm)

@@ -36,6 +36,7 @@ import java.util.UUID;
 public final class NotesActivity extends Activity {
     private Appearance.Palette palette;
     private final ArrayList<Note> notes=new ArrayList<Note>();
+    private final ArrayList<Note> shown=new ArrayList<Note>();private String query="";
     private final Handler handler=new Handler();
     private AtomicFile store;
     private EditText editor;
@@ -43,7 +44,7 @@ public final class NotesActivity extends Activity {
     private String editingId;
     private boolean editing,readFailed;
     private int selected;
-    private static final class Note { String id,body; }
+    private static final class Note { String id,body;boolean pinned; }
     private final Runnable draft=new Runnable() { public void run() { saveDraft(); } };
     public void onCreate(Bundle state) {
         super.onCreate(state);palette=Appearance.palette(this);
@@ -54,7 +55,7 @@ public final class NotesActivity extends Activity {
                 JSONArray saved=new JSONArray(new String(store.readFully(),StandardCharsets.UTF_8));
                 for(int i=0;i<saved.length();i++) {
                     JSONObject item=saved.getJSONObject(i); Note note=new Note();
-                    note.id=item.getString("id"); note.body=item.getString("body"); notes.add(note);
+                    note.id=item.getString("id"); note.body=item.getString("body");note.pinned=item.optBoolean("pinned"); notes.add(note);
                 }
             } catch(Exception invalid) { readFailed=true; }
         }
@@ -85,22 +86,22 @@ public final class NotesActivity extends Activity {
         root.addView(bar);
     }
     private void showList() {
-        editing=false; editor=null;
+        editing=false; editor=null;shown.clear();for(Note n:notes)if(query.isEmpty()||GlobalSearchActivity.matches(n.body,query))shown.add(n);java.util.Collections.sort(shown,new java.util.Comparator<Note>(){public int compare(Note a,Note b){return Boolean.compare(b.pinned,a.pinned);}});
         LinearLayout root=base();
-        TextView help=label("# opțiuni · "+notes.size()+" / 100",14); help.setGravity(Gravity.CENTER);
+        TextView help=label("# opțiuni · "+shown.size()+" / "+notes.size()+(query.isEmpty()?"":" · "+query),14); help.setGravity(Gravity.CENTER);
         root.addView(help,new LinearLayout.LayoutParams(-1,height(24)));
-        if(readFailed || notes.isEmpty()) {
-            TextView empty=label(readFailed?"Nu pot citi notițele salvate":"Nicio notiță\nSoft stânga: notiță nouă",18);
+        if(readFailed || shown.isEmpty()) {
+            TextView empty=label(readFailed?"Nu pot citi notițele salvate":query.isEmpty()?"Nicio notiță\nSoft stânga: notiță nouă":"Niciun rezultat · # căutare",18);
             empty.setGravity(Gravity.CENTER); root.addView(empty,new LinearLayout.LayoutParams(-1,0,1));
             list=null;
         } else {
             list=new ListView(this); list.setDividerHeight(height(3)); list.setPadding(height(6),0,height(6),0);
             list.setSelector(android.R.color.transparent); list.setAdapter(new BaseAdapter() {
-                public int getCount() { return notes.size(); }
-                public Object getItem(int position) { return notes.get(position); }
+                public int getCount() { return shown.size(); }
+                public Object getItem(int position) { return shown.get(position); }
                 public long getItemId(int position) { return position; }
                 public View getView(int position,View reuse,ViewGroup parent) {
-                    TextView item=label(title(notes.get(position).body),18);
+                    TextView item=label((shown.get(position).pinned?"★ ":"")+title(shown.get(position).body),18);
                     item.setSingleLine(true); item.setEllipsize(TextUtils.TruncateAt.END);
                     item.setPadding(height(10),0,height(10),0); item.setMinHeight(height(48));
                     item.setBackground(Appearance.surface(position==selected?palette.selection:palette.card,height(8)));
@@ -119,7 +120,7 @@ public final class NotesActivity extends Activity {
             root.addView(list,new LinearLayout.LayoutParams(-1,0,1));
         }
         footer(root,"Nouă","Deschide","Înapoi"); setContentView(root);
-        if(list!=null) { selected=Math.min(selected,notes.size()-1); list.requestFocus(); list.setSelection(selected); }
+        if(list!=null) { selected=Math.min(selected,shown.size()-1); list.requestFocus(); list.setSelection(selected); }
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }
     private static String title(String body) {
@@ -127,7 +128,7 @@ public final class NotesActivity extends Activity {
         return value.isEmpty()?"Notiță fără titlu":end<0?value:value.substring(0,end);
     }
     private void open(int index) {
-        if(index>=0 && index<notes.size()) { Note note=notes.get(index); edit(note.id,note.body); }
+        if(index>=0 && index<shown.size()) { Note note=shown.get(index); edit(note.id,note.body); }
     }
     private void edit(String id,String body) {
         if(readFailed) return;
@@ -146,7 +147,7 @@ public final class NotesActivity extends Activity {
             public void afterTextChanged(Editable value) { }
         });
         root.addView(editor,new LinearLayout.LayoutParams(-1,0,1));
-        footer(root,"Salvează","Rând nou","Șterge"); setContentView(root); editor.requestFocus();
+        footer(root,"Opțiuni","Rând nou","Șterge"); setContentView(root); editor.requestFocus();
         editor.post(new Runnable() { public void run() {
             if(editing && editor!=null) ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(editor,InputMethodManager.SHOW_IMPLICIT);
         }});
@@ -164,7 +165,7 @@ public final class NotesActivity extends Activity {
         FileOutputStream stream=null;
         try {
             JSONArray output=new JSONArray();
-            for(Note note:values) output.put(new JSONObject().put("id",note.id).put("body",note.body));
+            for(Note note:values) output.put(new JSONObject().put("id",note.id).put("body",note.body).put("pinned",note.pinned));
             stream=store.startWrite(); stream.write(output.toString().getBytes(StandardCharsets.UTF_8));
             store.finishWrite(stream); return true;
         } catch(Exception failure) { if(stream!=null) store.failWrite(stream); toast("Salvarea a eșuat; textul rămâne în ciornă"); return false; }
@@ -175,16 +176,21 @@ public final class NotesActivity extends Activity {
         ArrayList<Note> changed=new ArrayList<Note>(notes); int found=-1;
         for(int i=0;i<changed.size();i++) if(changed.get(i).id.equals(editingId)) found=i;
         if(found<0 && notes.size()>=100) { toast("Maximum 100 de notițe"); return; }
-        Note value=new Note(); value.id=editingId.isEmpty()?UUID.randomUUID().toString():editingId; value.body=body;
+        Note value=new Note(); value.id=editingId.isEmpty()?UUID.randomUUID().toString():editingId; value.body=body;value.pinned=found>=0&&changed.get(found).pinned;
         if(found<0) { changed.add(0,value); selected=0; } else changed.set(found,value);
         if(write(changed)) { notes.clear(); notes.addAll(changed); clearDraft(); showList(); toast("Salvată"); }
     }
     private void noteOptions() {
-        if(notes.isEmpty() || readFailed) return;
-        final Note target=notes.get(selected);
-        new KeypadDialog(this,"Notiță",new String[]{"Deschide", "Șterge"},new KeypadDialog.Action() {
+        if(readFailed)return;
+        if(shown.isEmpty()){search();return;}
+        final Note target=shown.get(selected);
+        new KeypadDialog(this,"Notiță",new String[]{"Deschide", "Șterge",target.pinned?"Desprinde":"Fixează sus","Caută text / T9","Exportă text","Arată toate"},new KeypadDialog.Action() {
             public void select(int choice) {
                 if(choice==0) open(selected);
+                else if(choice==2){target.pinned=!target.pinned;if(!write(notes))target.pinned=!target.pinned;showList();}
+                else if(choice==3)search();
+                else if(choice==4)exportNote(target);
+                else if(choice==5){query="";selected=0;showList();}
                 else new KeypadDialog(NotesActivity.this,"Ștergi notița?",new String[]{"Păstrează", "Șterge definitiv"},new KeypadDialog.Action() {
                     public void select(int confirmed) {
                         if(confirmed==1) {
@@ -196,6 +202,11 @@ public final class NotesActivity extends Activity {
             }
         }).show();
     }
+    private void search(){final EditText input=new EditText(this);input.setTextColor(Color.WHITE);input.setText(query);input.setSingleLine(true);input.setHint("Text sau cifre T9");final android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this).setTitle("Caută notițe").setView(input).setPositiveButton("Caută",new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){query=input.getText().toString().trim();selected=0;showList();}}).setNegativeButton("Înapoi",null).create();dialog.setOnKeyListener(new android.content.DialogInterface.OnKeyListener(){public boolean onKey(android.content.DialogInterface d,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_MENU){if(e.getAction()==KeyEvent.ACTION_DOWN&&e.getRepeatCount()==0){query=input.getText().toString().trim();selected=0;dialog.dismiss();showList();}return true;}return false;}});dialog.show();input.requestFocus();((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(input,InputMethodManager.SHOW_IMPLICIT);}
+    private void exportNote(Note n){try{File dir=new File(SaveLocations.selected(this),"Notes");if(!dir.isDirectory()&&!dir.mkdirs())throw new java.io.IOException();File f=new File(dir,"nota-"+System.currentTimeMillis()+"-"+UUID.randomUUID().toString().substring(0,8)+".txt");BackupEngine.write(f,n.body.getBytes(StandardCharsets.UTF_8));toast("Exportată în "+(SaveLocations.key(this).equals("leo")?"Documente Leo":"Card SD / Exports")+" / Notes");}catch(Exception e){toast("Exportul a eșuat");}}
+    static String checklist(String body){StringBuilder out=new StringBuilder();for(String line:body.split("\n",-1)){if(out.length()>0)out.append('\n');out.append(line.startsWith("[ ] ")||line.startsWith("[x] ")?line:"[ ] "+line);}return out.toString();}
+    static String toggleLine(String body,int cursor){int start=body.lastIndexOf('\n',Math.max(-1,cursor-1))+1;String tail=body.substring(start);if(tail.startsWith("[ ] "))tail="[x] "+tail.substring(4);else if(tail.startsWith("[x] "))tail="[ ] "+tail.substring(4);else tail="[ ] "+tail;return body.substring(0,start)+tail;}
+    private void editOptions(){new KeypadDialog(this,"Editor notiță",new String[]{"Salvează","Transformă în listă de bifat","Bifează / debifează rândul curent"},new KeypadDialog.Action(){public void select(int n){if(n==0)saveNote();else{int pos=editor.getSelectionStart();String body=editor.getText().toString();String next=n==1?checklist(body):toggleLine(body,Math.max(0,pos));if(next.length()>8192){toast("Maximum 8192 de caractere");return;}editor.setText(next);editor.setSelection(Math.min(next.length(),Math.max(0,pos)));saveDraft();}}}).show();}
     public void onBackPressed() {
         if(!editing) { finish(); return; }
         new KeypadDialog(this,"Închide editorul",new String[]{"Salvează", "Renunță la modificări", "Continuă editarea"},new KeypadDialog.Action() {
@@ -210,7 +221,7 @@ public final class NotesActivity extends Activity {
         int key=event.getKeyCode();
         if(key==KeyEvent.KEYCODE_MENU) {
             if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) {
-                if(editing) saveNote();
+                if(editing) editOptions();
                 else if(!readFailed && notes.size()<100) edit("","");
                 else toast(readFailed?"Fișierul existent este păstrat":"Maximum 100 de notițe");
             }

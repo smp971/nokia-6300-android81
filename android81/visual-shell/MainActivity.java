@@ -117,7 +117,7 @@ public final class MainActivity extends Activity {
         }
     }
     public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
-    public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){handler.removeCallbacks(speed);speedKey=-1;return true;}return super.onKeyUp(key,event);}
+    public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){boolean quick=key==KeyEvent.KEYCODE_5&&speedKey==key;handler.removeCallbacks(speed);speedKey=-1;if(quick)startActivity(new Intent(this,QuickHomeActivity.class));return true;}return super.onKeyUp(key,event);}
     public boolean onKeyDown(int key, KeyEvent event) {
         if(!screen.grid&&key==KeyEvent.KEYCODE_1){if(event.getRepeatCount()==0)startActivity(new Intent(this,GlobalSearchActivity.class));return true;}
         if(!screen.grid&&key==KeyEvent.KEYCODE_0){if(event.getRepeatCount()==0)startActivity(new Intent(this,NowPlayingActivity.class));return true;}
@@ -131,9 +131,10 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile","Media curentă","Caută în Leo"}, new KeypadDialog.Action() {
+                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile","Media curentă","Caută în Leo","Acces rapid Home"}, new KeypadDialog.Action() {
               public void select(int which) {
-                if(which==9){startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));}
+                if(which==10){startActivity(new Intent(MainActivity.this,QuickHomeActivity.class));}
+                else if(which==9){startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));}
                 else if(which==8){startActivity(new Intent(MainActivity.this,NowPlayingActivity.class));}
                 else if (which == 0) {
                     startActivity(new Intent(MainActivity.this,WallpaperActivity.class));
@@ -290,6 +291,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            HomeAccess.record(MainActivity.this,index);
             if(index==27){startActivity(new Intent(MainActivity.this,BackupActivity.class));return;}
             if(index==26){startActivity(new Intent(MainActivity.this,WeatherActivity.class));return;}
             if(index==25){startActivity(new Intent(MainActivity.this,FmActivity.class));return;}

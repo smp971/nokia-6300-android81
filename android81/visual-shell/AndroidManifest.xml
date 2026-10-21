@@ -143,6 +143,7 @@
         <receiver android:name=".BatterySessionReceiver" android:exported="false">
             <intent-filter><action android:name="android.intent.action.ACTION_POWER_CONNECTED"/><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter>
         </receiver>
+        <activity android:name=".QuickHomeActivity" android:exported="false" />
         <activity android:name=".FmActivity" android:exported="false" />
         <service android:name=".FmService" android:exported="false" />
     </application>

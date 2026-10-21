@@ -58,8 +58,9 @@ fără a forța deschiderea Telefonului la final. Baza privilegiată se sincroni
 prin instalatorul existent; nu se scriu imagini boot/recovery sau drivere în această etapă.
 
 Backup-ul existent al preferințelor include noile opțiuni de carduri la blocare.
-Favoritele muzicale, lista aplicațiilor ascunse/favorite și calendarul nu sunt încă
-incluse în exportul Backup Leo; arhiva separată de contacte/SMS rămâne disponibilă.
+Favoritele muzicale, lista aplicațiilor ascunse/favorite și Calendar Leo au fost
+adăugate ulterior în [Backup v2, cu restaurare pe categorii](LEO-DAILY-EXTRAS.md);
+arhiva separată de contacte/SMS rămâne disponibilă.
 
 Rezultat pe aparat: **25 de verificări noi trecute**, plus **8 probe UI/din taste**
 și **9 probe media/player** din etapele anterioare: 42 verificări locale în această

@@ -14,7 +14,7 @@ public final class FilesActivity extends LeoActivity {
     private File base,current;private int focused,sort;private LinearLayout listing;
     private File selected;private final LinkedHashSet<File> marked=new LinkedHashSet<File>();private final ArrayList<File> clipboard=new ArrayList<File>();private File sourceBoundary;private boolean cut;
     private final ArrayList<File> entries=new ArrayList<File>();
-    protected void onCreate(Bundle state) { super.onCreate(state);sort=getSharedPreferences("files-ui",0).getInt("sort",0);locations(); }
+    protected void onCreate(Bundle state) { super.onCreate(state);sort=getSharedPreferences("files-ui",0).getInt("sort",0);String folder=getIntent().getStringExtra("folder");if(folder!=null){try{File target=new File(folder);for(File candidate:LeoFileProvider.roots(this).values())if(LeoFileProvider.inside(candidate,target)&&target.isDirectory()){base=candidate;browse(target);return;}}catch(IOException ignored){}}locations(); }
     private void locations() {
         base=null; current=null; selected=null;marked.clear();
         final ArrayList<File> values=new ArrayList<File>(); ArrayList<String> labels=new ArrayList<String>();
