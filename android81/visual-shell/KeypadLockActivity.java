@@ -68,7 +68,7 @@ public final class KeypadLockActivity extends LeoActivity {
         LockView(){
             super(KeypadLockActivity.this);setFocusable(true);setFocusableInTouchMode(true);requestFocus();
             int theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
-            if(Appearance.wallpaper(KeypadLockActivity.this).isFile())wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(KeypadLockActivity.this).getPath());
+            if(getSharedPreferences("appearance",0).getBoolean("lock-wallpaper",true)&&Appearance.wallpaper(KeypadLockActivity.this).isFile())wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(KeypadLockActivity.this).getPath());
         }
         void refresh(){
             Date now=new Date();time=android.text.format.DateFormat.getTimeFormat(KeypadLockActivity.this).format(now);

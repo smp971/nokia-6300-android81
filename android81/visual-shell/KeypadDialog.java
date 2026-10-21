@@ -46,7 +46,7 @@ final class KeypadDialog extends Dialog {
                     int index=first+row; float top=42+row*39;
                     if(index==selected) {
                         paint.setColor(palette.selection);
-                        c.drawRoundRect(new RectF(6,top,234,top+35),3,3,paint);
+                        c.drawRoundRect(new RectF(6,top,234,top+35),10,10,paint);
                     }
                     text(c,items[index],15,top+23,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
                 }
@@ -75,7 +75,7 @@ final class KeypadDialog extends Dialog {
     }
     public boolean onKeyDown(int key,KeyEvent event) {
         if(key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) {
-            selected=Math.max(0,Math.min(items.length-1,selected+(key==KeyEvent.KEYCODE_DPAD_UP?-1:1)));
+            if(items.length>0)selected=CircularNavigation.step(selected,key==KeyEvent.KEYCODE_DPAD_UP?-1:1,items.length);
             content.invalidate(); return true;
         }
         if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {
@@ -89,7 +89,7 @@ final class KeypadDialog extends Dialog {
     public boolean onKeyUp(int key,KeyEvent event) {
         if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {
             boolean accept=centerPressed && !event.isCanceled(); centerPressed=false;
-            if(accept) { dismiss(); action.select(selected); }
+            if(accept&&items.length>0) { dismiss(); action.select(selected); }
             return true;
         }
         if(key==KeyEvent.KEYCODE_BACK) {

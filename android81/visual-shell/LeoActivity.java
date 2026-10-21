@@ -38,7 +38,7 @@ abstract class LeoActivity extends Activity {
         listTitle=null;listRows=null;listAdapter=null;
         palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
-        TextView heading=text(title,21); heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        TextView heading=text(title,21); heading.setTypeface(android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.NORMAL));heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(29)),null,null,null);heading.setCompoundDrawablePadding(dp(10));
         heading.setBackgroundColor(palette.card);
         root.addView(heading,new LinearLayout.LayoutParams(-1,dp(42)));
@@ -147,6 +147,7 @@ abstract class LeoActivity extends Activity {
     public boolean dispatchKeyEvent(KeyEvent event) {long start=android.os.SystemClock.elapsedRealtimeNanos();try{return dispatchLeoKey(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     private boolean dispatchLeoKey(KeyEvent event) {
         if(isJackNavigationNoise(event)) return true;
+        if(CircularNavigation.dispatch(this,event))return true;
         if(event.getKeyCode()==KeyEvent.KEYCODE_MENU && left!=null) {
             if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) left.run(); return true;
         }

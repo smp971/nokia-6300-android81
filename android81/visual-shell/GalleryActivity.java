@@ -51,7 +51,7 @@ public final class GalleryActivity extends LeoActivity {
     }
     private void imageOptions() {
         options("Imagine",new String[]{"Deschide","Fundal Leo","Reîncarcă galeria","Informații imagine","Imaginea anterioară","Imaginea următoare"},new Choice() { public void pick(int i) {
-            if(i>=4){selected=Math.max(0,Math.min(images.size()-1,selected+(i==4?-1:1)));open();}else if(i==3){options("Imagine",new String[]{names.get(selected),photo==null?"Dimensiuni la deschidere":photo.getWidth()+" × "+photo.getHeight()+" px · previzualizare","OK: zoom 1× / 2× / 4×","La zoom: săgețile deplasează","1 / 3: imaginea anterioară / următoare"},new Choice(){public void pick(int n){}});}else if(i==0) open(); else if(i==2) load(); else options("Aplici ca fundal Leo?",new String[]{"Anulează","Aplică"},new Choice() { public void pick(int yes) {
+            if(i>=4){selected=CircularNavigation.step(selected,i==4?-1:1,images.size());open();}else if(i==3){options("Imagine",new String[]{names.get(selected),photo==null?"Dimensiuni la deschidere":photo.getWidth()+" × "+photo.getHeight()+" px · previzualizare","OK: zoom 1× / 2× / 4×","La zoom: săgețile deplasează","1 / 3: imaginea anterioară / următoare"},new Choice(){public void pick(int n){}});}else if(i==0) open(); else if(i==2) load(); else options("Aplici ca fundal Leo?",new String[]{"Anulează","Aplică"},new Choice() { public void pick(int yes) {
                 if(yes==1) { final Uri uri=images.get(selected); worker.execute(new Runnable() { public void run() { try { Appearance.saveWallpaper(GalleryActivity.this,uri); ui(new Runnable() { public void run() { notice("Fundal Leo salvat"); } }); } catch(Exception|OutOfMemoryError error) { ui(new Runnable() { public void run() { notice("Fundalul nu poate fi salvat"); } }); } } }); }
             }});
         }});
@@ -59,10 +59,10 @@ public final class GalleryActivity extends LeoActivity {
     public boolean onKeyDown(int key,KeyEvent event) {
         if(face!=null && !images.isEmpty()) {
             if(key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER) { if(event.getRepeatCount()==0) { if(!viewer) { if(getIntent().getBooleanExtra("wallpaper",false)) imageOptions(); else open(); } else { zoom=zoom==4?1:zoom*2;panX=panY=0; face.invalidate(); } } return true; }
-            if(viewer&&(key==KeyEvent.KEYCODE_1||key==KeyEvent.KEYCODE_3)){if(event.getRepeatCount()==0){selected=Math.max(0,Math.min(images.size()-1,selected+(key==KeyEvent.KEYCODE_1?-1:1)));open();}return true;}
+            if(viewer&&(key==KeyEvent.KEYCODE_1||key==KeyEvent.KEYCODE_3)){if(event.getRepeatCount()==0){selected=CircularNavigation.step(selected,key==KeyEvent.KEYCODE_1?-1:1,images.size());open();}return true;}
             if(viewer&&zoom>1&&photo!=null&&(key==19||key==20||key==21||key==22)){float scale=Math.min(face.getWidth()/(float)photo.getWidth(),face.getHeight()/(float)photo.getHeight())*zoom;float maxX=Math.max(0,(photo.getWidth()*scale-face.getWidth())/2),maxY=Math.max(0,(photo.getHeight()*scale-face.getHeight())/2);panX=Math.max(-maxX,Math.min(maxX,panX+(key==21?24:key==22?-24:0)));panY=Math.max(-maxY,Math.min(maxY,panY+(key==19?24:key==20?-24:0)));face.invalidate();return true;}
             int step=key==KeyEvent.KEYCODE_DPAD_LEFT?-1:key==KeyEvent.KEYCODE_DPAD_RIGHT?1:key==KeyEvent.KEYCODE_DPAD_UP?(viewer?-1:-3):key==KeyEvent.KEYCODE_DPAD_DOWN?(viewer?1:3):0;
-            if(step!=0) { int old=selected/9; selected=Math.max(0,Math.min(images.size()-1,selected+step)); if(viewer) open(); else { if(old!=selected/9) thumbnails(); face.invalidate(); } return true; }
+            if(step!=0) { int old=selected/9; selected=viewer?CircularNavigation.step(selected,step,images.size()):selected==0&&step<0?images.size()-1:selected==images.size()-1&&step>0?0:Math.max(0,Math.min(images.size()-1,selected+step)); if(viewer) open(); else { if(old!=selected/9) thumbnails(); face.invalidate(); } return true; }
         }
         return super.onKeyDown(key,event);
     }

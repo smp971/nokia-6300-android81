@@ -77,7 +77,7 @@ public final class AndroidAppsActivity extends Activity {
     public boolean onKeyDown(int key,KeyEvent event) {
         if(key==KeyEvent.KEYCODE_BACK) { if(event.getRepeatCount()==0) finish(); return true; }
         if(key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) {
-            selected=Math.max(0,Math.min(apps.size()-1,selected+(key==KeyEvent.KEYCODE_DPAD_UP?-1:1)));
+            if(!apps.isEmpty())selected=CircularNavigation.step(selected,key==KeyEvent.KEYCODE_DPAD_UP?-1:1,apps.size());
             error=""; screen.invalidate(); return true;
         }
         if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {

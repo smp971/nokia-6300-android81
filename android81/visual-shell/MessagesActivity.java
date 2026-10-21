@@ -35,7 +35,7 @@ public final class MessagesActivity extends LeoActivity {
         }
     };
     private EditText recipient,body;
-    private static final class Message { String address,body; long date,sent; int type,sub; }
+    private static final class Message { String address,body; long date,sent; int type,sub,delivery=-1; }
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         preview=getIntent().getBooleanExtra("preview",false);
@@ -84,11 +84,11 @@ public final class MessagesActivity extends LeoActivity {
                     try(Cursor out=store.getReadableDatabase().query("outgoing",null,null,null,null,null,"date DESC","1000")) {
                         while(out.moveToNext()) {
                             Message m=new Message();m.address=out.getString(out.getColumnIndexOrThrow("address"));m.body=out.getString(out.getColumnIndexOrThrow("body"));
-                            m.date=out.getLong(out.getColumnIndexOrThrow("date"));m.sub=out.getInt(out.getColumnIndexOrThrow("sub"));m.type=out.getInt(out.getColumnIndexOrThrow("type"));
+                            m.date=out.getLong(out.getColumnIndexOrThrow("date"));m.sub=out.getInt(out.getColumnIndexOrThrow("sub"));m.type=out.getInt(out.getColumnIndexOrThrow("type"));m.delivery=out.getInt(out.getColumnIndexOrThrow("delivery"));
                             Message duplicate=null;
                             for(Message system:systemMessages)if(!matched.contains(system) && system.type!=Telephony.Sms.MESSAGE_TYPE_INBOX && system.sub==m.sub
                                     && Math.abs(system.date-m.date)<=10000 && PhoneNumberUtils.normalizeNumber(system.address).equals(PhoneNumberUtils.normalizeNumber(m.address)) && system.body.equals(m.body)) { duplicate=system;break; }
-                            if(duplicate==null)messages.add(m);else { matched.add(duplicate);duplicate.type=m.type; }
+                            if(duplicate==null)messages.add(m);else { matched.add(duplicate);duplicate.type=m.type;duplicate.delivery=m.delivery; }
                         }
                     }
                 }
@@ -100,11 +100,11 @@ public final class MessagesActivity extends LeoActivity {
     private void display(final String address,ArrayList<Message> messages) {
         viewingMessages=true;loadingMessages=false;
         final ArrayList<Message> rows=new ArrayList<Message>(); ArrayList<String> labels=new ArrayList<String>();
-        HashSet<String> threads=new HashSet<String>();
+        final HashSet<String> unread=new HashSet<String>();if(!preview)try(SmsStore s=new SmsStore(this);Cursor c=s.getReadableDatabase().rawQuery("SELECT DISTINCT address FROM inbox WHERE unread=1",null)){while(c.moveToNext())unread.add(c.getString(0));}catch(RuntimeException ignored){}HashSet<String> threads=new HashSet<String>();
         for(Message m:messages) {
             if(address.isEmpty()) {
                 if(!threads.add(m.address)) continue;
-                rows.add(m); labels.add(m.address+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
+                rows.add(m); labels.add((unread.contains(m.address)?"● Necitit · ":"")+m.address+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
             } else if(m.address.equals(address)) {
                 rows.add(m);
             }
@@ -118,8 +118,8 @@ public final class MessagesActivity extends LeoActivity {
         list("Mesaje",labels,0,new Choice() { public void pick(int i) {
             load(rows.get(i).address);
         } },"Opțiuni",new Runnable() { public void run() {
-            options("Mesaje",new String[]{"SMS nou","Caută în mesaje","Ciorne salvate"},new Choice() { public void pick(int i) {
-                if(i==0)compose("");else if(i==1)search("",messages);else drafts();
+            options("Mesaje",new String[]{"SMS nou","Caută în mesaje","Ciorne salvate","Previzualizare notificări"},new Choice() { public void pick(int i) {
+                if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)drafts();else {final SharedPreferences p=getSharedPreferences("sms-options",0);options("Text în notificări",new String[]{"Ascunde textul","Arată o previzualizare"},new Choice(){public void pick(int mode){p.edit().putBoolean("preview",mode==1).apply();notice("Preferință salvată pentru mesajele noi");}});}
             }});
         } });
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
@@ -127,7 +127,7 @@ public final class MessagesActivity extends LeoActivity {
         if(!status.isEmpty()) root.addView(text(status,14),1);
     }
     private String state(Message m) {
-        return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"Primit":m.type==Telephony.Sms.MESSAGE_TYPE_SENT?"Trimis către rețea":m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?"Eșuat":"În așteptare";
+        return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"Primit":m.type==Telephony.Sms.MESSAGE_TYPE_SENT?(m.delivery==1?"Livrat · raport operator":m.delivery==2?"Livrare eșuată":m.delivery==3?"Raport · livrare neconfirmată":m.delivery==0?"Trimis · așteaptă raport":"Trimis către rețea"):m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?"Eșuat":"În așteptare";
     }
     private String messageSim(Message m) { return preview?"SIM "+(m.sub+1):sim(m.sub); }
     private void detail(final String address,final ArrayList<Message> rows,final int index) {
@@ -327,14 +327,15 @@ public final class MessagesActivity extends LeoActivity {
     private void send(SmsManager manager,String number,String text,ArrayList<String> parts) {
         if(preview) { notice("Demonstrație locală · fără trimitere SMS");return; }
         saveDraft(); String token=UUID.randomUUID().toString(); JSONArray states=new JSONArray();
-        ArrayList<PendingIntent> callbacks=new ArrayList<PendingIntent>();
+        ArrayList<PendingIntent> callbacks=new ArrayList<PendingIntent>(),deliveries=new ArrayList<PendingIntent>();
         for(int i=0;i<parts.size();i++) {
             states.put(0);
             Intent result=new Intent(this,SmsStatusReceiver.class).setData(Uri.parse("leo-sms:"+token+"/"+i)).putExtra("token",token).putExtra("part",i);
             callbacks.add(PendingIntent.getBroadcast(this,i,result,PendingIntent.FLAG_UPDATE_CURRENT));
+            Intent delivered=new Intent(this,SmsDeliveryReceiver.class).setData(Uri.parse("leo-delivery:"+token+"/"+i)).putExtra("token",token).putExtra("part",i);deliveries.add(PendingIntent.getBroadcast(this,i,delivered,PendingIntent.FLAG_UPDATE_CURRENT));
         }
         long date=System.currentTimeMillis();int sub=manager.getSubscriptionId();
-        try(SmsStore store=new SmsStore(this)) { store.outgoing(token,number,text,date,sub); }
+        try(SmsStore store=new SmsStore(this)) { store.outgoing(token,number,text,date,sub);store.requestDelivery(token,parts.size()); }
         catch(RuntimeException unavailable) { notice("Arhiva SMS nu poate fi salvată; mesajul nu a fost trimis");return; }
         if(!getSharedPreferences("sms-outgoing",0).edit().putString("token",token).putString("parts",states.toString()).putString("number",number).putString("body",text).putString("draft-id",draftId==null?"":draftId).putLong("date",date).putInt("sub",sub).commit()) {
             try(SmsStore store=new SmsStore(this)) { store.completed(token,false); }
@@ -342,7 +343,7 @@ public final class MessagesActivity extends LeoActivity {
             notice("Starea SMS nu poate fi salvată; mesajul nu a fost trimis");return;
         }
         try {
-            manager.sendMultipartTextMessage(number,null,parts,callbacks,null);
+            manager.sendMultipartTextMessage(number,null,parts,callbacks,deliveries);
             composing=false; load(number); notice("SMS în curs de trimitere");
         } catch(RuntimeException failure) {
             try(SmsStore store=new SmsStore(this)) { store.completed(token,false); }

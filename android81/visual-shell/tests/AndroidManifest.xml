@@ -21,4 +21,6 @@
     <instrumentation android:name="ro.leo.visual.VibrationApiTest" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.FiveAppsTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.FiveAppsUiTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.SixIntegrationTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.MediaDashboardTests" android:targetPackage="ro.leo.visual" />
 </manifest>

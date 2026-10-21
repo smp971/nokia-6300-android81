@@ -53,6 +53,7 @@ public final class MainActivity extends Activity {
             screen.selected = Math.max(0, Math.min(screen.names.length-1, state.getInt("selected")));
         }
         setContentView(screen);
+        if(getIntent().hasExtra("open_app")){int id=getIntent().getIntExtra("open_app",-1);getIntent().removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length)screen.open(id);}
     }
     protected void onResume() {
         super.onResume();
@@ -107,6 +108,7 @@ public final class MainActivity extends Activity {
     }
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent); setIntent(intent);
+        if(intent.hasExtra("open_app")){int id=intent.getIntExtra("open_app",-1);intent.removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length){screen.open(id);return;}}
         screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();screen.invalidate();
     }
     public void onBackPressed() {
@@ -117,6 +119,7 @@ public final class MainActivity extends Activity {
     public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){handler.removeCallbacks(speed);speedKey=-1;return true;}return super.onKeyUp(key,event);}
     public boolean onKeyDown(int key, KeyEvent event) {
+        if(!screen.grid&&key==KeyEvent.KEYCODE_1){if(event.getRepeatCount()==0)startActivity(new Intent(this,GlobalSearchActivity.class));return true;}
         if(!screen.grid&&key==KeyEvent.KEYCODE_0){if(event.getRepeatCount()==0)startActivity(new Intent(this,NowPlayingActivity.class));return true;}
         if(!screen.grid&&key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9){if(event.getRepeatCount()==0){speedKey=key;handler.postDelayed(speed,650);}return true;}
         if(key==KeyEvent.KEYCODE_MENU && event.getScanCode()==212) {
@@ -128,9 +131,10 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile","Acum se redă"}, new KeypadDialog.Action() {
+                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile","Media curentă","Caută în Leo"}, new KeypadDialog.Action() {
               public void select(int which) {
-                if(which==8){startActivity(new Intent(MainActivity.this,NowPlayingActivity.class));}
+                if(which==9){startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));}
+                else if(which==8){startActivity(new Intent(MainActivity.this,NowPlayingActivity.class));}
                 else if (which == 0) {
                     startActivity(new Intent(MainActivity.this,WallpaperActivity.class));
                 }
@@ -277,10 +281,10 @@ public final class MainActivity extends Activity {
             if (delta != 0) {
                 if (!grid) grid = true;
                 else if(list) {
-                    if(key==KeyEvent.KEYCODE_DPAD_UP) selected=Math.max(0,selected-1);
-                    if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=Math.min(names.length-1,selected+1);
+                    if(key==KeyEvent.KEYCODE_DPAD_UP) selected=CircularNavigation.step(selected,-1,names.length);
+                    if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=CircularNavigation.step(selected,1,names.length);
                 }
-                else selected=Math.max(0,Math.min(names.length-1,selected+delta));
+                else if(selected==0&&delta<0)selected=names.length-1;else if(selected==names.length-1&&delta>0)selected=0;else selected=Math.max(0,Math.min(names.length-1,selected+delta));
                 message = ""; invalidate(); return true;
             }
             return false;

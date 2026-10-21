@@ -60,7 +60,7 @@ public final class NotesActivity extends Activity {
         }
         SharedPreferences saved=getSharedPreferences("notes-draft",MODE_PRIVATE);
         if(!readFailed && saved.getBoolean("editing",false)) edit(saved.getString("id",""),saved.getString("body",""));
-        else showList();
+        else {String target=getIntent().getStringExtra("note_id");boolean opened=false;if(target!=null)for(Note n:notes)if(target.equals(n.id)){edit(n.id,n.body);opened=true;break;}if(!opened)showList();}
     }
     protected void onPause() { handler.removeCallbacks(draft); saveDraft(); super.onPause(); }
     private void toast(String value) { Toast.makeText(this,value,Toast.LENGTH_SHORT).show(); }
@@ -206,6 +206,7 @@ public final class NotesActivity extends Activity {
         }).show();
     }
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if(!editing&&CircularNavigation.dispatch(this,event))return true;
         int key=event.getKeyCode();
         if(key==KeyEvent.KEYCODE_MENU) {
             if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) {

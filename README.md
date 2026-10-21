@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 21 octombrie 2026** · [Cinci aplicații îmbunătățite](android81/LEO-FIVE-APPS.md) · [Carduri Home și vibrații](android81/LEO-HOME-HAPTICS.md) · [Ceas și Meteo](android81/LEO-CLOCK-WEATHER.md) · [Telefon Leo Night](android81/LEO-NATIVE-PHONE.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
+**Actualizat: 21 octombrie 2026** · [Integrare Leo · șase funcții](android81/LEO-SIX-INTEGRATION.md) · [Cinci aplicații îmbunătățite](android81/LEO-FIVE-APPS.md) · [Carduri Home și vibrații](android81/LEO-HOME-HAPTICS.md) · [Ceas și Meteo](android81/LEO-CLOCK-WEATHER.md) · [Telefon Leo Night](android81/LEO-NATIVE-PHONE.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
 
 [Ce funcționează](#ce-poți-face-deja) · [Capturi](#leo-în-imagini) ·
 [Audit](#auditul-proiectului) · [Ce urmează](#ce-mai-avem-de-construit) ·
@@ -56,6 +56,21 @@ la Android Telecom. Ecranele de apel din aceste capturi sunt **demo locale**.
 | **Galerie · zoom** | **SMS · contor** | **Backup · previzualizare** |
 | <img src="android81/screenshots/leo-five-gallery.png" width="180" alt="Zoom în Galeria Leo"> | <img src="android81/screenshots/leo-five-sms-counter.png" width="180" alt="Ciornă locală, netrimisă"> | <img src="android81/screenshots/leo-five-backup.png" width="180" alt="Previzualizare backup demonstrativ"> |
 
+**Integrare nouă:** căutare globală, stiluri pe aplicații și backup selectiv al agendei/SMS.
+Capturile folosesc exclusiv date fictive; [funcții și limite](android81/LEO-SIX-INTEGRATION.md).
+
+| Caută în Leo | Stil pe aplicație · mostră | Restaurare selectivă |
+| :---: | :---: | :---: |
+| <img src="android81/screenshots/leo-six-search.png" width="180" alt="Căutare locală cu date fictive"> | <img src="android81/screenshots/leo-six-style.png" width="180" alt="Previzualizare temă pe aplicație"> | <img src="android81/screenshots/leo-six-backup.png" width="180" alt="Alegerea datelor de restaurat"> |
+
+**Material · Noapte** aduce suprafețe închise, accent turcoaz și carduri rotunjite.
+„Media curentă” reunește Muzică și FM; capturile următoare sunt demonstrații vizuale,
+fără redare audio pornită de probă.
+
+| Media curentă · Muzică | Media curentă · FM |
+| :---: | :---: |
+| <img src="android81/screenshots/leo-material-music.png" width="180" alt="Dashboard muzical Material, demonstrație"> | <img src="android81/screenshots/leo-material-fm.png" width="180" alt="Dashboard FM Material, demonstrație"> |
+
 ## Ce poți face deja
 
 **Home cu informații utile:** carduri opționale, fără servicii noi de polling.
@@ -69,10 +84,10 @@ Limitele și scenariile rămase sunt indicate separat.
 
 | Funcție de bază | Ce merge astăzi |
 | --- | --- |
-| 🏠 **Home și navigare** | Leo este launcherul principal. Carduri opționale Meteo, următoarea alarmă și Muzică/FM; `*` schimbă cardul, `#` îl deschide. D-pad, softkey-uri, notificări, blocare și mouse din taste. |
+| 🏠 **Home și navigare** | Leo este launcherul principal. Carduri opționale Meteo, următoarea alarmă și Muzică/FM; `*` schimbă cardul, `#` îl deschide. D-pad, softkey-uri, notificări grupate, blocare și mouse din taste. Listele și meniurile Leo au navigare circulară; `1` pe Home deschide căutarea globală locală. |
 | ⌨️ **Scriere** | Multi-tap și T9 românesc extins, dicționar personal, memorare opțională a alegerilor, majuscule, diacritice și simboluri. |
 | 📞 **Apeluri pe SIM 1** | Apel primit și două apeluri inițiate cu sunet în ambele sensuri, confirmate real; răspuns și închidere din taste. USB s-a întrerupt la apelurile inițiate. |
-| 👥 **Contacte și SMS** | Contacte locale cu numere multiple, fotografie, favorite și previzualizare import VCF; contor GSM-7/Unicode și SIM/stare în lista SMS. Trimitere și recepție SMS pe SIM 1 confirmate în probele anterioare. Conversații Leo cu bule și ciorne locale. |
+| 👥 **Contacte și SMS** | Contacte locale cu numere multiple, fotografie, favorite și previzualizare import VCF; alegerea numărului înainte de apel/SMS. Contor GSM-7/Unicode, necitite evidențiate, SIM/stare și cerere de raport de livrare; primirea raportului real încă nevalidată. Trimitere și recepție SMS pe SIM 1 confirmate în probele anterioare. Conversații Leo cu bule și ciorne locale. |
 | 🌐 **Conectivitate** | Date LTE pe SIM 1, Wi-Fi și hotspot cu Internet verificat de pe un alt telefon. Ambele SIM-uri sunt afișate și înregistrate pentru voce. |
 | 🔊 **Audio** | Difuzor, receptor, căști stereo cu fir și boxă Bluetooth A2DP. Bipuri pe boxă confirmate după integrarea modulului audio lipsă. |
 | 📳 **Vibrații** | Calea haptică audio KaiOS este activată: trei impulsuri confirmate fizic. API-ul Android este adaptat și verificat prin HAL/PCM; proprietățile și biblioteca se încarcă după reboot. |
@@ -82,11 +97,11 @@ Limitele și scenariile rămase sunt indicate separat.
 | 📂 **Fișiere și transfer** | Fișiere interne și SD, selecție multiplă cu `5`, căutare, sortare și spațiu disponibil; imagini deschise în Galeria Leo cu zoom și deplasare. Copiere/mutare verificate prin hash anterior; USB MTP confirmat. |
 | 🧰 **Unelte zilnice** | Calculator, Notițe, Calendar local și Ceas cu cinci file: Ora, Alarme, Glob, Timer și Crono. Timer cu pauză/continuare și cronometru cu ture, verificate din taste. |
 | 🌤️ **Meteo** | București implicit, oraș configurabil, vreme modelată Open-Meteo, șapte zile, răsărit/apus și cache local cu data actualizării. Prognoză reală afișată pe telefon. |
-| 🎨 **Personalizare** | Teme, fundaluri, reordonarea aplicațiilor, scurtături, trei favorite în dialer și configurări rapide cu volum. |
-| 💾 **Backup Leo** | Export și restaurare locală pentru preferințele acceptate, teme/fundal, ordinea aplicațiilor, notițe și dicționar personal. Validare și copie de revenire; fără contacte, SMS sau conturi. |
+| 🎨 **Personalizare** | Material · Noapte, teme și accente, teme individuale pentru aplicațiile acceptate cu previzualizare, fundal opțional la blocare, reordonarea aplicațiilor, scurtături, trei favorite în dialer și configurări rapide cu volum. |
+| 💾 **Backup Leo** | Export și restaurare locală pentru preferințele acceptate, teme/fundal, ordinea aplicațiilor, notițe și dicționar personal. Validare și copie de revenire. Contactele și SMS-urile au acum o arhivă separată cu restaurare selectivă și omitere a duplicatelor; conturile rămân excluse. |
 | 🌙 **Profiluri sonore** | Normal, Silențios, Exterior, Noapte și profil personal. Revenirea sunetului după Noapte → Normal confirmată. |
 
-**Scurtătura nouă:** din Home, apasă **0** pentru **Acum se redă** — un singur loc
+**Scurtătura nouă:** din Home, apasă **0** pentru **Media curentă** — un singur loc
 pentru muzică și FM, volum și acces la player. În meniul principal sunt **28 de intrări**;
 aplicațiile Android instalate au propria listă, iar compatibilitatea cu tastele variază.
 
@@ -106,7 +121,7 @@ confirmarea unei funcții se bazează pe proba ei separată.
 | **Interfața Leo** | Shell nativ adaptat la taste, cu un set consistent de aplicații | Home, bare softkey, T9 și meniuri comune. Serviciul tastelor era legat la procesul curent. Recuperarea sa limitată este implementată; eliminarea tuturor blocajelor nu este demonstrată. |
 | **Telefonie** | Funcțiile de bază au rezultate reale, cu acoperire incompletă | Apel primit și două apeluri inițiate bidirecționale, SMS și LTE pe SIM 1. SIM 2, DTMF și IMS au nevoie de probe distincte. [Probe noi](android81/STABILITY-PHONE-20261020.md). |
 | **Media** | Una dintre zonele cele mai avansate ale portului | Muzică, căști, FM/RDS și A2DP au confirmări reale. Modulul A2DP este încărcat în politica audio. Microfonul Bluetooth, apelurile prin accesorii și toate variantele de codec nu sunt validate. |
-| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | Inventar actualizat: 104 fișiere Java în shell, plus 24 fișiere Java de probe; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
+| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | Inventar actualizat: 110 fișiere Java în shell, plus 26 fișiere Java de probe; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
 | **Recompilare** | Există o bază reproductibilă documentată, încă netestată integral pe un PC curat | Toate cele **590 de proiecte AOSP** din manifest au revizii SHA fixate. Arborele AOSP, dump-ul și componentele proprietare necesare sunt intrări separate. |
 | **Verificare automată** | Există teste locale și probe pe telefon; lipsește încă o rulare continuă centralizată | Testele cozii muzicale au trecut în ultima etapă. Alte rezultate sunt legate în documentație. Repository-ul nu are workflow-uri GitHub Actions; suita completă nu a fost rerulată în acest audit. |
 | **Livrare și mentenanță** | Proiect de dezvoltare, încă fără release pentru instalare generală | Scripturile depind de mediul local și includ verificări pentru aparatul de dezvoltare. Lipsesc încă o procedură completă de release și un fișier LICENSE la rădăcină. |
@@ -117,7 +132,8 @@ să facem aceste rezultate repetabile: pornire, taste, apeluri, autonomie și re
 
 ## Ce mai avem de construit
 
-Etapa nouă extinde aplicațiile Leo: agenda, SMS, galeria, fișierele și backup-ul local.
+Etapa nouă leagă aplicațiile Leo prin căutare globală, notificări grupate, personalizare
+și backup selectiv al contactelor/SMS. Agenda, galeria și fișierele rămân baza acestor fluxuri.
 [Implementare, probe și limite](android81/LEO-FIVE-APPS.md). Telefonia și hardware-ul
 rămas au în continuare scenarii separate de validat.
 USB, performanța și autonomia sunt amânate momentan la alegerea utilizatorului;
