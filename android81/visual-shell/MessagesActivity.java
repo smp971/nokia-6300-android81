@@ -104,7 +104,7 @@ public final class MessagesActivity extends LeoActivity {
         for(Message m:messages) {
             if(address.isEmpty()) {
                 if(!threads.add(m.address)) continue;
-                rows.add(m); labels.add(m.address+"\n"+m.body);
+                rows.add(m); labels.add(m.address+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
             } else if(m.address.equals(address)) {
                 rows.add(m);
             }
@@ -293,6 +293,7 @@ public final class MessagesActivity extends LeoActivity {
         recipient=field(fields,"Număr",number,InputType.TYPE_CLASS_PHONE);
         body=field(fields,"Mesaj",initialBody,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         body.setMinLines(3); body.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(1000)});
+        final TextView count=text(SmsBudget.label(initialBody),13);fields.addView(count);body.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int c,int after){}public void onTextChanged(CharSequence s,int a,int before,int c){}public void afterTextChanged(android.text.Editable e){count.setText(SmsBudget.label(e.toString()));}});
         recipient.setNextFocusDownId(body.getId()); body.setNextFocusUpId(recipient.getId());
         left=new Runnable() { public void run() { prepare(); } };
         back=new Runnable() { public void run() {

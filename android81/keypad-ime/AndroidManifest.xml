@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.keypad">
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
+    <permission android:name="ro.leo.keypad.MANAGE_BACKUP" android:protectionLevel="signature" />
     <application android:label="Leo Keypad" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar">
+        <provider android:name=".BackupProvider" android:authorities="ro.leo.keypad.backup" android:exported="true" android:permission="ro.leo.keypad.MANAGE_BACKUP" />
         <service android:name=".KeypadIme" android:label="Leo Keypad · abc / T9" android:exported="true" android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter><action android:name="android.view.InputMethod" /></intent-filter>
             <meta-data android:name="android.view.im" android:resource="@xml/method" />

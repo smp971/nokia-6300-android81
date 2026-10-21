@@ -11,15 +11,15 @@ import java.nio.charset.*;
 import java.util.*;
 
 public final class FilesActivity extends LeoActivity {
-    private File base,current;
+    private File base,current;private int focused,sort;private LinearLayout listing;
     private File selected;private final LinkedHashSet<File> marked=new LinkedHashSet<File>();private final ArrayList<File> clipboard=new ArrayList<File>();private File sourceBoundary;private boolean cut;
     private final ArrayList<File> entries=new ArrayList<File>();
-    protected void onCreate(Bundle state) { super.onCreate(state); locations(); }
+    protected void onCreate(Bundle state) { super.onCreate(state);sort=getSharedPreferences("files-ui",0).getInt("sort",0);locations(); }
     private void locations() {
         base=null; current=null; selected=null;marked.clear();
         final ArrayList<File> values=new ArrayList<File>(); ArrayList<String> labels=new ArrayList<String>();
         for(Map.Entry<String,File> root:LeoFileProvider.roots(this).entrySet()) {
-            values.add(root.getValue()); labels.add(root.getKey().equals("phone")?"Memorie telefon":root.getKey().equals("leo")?"Documente Leo":"Card SD");
+            values.add(root.getValue()); labels.add((root.getKey().equals("phone")?"Memorie telefon":root.getKey().equals("leo")?"Documente Leo":"Card SD")+"\nLiber · "+android.text.format.Formatter.formatFileSize(this,root.getValue().getUsableSpace()));
         }
         list("Fișiere",labels,0,new Choice() { public void pick(int i) { base=values.get(i); browse(base); } },"Android",new Runnable() { public void run() {
             try { startActivity(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE)); }
@@ -29,20 +29,20 @@ public final class FilesActivity extends LeoActivity {
     private void browse(final File directory) {
         try { if(base==null || !LeoFileProvider.inside(base,directory) || !directory.isDirectory()) { notice("Stocare indisponibilă"); return; } }
         catch(IOException invalid) { notice("Locație invalidă"); return; }
-        current=directory; selected=null;
+        if(!directory.equals(current))focused=0;current=directory; selected=null;
         worker.execute(new Runnable() { public void run() {
             File[] contents=directory.listFiles(); final ArrayList<File> found=new ArrayList<File>();
             if(contents!=null) for(File file:contents) {
                 try { if(LeoFileProvider.inside(base,file) && !file.getName().startsWith(".leo-")) found.add(file); } catch(IOException ignored) { }
             }
-            Collections.sort(found,new Comparator<File>() { public int compare(File a,File b) { if(a.isDirectory()!=b.isDirectory()) return a.isDirectory()?-1:1; return a.getName().compareToIgnoreCase(b.getName()); } });
+            Collections.sort(found,new Comparator<File>() { public int compare(File a,File b) { if(a.isDirectory()!=b.isDirectory()) return a.isDirectory()?-1:1; return sort==1?Long.compare(b.lastModified(),a.lastModified()):sort==2?Long.compare(b.length(),a.length()):a.getName().compareToIgnoreCase(b.getName()); } });
             final boolean inaccessible=contents==null;
             ui(new Runnable() { public void run() {
                 entries.clear(); entries.addAll(found); ArrayList<String> labels=new ArrayList<String>();
                 for(File file:found) labels.add((marked.contains(file)?"✓ ":file.isDirectory()?"▸ ":"")+file.getName()+(file.isDirectory()?"":"\n"+file.length()+" octeți"));
-                list(directory.equals(base)?"Fișiere":directory.getName(),labels,0,new Choice() { public void pick(int i) {
+                list(directory.equals(base)?"Fișiere":directory.getName(),labels,Math.min(focused,Math.max(0,found.size()-1)),new Choice() { public void pick(int i) {
                     selected=entries.get(i); if(selected.isDirectory()) browse(selected); else fileOptions(selected);
-                } },"Opțiuni",new Runnable() { public void run() { directoryOptions(); } });
+                } },"Opțiuni",new Runnable() { public void run() { directoryOptions(); } });listing=root;if(!entries.isEmpty())selected=entries.get(Math.min(focused,entries.size()-1));
                 back=new Runnable() { public void run() { if(directory.equals(base)) locations(); else browse(directory.getParentFile()); } };
                 if(inaccessible) notice("Folderul nu poate fi citit; verifică permisiunile");
             }});
@@ -54,7 +54,7 @@ public final class FilesActivity extends LeoActivity {
     }
     private void directoryOptions() {
         final ArrayList<String> actions=new ArrayList<String>(Arrays.asList("Folder nou","Fișier text nou","Reîmprospătează","Caută în această stocare","Marchează fișierele de aici","Selecție · "+marked.size(),"Lipește aici · "+clipboard.size()));if(!current.equals(base)){actions.add("Redenumește folderul");actions.add("Șterge folderul gol");}
-        options("Fișiere",actions.toArray(new String[0]),new Choice(){public void pick(int i){if(i==0)nameForm(null);else if(i==1)textFile(null);else if(i==2)browse(current);else if(i==3)search();else if(i==4){for(File f:entries)if(f.isFile()&&marked.size()<100)marked.add(f);browse(current);}else if(i==5)selection();else if(i==6)paste();else if(i==7)nameForm(current);else options("Ștergi folderul gol?",new String[]{"Păstrează","Șterge"},new Choice(){public void pick(int yes){if(yes==1){File parent=current.getParentFile();if(current.delete())browse(parent);else notice("Folderul nu este gol sau accesul este refuzat");}}});}});
+        final int info=actions.size();actions.add("Spațiu și folder");actions.add("Triere");options("Fișiere",actions.toArray(new String[0]),new Choice(){public void pick(int i){if(i==info){metadata(current);return;}if(i==info+1){options("Triere",new String[]{"Nume","Cele mai recente","Cele mai mari"},new Choice(){public void pick(int mode){sort=mode;getSharedPreferences("files-ui",0).edit().putInt("sort",sort).apply();browse(current);}});return;}if(i==0)nameForm(null);else if(i==1)textFile(null);else if(i==2)browse(current);else if(i==3)search();else if(i==4){for(File f:entries)if(f.isFile()&&marked.size()<100)marked.add(f);browse(current);}else if(i==5)selection();else if(i==6)paste();else if(i==7)nameForm(current);else options("Ștergi folderul gol?",new String[]{"Păstrează","Șterge"},new Choice(){public void pick(int yes){if(yes==1){File parent=current.getParentFile();if(current.delete())browse(parent);else notice("Folderul nu este gol sau accesul este refuzat");}}});}});
     }
     private void selection(){options("Selecție · "+marked.size(),new String[]{"Copiază selecția","Mută selecția","Anulează marcajele"},new Choice(){public void pick(int i){if(i==2){marked.clear();browse(current);}else prepareTransfer(new ArrayList<File>(marked),i==1);}});}
     private void prepareTransfer(List<File> files,boolean move){if(files.isEmpty()){notice("Marchează întâi fișierele");return;}clipboard.clear();clipboard.addAll(files);sourceBoundary=base;cut=move;locations();notice("Alege destinația, apoi Opțiuni → Lipește aici. Numele existente nu sunt suprascrise.");}
@@ -97,20 +97,28 @@ public final class FilesActivity extends LeoActivity {
         back=new Runnable() { public void run() { browse(current); } }; footer("Salvează","","Șterge"); name.requestFocus();
     }
     private void fileOptions(final File file) {
-        options(file.getName(),new String[]{"Deschide","Editează text UTF-8","Redenumește","Șterge","Copiază","Mută",marked.contains(file)?"Demarchează":"Marchează"},new Choice() { public void pick(int i) {
+        options(file.getName(),new String[]{"Deschide","Editează text UTF-8","Redenumește","Șterge","Copiază","Mută",marked.contains(file)?"Demarchează":"Marchează","Informații"},new Choice() { public void pick(int i) {
             if(i==0) open(file); else if(i==1) textFile(file); else if(i==2) nameForm(file);
-            else if(i==4||i==5)prepareTransfer(Arrays.asList(file),i==5);else if(i==6){if(!marked.remove(file)){if(marked.size()>=100){notice("Maximum 100 fișiere în selecție");return;}marked.add(file);}browse(current);}
+            else if(i==7)metadata(file);else if(i==4||i==5)prepareTransfer(Arrays.asList(file),i==5);else if(i==6){if(!marked.remove(file)){if(marked.size()>=100){notice("Maximum 100 fișiere în selecție");return;}marked.add(file);}browse(current);}
             else options("Ștergi fișierul?",new String[]{"Păstrează","Șterge"},new Choice() { public void pick(int yes) {
                 if(yes==1) { if(!file.delete()) notice("Ștergerea a eșuat; folderele trebuie să fie goale"); browse(current); }
             }});
         }});
     }
+    void onListSelection(String title,int index){if(root==listing&&index>=0&&index<entries.size()){focused=index;selected=entries.get(index);}}
+    public boolean dispatchKeyEvent(android.view.KeyEvent e){if(e.getKeyCode()==android.view.KeyEvent.KEYCODE_5&&root==listing&&selected!=null&&selected.isFile()){if(e.getAction()==android.view.KeyEvent.ACTION_DOWN)onKeyDown(e.getKeyCode(),e);return true;}return super.dispatchKeyEvent(e);}
+    public boolean onKeyDown(int key,android.view.KeyEvent e){if(key==android.view.KeyEvent.KEYCODE_5&&root==listing&&selected!=null&&selected.isFile()){if(e.getRepeatCount()==0){if(!marked.remove(selected)){if(marked.size()>=100){notice("Maximum 100 fișiere");return true;}marked.add(selected);}browse(current);}return true;}return super.onKeyDown(key,e);}
+    private void metadata(final File f){ArrayList<String> rows=new ArrayList<String>();rows.add(f.isDirectory()?"Folder":"Fișier");if(f.isFile())rows.add("Mărime · "+android.text.format.Formatter.formatFileSize(this,f.length()));rows.add("Liber · "+android.text.format.Formatter.formatFileSize(this,f.getUsableSpace()));rows.add("Total · "+android.text.format.Formatter.formatFileSize(this,f.getTotalSpace()));rows.add("Modificat · "+new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new Date(f.lastModified())));rows.add("Selecție · "+marked.size()+" fișiere");list(f.getName(),rows,0,new Choice(){public void pick(int i){}},"",null);back=new Runnable(){public void run(){browse(current);}};}
     private void open(File file) {
         try {
             android.net.Uri uri=LeoFileProvider.uri(this,file);
             Intent view=new Intent(Intent.ACTION_VIEW);
             String extension=file.getName().contains(".")?file.getName().substring(file.getName().lastIndexOf('.')+1).toLowerCase(Locale.ROOT):"";
             String mime=android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            if(mime!=null&&mime.startsWith("image/")){startActivity(new Intent(this,GalleryActivity.class).setData(uri).putExtra("title",file.getName()));return;}
+            if(mime!=null&&mime.startsWith("video/")){startActivity(new Intent(this,VideoActivity.class).setData(uri).putExtra("title",file.getName()));return;}
+            if((mime!=null&&mime.startsWith("audio/"))||extension.equals("wma")){startActivity(new Intent(this,MediaActivity.class).setData(uri).putExtra("title",file.getName()));return;}
+            if(file.getName().endsWith(".leo-backup.json")){startActivity(new Intent(this,BackupActivity.class).putExtra("file",file.getAbsolutePath()));return;}
             view.setDataAndType(uri,mime==null?"application/octet-stream":mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(view);
         } catch(Exception failure) { notice("Nicio aplicație disponibilă pentru acest fișier"); }
