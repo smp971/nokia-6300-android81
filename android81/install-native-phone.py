@@ -2,7 +2,7 @@
 from pathlib import Path
 import argparse,json,subprocess,re,hashlib
 root=Path(__file__).resolve().parent
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--activate',action='store_true');p.add_argument('--restore',action='store_true');args=p.parse_args();assert not(args.activate and args.restore)
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--activate',action='store_true');p.add_argument('--no-open',action='store_true',help='Keep the current screen after updating');p.add_argument('--restore',action='store_true');args=p.parse_args();assert not(args.activate and args.restore)
 adb=['D:/ROMS/platform-tools/adb.exe','-s','695d']
 def run(*a):return subprocess.check_output(['python','-X','utf8',str(root/'framework-command.py'),*a],timeout=45).decode(errors='replace').strip()
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -25,4 +25,4 @@ if args.restore:
  else:run('/system/bin/sh','/system/bin/settings','put','secure','dialer_default_application',record['dialer'])
 installed=run('/system/bin/sh','/system/bin/pm','path','ro.leo.visual').splitlines()[0][8:];assert run('/system/bin/sha256sum',installed).split()[0]==expected
 print('Native phone restored' if args.restore else 'Native phone installed; default role '+('set to Leo' if args.activate else 'unchanged'))
-run('/system/bin/sh','/system/bin/am','start','-W','-f','0x14000000','-n','ro.leo.visual/.PhoneActivity')
+if not args.no_open:run('/system/bin/sh','/system/bin/am','start','-W','-f','0x14000000','-n','ro.leo.visual/.PhoneActivity')

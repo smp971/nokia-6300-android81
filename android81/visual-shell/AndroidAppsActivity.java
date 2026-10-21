@@ -25,7 +25,8 @@ public final class AndroidAppsActivity extends Activity {
     private final ArrayList<Entry> apps=new ArrayList<Entry>();
     private AppList screen;
     private int selected;
-    private String error="";
+    private String error="";private boolean showHidden,favoritesOnly;
+    private java.util.Set<String> stored(String key){return getSharedPreferences("android-apps",0).getStringSet(key,java.util.Collections.<String>emptySet());}
     private static final class Entry {
         ComponentName component;
         String label;
@@ -41,6 +42,9 @@ public final class AndroidAppsActivity extends Activity {
         super.onResume();
         palette=Appearance.palette(this);
         getWindow().setStatusBarColor(palette.bar);
+        reload();
+    }
+    private void reload(){
         ComponentName previous=apps.isEmpty()?null:apps.get(Math.max(0,Math.min(selected,apps.size()-1))).component;
         apps.clear();
         HashSet<String> homePackages=new HashSet<String>();
@@ -55,7 +59,7 @@ public final class AndroidAppsActivity extends Activity {
                     || getPackageName().equals(info.activityInfo.packageName)
                     || homePackages.contains(info.activityInfo.packageName)) continue;
             ComponentName component=new ComponentName(info.activityInfo.packageName,info.activityInfo.name);
-            if(!seen.add(component)) continue;
+            if(!seen.add(component)||(!showHidden&&stored("hidden").contains(component.flattenToString()))||(favoritesOnly&&!stored("favorites").contains(component.flattenToString()))) continue;
             Entry item=new Entry(); item.component=component;
             item.label=info.loadLabel(getPackageManager()).toString();
             item.icon=info.loadIcon(getPackageManager()); apps.add(item);
@@ -63,7 +67,7 @@ public final class AndroidAppsActivity extends Activity {
         final Collator collator=Collator.getInstance(new Locale("ro"));
         Collections.sort(apps,new Comparator<Entry>() {
             public int compare(Entry a,Entry b) {
-                int result=collator.compare(a.label,b.label);
+                boolean af=stored("favorites").contains(a.component.flattenToString()),bf=stored("favorites").contains(b.component.flattenToString());if(af!=bf)return af?-1:1;int result=collator.compare(a.label,b.label);
                 return result!=0?result:a.component.flattenToString().compareTo(b.component.flattenToString());
             }
         });
@@ -74,7 +78,11 @@ public final class AndroidAppsActivity extends Activity {
     protected void onSaveInstanceState(Bundle state) {
         state.putInt("selected",selected); super.onSaveInstanceState(state);
     }
+    private void menu(){final Entry item=apps.isEmpty()?null:apps.get(selected);new KeypadDialog(this,"Aplicații Android",new String[]{"Adaugă / elimină favoritul","Ascunde / arată selecția",showHidden?"Ascunde intrările ascunse":"Arată și intrările ascunse",favoritesOnly?"Toate aplicațiile":"Doar favorite","Informații aplicație","Aplicații implicite Android"},new KeypadDialog.Action(){public void select(int i){if(i==0||i==1){if(item==null)return;String key=i==0?"favorites":"hidden",id=item.component.flattenToString();java.util.Set<String> ids=new HashSet<String>(stored(key));if(!ids.remove(id))ids.add(id);getSharedPreferences("android-apps",0).edit().putStringSet(key,ids).apply();}else if(i==2)showHidden=!showHidden;else if(i==3)favoritesOnly=!favoritesOnly;else if(i==4){if(item!=null)try{startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:"+item.component.getPackageName())));}catch(RuntimeException e){error="Pagina Android nu este disponibilă";}return;}else{try{startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));}catch(RuntimeException e){error="Configurarea implicitelor nu este disponibilă";}return;}onResumeList();}}).show();}
+    private void onResumeList(){reload();}
     public boolean onKeyDown(int key,KeyEvent event) {
+        if(LeoActivity.isJackNavigationNoise(event))return true;
+        if(key==KeyEvent.KEYCODE_MENU){if(event.getRepeatCount()==0)menu();return true;}
         if(key==KeyEvent.KEYCODE_BACK) { if(event.getRepeatCount()==0) finish(); return true; }
         if(key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) {
             if(!apps.isEmpty())selected=CircularNavigation.step(selected,key==KeyEvent.KEYCODE_DPAD_UP?-1:1,apps.size());
@@ -113,13 +121,14 @@ public final class AndroidAppsActivity extends Activity {
                 if(index==selected) { paint.setColor(palette.selection); c.drawRoundRect(new RectF(6,top,234,top+38),7,7,paint); }
                 Entry item=apps.get(index);
                 c.save(); c.translate(13,top+5); item.icon.setBounds(0,0,28,28); item.icon.draw(c); c.restore();
-                text(c,fit(item.label,178),49,top+25,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
+                text(c,fit((stored("favorites").contains(item.component.flattenToString())?"★ ":"")+(stored("hidden").contains(item.component.flattenToString())?"◌ ":"")+item.label,178),49,top+25,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
             }
             if(apps.isEmpty()) text(c,"Nicio aplicație disponibilă",120,140,14,Color.WHITE,Paint.Align.CENTER);
             text(c,error.isEmpty()?(apps.isEmpty()?"0 / 0":(selected+1)+" / "+apps.size()):error,
                 120,268,11,0xffd3bddf,Paint.Align.CENTER);
             paint.setColor(palette.bar); c.drawRect(0,276,240,302,paint);
             text(c,apps.isEmpty()?"":"Deschide",120,293,12,palette.accent,Paint.Align.CENTER);
+            text(c,"Opțiuni",8,293,11,Color.WHITE,Paint.Align.LEFT);
             text(c,"Înapoi",232,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
         }
     }

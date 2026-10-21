@@ -31,7 +31,7 @@ public final class KeypadLockActivity extends LeoActivity {
         super.onResume();visible=true;IntentFilter f=new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         f.addAction(Intent.ACTION_TIME_CHANGED);f.addAction(Intent.ACTION_TIMEZONE_CHANGED);f.addAction(Intent.ACTION_SCREEN_ON);
         f.addAction("android.intent.action.SERVICE_STATE");f.addAction("android.intent.action.SIM_STATE_CHANGED");f.addAction("android.intent.action.ACTION_SUBINFO_RECORD_UPDATED");
-        f.addAction("ro.leo.visual.MUSIC_CHANGED");f.addAction(UnreadState.CHANGED);f.addAction(LeoNotificationService.CHANGED);UnreadState.watch(this);UnreadState.refresh(this);
+        f.addAction(FmService.CHANGED);f.addAction("ro.leo.visual.MUSIC_CHANGED");f.addAction(UnreadState.CHANGED);f.addAction(LeoNotificationService.CHANGED);UnreadState.watch(this);UnreadState.refresh(this);
         registerReceiver(changes,f);handler.removeCallbacks(minute);handler.post(minute);
     }
     protected void onPause(){visible=false;unregisterReceiver(changes);handler.removeCallbacks(minute);handler.removeCallbacks(disarm);armed=0;super.onPause();}
@@ -47,6 +47,7 @@ public final class KeypadLockActivity extends LeoActivity {
         int key=event.getKeyCode();
         if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0) {
             PlaybackService music=PlaybackService.instance;
+            if(armed==0&&FmService.playing&&(music==null||!music.playing())&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(key==KeyEvent.KEYCODE_5)stopService(new Intent(this,FmService.class));else if(FmService.instance!=null)FmService.instance.seek(key==KeyEvent.KEYCODE_6);screen.refresh();return true;}
             if(armed==0&&music!=null&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(key==KeyEvent.KEYCODE_5)music.toggle();else music.next(key==KeyEvent.KEYCODE_6);screen.refresh();return true;}
             if(key==KeyEvent.KEYCODE_DPAD_DOWN||key==KeyEvent.KEYCODE_DPAD_UP){previewIndex+=key==KeyEvent.KEYCODE_DPAD_DOWN?1:-1;screen.refresh();return true;}
             if(key==KeyEvent.KEYCODE_MENU) { armed=SystemClock.elapsedRealtime();handler.removeCallbacks(disarm);handler.postDelayed(disarm,3000);screen.invalidate(); }
@@ -63,7 +64,7 @@ public final class KeypadLockActivity extends LeoActivity {
         int battery;
         boolean charging;
         String time="",date="";
-        String[] preview={"",""};
+        String[] preview={"",""};HomeCards.Card[] cards=new HomeCards.Card[0];
         final String[] sims={"SIM 1 · se verifică","SIM 2 · se verifică"};
         LockView(){
             super(KeypadLockActivity.this);setFocusable(true);setFocusableInTouchMode(true);requestFocus();
@@ -73,6 +74,7 @@ public final class KeypadLockActivity extends LeoActivity {
         void refresh(){
             Date now=new Date();time=android.text.format.DateFormat.getTimeFormat(KeypadLockActivity.this).format(now);
             date=new java.text.SimpleDateFormat("EEEE, d MMMM",new Locale("ro")).format(now);
+            cards=HomeCards.lockInfo(KeypadLockActivity.this,System.currentTimeMillis());
             preview=LeoNotificationService.preview(KeypadLockActivity.this,previewIndex);
             TelephonyManager base=(TelephonyManager)getSystemService(TELEPHONY_SERVICE);
             List<SubscriptionInfo> active=null;
@@ -108,20 +110,13 @@ public final class KeypadLockActivity extends LeoActivity {
             label(c,"LEO",12,23,11,0xffefe7fa,Paint.Align.LEFT);
             label(c,(charging?"+ ":"")+battery+"%",198,23,11,Color.WHITE,Paint.Align.RIGHT);
             paint.setColor(Color.WHITE);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.2f);c.drawRoundRect(new RectF(205,13,228,24),2,2,paint);paint.setStyle(Paint.Style.FILL);c.drawRect(229,16,231,21,paint);c.drawRect(207,15,207+19*battery/100f,22,paint);
-            label(c,time,120,91,49,Color.WHITE,Paint.Align.CENTER);
-            label(c,date,120,115,13,0xfff0e8f7,Paint.Align.CENTER);
-            label(c,sims[0],120,147,12,0xfff0e8f7,Paint.Align.CENTER);label(c,sims[1],120,167,12,0xfff0e8f7,Paint.Align.CENTER);
-            label(c,UnreadState.label(),120,190,12,Color.WHITE,Paint.Align.CENTER);
-            PlaybackService music=PlaybackService.instance;boolean hasMusic=music!=null&&!music.queue.sources.isEmpty();
-            boolean hasPreview=hasMusic||!preview[0].isEmpty();
-            if(hasPreview){paint.setColor(0x77100f1d);c.drawRoundRect(10,199,230,242,8,8,paint);label(c,hasMusic?PlaybackService.title:preview[0],120,216,12,Color.WHITE,Paint.Align.CENTER);label(c,hasMusic?"4 anterior · 5 "+(music.playing()?"pauză":"redă")+" · 6 următor":preview[1],120,233,11,0xffe3d4ef,Paint.Align.CENTER);}
-            paint.setColor(0x99150e24);c.drawRoundRect(new RectF(12,hasPreview?248:207,228,hasPreview?297:283),10,10,paint);
-            if(!hasPreview){
-            paint.setColor(0xfff5eefb);c.drawRoundRect(new RectF(112,205,128,220),3,3,paint);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2);c.drawArc(new RectF(114,196,126,213),180,180,false,paint);paint.setStyle(Paint.Style.FILL);
-            }
-            label(c,armed>0?"Apasă acum *":"Taste blocate",120,hasPreview?268:237,17,Color.WHITE,Paint.Align.CENTER);
-            label(c,armed>0?"Ai 3 secunde":"Soft stânga, apoi *",120,hasPreview?286:259,12,0xffe3d4ef,Paint.Align.CENTER);
-            label(c,"Deblochează",10,311,12,Color.WHITE,Paint.Align.LEFT);label(c,"*",230,311,15,Color.WHITE,Paint.Align.RIGHT);
+            label(c,time,120,76,43,Color.WHITE,Paint.Align.CENTER);label(c,date,120,98,13,0xffd1e2e5,Paint.Align.CENTER);
+            label(c,sims[0],120,119,11,0xffd1e2e5,Paint.Align.CENTER);label(c,sims[1],120,136,11,0xffd1e2e5,Paint.Align.CENTER);label(c,UnreadState.label(),120,154,11,Color.WHITE,Paint.Align.CENTER);
+            if(getSharedPreferences("appearance",0).getBoolean("lock-info",true)){for(int i=0;i<2;i++){float x=12+i*112;paint.setColor(palette.card);c.drawRoundRect(x,163,x+104,207,7,7,paint);String title=i==0?"Meteo · cache":"Următoarea alarmă",value="Indisponibil";for(HomeCards.Card card:cards)if(card.type==i){value=card.main;break;}paint.setTextSize(11);int limit=paint.breakText(value,true,94,null);if(limit<value.length())value=value.substring(0,Math.max(0,limit-1))+"…";label(c,title,x+7,178,9,palette.accent,Paint.Align.LEFT);label(c,value,x+7,197,11,Color.WHITE,Paint.Align.LEFT);}}
+            PlaybackService music=PlaybackService.instance;boolean fm=FmService.playing&&(music==null||!music.playing()),hasMusic=music!=null&&!music.queue.sources.isEmpty(),showMedia=getSharedPreferences("appearance",0).getBoolean("lock-media",true)&&(hasMusic||fm);
+            if(showMedia||!preview[0].isEmpty()){paint.setColor(palette.card);c.drawRoundRect(12,215,228,263,7,7,paint);if(showMedia){Bitmap art=fm?null:music.cover();if(art!=null&&!art.isRecycled()){paint.setColor(Color.WHITE);c.drawBitmap(art,null,new RectF(18,221,54,257),paint);}else{paint.setColor(palette.accent);c.drawCircle(36,239,15,paint);paint.setColor(palette.background);c.drawCircle(36,239,6,paint);}String title=fm?(FmService.stationName.isEmpty()?String.format(Locale.ROOT,"%.1f MHz",FmService.frequency/1000f):FmService.stationName):PlaybackService.title;paint.setTextSize(12);int n=paint.breakText(title,true,160,null);if(n<title.length())title=title.substring(0,Math.max(0,n-1))+"…";label(c,title,62,233,12,Color.WHITE,Paint.Align.LEFT);label(c,"4 ◀  5 "+(fm?"stop":music.playing()?"pauză":"redă")+"  6 ▶",62,251,11,palette.accent,Paint.Align.LEFT);}else{label(c,preview[0],120,233,12,Color.WHITE,Paint.Align.CENTER);label(c,preview[1],120,251,11,palette.accent,Paint.Align.CENTER);}}
+            paint.setColor(palette.bar);c.drawRoundRect(12,270,228,302,7,7,paint);label(c,armed>0?"Apasă * în 3 secunde":"Soft stânga, apoi *",120,291,14,Color.WHITE,Paint.Align.CENTER);
+            label(c,"Deblochează",10,315,11,Color.WHITE,Paint.Align.LEFT);label(c,"*",230,315,14,Color.WHITE,Paint.Align.RIGHT);
             c.restore();
         }
         public boolean onTouchEvent(android.view.MotionEvent event){return true;}

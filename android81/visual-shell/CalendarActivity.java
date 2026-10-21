@@ -15,17 +15,17 @@ import java.util.*;
 public final class CalendarActivity extends LeoActivity {
     private final Calendar day=Calendar.getInstance();
     private long calendarId=-1;
-    private boolean month;
+    private boolean month;private int pageGeneration;private volatile int dotsGeneration;private final HashSet<Integer> eventDays=new HashSet<Integer>();
     private MonthFace face;
-    private static final class Event { long id,start,end; String title; }
+    private static final class Event { long id,start,end; String title,rule;int reminder=-1; }
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        if(state!=null) day.setTimeInMillis(state.getLong("day",System.currentTimeMillis()));
+        day.setTimeInMillis(state!=null?state.getLong("day",System.currentTimeMillis()):getIntent().getLongExtra("day",System.currentTimeMillis()));
         showMonth();
     }
     protected void onSaveInstanceState(Bundle state) { state.putLong("day",day.getTimeInMillis()); super.onSaveInstanceState(state); }
     private void showMonth() {
-        month=true; begin("Calendar"); face=new MonthFace(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
+        ++pageGeneration;month=true;loadDots(); begin("Calendar"); face=new MonthFace(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable() { public void run() {
             options("Calendar",new String[]{"Eveniment nou","Azi","Agenda Leo"},new Choice() { public void pick(int i) {
                 if(i==0) edit(null); else if(i==1) { day.setTimeInMillis(System.currentTimeMillis()); showMonth(); } else events(true);
@@ -50,40 +50,40 @@ public final class CalendarActivity extends LeoActivity {
         if(added==null) throw new IllegalStateException(); calendarId=ContentUris.parseId(added); return calendarId;
     }
     private void events(final boolean agenda) {
-        month=false;
+        final int page=++pageGeneration;month=false;
         final Calendar start=(Calendar)day.clone(); start.set(Calendar.HOUR_OF_DAY,0); start.set(Calendar.MINUTE,0); start.set(Calendar.SECOND,0); start.set(Calendar.MILLISECOND,0);
         final Calendar end=(Calendar)start.clone(); end.add(Calendar.DATE,1);
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Event> rows=new ArrayList<Event>();
             try {
                 long own=ownCalendar(false);
-                if(own>=0) try(Cursor c=getContentResolver().query(CalendarContract.Events.CONTENT_URI,new String[]{"_id","title","dtstart","dtend"},
-                    "calendar_id=? AND deleted=0"+(agenda?"":" AND dtstart<? AND dtend>?"),
-                    agenda?new String[]{""+own}:new String[]{""+own,""+end.getTimeInMillis(),""+start.getTimeInMillis()},"dtstart ASC")) {
+                if(agenda)end.add(Calendar.DATE,89);
+                if(own>=0) try(Cursor c=getContentResolver().query(CalendarReminders.instances(start.getTimeInMillis(),end.getTimeInMillis()),new String[]{"event_id","title","begin","end","rrule"},"calendar_id=?",new String[]{""+own},"begin ASC")) {
                     while(c!=null && c.moveToNext() && rows.size()<200) {
-                        Event e=new Event(); e.id=c.getLong(0); e.title=c.getString(1); e.start=c.getLong(2); e.end=c.getLong(3); rows.add(e);
+                        Event e=new Event(); e.id=c.getLong(0); e.title=c.getString(1); e.start=c.getLong(2); e.end=c.getLong(3);e.rule=c.getString(4); rows.add(e);
                     }
                 }
                 ui(new Runnable() { public void run() {
-                    ArrayList<String> labels=new ArrayList<String>(); SimpleDateFormat time=new SimpleDateFormat(agenda?"dd.MM.yyyy HH:mm":"HH:mm",Locale.getDefault());
+                    if(page!=pageGeneration)return;ArrayList<String> labels=new ArrayList<String>(); SimpleDateFormat time=new SimpleDateFormat(agenda?"dd.MM.yyyy HH:mm":"HH:mm",Locale.getDefault());
                     for(Event e:rows) labels.add(e.title+"\n"+time.format(new Date(e.start)));
-                    list(agenda?"Agenda Leo":new SimpleDateFormat("dd.MM.yyyy",Locale.ROOT).format(day.getTime()),labels,0,new Choice() { public void pick(int i) { detail(rows.get(i),agenda); } },"Nou",new Runnable() { public void run() { edit(null); } });
+                    list(agenda?"Agenda · 90 zile":new SimpleDateFormat("dd.MM.yyyy",Locale.ROOT).format(day.getTime()),labels,0,new Choice() { public void pick(int i) { detail(rows.get(i),agenda); } },"Nou",new Runnable() { public void run() { edit(null); } });
                     back=new Runnable() { public void run() { showMonth(); } };
                 }});
-            } catch(RuntimeException failure) { ui(new Runnable() { public void run() { notice("Calendarul nu poate fi citit; verifică permisiunile"); showMonth(); } }); }
+            } catch(RuntimeException failure) { ui(new Runnable() { public void run() { if(page!=pageGeneration)return;notice("Calendarul nu poate fi citit; verifică permisiunile"); showMonth(); } }); }
         }});
     }
     private void detail(final Event event,final boolean agenda) {
-        options(event.title,new String[]{"Editează","Șterge","Înapoi"},new Choice() { public void pick(int i) {
+        options(event.title,new String[]{event.rule==null||event.rule.isEmpty()?"Editează":"Editează seria",event.rule==null||event.rule.isEmpty()?"Șterge":"Șterge seria","Înapoi"},new Choice() { public void pick(int i) {
             if(i==0) edit(event);
             else if(i==1) options("Ștergi evenimentul?",new String[]{"Păstrează","Șterge"},new Choice() { public void pick(int yes) {
-                if(yes==1) try { getContentResolver().delete(CalendarContract.Events.CONTENT_URI,"_id=? AND calendar_id=?",new String[]{""+event.id,""+ownCalendar(false)}); events(agenda); }
+                if(yes==1) try { getContentResolver().delete(CalendarContract.Events.CONTENT_URI,"_id=? AND calendar_id=?",new String[]{""+event.id,""+ownCalendar(false)}); CalendarReminders.schedule(CalendarActivity.this);loadDots();events(agenda); }
                 catch(RuntimeException failure) { notice("Evenimentul nu poate fi șters"); }
             }});
         }});
     }
     private void edit(final Event event) {
-        month=false; final Calendar date=(Calendar)day.clone(); if(event!=null) date.setTimeInMillis(event.start);
+        ++pageGeneration;month=false;if(event!=null){try(Cursor c=getContentResolver().query(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,event.id),new String[]{"dtstart","dtend","duration","rrule"},null,null,null)){if(c!=null&&c.moveToFirst()){event.start=c.getLong(0);event.rule=c.getString(3);String length=c.getString(2);event.end=c.isNull(1)?event.start+parseDuration(length):c.getLong(1);}}try(Cursor c=getContentResolver().query(CalendarContract.Reminders.CONTENT_URI,new String[]{"minutes"},"event_id=? AND method=?",new String[]{""+event.id,""+CalendarContract.Reminders.METHOD_ALERT},null)){if(c!=null&&c.moveToFirst())event.reminder=c.getInt(0);}}
+        final Calendar date=(Calendar)day.clone(); if(event!=null) date.setTimeInMillis(event.start);
         LinearLayout fields=fields(event==null?"Eveniment nou":"Editează");
         final EditText title=field(fields,"Titlu",event==null?"":event.title,InputType.TYPE_CLASS_TEXT);
         final EditText d=field(fields,"Zi",""+date.get(Calendar.DAY_OF_MONTH),InputType.TYPE_CLASS_NUMBER);
@@ -92,6 +92,8 @@ public final class CalendarActivity extends LeoActivity {
         final EditText h=field(fields,"Ora",""+date.get(Calendar.HOUR_OF_DAY),InputType.TYPE_CLASS_NUMBER);
         final EditText min=field(fields,"Minute",""+date.get(Calendar.MINUTE),InputType.TYPE_CLASS_NUMBER);
         final EditText duration=field(fields,"Durată (minute)",event==null?"60":""+Math.max(1,(event.end-event.start)/60000),InputType.TYPE_CLASS_NUMBER);
+        final Spinner repeat=new Spinner(this);repeat.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Nu se repetă","Zilnic","Săptămânal","Lunar"}));if(event!=null&&event.rule!=null){repeat.setSelection(event.rule.contains("DAILY")?1:event.rule.contains("WEEKLY")?2:event.rule.contains("MONTHLY")?3:0);}fields.addView(text("Repetare · editarea afectează seria",14));fields.addView(repeat);
+        final int[] reminderValues={-1,0,5,10,30,60};final Spinner reminder=new Spinner(this);reminder.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Fără notificare","La început","Cu 5 minute înainte","Cu 10 minute înainte","Cu 30 minute înainte","Cu o oră înainte"}));if(event!=null)for(int i=0;i<reminderValues.length;i++)if(reminderValues[i]==event.reminder)reminder.setSelection(i);fields.addView(text("Notificare",14));fields.addView(reminder);
         EditText[] all={title,d,m,y,h,min,duration};
         for(int i=0;i<all.length;i++) { if(i>0) all[i].setNextFocusUpId(all[i-1].getId()); if(i+1<all.length) all[i].setNextFocusDownId(all[i+1].getId()); }
         left=new Runnable() { public void run() {
@@ -102,8 +104,8 @@ public final class CalendarActivity extends LeoActivity {
                 value.set(year,Integer.parseInt(m.getText().toString())-1,Integer.parseInt(d.getText().toString()),Integer.parseInt(h.getText().toString()),Integer.parseInt(min.getText().toString()));
                 long begin=value.getTimeInMillis(),length=AlarmMath.duration(Integer.parseInt(duration.getText().toString()),0);
                 ContentValues v=new ContentValues(); v.put("calendar_id",ownCalendar(true)); v.put("title",name); v.put("dtstart",begin); v.put("dtend",begin+length); v.put("eventTimezone",TimeZone.getDefault().getID());
-                if(event==null) { if(getContentResolver().insert(CalendarContract.Events.CONTENT_URI,v)==null) throw new IllegalStateException(); }
-                else if(getContentResolver().update(CalendarContract.Events.CONTENT_URI,v,"_id=? AND calendar_id=?",new String[]{""+event.id,""+calendarId})!=1) throw new IllegalStateException();
+                String[] rules={null,"FREQ=DAILY","FREQ=WEEKLY","FREQ=MONTHLY"};String rule=rules[repeat.getSelectedItemPosition()];v.put("rrule",rule);if(rule==null){v.putNull("duration");}else{v.putNull("dtend");v.put("duration","PT"+(length/1000)+"S");}int alert=reminderValues[reminder.getSelectedItemPosition()];v.put("hasAlarm",alert>=0?1:0);
+                ArrayList<ContentProviderOperation> ops=new ArrayList<ContentProviderOperation>();if(event==null)ops.add(ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI).withValues(v).build());else{ops.add(ContentProviderOperation.newUpdate(CalendarContract.Events.CONTENT_URI).withSelection("_id=? AND calendar_id=?",new String[]{""+event.id,""+calendarId}).withValues(v).withExpectedCount(1).build());ops.add(ContentProviderOperation.newDelete(CalendarContract.Reminders.CONTENT_URI).withSelection("event_id=?",new String[]{""+event.id}).build());}if(alert>=0){ContentProviderOperation.Builder op=ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI).withValue("minutes",alert).withValue("method",CalendarContract.Reminders.METHOD_ALERT);if(event==null)op.withValueBackReference("event_id",0);else op.withValue("event_id",event.id);ops.add(op.build());}getContentResolver().applyBatch(CalendarContract.AUTHORITY,ops);CalendarReminders.schedule(CalendarActivity.this);
                 day.setTimeInMillis(begin); events(false); notice("Eveniment salvat");
             } catch(Exception invalid) { notice("Verifică data, durata (1–1440 minute) și permisiunile"); }
         }};
@@ -113,12 +115,14 @@ public final class CalendarActivity extends LeoActivity {
     public boolean onKeyDown(int key,KeyEvent event) {
         if(month) {
             int amount=key==KeyEvent.KEYCODE_DPAD_LEFT?-1:key==KeyEvent.KEYCODE_DPAD_RIGHT?1:key==KeyEvent.KEYCODE_DPAD_UP?-7:key==KeyEvent.KEYCODE_DPAD_DOWN?7:0;
-            if(amount!=0) { day.add(Calendar.DATE,amount); face.invalidate(); return true; }
-            if(key==KeyEvent.KEYCODE_STAR || key==KeyEvent.KEYCODE_POUND) { if(event.getRepeatCount()==0) { day.add(Calendar.MONTH,key==KeyEvent.KEYCODE_STAR?-1:1); face.invalidate(); } return true; }
+            if(amount!=0) { day.add(Calendar.DATE,amount); loadDots();face.invalidate(); return true; }
+            if(key==KeyEvent.KEYCODE_STAR || key==KeyEvent.KEYCODE_POUND) { if(event.getRepeatCount()==0) { day.add(Calendar.MONTH,key==KeyEvent.KEYCODE_STAR?-1:1); loadDots();face.invalidate(); } return true; }
             if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) { if(event.getRepeatCount()==0) events(false); return true; }
         }
         return super.onKeyDown(key,event);
     }
+    static long parseDuration(String value){try{return Long.parseLong(value.substring(2,value.length()-1))*1000L;}catch(Exception ignored){return 3600000L;}}
+    private void loadDots(){final int token=++dotsGeneration;final Calendar first=(Calendar)day.clone();first.set(Calendar.DAY_OF_MONTH,1);first.set(Calendar.HOUR_OF_DAY,0);first.set(Calendar.MINUTE,0);first.set(Calendar.SECOND,0);final Calendar end=(Calendar)first.clone();end.add(Calendar.MONTH,1);worker.execute(new Runnable(){public void run(){if(token!=dotsGeneration)return;final HashSet<Integer> found=new HashSet<Integer>();try{long own=ownCalendar(false);if(own>=0)try(Cursor c=getContentResolver().query(CalendarReminders.instances(first.getTimeInMillis(),end.getTimeInMillis()),new String[]{"begin"},"calendar_id=?",new String[]{""+own},"begin ASC")){int n=0;while(c!=null&&c.moveToNext()&&n++<2000){Calendar d=Calendar.getInstance();d.setTimeInMillis(c.getLong(0));if(d.get(Calendar.MONTH)==first.get(Calendar.MONTH))found.add(d.get(Calendar.DAY_OF_MONTH));}}}catch(RuntimeException ignored){}ui(new Runnable(){public void run(){if(token!=dotsGeneration)return;eventDays.clear();eventDays.addAll(found);if(face!=null&&month)face.invalidate();}});}});}
     private final class MonthFace extends View {
         final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
         MonthFace() { super(CalendarActivity.this); }
@@ -131,6 +135,7 @@ public final class CalendarActivity extends LeoActivity {
             for(int value=1;value<=day.getActualMaximum(Calendar.DAY_OF_MONTH);value++) {
                 int cell=offset+value-1; float x=18+cell%7*34,y=78+cell/7*25;
                 if(value==day.get(Calendar.DAY_OF_MONTH)) { p.setColor(palette.selection); c.drawRoundRect(new RectF(x-15,y-18,x+15,y+5),5,5,p); }
+                if(eventDays.contains(value)){p.setColor(palette.accent);c.drawCircle(x,y+9,2,p);}
                 text(c,""+value,x,y,14,value==day.get(Calendar.DAY_OF_MONTH)?palette.ink:Color.WHITE);
             }
             text(c,"* luna precedentă · # luna următoare",120,221,11,0xffd3bddf); c.restore();

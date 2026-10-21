@@ -15,7 +15,7 @@ public final class ContactsActivity extends LeoActivity {
     private int selected;
     private int loadGeneration;
     private boolean favorites,managingFavorites;
-    private Entry photoEntry;
+    private Entry photoEntry;private final RowArtwork avatars=new RowArtwork(this);private String contactsTitle="";
     private static final class Entry { long data,raw,contact; String name,number; boolean starred; }
     protected void onCreate(Bundle state) { super.onCreate(state); favorites=getIntent().getBooleanExtra("favorites",false); long id=getIntent().getLongExtra("contact_id",-1);if(id<0)load();else openContact(id); }
     private void openContact(long id){try(Cursor c=getContentResolver().query(Phone.CONTENT_URI,new String[]{Phone._ID,Phone.RAW_CONTACT_ID,Phone.CONTACT_ID,Phone.DISPLAY_NAME,Phone.NUMBER,Phone.STARRED},Phone.CONTACT_ID+"=?",new String[]{""+id},null)){if(c!=null&&c.moveToFirst()){Entry e=new Entry();e.data=c.getLong(0);e.raw=c.getLong(1);e.contact=c.getLong(2);e.name=c.getString(3);e.number=c.getString(4);e.starred=c.getInt(5)!=0;detail(e);return;}}catch(RuntimeException ignored){}load();}
@@ -40,12 +40,14 @@ public final class ContactsActivity extends LeoActivity {
     private void show() {
         ArrayList<String> labels=new ArrayList<String>();
         for(Entry e:entries) labels.add((e.starred?"★ ":"")+(e.name==null?"Fără nume":e.name)+"\n"+e.number);
+        contactsTitle=managingFavorites?"OK schimbă favoritul":favorites?"Favorite":filter.isEmpty()?"Contacte":"Rezultate";
         list(managingFavorites?"OK schimbă favoritul":favorites?"Favorite":filter.isEmpty()?"Contacte":"Rezultate",labels,selected,new Choice() { public void pick(int i) { selected=i;if(managingFavorites){Entry chosen=entries.get(i);try{ContentValues v=new ContentValues();v.put(ContactsContract.Contacts.STARRED,chosen.starred?0:1);getContentResolver().update(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,chosen.contact),v,null,null);load();}catch(RuntimeException e){notice("Favoritul nu poate fi modificat");}return;}int slot=getIntent().getIntExtra("speed_slot",0);Entry e=entries.get(i);int favorite=getIntent().getIntExtra("dialer_slot",-1);if(favorite>=0&&favorite<3){getSharedPreferences("dialer-favorites",0).edit().putString("name"+favorite,e.name==null?"":e.name).putString("number"+favorite,e.number).apply();notice("Favoritul "+(favorite+1)+" salvat");finish();}else if(slot>=2&&slot<=9){getSharedPreferences("speed-dial",0).edit().putString("name"+slot,e.name).putString("number"+slot,e.number).apply();notice("Tasta "+slot+" atribuită");finish();}else detail(e); } },"Opțiuni",new Runnable() {
             public void run() { options("Contacte",new String[]{"Contact nou","Caută","Toate contactele","Favorite","Import / export VCF","Apelare rapidă",managingFavorites?"Încheie administrarea":"Administrează favoritele"},new Choice() {
                 public void pick(int i) { if(i==6){managingFavorites=!managingFavorites;favorites=false;filter="";load();}else if(i==0) edit(null); else if(i==1) options("Caută",new String[]{"Nume / număr","Cifre T9"},new Choice(){public void pick(int mode){search(mode==1);}}); else if(i==4)startActivity(new Intent(ContactsActivity.this,VCardActivity.class));else if(i==5)startActivity(new Intent(ContactsActivity.this,SpeedDialActivity.class));else { filter=""; favorites=i==3; selected=0; load(); } }
             }); }
         });
     }
+    android.graphics.drawable.Drawable rowIcon(String title,int at){if(!title.equals(contactsTitle)||at<0||at>=entries.size())return null;Entry e=entries.get(at);return avatars.get("contact:"+e.contact,ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,e.contact).buildUpon().appendPath("photo").build(),e.name);}
     private void search(boolean numeric) {
         LinearLayout fields=fields(numeric?"Caută T9":"Caută contact"); final EditText term=field(fields,numeric?"Cifre pentru literele numelui":"Nume sau număr",numeric&&!filter.matches("[0-9]*")?"":filter,numeric?InputType.TYPE_CLASS_NUMBER:InputType.TYPE_CLASS_TEXT);
         left=new Runnable() { public void run() { filter=term.getText().toString().trim(); selected=0; load(); } };

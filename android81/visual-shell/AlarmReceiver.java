@@ -8,7 +8,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
         try {
             String action=intent.getAction();
             if(Intent.ACTION_BOOT_COMPLETED.equals(action) || Intent.ACTION_TIME_CHANGED.equals(action) || Intent.ACTION_TIMEZONE_CHANGED.equals(action) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
-                AlarmScheduler.restore(context); return;
+                AlarmScheduler.restore(context);CalendarReminders.schedule(context); return;
             }
             if(!AlarmScheduler.FIRE.equals(action)) return;
             String kind=intent.getStringExtra("kind"),label="Temporizator";

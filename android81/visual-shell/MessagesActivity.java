@@ -176,10 +176,10 @@ public final class MessagesActivity extends LeoActivity {
                 date.setText(today);date.setVisibility(i==0 || !today.equals(day.format(new Date(rows.get(i-1).date)))?View.VISIBLE:View.GONE);
                 LinearLayout bubble=(LinearLayout)row.getChildAt(1);
                 LinearLayout.LayoutParams lp=(LinearLayout.LayoutParams)bubble.getLayoutParams();
-                lp.leftMargin=received?0:dp(22);lp.rightMargin=received?dp(22):0;bubble.setLayoutParams(lp);
+                lp.leftMargin=received?0:dp(18);lp.rightMargin=received?dp(18):0;bubble.setLayoutParams(lp);
                 ((TextView)bubble.getChildAt(0)).setText(m.body);
                 TextView meta=(TextView)bubble.getChildAt(1);meta.setText(clock.format(new Date(m.date))+" · "+messageSim(m)+" · "+state(m));
-                meta.setTextColor(m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?0xffffb8ad:0xffe4d6f1);
+                int slot=preview?m.sub:-1;try{if(!preview){SubscriptionInfo info=SubscriptionManager.from(MessagesActivity.this).getActiveSubscriptionInfo(m.sub);if(info!=null)slot=info.getSimSlotIndex();}}catch(RuntimeException ignored){}meta.setTextColor(m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?0xffffb8ad:slot==0?0xff8fc7ff:slot==1?0xff88e5c6:0xffccd2dd);meta.setCompoundDrawables(new AvatarArt(received?address:"Eu",dp(19)),null,null,null);meta.setCompoundDrawablePadding(dp(5));
                 row.setTag(received);paintBubble(row,i==focus[0]);return row;
             }
         };
@@ -270,7 +270,7 @@ public final class MessagesActivity extends LeoActivity {
     private void paintBubble(View view,boolean selected) {
         if(!(view instanceof LinearLayout))return;
         LinearLayout row=(LinearLayout)view;boolean received=Boolean.TRUE.equals(row.getTag());
-        GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(3));
+        GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(10));
         background.setColor(received?palette.card:Appearance.mix(palette.card,palette.accent,.22f));
         background.setStroke(dp(2),selected?palette.accent:Color.TRANSPARENT);
         row.getChildAt(1).setBackground(background);
