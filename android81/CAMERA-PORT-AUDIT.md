@@ -68,3 +68,26 @@ permissions alone will fix it. The runner refuses to stack another probe while
 an earlier process remains. Further hardware probing needs a kernel wait/timeout
 review and a controlled stock daemon/sensor-library initialization path first.
 Do not install this diagnostic HAL globally or claim that capture works.
+
+
+## Bootstrap inventory and keypad app — 22 October 2026
+
+`inspect-camera-bootstrap.py` reads the original files only. It found the strings
+`module_sensor_init` / `server_process_module_sensor_init` in `mm-qcamera-daemon`,
+and `module_sensor_init`, `sensor_init_probe`, `sensor_init_session` in
+`libmmcamera2_sensor_modules.so`. The stock `qcamerasvr` service belongs to
+`late_start`, runs as camera, and has camera/system/inet/input/graphics groups.
+There are 82 vendor libraries with the `libmmcamera` prefix; this is **not a count
+of physical sensors**. No hardware has been identified by this inventory.
+
+These markers suggest reviewing the daemon-to-sensor-module bootstrap before
+retrying enumeration. Strings do not prove call order, the exact blocked ioctl,
+or that starting the daemon would fix the previous kernel wait. No daemon,
+probe or private HAL was started in this stage. The private report stays in
+ignored `output/camera-bootstrap-audit.json`.
+
+The new Camera Leo activity queries the public legacy camera count and shows
+unavailability when Android exposes none. A permission-gated preview and JPEG
+capture path is implemented for a future registered camera. It does not load or
+install vendor libraries. Its preview, orientation and capture remain untested
+on the handset; USB/ADB was unavailable during this work.

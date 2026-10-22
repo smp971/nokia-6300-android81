@@ -1,4 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="3" android:versionName="0.3.0-dev">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="4" android:versionName="0.4.0-dev">
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -160,5 +162,12 @@
         <activity android:name=".PlaylistEditorActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".SoundScheduleActivity" android:exported="false" android:screenOrientation="portrait" />
         <receiver android:name=".SoundScheduleReceiver" android:exported="false" />
+        <activity android:name=".ReaderActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".GamesActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ConnectionDashboardActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".UpdatesActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".CameraActivity" android:exported="false" android:screenOrientation="portrait" />
+        <service android:name=".UpdateService" android:exported="false" />
+        <receiver android:name=".UpdateResultReceiver" android:exported="false" />
     </application>
 </manifest>

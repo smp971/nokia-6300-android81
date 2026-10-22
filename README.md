@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 21 octombrie 2026** · [T9 și Browser din taste · 0.3.0](android81/LEO-KEYPAD-WEB.md) · [Organizator și media · 0.2.0](android81/LEO-ORGANIZER.md) · [Fluxuri noi · pregătite pentru testare](android81/LEO-PROJECT-FLOWS.md) · [Leo pentru fiecare zi](android81/LEO-COMFORT.md) · [Acces rapid și unelte personale](android81/LEO-DAILY-EXTRAS.md) · [Aplicațiile zilnice Material](android81/LEO-DAILY-POLISH.md) · [Integrare Leo · șase funcții](android81/LEO-SIX-INTEGRATION.md) · [Cinci aplicații îmbunătățite](android81/LEO-FIVE-APPS.md) · [Carduri Home și vibrații](android81/LEO-HOME-HAPTICS.md) · [Ceas și Meteo](android81/LEO-CLOCK-WEATHER.md) · [Telefon Leo Night](android81/LEO-NATIVE-PHONE.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
+**Actualizat: 22 octombrie 2026** · [Pachetul de buzunar · 0.4.0](android81/LEO-POCKET-SUITE.md) · [T9 și Browser din taste · 0.3.0](android81/LEO-KEYPAD-WEB.md) · [Organizator și media · 0.2.0](android81/LEO-ORGANIZER.md) · [Fluxuri noi · pregătite pentru testare](android81/LEO-PROJECT-FLOWS.md) · [Leo pentru fiecare zi](android81/LEO-COMFORT.md) · [Acces rapid și unelte personale](android81/LEO-DAILY-EXTRAS.md) · [Aplicațiile zilnice Material](android81/LEO-DAILY-POLISH.md) · [Integrare Leo · șase funcții](android81/LEO-SIX-INTEGRATION.md) · [Cinci aplicații îmbunătățite](android81/LEO-FIVE-APPS.md) · [Carduri Home și vibrații](android81/LEO-HOME-HAPTICS.md) · [Ceas și Meteo](android81/LEO-CLOCK-WEATHER.md) · [Telefon Leo Night](android81/LEO-NATIVE-PHONE.md) · [Tema flat](android81/LEO-FLAT-THEME.md)
 
 [Ce funcționează](#ce-poți-face-deja) · [Capturi](#leo-în-imagini) ·
 [Audit](#auditul-proiectului) · [Ce urmează](#ce-mai-avem-de-construit) ·
@@ -101,17 +101,15 @@ rapid și șabloane, ceas de birou, colecții vizuale și versuri locale.
 | **Colecție · previzualizare** | **Versuri locale originale** | **Ajutor · taste** |
 | <img src="android81/screenshots/leo-comfort-themes.png" width="180" alt="Previzualizare Nordic"> | <img src="android81/screenshots/leo-comfort-lyrics.png" width="180" alt="Versuri originale de probă"> | <img src="android81/screenshots/leo-comfort-help.png" width="180" alt="Harta tastelor Home"> |
 
-**Pregătit pe PC · 0.3.0-dev, încă neinstalat pe Nokia:** include atât
-[fluxurile comune](android81/LEO-PROJECT-FLOWS.md), cât și [cele șase îmbunătățiri
-pentru organizare și media](android81/LEO-ORGANIZER.md): Calendar cu ICS,
-Galerie cu favorite, editor de playlisturi, notificări pe zile, program sonor
-și diagnostic cu previzualizare editabilă. Pachetul adaugă și [T9 îmbunătățit,
-dicționar editabil și navigare web în mod text din taste](android81/LEO-KEYPAD-WEB.md).
+**Pregătit pe PC · 0.4.0-dev, încă neinstalat pe Nokia:** include toate etapele
+anterioare și [șase funcții noi](android81/LEO-POCKET-SUITE.md): colecții vizuale cu
+mostre și revenire, cititor TXT/EPUB, trei jocuri pentru taste, panou de conexiuni,
+actualizator local și interfață experimentală pentru cameră.
 
-Pe lângă verificările T9 și cele 17 verificări de URL/navigare locală,
-51 de verificări offline ale etapei anterioare au trecut: 36 noi, 10 algoritmice anterioare și 5 pentru
-pachet. APK-ul de probe Android compilează; **probele pe aparat și instalarea
-așteaptă reconectarea ADB**. Nu există capturi noi ale acestei versiuni.
+Cele 28 de verificări offline noi au trecut. APK-ul de probe Android compilează;
+**instalarea și verificările pe aparat așteaptă reconectarea ADB**. Camera nu este
+considerată funcțională: ultima probă HAL nu enumera niciun senzor.
+Nu există capturi noi pentru ecranele acestei versiuni.
 [Recompilare și pachet](android81/RELEASE-APPS.md).
 
 ## Ce poți face deja
@@ -165,7 +163,7 @@ confirmarea unei funcții se bazează pe proba ei separată.
 | **Interfața Leo** | Shell nativ adaptat la taste, cu un set consistent de aplicații | Home, bare softkey, T9 și meniuri comune. Serviciul tastelor era legat la procesul curent. Recuperarea sa limitată este implementată; eliminarea tuturor blocajelor nu este demonstrată. |
 | **Telefonie** | Funcțiile de bază au rezultate reale, cu acoperire incompletă | Apel primit și două apeluri inițiate bidirecționale, SMS și LTE pe SIM 1. SIM 2, DTMF și IMS au nevoie de probe distincte. [Probe noi](android81/STABILITY-PHONE-20261020.md). |
 | **Media** | Una dintre zonele cele mai avansate ale portului | Muzică, căști, FM/RDS și A2DP au confirmări reale. Modulul A2DP este încărcat în politica audio. Microfonul Bluetooth, apelurile prin accesorii și toate variantele de codec nu sunt validate. |
-| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | Inventar actualizat: 145 fișiere Java în shell, plus 33 fișiere Java de probe Android și 4 fișiere Java host; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
+| **Cod și structură** | Sursele Leo sunt în repository, împreună cu scripturi și documentație | Inventar actualizat: 157 fișiere Java în shell, plus 34 fișiere Java de probe Android și 5 fișiere Java host; tastatura și uneltele native sunt separate. Numărul fișierelor descrie inventarul, nu acoperirea testelor. |
 | **Recompilare** | Există o bază reproductibilă documentată, încă netestată integral pe un PC curat | Toate cele **590 de proiecte AOSP** din manifest au revizii SHA fixate. Arborele AOSP, dump-ul și componentele proprietare necesare sunt intrări separate. |
 | **Verificare automată** | Există teste locale și probe pe telefon; lipsește încă o rulare continuă centralizată | Testele cozii muzicale au trecut în ultima etapă. Alte rezultate sunt legate în documentație. Repository-ul nu are workflow-uri GitHub Actions; suita completă nu a fost rerulată în acest audit. |
 | **Livrare și mentenanță** | Proiect de dezvoltare, încă fără release pentru instalare generală | Scripturile depind de mediul local și includ verificări pentru aparatul de dezvoltare. Lipsesc încă o procedură completă de release și un fișier LICENSE la rădăcină. |
@@ -242,6 +240,7 @@ android81/
 | --- | --- |
 | Sursele și recompilarea | [REBUILD](android81/REBUILD.md), [configurația dispozitivului](android81/device/nokia/leo/) |
 | Stabilitate și apeluri inițiate | [Probe SIM 1, întreruperea USB și DeskClock](android81/STABILITY-PHONE-20261020.md) |
+| Șase funcții noi · 0.4.0 · neinstalat încă | [Teme, cărți, jocuri, conexiuni, actualizator și cameră experimentală](android81/LEO-POCKET-SUITE.md) |
 | T9 și Browser · în așteptarea probelor Android | [Cuvinte și pagini din taste](android81/LEO-KEYPAD-WEB.md) |
 | Organizator · în așteptarea probelor Android | [Calendar, Galerie, playlisturi, notificări, program sonor și diagnostic](android81/LEO-ORGANIZER.md) |
 | Fluxuri noi · în așteptarea probelor Android | [Fișiere, partajare, contacte, Home și aplicații](android81/LEO-PROJECT-FLOWS.md) |

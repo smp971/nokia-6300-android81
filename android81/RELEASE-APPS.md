@@ -1,11 +1,11 @@
-# Pachetul aplicațiilor Leo · 0.3.0-dev
+# Pachetul aplicațiilor Leo · 0.4.0-dev
 
 Acesta actualizează **Leo Visual și Leo Keypad** peste un port Leo Android 8.1
 existent. Nu este un ROM instalabil și nu conține boot/recovery, modem, dump,
 firmware proprietar sau datele utilizatorului.
 
-Versiunea 0.3.0-dev include și etapele 0.1.0-dev și 0.2.0-dev. Instalarea pe Nokia este încă în
-așteptarea conexiunii ADB; [T9 și browser](LEO-KEYPAD-WEB.md), [organizator](LEO-ORGANIZER.md).
+Versiunea 0.4.0-dev include și etapele 0.1.0-dev, 0.2.0-dev și 0.3.0-dev. Instalarea pe Nokia este încă în
+așteptarea conexiunii ADB; [cele șase funcții noi](LEO-POCKET-SUITE.md), [T9 și browser](LEO-KEYPAD-WEB.md).
 
 ## Recompilare
 
@@ -38,14 +38,14 @@ folosită de proiect, pentru compatibilitatea actualizărilor.
 
 ## Rezultat și verificare
 
-`leo-apps-0.3.0-dev/` conține:
+`leo-apps-0.4.0-dev/` conține:
 
 - `leo-visual.apk` și `leo-keypad-ime.apk`;
 - `manifest.json`: versiune, țintă, dimensiuni/hash-uri, commit, starea arborelui,
   hash-urile surselor și ale intrărilor de build;
 - `install-app-bundle.py` și `README.txt`.
 
-Se produce și `leo-apps-0.3.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
+Se produce și `leo-apps-0.4.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
 extras, pe Windows sau Linux:
 
 ```bash
@@ -92,3 +92,11 @@ bash android81/run-host-project-checks.sh
 
 Al doilea test cere mai întâi compilarea shell-ului. Probele Android pentru noile
 fluxuri sunt compilate, dar trebuie rulate separat pe aparat.
+
+## Actualizatorul din telefon
+
+Leo 0.4.0 adaugă verificarea pachetului ZIP și sesiuni Android pentru cele două
+APK-uri, cu păstrarea copiei precedente. Nu execută scriptul Python din arhivă.
+Fluxul și revenirea rămân de verificat pe Nokia: [stare și limite](LEO-POCKET-SUITE.md).
+Prima instalare a acestei versiuni poate fi făcută în continuare prin ADB, folosind
+comanda explicită de mai sus.

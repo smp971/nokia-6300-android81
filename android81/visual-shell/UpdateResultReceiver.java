@@ -1,0 +1,2 @@
+package ro.leo.visual;
+public final class UpdateResultReceiver extends android.content.BroadcastReceiver {public void onReceive(final android.content.Context c,final android.content.Intent i){final PendingResult pending=goAsync();new Thread(new Runnable(){public void run(){try{UpdateEngine.result(c,i);}catch(RuntimeException e){UpdateEngine.fail(c,"Rezultatul instalării nu a putut fi procesat");}finally{pending.finish();}}},"LeoUpdateResult").start();}}

@@ -294,6 +294,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index>=29&&index<=34){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,new Class<?>[]{ThemePacksActivity.class,ReaderActivity.class,GamesActivity.class,ConnectionDashboardActivity.class,UpdatesActivity.class,CameraActivity.class}[index-29]));return;}
             if(index==28){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,HelpActivity.class));return;}
             HomeAccess.record(MainActivity.this,index);
             if(index==27){startActivity(new Intent(MainActivity.this,BackupActivity.class));return;}
