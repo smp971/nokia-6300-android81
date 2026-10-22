@@ -93,10 +93,13 @@ Android rămâne sursa pentru date/cache; valoarea nativă reprezintă APK și s
   și refuzul instalării fără serial explicit înainte de apelarea ADB.
 - Pachetul construit are manifest, două APK-uri și un instalator verificabil offline.
 
-**Nerulate încă:** probele pe Android, verificarea vizuală, accesul URI între UID-uri,
-ContactsProvider/CalendarProvider, cardurile Home, instalarea/dezinstalarea prin UI
-și confirmarea după reboot. Nu se afirmă că cele șase funcții sunt deja funcționale
-pe telefon. Nu au fost inițiate apeluri, mesaje, înregistrări sau transferuri externe.
+**22 octombrie 2026: instalat în 0.4.0-dev; 32 verificări pe aparat trecute.**
+Au fost verificate accesul URI între UID-uri (citire permisă, scriere refuzată),
+ContactsProvider/CalendarProvider cu date fictive, cardurile Home, copierea și
+previzualizarea APK. Încărcarea întârziată a listei de aplicații nu mai înlocuiește
+pagina de detalii. Instalarea/dezinstalarea prin UI, confirmarea după reboot și
+validarea vizuală manuală rămân de făcut. Nu au fost inițiate apeluri, mesaje,
+înregistrări sau transferuri externe.
 
 Comenzi pentru dezvoltator, după instalare: activează temporar componenta de probă
 `ro.leo.visual.tests/ro.leo.visual.ShareProbeActivity`, apoi rulează

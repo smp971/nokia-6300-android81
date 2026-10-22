@@ -11,8 +11,10 @@ import java.util.*;
 public final class AppSettingsActivity extends LeoActivity {
     private boolean all;
     private String current;
+    private int pageGeneration;
     protected void onResume(){super.onResume();if(current==null)load();else details(current);}
     private void load(){
+        final int generation=++pageGeneration;
         current=null;begin("Aplicații Leo");root.addView(text("Se încarcă…",18));footer("","","Înapoi");
         worker.execute(new Runnable(){public void run(){
             final ArrayList<ApplicationInfo> apps=new ArrayList<>();
@@ -22,11 +24,13 @@ public final class AppSettingsActivity extends LeoActivity {
             Collections.sort(apps,new Comparator<ApplicationInfo>(){public int compare(ApplicationInfo a,ApplicationInfo b){return order.compare(a.loadLabel(getPackageManager()).toString(),b.loadLabel(getPackageManager()).toString());}});
             final ArrayList<String> labels=new ArrayList<>();for(ApplicationInfo app:apps)labels.add(app.loadLabel(getPackageManager()).toString()+(app.enabled?"":" · dezactivată"));
             ui(new Runnable(){public void run(){
+                if(generation!=pageGeneration||current!=null)return;
                 list(all?"Toate aplicațiile":"Aplicații",labels,0,new Choice(){public void pick(int i){details(apps.get(i).packageName);}},all?"Uzuale":"Toate",new Runnable(){public void run(){all=!all;load();}});
             }});
         }});
     }
     private void details(final String name){
+        pageGeneration++;
         try{
             final PackageInfo info=getPackageManager().getPackageInfo(name,PackageManager.GET_PERMISSIONS);current=name;
             String label=info.applicationInfo.loadLabel(getPackageManager()).toString();

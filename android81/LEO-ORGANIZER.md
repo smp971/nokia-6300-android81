@@ -100,10 +100,11 @@ dar acest lucru nu echivalează cu un backup complet după formatare.
 - 36 verificări algoritmice noi pe PC: ICS, Unicode, duplicate, date invalide,
   limite, program nocturn, weekend și schimbarea orei.
 - 10 verificări host ale etapei precedente și 5 teste ale pachetului: trecute.
-- `OrganizerTests` este pregătit pentru probe locale pe Android, fără audio,
+- `OrganizerTests`: **16 verificări trecute pe Nokia, 22 octombrie 2026**, cu date locale, fără audio,
   apeluri, SMS, email sau alegerea unei destinații externe de partajare.
-- `ProjectFlowTests` al etapei precedente rămâne de executat pe Nokia.
-- Instalarea, probele hardware ale programului sonor și capturile noi: **în așteptare**.
+- `ProjectFlowTests`: 32 verificări trecute pe Nokia.
+- Instalat în pachetul 0.4.0-dev. Probele hardware ale programului sonor
+  și capturile noi rămân în așteptare.
 
 Reexecutare offline după build:
 

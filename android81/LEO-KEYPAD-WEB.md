@@ -88,10 +88,10 @@ nu sunt încă incluse în Backup Leo.
   256 inserări de fixture pentru verificarea capacității, nu 275 de scenarii separate.
 - 17 verificări de URL-uri și căutare locală au trecut, fără cereri de rețea.
 - Compilarea ambelor aplicații și a APK-ului de probe Android a trecut.
-- `BrowserNavigationTests` este pregătit cu HTML local: evidențiere, zoom, căutare,
+- `BrowserNavigationTests`: **11 verificări trecute pe Nokia, 22 octombrie 2026**, cu HTML local: evidențiere, zoom, căutare,
   revenire și formular de adresă. Nu deschide linkuri și nu face cereri externe.
 - Probe pe telefon pentru `*` ținut, majuscule în editor, pagina web reală,
-  accesibilitate și instalare: **în așteptare**. Nu sunt publicate capturi noi.
+  accesibilitate: **în așteptare**. Ambele APK-uri sunt instalate în versiunea 0.4.0-dev. Nu sunt publicate capturi noi.
 
 După build:
 

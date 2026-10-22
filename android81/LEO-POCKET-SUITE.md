@@ -151,11 +151,14 @@ de investigație, nu demonstrează că un anumit senzor este prezent ori funcți
 - Compilare Leo Visual și APK de probe Android: trecută.
 - 28 verificări offline: citire TXT/EPUB, XML și căi, ordinea capitolelor,
   Snake/Sudoku/Puzzle, integritatea și limitele arhivei de actualizare.
-- `PocketSuiteTests` este pregătit pentru Android cu fișiere locale: cititor,
+- `PocketSuiteTests`: **18 verificări trecute pe Nokia, 22 octombrie 2026**, cu fișiere locale: cititor,
   parser EPUB, taste, palete, metadata/certificate APK și pagini de stare.
   Nu deschide senzorul, nu schimbă rețeaua, nu redă audio și nu creează sesiuni
   de instalare.
-- Instalarea completă, probele UI și hardware: **în așteptarea ADB**.
+- Tastatura și Leo Visual 0.4.0-dev instalate prin pachetul portabil; copia APK-urilor
+  anterioare păstrată local. HOME, dialer și IME Leo verificate.
+- Probele UI locale au trecut; fotografia, instalarea/revenirea prin actualizator
+  și utilizarea îndelungată rămân nevalidate.
 - Nu există capturi noi pentru această etapă.
 
 Pozițiile de lectură, semnele de carte, progresul jocurilor, checkpointul temei și
