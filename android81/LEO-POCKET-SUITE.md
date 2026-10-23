@@ -5,10 +5,10 @@
 O bibliotecă în buzunar, jocuri pentru taste și un aspect pe care îl alegi tu.
 Această versiune include și toate etapele **0.1, 0.2 și 0.3**.
 
-**Stare: implementare compilată pe PC. Instalarea și probele pe Nokia așteaptă
-reconectarea USB/ADB.** Camera este o interfață experimentală peste API-ul Android;
-portarea hardware rămâne blocată înaintea enumerării senzorului. Nu sunt publicate
-capturi noi pentru ecrane încă neinspectate pe telefon.
+**Stare: instalat pe Nokia, cu 18 verificări locale ale acestei etape trecute.**
+Camera este o interfață experimentală peste API-ul Android. Pe 23 octombrie,
+inițializarea izolată a detectat BF20A1 și o cameră în HAL-ul privat; Android încă
+nu o expune aplicațiilor. Nu sunt publicate capturi noi pentru această etapă.
 
 | Funcție | Ce este pregătit | Ce rămâne de demonstrat pe aparat |
 | --- | --- | --- |
@@ -143,7 +143,9 @@ Vizorul, orientarea și fotografia rămân nevalidate fizic.
 
 Auditul nou al fișierelor stock a identificat markeri de inițializare în daemon
 și în modulul de senzori, plus configurația serviciului. Acestea susțin o direcție
-de investigație, nu demonstrează că un anumit senzor este prezent ori funcțional.
+de investigație. Pe 23 octombrie, proba izolată a înregistrat BF20A1 și HAL-ul privat
+a raportat o cameră. Serviciul Android raportează încă zero; vizorul și fotografia
+nu au fost testate.
 [Audit și blocajul anterior](CAMERA-PORT-AUDIT.md).
 
 ## Validare și date păstrate

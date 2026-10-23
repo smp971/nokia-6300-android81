@@ -109,7 +109,9 @@ actualizator local și interfață experimentală pentru cameră.
 Cele 28 de verificări offline noi și **77 de verificări automate pe aparat** au trecut
 (32 fluxuri, 16 organizator, 11 Browser, 18 pachet de buzunar). Leo rămâne HOME,
 dialer și tastatură implicită, cu datele păstrate. Camera nu este
-considerată funcțională: ultima probă HAL nu enumera niciun senzor.
+considerată funcțională: pe 23 octombrie, senzorul BF20A1 și o cameră în HAL-ul
+privat au fost detectate; integrarea cu Android și fotografia rămân de făcut.
+[Progresul camerei](android81/CAMERA-PORT-AUDIT.md).
 Nu există capturi noi pentru ecranele acestei versiuni.
 [Recompilare și pachet](android81/RELEASE-APPS.md).
 
@@ -187,7 +189,7 @@ acest lucru nu înseamnă că limitele lor au fost rezolvate.
 | **1 · Stabilitate** | Blocaje Leo, întreruperi ADB/USB, pornire și repornire; DeskClock stock corectat, STOP fără alarmă activă verificat, reboot încă de testat | Serii documentate de porniri și navigare, cu recuperare verificată și fără pierderea controlului din taste. |
 | **2 · Telefonie completă · activ** | Telefon și ecran de apel native Leo Night, pe backend Telecom; rol Leo activat, demo și contract de integrare verificate. Probele SIM 2 urmează după maturizarea interfeței | Apeluri reale prin noua interfață, DTMF, respingere și rute audio; ulterior SIM 2 și reboot. VoLTE și VoWiFi validate separat. |
 | **3 · Autonomie** | Consum în repaus, suspendare, încărcare și utilizare pe baterie | Măsurători fără alimentare USB și sesiuni mai lungi, cu metodă și rezultate publicate. |
-| **4 · Hardware rămas** | Cameră, GPS și integrarea senzorilor | Probe pe hardware real; camera rămâne momentan în afara etapei active, la cererea utilizatorului. |
+| **4 · Hardware rămas** | Cameră, GPS și integrarea senzorilor | Probe pe hardware real; camera este din nou în lucru: BF20A1 detectat, HAL privat cu o cameră; serviciul Android încă nu o expune. |
 | **5 · Aplicații și accesibilitate** | T9 mai bun, email SMTP, browser/WebView, aplicații Android dificil de folosit din taste | Trimitere reală de email, scenarii T9 mai largi și fluxuri complete controlabile din taste. |
 | **6 · Release de proiect** | Build de la zero, teste automatizate, pachet și recuperare documentată, clarificarea licenței codului Leo | Alt mediu poate reconstrui versiunile publicate urmând documentația; intrările și limitele sunt explicite. |
 
