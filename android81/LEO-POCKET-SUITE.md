@@ -7,8 +7,7 @@ Această versiune include și toate etapele **0.1, 0.2 și 0.3**.
 
 **Stare: instalat pe Nokia, cu 18 verificări locale ale acestei etape trecute.**
 Camera este o interfață experimentală peste API-ul Android. Pe 23 octombrie,
-inițializarea izolată a detectat BF20A1 și o cameră în HAL-ul privat; Android încă
-nu o expune aplicațiilor. Nu sunt publicate capturi noi pentru această etapă.
+inițializarea izolată a detectat BF20A1 și o cameră în HAL-ul privat; Android o expune acum aplicațiilor, cu vizor și JPEG verificate. Nu sunt publicate capturi noi pentru această etapă.
 
 | Funcție | Ce este pregătit | Ce rămâne de demonstrat pe aparat |
 | --- | --- | --- |
@@ -17,7 +16,7 @@ nu o expune aplicațiilor. Nu sunt publicate capturi noi pentru această etapă.
 | Jocuri Leo | Snake, Sudoku și Puzzle 15; reguli verificate offline; progres local pentru ultimele două | Randare și taste fizice, pauză și consum în utilizare |
 | Conexiuni Leo | Wi-Fi, hotspot, profiluri Bluetooth, USB, trafic și descărcările Leo | Starea reală a serviciilor și accesul la profiluri pe acest port |
 | Actualizări Leo | Verificare ZIP/SHA-256/certificate, copie a APK-urilor precedente, sesiuni Android secvențiale și jurnal de stare | Confirmarea instalării, actualizarea propriei aplicații, revenirea și recuperarea sesiunilor |
-| Cameră Leo | Diagnostic fără deschiderea senzorului; vizor și declanșare pe OK pregătite pentru un senzor expus de Android | **Hardware nefuncțional la ultima probă; fotografia nu este confirmată** |
+| Cameră Leo | Diagnostic fără deschiderea senzorului; vizor și declanșare pe OK pregătite pentru un senzor expus de Android | Vizor și JPEG 480×640 verificate; video și bliț nevalidate |
 
 Cele șase intrări sunt adăugate la finalul meniului, cu pictograme proprii.
 ID-urile vechi rămân neschimbate. Meniul are acum **35 de aplicații** și poate fi
@@ -132,21 +131,18 @@ curentă. Proiectul folosește cheia AOSP de dezvoltare, deci acesta nu este un 
 public de actualizări cu autentificarea unui editor printr-o cheie privată de release.
 Sesiunile, revenirea și actualizarea propriei aplicații sunt **încă netestate pe aparat**.
 
-## Camera: interfață pregătită, inițializare încă de rezolvat
+## Camera: BF20A1 integrat în serviciul Android
 
-Deschiderea aplicației doar întreabă Android câte camere expune. Când numărul
-este zero, afișează explicația și nu încearcă deschiderea HAL-ului privat.
-Dacă un senzor va fi înregistrat, permisiunea Cameră și alegerea explicită a
-vizorului preced deschiderea. OK declanșează, iar JPEG-ul este salvat în
-`Pictures/Leo` și indexat pentru Galerie. Nu este implementată filmarea.
-Vizorul, orientarea și fotografia rămân nevalidate fizic.
+Providerul AOSP HIDL și driverul original KaiOS expun acum o cameră HAL1.
+Cameră Leo are vizor și captură pe OK; JPEG-ul este salvat în `Pictures/Leo` și
+indexat pentru Galerie. Au fost decodate imagini 480 × 640, inclusiv după repornire,
+cu pornirea automată a serviciilor. Nu este implementată filmarea.
 
-Auditul nou al fișierelor stock a identificat markeri de inițializare în daemon
-și în modulul de senzori, plus configurația serviciului. Acestea susțin o direcție
-de investigație. Pe 23 octombrie, proba izolată a înregistrat BF20A1 și HAL-ul privat
-a raportat o cameră. Serviciul Android raportează încă zero; vizorul și fotografia
-nu au fost testate.
-[Audit și blocajul anterior](CAMERA-PORT-AUDIT.md).
+Interfața camerei este separată în procesul `:camera`, cu randare software pentru
+chrome și SurfaceView pentru imagine. Camera IPC rulează pe fir separat pentru
+a păstra tastele responsive. Blițul, alte rezoluții și sesiunile lungi rămân de
+verificat. Runtime-ul păstrează procese root în politica engineering existentă.
+[Integrare, verificări și dezactivare](CAMERA-RUNTIME.md).
 
 ## Validare și date păstrate
 
@@ -159,7 +155,7 @@ nu au fost testate.
   de instalare.
 - Tastatura și Leo Visual 0.4.0-dev instalate prin pachetul portabil; copia APK-urilor
   anterioare păstrată local. HOME, dialer și IME Leo verificate.
-- Probele UI locale au trecut; fotografia, instalarea/revenirea prin actualizator
+- Probele UI locale au trecut; instalarea/revenirea prin actualizator
   și utilizarea îndelungată rămân nevalidate.
 - Nu există capturi noi pentru această etapă.
 

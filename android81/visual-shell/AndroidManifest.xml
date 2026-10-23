@@ -166,7 +166,7 @@
         <activity android:name=".GamesActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".ConnectionDashboardActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".UpdatesActivity" android:exported="false" android:screenOrientation="portrait" />
-        <activity android:name=".CameraActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".CameraActivity" android:exported="false" android:screenOrientation="portrait" android:process=":camera" android:hardwareAccelerated="false" />
         <service android:name=".UpdateService" android:exported="false" />
         <receiver android:name=".UpdateResultReceiver" android:exported="false" />
     </application>

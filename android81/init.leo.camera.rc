@@ -1,0 +1,29 @@
+# Engineering camera port; isolated library mounts, opt-in boot activation.
+on post-fs-data
+    mkdir /data/leo-camera 0700 root root
+    mkdir /data/leo-camera/sockets 0770 camera camera
+    mkdir /data/misc/camera 0770 camera camera
+
+service leo-camera-daemon /vendor/leo-camera/exec daemon 0
+    class late_start
+    user root
+    group root camera system inet input graphics
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+service leo-camera-provider /vendor/leo-camera/exec provider 0
+    class late_start
+    user root
+    group root camera system inet input graphics
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1 && property:persist.leo.camera.enabled=1
+    start leo-camera-daemon
+    start leo-camera-provider
+
+on property:persist.leo.camera.enabled=0
+    stop leo-camera-provider
+    stop leo-camera-daemon

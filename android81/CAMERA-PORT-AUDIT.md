@@ -2,9 +2,10 @@
 
 The dump contains `camera.msm8909.so`, `mm-qcamera-daemon`, and the Qualcomm camera
 pipeline libraries. Its framework reports Android 6.0.1/API 23; Leo targets API 27.
-Android currently reports **zero cameras**. As of 23 October, the private stock
-HAL can enumerate **one camera** after isolated sensor bootstrap. It is not yet
-registered with Android; camera capture is not functional.
+As of 23 October, Android exposes **one HAL1 camera** through the original stock
+pipeline and a small callback-cookie bridge. Preview and JPEG capture work in
+Leo, including a capture after reboot. See [runtime integration](CAMERA-RUNTIME.md)
+for the current state, engineering limitations and UI isolation fix.
 
 `inspect-camera-port.py` inspected 23 original camera/vendor binaries and compared
 their required symbols with 16 Android 8.1 platform libraries. The offline audit
@@ -162,3 +163,20 @@ plugin hashes and absence of an earlier probe/daemon. Child CPU, memory and wall
 time are bounded, but an uninterruptible kernel wait can outlive SIGKILL. Inspect
 any remaining child before proceeding. The old `--devices` enumeration probe is
 not needed for this sequence.
+
+
+## Android integration — 23 October 2026
+
+The standard AOSP 2.4 provider and device implementations were built locally.
+The stock daemon registers BF20A1; Android then enumerates `device@1.0/legacy/0`.
+A memory-cookie bridge corrects Qualcomm's stream-memory user argument for Oreo's
+HIDL allocator. Private C2D and QOMX/JPEG plugins completed the preview/capture path.
+The initial preview succeeded, and two JPEG files decoded at 480x640, including
+one after reboot. Provider and daemon now start as init services automatically.
+
+The unadapted memory callback crashed the provider; the bridge fixes that and has
+13 fake-vendor contract checks. A separate HWUI GL_OUT_OF_MEMORY occurred on exit
+from the original camera activity; the UI is moved to its own process with software
+chrome and asynchronous Camera IPC. The final capture/return-to-Home probe retained launcher, provider and camera
+service PIDs; runtime notes document that correction. These were real bring-up failures, not successful checks.
+No private photos, proprietary blobs or raw logs are published.

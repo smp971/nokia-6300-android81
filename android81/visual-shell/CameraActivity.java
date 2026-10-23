@@ -1,18 +1,195 @@
 package ro.leo.visual;
-import android.Manifest;import android.app.*;import android.content.*;import android.content.pm.PackageManager;import android.hardware.Camera;import android.os.*;import android.view.*;import android.widget.*;import java.io.*;import java.util.*;
-/** Legacy API preview only when Android actually exposes a camera. No private HAL loading. */
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.hardware.Camera;
+import android.os.*;
+import android.view.*;
+import android.widget.*;
+import java.io.*;
+import java.util.*;
+
+/** HAL1 UI in its own process. Camera IPC never blocks the UI/key dispatch thread. */
 @SuppressWarnings("deprecation")
 public final class CameraActivity extends LeoActivity implements SurfaceHolder.Callback {
- private Camera camera;private SurfaceView surface;private boolean taking;private int cameraId=-1;private View preview;
- protected void onCreate(Bundle b){super.onCreate(b);diagnostic();}
- private void diagnostic(){release();final ArrayList<String> rows=new ArrayList<String>();int count=0;try{count=Camera.getNumberOfCameras();}catch(RuntimeException e){rows.add("Serviciul cameră nu răspunde");}final int total=count;rows.add("Camere raportate de Android · "+count);rows.add(count==0?"Driverul nu expune încă un senzor\nCapturarea nu este disponibilă":"Deschide vizorul · OK declanșează");rows.add("Calea de salvare · Pictures/Leo");rows.add("Portare KaiOS · inițializarea senzorului rămâne de investigat");list("Cameră Leo · experimental",rows,0,new Choice(){public void pick(int at){if(at!=1){notice("Cameră Leo · diagnostic și salvare locală");return;}if(total==0){notice("Zero senzori · nu încarc driverul privat din aplicație");return;}if(checkSelfPermission(Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.CAMERA},73);return;}cameraId=0;viewfinder();}},"Actualizează",new Runnable(){public void run(){diagnostic();}});}
- private void viewfinder(){begin("Cameră Leo");preview=root;surface=new SurfaceView(this);root.addView(surface,new LinearLayout.LayoutParams(-1,0,1));surface.getHolder().addCallback(this);left=new Runnable(){public void run(){capture();}};back=new Runnable(){public void run(){diagnostic();}};footer("Foto","OK declanșează","Înapoi");surface.setFocusable(true);surface.requestFocus();}
- public void surfaceCreated(SurfaceHolder holder){if(root!=preview||surface==null||holder!=surface.getHolder()||isFinishing()||camera!=null)return;try{camera=Camera.open(cameraId);Camera.Parameters parameters=camera.getParameters();List<Camera.Size> sizes=parameters.getSupportedPreviewSizes();Camera.Size best=null;for(Camera.Size size:sizes)if(size.width<=640&&(best==null||size.width*size.height>best.width*best.height))best=size;if(best!=null)parameters.setPreviewSize(best.width,best.height);List<Camera.Size> pictures=parameters.getSupportedPictureSizes();best=null;for(Camera.Size size:pictures)if(size.width*size.height<=2000000&&(best==null||size.width*size.height>best.width*best.height))best=size;if(best!=null)parameters.setPictureSize(best.width,best.height);parameters.setJpegQuality(85);Camera.CameraInfo info=new Camera.CameraInfo();Camera.getCameraInfo(cameraId,info);int rotation=getWindowManager().getDefaultDisplay().getRotation()*90;parameters.setRotation((info.orientation+(info.facing==Camera.CameraInfo.CAMERA_FACING_FRONT?-rotation:rotation)+360)%360);camera.setParameters(parameters);camera.setDisplayOrientation(info.facing==Camera.CameraInfo.CAMERA_FACING_FRONT?(360-(info.orientation+rotation)%360)%360:(info.orientation-rotation+360)%360);camera.setPreviewDisplay(holder);camera.startPreview();}catch(Exception e){release();notice("Vizor indisponibil · verifică portarea hardware");}}
- public void surfaceChanged(SurfaceHolder h,int f,int w,int height){}public void surfaceDestroyed(SurfaceHolder h){if(surface!=null&&h==surface.getHolder())release();}
- private void release(){if(camera!=null){try{camera.stopPreview();}catch(RuntimeException ignored){}try{camera.release();}catch(RuntimeException ignored){}camera=null;}taking=false;}
- private void capture(){if(camera==null||taking){notice("Vizorul nu este pregătit");return;}taking=true;try{camera.takePicture(null,null,new Camera.PictureCallback(){public void onPictureTaken(final byte[] jpeg,Camera device){if(jpeg==null||jpeg.length==0||jpeg.length>16777216){taking=false;notice("Imagine invalidă");return;}worker.execute(new Runnable(){public void run(){try{File folder=new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),"Leo");if(!folder.isDirectory()&&!folder.mkdirs())throw new IOException();final File photo=File.createTempFile("LEO-",".jpg",folder);try(FileOutputStream out=new FileOutputStream(photo)){out.write(jpeg);out.getFD().sync();}android.media.MediaScannerConnection.scanFile(CameraActivity.this,new String[]{photo.getPath()},new String[]{"image/jpeg"},null);ui(new Runnable(){public void run(){taking=false;notice("Fotografie salvată în Pictures/Leo");if(camera!=null)try{camera.startPreview();}catch(RuntimeException ignored){}}});}catch(Exception e){ui(new Runnable(){public void run(){taking=false;notice("Fotografia nu a putut fi salvată");}});}}});}});}catch(RuntimeException e){taking=false;notice("Capturarea a eșuat");}}
- public boolean onKeyDown(int key,KeyEvent e){if(root==preview&&(key==23||key==66||key==KeyEvent.KEYCODE_CAMERA)){if(e.getRepeatCount()==0)capture();return true;}return super.onKeyDown(key,e);}
- public void onRequestPermissionsResult(int request,String[] permissions,int[] results){super.onRequestPermissionsResult(request,permissions,results);if(request==73)diagnostic();}
- protected void onResume(){super.onResume();if(root==preview&&surface!=null&&surface.getHolder().getSurface().isValid()&&camera==null)surfaceCreated(surface.getHolder());}
- protected void onPause(){release();super.onPause();}
+    private volatile Camera camera;
+    private final Object cameraLock = new Object();
+    private volatile boolean taking, opening;
+    private volatile int generation;
+    private int captureSerial;
+    private SurfaceView surface;
+    private View preview;
+    private TextView previewStatus;
+    private int cameraId;
+    private HandlerThread cameraThread;
+    private Handler cameraWork;
+    private final Handler main = new Handler(Looper.getMainLooper());
+
+    protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        cameraThread = new HandlerThread("LeoCamera");
+        cameraThread.start();
+        cameraWork = new Handler(cameraThread.getLooper());
+        diagnostic();
+    }
+
+    private void diagnostic() {
+        release();
+        final ArrayList<String> rows = new ArrayList<>();
+        int count = 0;
+        try { count = Camera.getNumberOfCameras(); } catch (RuntimeException ignored) {}
+        final int total = count;
+        rows.add("Camere raportate de Android · " + count);
+        rows.add(count == 0 ? "Camera nu este încă disponibilă\nVerifică pornirea serviciilor" : "Deschide vizorul · OK declanșează");
+        rows.add("Calea de salvare · Pictures/Leo");
+        rows.add("BF20A1 · driver KaiOS și adaptor Android 8.1");
+        list("Cameră Leo · experimental", rows, 0, new Choice() {
+            public void pick(int at) {
+                if (at != 1) { notice("Cameră Leo · diagnostic și salvare locală"); return; }
+                if (total == 0) { notice("Camera nu este expusă de serviciul Android"); return; }
+                if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.CAMERA}, 73); return;
+                }
+                cameraId = 0;
+                viewfinder();
+            }
+        }, "Actualizează", new Runnable() { public void run() { diagnostic(); } });
+    }
+
+    private void viewfinder() {
+        begin("Cameră Leo");
+        preview = root;
+        surface = new SurfaceView(this);
+        root.addView(surface, new LinearLayout.LayoutParams(-1, 0, 1));
+        surface.getHolder().addCallback(this);
+        left = new Runnable() { public void run() { capture(); } };
+        back = new Runnable() { public void run() { diagnostic(); } };
+        footer("Foto", "Se pornește…", "Înapoi");
+        LinearLayout bar = (LinearLayout) root.getChildAt(root.getChildCount() - 1);
+        previewStatus = (TextView) bar.getChildAt(1);
+        surface.setFocusable(true);
+        surface.requestFocus();
+    }
+
+    private static void closeCamera(Camera value) {
+        if (value == null) return;
+        try { value.stopPreview(); } catch (RuntimeException ignored) {}
+        try { value.release(); } catch (RuntimeException ignored) {}
+    }
+
+    public void surfaceCreated(final SurfaceHolder holder) {
+        if (root != preview || surface == null || holder != surface.getHolder() || isFinishing() || camera != null || opening) return;
+        final int ticket = ++generation;
+        final int rotation = getWindowManager().getDefaultDisplay().getRotation() * 90;
+        opening = true;
+        cameraWork.post(new Runnable() { public void run() {
+            Camera value = null;
+            try {
+                value = Camera.open(cameraId);
+                Camera.Parameters parameters = value.getParameters();
+                Camera.Size best = null;
+                for (Camera.Size size : parameters.getSupportedPreviewSizes())
+                    if (size.width <= 640 && (best == null || size.width * size.height > best.width * best.height)) best = size;
+                if (best != null) parameters.setPreviewSize(best.width, best.height);
+                best = null;
+                for (Camera.Size size : parameters.getSupportedPictureSizes())
+                    if (size.width * size.height <= 2000000 && (best == null || size.width * size.height > best.width * best.height)) best = size;
+                if (best != null) parameters.setPictureSize(best.width, best.height);
+                parameters.setJpegQuality(85);
+                Camera.CameraInfo info = new Camera.CameraInfo();
+                Camera.getCameraInfo(cameraId, info);
+                parameters.setRotation((info.orientation + (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT ? -rotation : rotation) + 360) % 360);
+                value.setParameters(parameters);
+                value.setDisplayOrientation(info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT ? (360 - (info.orientation + rotation) % 360) % 360 : (info.orientation - rotation + 360) % 360);
+                if (ticket != generation || !holder.getSurface().isValid()) { closeCamera(value); return; }
+                value.setPreviewDisplay(holder);
+                value.startPreview();
+                boolean cancelled;
+                synchronized (cameraLock) {
+                    cancelled = ticket != generation;
+                    if (!cancelled) { camera = value; opening = false; }
+                }
+                if (cancelled) { closeCamera(value); return; }
+                value.setErrorCallback(new Camera.ErrorCallback() { public void onError(int error, Camera source) {
+                    main.post(new Runnable() { public void run() {
+                        if (ticket != generation) return;
+                        release(); notice("Camera s-a oprit · poți reveni cu Înapoi");
+                        previewStatus.setText("Cameră oprită");
+                    }});
+                }});
+                main.post(new Runnable() { public void run() { if (ticket == generation) previewStatus.setText("OK declanșează"); }});
+            } catch (Exception error) {
+                closeCamera(value);
+                main.post(new Runnable() { public void run() {
+                    if (ticket != generation) return;
+                    opening = false; camera = null;
+                    notice("Vizor indisponibil · revino cu Înapoi");
+                    previewStatus.setText("Cameră oprită");
+                }});
+            }
+        }});
+        main.postDelayed(new Runnable() { public void run() {
+            if (ticket == generation && opening) {
+                release(); notice("Pornirea camerei durează prea mult · poți ieși");
+                previewStatus.setText("Cameră oprită");
+            }
+        }}, 15000);
+    }
+
+    public void surfaceChanged(SurfaceHolder h, int format, int width, int height) {}
+    public void surfaceDestroyed(SurfaceHolder holder) { if (surface != null && holder == surface.getHolder()) release(); }
+
+    private void release() {
+        final Camera old;
+        synchronized (cameraLock) {
+            ++generation; opening = false; taking = false;
+            old = camera; camera = null;
+        }
+        if (old != null && cameraWork != null) cameraWork.post(new Runnable() { public void run() { closeCamera(old); }});
+    }
+
+    private void capture() {
+        if (camera == null || taking) { notice(opening ? "Camera se pornește…" : "Vizorul nu este pregătit"); return; }
+        final int ticket = generation;
+        final int captureTicket = ++captureSerial;
+        taking = true;
+        cameraWork.post(new Runnable() { public void run() {
+            final Camera device = camera;
+            if (ticket != generation || device == null) return;
+            try { device.takePicture(null, null, new Camera.PictureCallback() {
+                public void onPictureTaken(final byte[] jpeg, Camera source) {
+                    if (ticket != generation) return;
+                    if (jpeg == null || jpeg.length == 0 || jpeg.length > 16777216) { captureFailed(ticket); return; }
+                    try { worker.execute(new Runnable() { public void run() {
+                        try {
+                            File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Leo");
+                            if (!folder.isDirectory() && !folder.mkdirs()) throw new IOException();
+                            final File photo = File.createTempFile("LEO-", ".jpg", folder);
+                            try (FileOutputStream out = new FileOutputStream(photo)) { out.write(jpeg); out.getFD().sync(); }
+                            android.media.MediaScannerConnection.scanFile(CameraActivity.this, new String[]{photo.getPath()}, new String[]{"image/jpeg"}, null);
+                            main.post(new Runnable() { public void run() { if (ticket == generation) { taking = false; notice("Fotografie salvată în Pictures/Leo"); } }});
+                            cameraWork.post(new Runnable() { public void run() {
+                                if (ticket == generation && camera == device) try { device.startPreview(); } catch (RuntimeException ignored) { captureFailed(ticket); }
+                            }});
+                        } catch (Exception error) { captureFailed(ticket); }
+                    }}); } catch (java.util.concurrent.RejectedExecutionException ignored) { /* Activity already destroyed. */ }
+                }
+            }); } catch (RuntimeException error) { captureFailed(ticket); }
+        }});
+        main.postDelayed(new Runnable() { public void run() {
+            if (ticket == generation && captureTicket == captureSerial && taking) { release(); notice("Capturarea a expirat · revino cu Înapoi"); }
+        }}, 15000);
+    }
+
+    private void captureFailed(final int ticket) {
+        main.post(new Runnable() { public void run() { if (ticket == generation) { release(); notice("Capturarea a eșuat · revino cu Înapoi"); } }});
+    }
+    public boolean onKeyDown(int key, KeyEvent event) {
+        if (root == preview && (key == 23 || key == 66 || key == KeyEvent.KEYCODE_CAMERA)) { if (event.getRepeatCount() == 0) capture(); return true; }
+        return super.onKeyDown(key, event);
+    }
+    public void onRequestPermissionsResult(int request, String[] permissions, int[] results) { super.onRequestPermissionsResult(request, permissions, results); if (request == 73) diagnostic(); }
+    protected void onResume() { super.onResume(); if (root == preview && surface != null && surface.getHolder().getSurface().isValid() && camera == null && !opening) surfaceCreated(surface.getHolder()); }
+    protected void onPause() { release(); super.onPause(); }
+    protected void onDestroy() { release(); if (cameraThread != null) cameraThread.quitSafely(); main.removeCallbacksAndMessages(null); super.onDestroy(); }
 }
