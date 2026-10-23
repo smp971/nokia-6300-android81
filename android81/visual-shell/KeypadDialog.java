@@ -46,14 +46,14 @@ final class KeypadDialog extends Dialog {
                     int index=first+row; float top=42+row*39;
                     if(index==selected) {
                         paint.setColor(palette.selection);
-                        c.drawRoundRect(new RectF(6,top,234,top+35),10,10,paint);
+                        c.drawRoundRect(new RectF(6,top,234,top+35),4,4,paint);
                     }
                     text(c,items[index],15,top+23,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
                 }
                 paint.setColor(palette.bar); c.drawRect(0,250,240,280,paint);
                 paint.setColor(palette.accent);c.drawRect(0,250,240,251,paint);
-                text(c,(selected+1)+" / "+items.length,12,245,10,palette.accent,Paint.Align.LEFT);
-                text(c,"Alege",120,270,13,palette.accent,Paint.Align.CENTER);
+                text(c,(items.length==0?0:selected+1)+" / "+items.length,12,245,10,palette.accent,Paint.Align.LEFT);
+                text(c,items.length==0?"":"Alege",120,270,13,palette.accent,Paint.Align.CENTER);
                 text(c,"Înapoi",233,270,12,Color.WHITE,Paint.Align.RIGHT);
                 c.restore();
             }

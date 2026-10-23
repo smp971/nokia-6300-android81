@@ -25,6 +25,13 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 ## Leo în imagini
 
+**23 octombrie · finisare UI:** antet compact, liste cu detalii secundare și bară
+de taste actualizată fără refacerea ecranului. [Audit și verificări](android81/LEO-UI-FOUNDATION.md).
+
+| Componente comune · date demo | Meniu global peste Setări Android |
+| :---: | :---: |
+| <img src="android81/screenshots/leo-ui-foundation.png" width="180" alt="Listă Leo cu ierarhie vizuală"> | <img src="android81/screenshots/leo-global-menu-external.png" width="180" alt="Meniul global Leo disponibil în afara shell-ului"> |
+
 Capturi reale de pe telefon, făcute pe **20 octombrie 2026**, cu noul aspect flat.
 Culori uniforme, pictograme fără reflexe și selecții clare pentru D-pad.
 Apasă o imagine pentru dimensiunea originală.

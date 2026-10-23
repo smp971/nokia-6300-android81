@@ -35,6 +35,7 @@ public final class LeoPointerService extends AccessibilityService {
     private final android.os.Handler movement=new android.os.Handler();
     private int heldDirection;
     private long heldSince;
+    private long nextEdgeScroll;
     static void prepareForCall(){if(instance!=null){instance.setActive(false);if(instance.menu!=null)instance.menu.dismiss();}}
     private final Runnable repeatMovement=new Runnable() {
         public void run() {
@@ -54,7 +55,23 @@ public final class LeoPointerService extends AccessibilityService {
         if(key==KeyEvent.KEYCODE_DPAD_DOWN) y+=step;
         x=Math.max(0,Math.min(width-2,x)); y=Math.max(0,Math.min(height-2,y));
         layout.x=x; layout.y=y; manager.updateViewLayout(pointer,layout);
+        edgeScroll(key);
         Log.i("LeoPointer","move x="+x+" y="+y);
+    }
+    static int edgeDirection(int key,int y,int height){
+        if(key==KeyEvent.KEYCODE_DPAD_UP&&y<=2)return -1;
+        if(key==KeyEvent.KEYCODE_DPAD_DOWN&&y>=height-3)return 1;
+        return 0;
+    }
+    private void edgeScroll(int key){
+        int direction=edgeDirection(key,y,height);
+        long now=android.os.SystemClock.uptimeMillis();
+        if(!active||scroll||direction==0||gesturePending||now<nextEdgeScroll)return;
+        // Keep swipes away from status/softkey bars; a held key repeats at most once per 700 ms.
+        nextEdgeScroll=now+700;
+        gesture(width*.5f,height*(direction>0?.72f:.28f),width*.5f,
+                height*(direction>0?.28f:.72f),300);
+        Log.i("LeoPointer","edge scroll "+direction);
     }
     protected void onServiceConnected() {
         instance=this;
@@ -101,7 +118,7 @@ public final class LeoPointerService extends AccessibilityService {
             android.util.DisplayMetrics metrics=new android.util.DisplayMetrics();
             manager.getDefaultDisplay().getRealMetrics(metrics);
             width=metrics.widthPixels; height=metrics.heightPixels; x=width/2; y=height/2;
-            scroll=false;
+            scroll=false;nextEdgeScroll=0;
             pointer=new View(this) {
                 private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
                 private final Path arrow=new Path();
@@ -118,7 +135,7 @@ public final class LeoPointerService extends AccessibilityService {
             layout.gravity=Gravity.TOP|Gravity.LEFT; layout.x=x; layout.y=y;
             try { manager.addView(pointer,layout); active=true; }
             catch(RuntimeException error) { pointer=null; return; }
-            Toast.makeText(this,"Mouse: săgeți · OK clic · # oprire · * derulare",Toast.LENGTH_LONG).show();
+            Toast.makeText(this,"Mouse: săgeți · margini sus/jos: derulare · OK clic · # oprire",Toast.LENGTH_LONG).show();
         } else {
             active=false;
             if(pointer!=null) { try { manager.removeView(pointer); } catch(RuntimeException ignored) { } pointer=null; }

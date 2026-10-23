@@ -22,6 +22,7 @@ abstract class LeoActivity extends Activity {
     Runnable left,back;
     boolean form;
     Appearance.Palette palette;
+    private LinearLayout softkeyBar;
     private String listTitle;private java.util.ArrayList<String> listRows;private BaseAdapter listAdapter;
     protected void onCreate(Bundle state) {
         super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
@@ -34,26 +35,32 @@ abstract class LeoActivity extends Activity {
         view.setTextColor(Color.WHITE); view.setPadding(dp(8),dp(4),dp(8),dp(4)); return view;
     }
     void begin(String title) {
-        form=false; left=null; back=null;
+        form=false; left=null; back=null; softkeyBar=null;
         listTitle=null;listRows=null;listAdapter=null;
         palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
-        TextView heading=text(title,21); heading.setTypeface(android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.NORMAL));heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
-        heading.setCompoundDrawables(new AppBadge(title,dp(29)),null,null,null);heading.setCompoundDrawablePadding(dp(10));
+        TextView heading=text(title,18); heading.setTypeface(android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.NORMAL));heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
         heading.setBackgroundColor(palette.card);
-        root.addView(heading,new LinearLayout.LayoutParams(-1,dp(42)));
-        View accent=new View(this);accent.setBackgroundColor(palette.accent);root.addView(accent,new LinearLayout.LayoutParams(-1,dp(2)));
+        root.addView(heading,new LinearLayout.LayoutParams(-1,dp(38)));
+        View accent=new View(this);accent.setBackgroundColor(Appearance.mix(palette.card,palette.accent,.35f));root.addView(accent,new LinearLayout.LayoutParams(-1,dp(1)));
     }
     void footer(String a,String b,String c) {
-        LinearLayout bar=new LinearLayout(this); bar.setBackgroundColor(palette.bar);
+        // Updating labels must not detach the content (especially a camera SurfaceView).
+        boolean attach=softkeyBar==null;
+        if(attach){softkeyBar=new LinearLayout(this);softkeyBar.setBackgroundColor(palette.bar);}
+        LinearLayout bar=softkeyBar;
         String[] values={a,b,c};
         for(int i=0;i<3;i++) {
-            TextView label=text(values[i],13); label.setSingleLine(true);
+            TextView label=attach?text(values[i],12):(TextView)bar.getChildAt(i);
+            label.setText(values[i]);label.setSingleLine(true);label.setEllipsize(TextUtils.TruncateAt.END);
+            label.setPadding(dp(5),0,dp(5),0);
+            label.setAutoSizeTextTypeUniformWithConfiguration(9,Math.round(12*Appearance.textScale(this)),1,android.util.TypedValue.COMPLEX_UNIT_SP);
             if(i==1)label.setTextColor(palette.accent);
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-            bar.addView(label,new LinearLayout.LayoutParams(0,dp(34),1));
+            if(attach)bar.addView(label,new LinearLayout.LayoutParams(0,dp(32),1));
         }
-        root.addView(bar); setContentView(root);
+        if(attach){root.addView(bar);setContentView(root);}
         if(!form) root.post(new Runnable() { public void run() {
             ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(),0);
         }});
@@ -61,7 +68,7 @@ abstract class LeoActivity extends Activity {
     void list(String title,final List<String> values,int selected,final Choice choice,String action,Runnable command) {
         begin(title); left=command;
         listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
-        final ListView list=new ListView(this); list.setPadding(dp(6),0,dp(6),0); list.setDividerHeight(dp(3));
+        final ListView list=new ListView(this); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
         list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
         final BaseAdapter adapter=new BaseAdapter() {
@@ -72,13 +79,14 @@ abstract class LeoActivity extends Activity {
                 TextView label;
                 if(reuse instanceof TextView) label=(TextView)reuse;
                 else {
-                    label=text("",18); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
-                    label.setMinHeight(dp(52)); label.setGravity(Gravity.CENTER_VERTICAL);
+                    label=text("",17); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
+                    label.setPadding(dp(10),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);
                     android.graphics.drawable.StateListDrawable surfaces=new android.graphics.drawable.StateListDrawable();
-                    surfaces.addState(new int[]{android.R.attr.state_selected},Appearance.surface(palette.selection,dp(7)));
-                    surfaces.addState(new int[]{},Appearance.surface(palette.card,dp(7)));label.setBackground(surfaces);
+                    android.graphics.drawable.GradientDrawable selectedSurface=Appearance.surface(palette.selection,dp(4));selectedSurface.setStroke(dp(1),palette.accent);
+                    surfaces.addState(new int[]{android.R.attr.state_selected},selectedSurface);
+                    surfaces.addState(new int[]{},Appearance.surface(palette.card,dp(4)));label.setBackground(surfaces);
                 }
-                label.setText(rows.get(i));label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setCompoundDrawablePadding(dp(9)); paintSelection(label,i==focused[0]); return label;
+                label.setText(rowText(rows.get(i)));label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setCompoundDrawablePadding(dp(9)); paintSelection(label,i==focused[0]); return label;
             }
         };
         listAdapter=adapter;list.setAdapter(adapter);
@@ -98,11 +106,17 @@ abstract class LeoActivity extends Activity {
             TextView empty=text("Nicio intrare",18); empty.setGravity(Gravity.CENTER);
             root.addView(empty,new LinearLayout.LayoutParams(-1,0,1));
         } else root.addView(list,new LinearLayout.LayoutParams(-1,0,1));
-        footer(action,"Deschide","Înapoi");
+        footer(action,values.isEmpty()?"":"Deschide","Înapoi");
         list.requestFocus(); list.setSelection(focused[0]);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }
     boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;if(listRows.equals(rows))return true;listRows.clear();listRows.addAll(rows);listAdapter.notifyDataSetChanged();return true;}
+    private CharSequence rowText(String value){
+        android.text.SpannableString styled=new android.text.SpannableString(value);
+        int split=value.indexOf('\n');
+        if(split>=0&&split<value.length()-1)styled.setSpan(new android.text.style.RelativeSizeSpan(.82f),split+1,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return styled;
+    }
     void refreshRows(){if(listAdapter!=null)listAdapter.notifyDataSetChanged();}
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
     void onListSelection(String title,int index){}
