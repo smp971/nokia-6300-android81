@@ -4,8 +4,16 @@ Acesta actualizează **Leo Visual și Leo Keypad** peste un port Leo Android 8.1
 existent. Nu este un ROM instalabil și nu conține boot/recovery, modem, dump,
 firmware proprietar sau datele utilizatorului.
 
-Versiunea 0.4.0-dev include și etapele 0.1.0-dev, 0.2.0-dev și 0.3.0-dev. Instalarea pe Nokia este încă în
-așteptarea conexiunii ADB; [cele șase funcții noi](LEO-POCKET-SUITE.md), [T9 și browser](LEO-KEYPAD-WEB.md).
+Versiunea 0.4.0-dev include și etapele 0.1.0-dev, 0.2.0-dev și 0.3.0-dev și este
+instalată pe Nokia. Ulterior au fost integrate [camera BF20A1](CAMERA-RUNTIME.md)
+și [finisarea UI și derularea mouse-ului](LEO-UI-FOUNDATION.md), păstrând codul 4.
+Commit-ul și hash-urile din manifest identifică snapshot-ul exact; eticheta
+0.4.0-dev singură nu distinge toate aceste build-uri de dezvoltare.
+
+Snapshot-ul local din 23 octombrie a fost generat cu `--package-only`, din APK-urile
+construite anterior, și verificat prin instalatorul offline. Manifestul său indică
+`rebuilt=false`. Runtime-ul proprietar al camerei se instalează separat și nu este
+inclus în pachetul celor două aplicații.
 
 ## Recompilare
 
