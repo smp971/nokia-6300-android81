@@ -23,6 +23,7 @@ import java.text.Normalizer;
 /** SMS reader/composer; no automatic transmission and no change of default SMS app. */
 public final class MessagesActivity extends LeoActivity {
     private String current="",draftId;
+    private int folder;
     private boolean composing;
     private boolean preview;
     private boolean viewingMessages;
@@ -35,7 +36,7 @@ public final class MessagesActivity extends LeoActivity {
         }
     };
     private EditText recipient,body;private String replyAddress="";
-    private static final class Message { String address,body; long date,sent; int type,sub,delivery=-1; }
+    private static final class Message { String address,body;ContactIdentity identity; long date,sent; int type,sub,delivery=-1; }
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         preview=getIntent().getBooleanExtra("preview",false);
@@ -93,6 +94,7 @@ public final class MessagesActivity extends LeoActivity {
                     }
                 }
                 Collections.sort(messages,new Comparator<Message>() { public int compare(Message a,Message b) { return Long.compare(b.date,a.date); } });
+                HashMap<String,ContactIdentity> identities=new HashMap<String,ContactIdentity>();for(Message m:messages){ContactIdentity identity=identities.get(m.address);if(identity==null&&identities.size()<128){identity=ContactIdentity.find(MessagesActivity.this,m.address);identities.put(m.address,identity);}m.identity=identity;}
                 ui(new Runnable() { public void run() { if(root==loading)display(address,messages); } });
             } catch(RuntimeException denied) { ui(new Runnable() { public void run() { if(root==loading) { notice("Mesajele nu pot fi citite; verifică permisiunile");display(address,messages); } } }); }
         }});
@@ -103,8 +105,9 @@ public final class MessagesActivity extends LeoActivity {
         final HashSet<String> unread=new HashSet<String>();if(!preview)try(SmsStore s=new SmsStore(this);Cursor c=s.getReadableDatabase().rawQuery("SELECT DISTINCT address FROM inbox WHERE unread=1",null)){while(c.moveToNext())unread.add(c.getString(0));}catch(RuntimeException ignored){}HashSet<String> threads=new HashSet<String>();
         for(Message m:messages) {
             if(address.isEmpty()) {
+                if(!SmsFolders.accepts(folder,m.type))continue;
                 if(!threads.add(m.address)) continue;
-                rows.add(m); labels.add((unread.contains(m.address)?"● Necitit · ":"")+m.address+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
+                rows.add(m); labels.add((unread.contains(m.address)?"● ":"")+(m.identity==null?m.address:m.identity.name)+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
             } else if(m.address.equals(address)) {
                 rows.add(m);
             }
@@ -115,13 +118,14 @@ public final class MessagesActivity extends LeoActivity {
             if(!preview) { long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through); }
             return;
         }
-        list("Mesaje",labels,0,new Choice() { public void pick(int i) {
+        list(folder==0?"Mesaje":"Mesaje · "+SmsFolders.LABELS[folder],labels,0,new Choice() { public void pick(int i) {
             load(rows.get(i).address);
         } },"Opțiuni",new Runnable() { public void run() {
-            options("Mesaje",new String[]{"SMS nou","Caută în mesaje","Ciorne salvate","Previzualizare notificări","Șabloane SMS"},new Choice() { public void pick(int i) {
-                if(i==4){replyAddress="";templates(false);}else if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)drafts();else {final SharedPreferences p=getSharedPreferences("sms-options",0);options("Text în notificări",new String[]{"Ascunde textul","Arată o previzualizare"},new Choice(){public void pick(int mode){p.edit().putBoolean("preview",mode==1).apply();notice("Preferință salvată pentru mesajele noi");}});}
+            options("Mesaje",new String[]{"SMS nou","Caută în toate mesajele","Ciorne salvate","Previzualizare notificări","Șabloane SMS","Dosare mesaje"},new Choice() { public void pick(int i) {
+                if(i==5){options("Dosare",SmsFolders.LABELS,new Choice(){public void pick(int at){folder=at;load("");}});}else if(i==4){replyAddress="";templates(false);}else if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)drafts();else {final SharedPreferences p=getSharedPreferences("sms-options",0);options("Text în notificări",new String[]{"Ascunde textul","Arată o previzualizare"},new Choice(){public void pick(int mode){p.edit().putBoolean("preview",mode==1).apply();notice("Preferință salvată pentru mesajele noi");}});}
             }});
         } });
+        TextView folders=text("‹ "+SmsFolders.LABELS[folder]+" › · stânga / dreapta",12);folders.setGravity(Gravity.CENTER);folders.setTextColor(palette.accent);root.addView(folders,1);
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
         String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):"SMS în așteptare · fără confirmare";
         if(!status.isEmpty()) root.addView(text(status,14),1);
@@ -307,6 +311,7 @@ public final class MessagesActivity extends LeoActivity {
     private void templates(final boolean insert){final ArrayList<String> all=SmsTemplates.read(this);list("Șabloane SMS",all,0,new Choice(){public void pick(final int n){options("Șablon",new String[]{insert?"Inserează în mesaj":"Folosește pentru răspuns","Editează","Șterge"},new Choice(){public void pick(int action){if(action==0){if(insert){String text=SmsTemplates.insert(body.getText().toString(),all.get(n),Math.max(0,body.getSelectionStart()));if(text.length()>1000){notice("Mesajul ar depăși 1000 de caractere");return;}String address=recipient.getText().toString();editor(address,text,false);}else{if(composing)saveDraft();draftId=null;editor(replyAddress,all.get(n),false);}}else if(action==1)templateEdit(all,n,insert);else options("Ștergi șablonul?",new String[]{"Păstrează","Șterge"},new Choice(){public void pick(int yes){if(yes==1){all.remove(n);SmsTemplates.save(MessagesActivity.this,all);templates(insert);}}});}});}},"Nou",new Runnable(){public void run(){if(all.size()>=20)notice("Maximum 20 de șabloane");else templateEdit(all,-1,insert);}});viewingMessages=false;loadingMessages=false;back=new Runnable(){public void run(){if(insert)editor(recipient.getText().toString(),body.getText().toString(),false);else if(preview)demo();else load(current);}};}
     private void templateEdit(final ArrayList<String> all,final int at,final boolean insert){LinearLayout f=fields("Editează șablonul");final EditText value=field(f,"Text · maximum 240 caractere",at<0?"":all.get(at),InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);value.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(240)});left=new Runnable(){public void run(){String text=value.getText().toString().trim();if(text.isEmpty()){notice("Scrie textul șablonului");return;}if(at<0)all.add(text);else all.set(at,text);SmsTemplates.save(MessagesActivity.this,all);templates(insert);}};back=new Runnable(){public void run(){templates(insert);}};footer("Salvează","Editor","Șterge");value.requestFocus();}
     public boolean onKeyDown(int key,android.view.KeyEvent e){if(!composing&&viewingMessages&&!current.isEmpty()&&key==android.view.KeyEvent.KEYCODE_5){if(e.getRepeatCount()==0)compose(current);return true;}return super.onKeyDown(key,e);}
+    public boolean dispatchKeyEvent(android.view.KeyEvent e){int key=e.getKeyCode();if(!composing&&viewingMessages&&current.isEmpty()&&(key==android.view.KeyEvent.KEYCODE_DPAD_LEFT||key==android.view.KeyEvent.KEYCODE_DPAD_RIGHT)){if(e.getAction()==0&&e.getRepeatCount()==0){folder=Math.floorMod(folder+(key==android.view.KeyEvent.KEYCODE_DPAD_RIGHT?1:-1),SmsFolders.LABELS.length);load("");}return true;}return super.dispatchKeyEvent(e);}
     private void prepare() {
         if(preview) { notice("Demonstrație locală · fără trimitere SMS");return; }
         final String number=PhoneNumberUtils.normalizeNumber(recipient.getText().toString()),text=body.getText().toString();

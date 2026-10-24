@@ -1,4 +1,4 @@
-# Pachetul aplicațiilor Leo · 0.4.0-dev
+# Pachetul aplicațiilor Leo · 0.5.0-dev
 
 Acesta actualizează **Leo Visual și Leo Keypad** peste un port Leo Android 8.1
 existent. Nu este un ROM instalabil și nu conține boot/recovery, modem, dump,
@@ -14,6 +14,13 @@ Snapshot-ul local din 23 octombrie a fost generat cu `--package-only`, din APK-u
 construite anterior, și verificat prin instalatorul offline. Manifestul său indică
 `rebuilt=false`. Runtime-ul proprietar al camerei se instalează separat și nu este
 inclus în pachetul celor două aplicații.
+
+## Etapa curentă · 0.5.0-dev / cod 5
+
+Include [meniul pe categorii, ferestrele recente, dosarele SMS și controlul
+blițului](LEO-MATURITY.md), pe lângă etapele anterioare. Ambele APK-uri sunt
+reconstruite și numerotate 0.5.0-dev; codul funcțional al tastaturii este păstrat.
+Runtime-urile hardware sunt separate de pachetul aplicațiilor.
 
 ## Recompilare
 
@@ -46,14 +53,14 @@ folosită de proiect, pentru compatibilitatea actualizărilor.
 
 ## Rezultat și verificare
 
-`leo-apps-0.4.0-dev/` conține:
+`leo-apps-0.5.0-dev/` conține:
 
 - `leo-visual.apk` și `leo-keypad-ime.apk`;
 - `manifest.json`: versiune, țintă, dimensiuni/hash-uri, commit, starea arborelui,
   hash-urile surselor și ale intrărilor de build;
 - `install-app-bundle.py` și `README.txt`.
 
-Se produce și `leo-apps-0.4.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
+Se produce și `leo-apps-0.5.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
 extras, pe Windows sau Linux:
 
 ```bash

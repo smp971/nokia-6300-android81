@@ -28,13 +28,12 @@ def capture_probe():
   time.sleep(.2)
  else:raise RuntimeError('Camera window did not get focus')
  time.sleep(.5)
- run('/system/bin/sh','/system/bin/input','keyevent','20');run('/system/bin/sh','/system/bin/input','keyevent','23')
  ready=False
  for i in range(5):
   run('/system/bin/sh','/system/bin/uiautomator','dump','--compressed','/tmp/leo-camera-ui.xml',timeout=45)
   xml=run('/system/bin/cat','/tmp/leo-camera-ui.xml')
   if 'OK declanșează' in xml:
-   assert xml.count('text="Foto"')==1,'Duplicated preview footer'
+   assert xml.count('text="Opțiuni"')==1,'Duplicated preview footer'
    ready=True;break
   if 'Cameră oprită' in xml:raise RuntimeError('Preview reported failure')
   time.sleep(.5)
@@ -62,7 +61,11 @@ def capture_probe():
  report=dict(result='PASS',main_pid_unchanged=True,provider_pid_unchanged=True,server_pid_unchanged=True,separate_camera_process=True,jpeg_saved=True,camera_released=True,audio_state='active')
  (Path(__file__).resolve().parent/'output/camera-isolated-ui-validation.json').write_text(json.dumps(report,indent=2))
  print('PASS preview, JPEG, release; launcher/provider/server retained PIDs',flush=True)
+accessibility_before={key:run('/system/bin/sh','/system/bin/settings','get','secure',key) for key in ('enabled_accessibility_services','accessibility_enabled')}
 try:
  capture_probe()
 finally:
+ for key,value in accessibility_before.items():
+  if value=='null':run('/system/bin/sh','/system/bin/settings','delete','secure',key)
+  else:run('/system/bin/sh','/system/bin/settings','put','secure',key,value)
  run('/system/bin/sh','/system/bin/am','start','-f','0x14000000','-n','ro.leo.visual/.MainActivity')

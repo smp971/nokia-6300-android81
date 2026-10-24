@@ -35,6 +35,8 @@ public final class PhoneActivity extends LeoActivity {
     private NetworkTelemetry network;
     private int page,generation;
     private String draft="";
+    private final RowArtwork historyArt=new RowArtwork(this);
+    private final ArrayList<ContactIdentity> historyPeople=new ArrayList<ContactIdentity>();
     private final String[] tabNames={"Apelare","Istoric","Statistici"};
     protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -155,22 +157,29 @@ public final class PhoneActivity extends LeoActivity {
         page=1;networkText=null;final int token=++generation;
         final ArrayList<String> labels=new ArrayList<String>(),numbers=new ArrayList<String>();
         final ArrayList<Long> missedDates=new ArrayList<Long>();
+        final ArrayList<ContactIdentity> people=new ArrayList<ContactIdentity>();final ArrayList<String> descriptions=new ArrayList<String>();
         worker.execute(new Runnable() { public void run() {
-            try(Cursor c=getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.NUMBER,CallLog.Calls.CACHED_NAME,CallLog.Calls.DATE,CallLog.Calls.TYPE,CallLog.Calls.PHONE_ACCOUNT_ID,CallLog.Calls.NUMBER_PRESENTATION},null,null,CallLog.Calls.DATE+" DESC")) {
+            try(Cursor c=getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.NUMBER,CallLog.Calls.CACHED_NAME,CallLog.Calls.DATE,CallLog.Calls.TYPE,CallLog.Calls.PHONE_ACCOUNT_ID,CallLog.Calls.NUMBER_PRESENTATION,CallLog.Calls.DURATION},null,null,CallLog.Calls.DATE+" DESC")) {
                 SimpleDateFormat date=new SimpleDateFormat("dd.MM HH:mm",java.util.Locale.getDefault());
                 while(c!=null && c.moveToNext() && labels.size()<100) {
                     String p=c.getString(0),name=c.getString(1); int type=c.getInt(3);
                     if(type==CallLog.Calls.MISSED_TYPE)missedDates.add(c.getLong(2));
-                    String only=getIntent().getStringExtra("history_number");if(only!=null&&!PhoneNumberUtils.compare(only,p))continue;boolean allowed=c.getInt(5)==TelecomManager.PRESENTATION_ALLOWED;numbers.add(allowed?p:""); labels.add((!allowed?"Număr privat":name==null || name.isEmpty()?p:name)+"\n"+(type==CallLog.Calls.OUTGOING_TYPE?"Ieșit":type==CallLog.Calls.MISSED_TYPE?"Pierdut":"Primit")+" · "+accountSlot(c.getString(4))+" · "+date.format(new Date(c.getLong(2))));
+                    String only=getIntent().getStringExtra("history_number");if(only!=null&&!PhoneNumberUtils.compare(only,p))continue;boolean allowed=c.getInt(5)==TelecomManager.PRESENTATION_ALLOWED;numbers.add(allowed?p:"");ContactIdentity identity=ContactIdentity.find(PhoneActivity.this,allowed?p:"");people.add(identity);String description=(type==CallLog.Calls.OUTGOING_TYPE?"Efectuat":type==CallLog.Calls.MISSED_TYPE?"Pierdut":"Primit")+" · "+accountSlot(c.getString(4))+" · "+date.format(new Date(c.getLong(2)))+"\nDurată · "+duration(c.getLong(6));descriptions.add(description);labels.add(identity.name+"\n"+description.substring(0,description.indexOf("\n")));
                 }
                 ui(new Runnable() { public void run() {
                     if(token!=generation)return;long through=0;
                     for(Long value:missedDates)through=Math.max(through,value);CallNotices.clearMissed(PhoneActivity.this);UnreadState.readCalls(PhoneActivity.this,through);
-                    list("Istoric apeluri",labels,0,new Choice() { public void pick(int i) { dial(numbers.get(i)); } },"Opțiuni",new Runnable(){public void run(){menu();}});tabs();
+                    historyPeople.clear();historyPeople.addAll(people);list("Istoric apeluri",labels,0,new Choice() { public void pick(int i) { callDetail(people.get(i),numbers.get(i),descriptions.get(i)); } },"Opțiuni",new Runnable(){public void run(){menu();}});tabs();
                     back=new Runnable() { public void run() { dial(draft); } };
                 }});
             } catch(RuntimeException denied) { ui(new Runnable() { public void run() { if(token==generation){dial(draft);notice("Istoricul nu poate fi citit");} } }); }
         }});
+    }
+    android.graphics.drawable.Drawable rowIcon(String title,int at){if(!title.equals("Istoric apeluri")||at<0||at>=historyPeople.size())return null;ContactIdentity p=historyPeople.get(at);return historyArt.get("history:"+p.id+":"+p.name,p.photo,p.name);}
+    private void callDetail(final ContactIdentity person,final String number,final String description){
+        generation++;begin(person.name);android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(text((number.isEmpty()?"Număr indisponibil":number)+"\n\n"+description,17));root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));scroll.setFocusable(true);scroll.requestFocus();
+        left=new Runnable(){public void run(){options("Apel",new String[]{"Deschide în Telefon","Scrie SMS","Contact"},new Choice(){public void pick(int at){if(number.isEmpty()){notice("Număr privat sau indisponibil");return;}if(at==0)dial(number);else if(at==1)startActivity(new Intent(PhoneActivity.this,MessagesActivity.class).putExtra("number",number));else if(person.id>=0)startActivity(new Intent(PhoneActivity.this,ContactsActivity.class).putExtra("contact_id",person.id));else notice("Numărul nu este salvat în Contacte");}});}};
+        back=new Runnable(){public void run(){history();}};footer("Opțiuni","Detalii","Înapoi");
     }
     private void stats(){
         page=2;networkText=null;final int token=++generation;

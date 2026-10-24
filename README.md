@@ -13,14 +13,14 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 23 octombrie 2026** · **Aplicații instalate: 0.4.0-dev / cod 4**
+**Actualizat: 24 octombrie 2026** · **Aplicații instalate: 0.5.0-dev / cod 5**
 
-Ultimele etape: [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
+Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
 [Pachetul de buzunar](android81/LEO-POCKET-SUITE.md) ·
 [Recompilare și pachet de aplicații](android81/RELEASE-APPS.md).
-Versiunea aplicațiilor este păstrată; modificările recente sunt identificate și
-prin commit: `1e87b06` pentru cameră, `420d47d` pentru UI și mouse.
+Versiunea 0.5.0-dev include etapele anterioare. Integrarea inițială a camerei este
+documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d`.
 
 [Ce funcționează](#ce-poți-face-deja) · [Capturi](#leo-în-imagini) ·
 [Comenzi](#din-taste) · [Audit](#auditul-proiectului) · [Ce urmează](#ce-mai-avem-de-construit) ·
@@ -32,21 +32,34 @@ prin commit: `1e87b06` pentru cameră, `420d47d` pentru UI și mouse.
 
 ## Ce este nou
 
-- **Camera funcționează prin Android:** senzor BF20A1, vizor și JPEG **480 × 640**
-  în `Pictures/Leo`, inclusiv după repornire. Proces separat pentru cameră;
-  deschiderea și închiderea lentă a driverului nu blochează firul interfeței.
-- **Componente UI finisate:** antet compact, detalii secundare mai mici, selecție
-  contrastantă și bară de taste actualizată pe loc. Ecranele care folosesc baza
-  comună primesc aceste schimbări; compozițiile speciale se finisează separat.
-- **Meniu Leo peste aplicațiile Android:** butonul fizic Meniu deschide notificări,
-  mouse, Home, Setări, blocare, configurări rapide și media curentă.
-- **Mouse cu derulare la margine:** ține ↑/↓ când cursorul ajunge sus/jos;
-  continuă să deruleze în pași controlați până eliberezi tasta.
-- **Verificări recente:** 16 verificări UI trecute, 18 PocketSuite reverificate,
-  plus probe reale de cameră și de derulare în Setările Android. Testul UI de
-  captură păstrează acum serviciul global de taste activ.
+**Leo 0.5 aduce ordine în meniu și mai mult control din taste.**
+
+- **22 de intrări vizibile, șase categorii:** Toate, Comunicare, Media, Unelte,
+  Relaxare și Sistem. Cele 35 de ID-uri rămân stabile; uneltele de configurare
+  sunt accesibile în Setări, fără pictograme duplicate în meniu. `*` / `#`
+  schimbă categoria.
+- **Cameră direct în vizor:** progres de salvare, ultima fotografie și Galerie
+  în Opțiuni. Lanternă confirmată fizic; modul Pornit a activat LED-ul în timpul
+  capturii. Auto este disponibil, dar comportamentul în funcție de lumină rămâne de verificat.
+- **Telefon și Contacte:** identitate și fotografie în istoric, detalii cu durată,
+  dată/SIM și acces la contact, SMS sau ecranul de apelare.
+- **Dosare SMS:** Toate, Primite, Trimise, În așteptare și Eșuate; stânga/dreapta
+  schimbă dosarul. Căutarea în toate mesajele și ciornele rămân disponibile.
+- **Aplicații recente:** recente Leo și ferestre Android, comutare și închidere
+  cu confirmare din meniul global. Închiderea se aplică ferestrei alese.
+- **Ghid inițial extins:** zece pagini, inclusiv temă, tastatură și comenzile
+  globale. Formularele au margini și spațiere comună.
+
+[Implementare, probe și limitele etapei 0.5](android81/LEO-MATURITY.md).
 
 ## Leo în imagini
+
+**24 octombrie · categorii și ghid:** capturi reale, fără date personale.
+
+| Media · grilă filtrată | Ghid · comenzile telefonului | Aplicații recente |
+| :---: | :---: | :---: |
+| <img src="android81/screenshots/leo-maturity-media.png" width="180" alt="Categoria Media din meniul Leo"> | <img src="android81/screenshots/leo-maturity-setup.png" width="180" alt="Ghidul pentru taste și meniul global"> | <img src="android81/screenshots/leo-maturity-recents.png" width="180" alt="Aplicații recente în Leo"> |
+
 
 **23 octombrie · finisare UI:** antet compact, liste cu detalii secundare și bară
 de taste actualizată fără refacerea ecranului. [Audit și verificări](android81/LEO-UI-FOUNDATION.md).
@@ -132,9 +145,9 @@ rapid și șabloane, ceas de birou, colecții vizuale și versuri locale.
 | **Colecție · previzualizare** | **Versuri locale originale** | **Ajutor · taste** |
 | <img src="android81/screenshots/leo-comfort-themes.png" width="180" alt="Previzualizare Nordic"> | <img src="android81/screenshots/leo-comfort-lyrics.png" width="180" alt="Versuri originale de probă"> | <img src="android81/screenshots/leo-comfort-help.png" width="180" alt="Harta tastelor Home"> |
 
-**Instalat pe Nokia · 0.4.0-dev:** include etapele anterioare, cititorul TXT/EPUB,
+**Etapa 0.4, inclusă în 0.5:** include etapele anterioare, cititorul TXT/EPUB,
 jocurile pentru taste, colecțiile vizuale, panoul de conexiuni, actualizatorul
-local și Cameră Leo. Meniul are **35 de intrări stabile**, cu ordine configurabilă.
+local și Cameră Leo. Catalogul are **35 de ID-uri stabile**; meniul afișează acum **22 de intrări**, cu ordine configurabilă.
 
 Pentru cameră sunt publicate sursele și documentația, fără fotografiile personale
 folosite în probe. Captura „Componente comune” este un ecran de test randat real
@@ -154,11 +167,12 @@ Limitele și scenariile rămase sunt indicate separat.
 | Funcție de bază | Ce merge astăzi |
 | --- | --- |
 | 🏠 **Home și navigare** | Leo este launcherul principal. Carduri opționale Meteo, următoarea alarmă și Muzică/FM; `*` schimbă cardul, `#` îl deschide. D-pad, softkey-uri, notificări grupate, blocare și mouse din taste. Listele și meniurile Leo au navigare circulară; `1` pe Home deschide căutarea globală locală; `5` scurt deschide Acces rapid, cu favorite și recente Leo. |
+| 🗂️ **Ferestre și recente** | Recente Leo și task-uri Android; comutare și închidere cu confirmare prin serviciul root existent. Un task Settings creat pentru probă a fost comutat și eliminat. Leo revine la Home; ferestrele de telefonie și apelurile active sunt protejate. |
 | 🖱️ **Meniu global și mouse** | Meniu fizic disponibil și peste aplicațiile Android, cu serviciul Leo de accesibilitate activ. Activarea/oprirea mouse-ului și deplasarea cursorului verificate peste Setări Android; derulare automată sus/jos la margine cu tasta ținută, plus mod manual pe `*`. |
-| 📷 **Cameră** | O cameră BF20A1 expusă prin HAL1; vizor, declanșare cu OK și JPEG 480 × 640 salvat local. Pornire automată și captură după reboot verificate. Ieșirea la Home a păstrat procesele launcherului și serviciilor camerei. Video neimplementat, bliț nevalidat. |
+| 📷 **Cameră** | O cameră BF20A1 expusă prin HAL1; vizor, declanșare cu OK și JPEG 480 × 640 salvat local. Pornire automată și captură după reboot verificate. Ieșirea la Home a păstrat procesele launcherului și serviciilor camerei. Lanternă confirmată fizic și impuls LED în timpul capturii; Auto și calitatea expunerii cu bliț rămân nevalidate. Video neimplementat. |
 | ⌨️ **Scriere** | Multi-tap și T9 românesc extins, dicționar personal, memorare opțională a alegerilor, majuscule, diacritice și simboluri. |
 | 📞 **Apeluri pe SIM 1** | Apel primit și două apeluri inițiate cu sunet în ambele sensuri, confirmate real; răspuns și închidere din taste. USB s-a întrerupt la apelurile inițiate. |
-| 👥 **Contacte și SMS** | Contacte locale cu numere multiple, fotografie, favorite și previzualizare import VCF; alegerea numărului înainte de apel/SMS. Telefonul prioritizează numerele recunoscute și arată fotografia/inițialele; căutare T9 în nume. Răspuns rapid pe 5, șabloane editabile și căutare T9 în conversație; contor GSM-7/Unicode, necitite evidențiate, SIM/stare și cerere de raport de livrare; primirea raportului real încă nevalidată. Trimitere și recepție SMS pe SIM 1 confirmate în probele anterioare. Conversații Leo cu bule și ciorne locale. |
+| 👥 **Contacte și SMS** | Contacte locale cu numere multiple, fotografie, favorite și previzualizare import VCF; alegerea numărului înainte de apel/SMS. Telefonul prioritizează numerele recunoscute și arată fotografia/inițialele; căutare T9 în nume. Răspuns rapid pe 5, șabloane editabile și căutare T9 în conversație; contor GSM-7/Unicode, necitite evidențiate, SIM/stare și cerere de raport de livrare; primirea raportului real încă nevalidată. Dosare Primite/Trimise/În așteptare/Eșuate, verificate cu date locale fictive. Trimitere și recepție SMS pe SIM 1 confirmate în probele anterioare. Conversații Leo cu bule și ciorne locale. |
 | 🌐 **Conectivitate** | Date LTE pe SIM 1, Wi-Fi și hotspot cu Internet verificat de pe un alt telefon. Ambele SIM-uri sunt afișate și înregistrate pentru voce. |
 | 🔊 **Audio** | Difuzor, receptor, căști stereo cu fir și boxă Bluetooth A2DP. Bipuri pe boxă confirmate după integrarea modulului audio lipsă. |
 | 📳 **Vibrații** | Calea haptică audio KaiOS este activată: trei impulsuri confirmate fizic. API-ul Android este adaptat și verificat prin HAL/PCM; proprietățile și biblioteca se încarcă după reboot. |
@@ -178,7 +192,7 @@ Limitele și scenariile rămase sunt indicate separat.
 | 📦 **Actualizări locale** | Actualizator pentru pachetele Leo, cu verificări de integritate/semnătură și copie a APK-urilor precedente. Validarea metadatelor și respingerea pachetului greșit au probe Android; un ciclu complet de actualizare și recuperare prin aplicație rămâne de demonstrat. |
 
 **Scurtătura nouă:** din Home, apasă **0** pentru **Media curentă** — un singur loc
-pentru muzică și FM, volum și acces la player. În catalogul meniului sunt **35 de intrări**, inclusiv Ajutor Leo;
+pentru muzică și FM, volum și acces la player. Catalogul păstrează **35 de identificatori**, cu **22 de intrări în meniul pe categorii**; Ajutorul este în Setări;
 aplicațiile Android instalate au propria listă, iar compatibilitatea cu tastele variază.
 
 Pentru telefonia pe SIM 2, DTMF, VoLTE/VoWiFi și probe după repornire, consultă
@@ -197,7 +211,9 @@ păstrează detaliile fiecărei funcții.
 | Mouse · săgeți / OK | Deplasează cursorul / clic |
 | Mouse · ↑/↓ ținut la marginea sus/jos | Derulează vertical; repetarea se oprește la eliberare |
 | Mouse · `*` / `#` | Comută modul manual de derulare / oprește mouse-ul |
-| Cameră · Deschide vizorul → OK | Salvează o fotografie în `Pictures/Leo` |
+| Meniu aplicații · `*` / `#` | Categoria anterioară / următoare |
+| Mesaje · stânga / dreapta | Schimbă dosarul de mesaje |
+| Cameră · OK în vizor | Salvează o fotografie în `Pictures/Leo` |
 
 Meniul global folosește serviciul Android de accesibilitate **Leo Visual**.
 Acesta trebuie să fie activ; nu depinde de aplicația aflată în prim-plan.
@@ -207,7 +223,7 @@ Derularea mouse-ului funcționează pe suprafețe care acceptă gesturi de glisa
 
 ## Auditul proiectului
 
-Audit actualizat la **23 octombrie 2026**, pe baza surselor și a rezultatelor
+Audit actualizat la **24 octombrie 2026**, pe baza surselor și a rezultatelor
 consemnate. „Confirmat” se referă la proba descrisă pe TA-1286; nu certifică toate
 scenariile. Nu au fost repetate probele fizice vechi pentru această actualizare
 de documentație.
@@ -215,14 +231,14 @@ de documentație.
 | Zonă | Stare actuală | Dovezi și limite |
 | --- | --- | --- |
 | **Sistem și hardware** | Boot intern și mai multe subsisteme utilizabile | Android 8.1, profil low-RAM, GPU, taste, conectivitate, audio și vibrații documentate. GPS și alte integrări de senzori rămân incomplete. |
-| **Cameră** | Fotografiere de bază funcțională | BF20A1, HAL1, vizor, JPEG 480 × 640 și pornire automată. Fluxul vizor → fotografie → Home a trecut fără repornirea proceselor urmărite. Deschiderea poate dura câteva secunde; video, bliț și sesiuni lungi rămân de lucrat. [Detalii](android81/CAMERA-RUNTIME.md). |
-| **Interfața Leo** | Fundație comună finisată, 35 de intrări în catalog | 65 de activități moștenesc baza comună; nu toate ecranele lor folosesc exclusiv acea compoziție. Home, Telefon, player și alte ecrane speciale necesită audit individual. Nu este revendicat un redesign complet al fiecărui ecran. |
+| **Cameră** | Fotografiere de bază funcțională | BF20A1, HAL1, vizor, JPEG 480 × 640 și pornire automată. Fluxul vizor → fotografie → Home a trecut fără repornirea proceselor urmărite. Deschiderea poate dura câteva secunde; LED-ul a fost confirmat; video, Auto și sesiuni lungi rămân de lucrat. [Detalii](android81/CAMERA-RUNTIME.md). |
+| **Interfața Leo** | Fundație comună finisată, meniu filtrat pe categorii | 66 de activități moștenesc baza comună; nu toate ecranele lor folosesc exclusiv acea compoziție. Home, Telefon, player și alte ecrane speciale necesită audit individual. Nu este revendicat un redesign complet al fiecărui ecran. |
 | **Meniu și accesibilitate** | Meniu global și mouse verificate în afara shell-ului | Probă peste Setări Android: deschidere meniu, pornire/oprire cursor, deplasare și derulare la margine. Testul de captură UI păstrează serviciul activ. [Audit UI](android81/LEO-UI-FOUNDATION.md). |
 | **Telefonie** | Apeluri și SMS SIM 1 confirmate în probele anterioare | Interfață proprie Leo Night pe Android Telecom. SIM 2 apeluri/SMS, DTMF și IMS au scenarii separate; întreruperile USB în timpul unor apeluri sunt încă documentate. |
 | **Media** | Muzică, FM/RDS, căști și A2DP cu confirmări reale | Microfonul Bluetooth, HFP și toate variantele de codec nu sunt validate. Fișierele media de probă nu echivalează cu suport universal pentru orice profil. |
-| **Surse** | 157 fișiere Java în shell, 35 de probe Android și 5 Java host | Inventar de fișiere, nu acoperire a testelor; tastatura și uneltele native sunt separate. |
+| **Surse** | 162 fișiere Java în shell, 36 de fișiere Java de probe Android și 5 Java host | Inventar de fișiere, nu acoperire a testelor; tastatura și uneltele native sunt separate. |
 | **Recompilare** | 590 de proiecte AOSP fixate la SHA, patch-uri și rețete în repository | Rebuild integral pe PC curat nevalidat. Dump-ul și componentele proprietare sunt intrări private separate. |
-| **Verificări** | Probe automate locale și confirmări hardware păstrate distinct | 77 de verificări Android au trecut în etapa 0.4 (32 fluxuri, 16 organizator, 11 browser, 18 PocketSuite). Ulterior: 13 verificări ale adaptorului camerei cu HAL fictiv, 18 PocketSuite reverificate și 16 UI Foundation. Sunt rulări diferite, cu suprapuneri; nu se însumează ca o suită unică. |
+| **Verificări** | Probe automate locale și confirmări hardware păstrate distinct | 77 de verificări Android au trecut în etapa 0.4 (32 fluxuri, 16 organizator, 11 browser, 18 PocketSuite). Ulterior: 13 verificări ale adaptorului camerei cu HAL fictiv, 18 PocketSuite reverificate, 16 UI Foundation și 86 Maturity în etapa 0.5; cele 16 UI Foundation au fost reverificate și pe 0.5. Sunt rulări diferite, cu suprapuneri; nu se însumează ca o suită unică. |
 | **Livrare** | Pachet local de actualizare a celor două aplicații, cu hash-uri verificate | Snapshot-ul recent a fost colectat din APK-urile construite (`rebuilt=false` în manifestul pachetului). Nu este ROM complet și nu include runtime-ul proprietar al camerei. |
 | **Securitate și licențe** | Build de dezvoltare, integrare hardware cu componente stock | Serviciile camerei rulează root în politica permisivă existentă. Întărirea SELinux și clarificarea licenței codului Leo rămân de făcut. Blobs, chei, fotografii personale și jurnale brute nu sunt publicate. |
 
@@ -243,7 +259,7 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
 
 ### Limite cunoscute, pe scurt
 
-- **Camera:** vizor și JPEG 480 × 640 funcționale în portul HAL1; filmarea nu este implementată, iar blițul nu este validat. [Detalii și izolarea interfeței](android81/CAMERA-RUNTIME.md).
+- **Camera:** vizor și JPEG 480 × 640 funcționale în portul HAL1; filmarea nu este implementată. Lanternă și activarea LED-ului la captură au probe; modul Auto și expunerea în diferite scene rămân de validat. [Detalii și izolarea interfeței](android81/CAMERA-RUNTIME.md).
 - **GPS și ceilalți senzori Android:** integrarea rămâne incompletă.
 - **Vibrații:** calea audio funcționează fizic și prin API-ul Android adaptat. Amplitudinea variabilă, efectele predefinite și scenariile simultane cu apel/media nu sunt validate. [Corecția și probele](android81/LEO-HOME-HAPTICS.md#vibrații-cauza-și-corecția).
 - **VoLTE / VoWiFi:** o înregistrare IMS experimentală nu validează apeluri IMS.
@@ -291,6 +307,7 @@ android81/
 | Vrei să urmărești… | Începe de aici |
 | --- | --- |
 | Camera BF20A1, pornire și limite | [Integrarea runtime-ului camerei](android81/CAMERA-RUNTIME.md), [investigația inițială](android81/CAMERA-PORT-AUDIT.md) |
+| Maturizarea Leo · 0.5 | [Categorii, ferestre, SMS, ghid și bliț](android81/LEO-MATURITY.md) |
 | UI, meniu global și mouse | [Fundația vizuală, probe și limite](android81/LEO-UI-FOUNDATION.md) |
 | Sursele și recompilarea | [REBUILD](android81/REBUILD.md), [configurația dispozitivului](android81/device/nokia/leo/) |
 | Stabilitate și apeluri inițiate | [Probe SIM 1, întreruperea USB și DeskClock](android81/STABILITY-PHONE-20261020.md) |

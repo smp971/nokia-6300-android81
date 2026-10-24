@@ -49,8 +49,8 @@ public final class MainActivity extends Activity {
         getWindow().setStatusBarColor(Color.rgb(26, 14, 58));
         screen = new Screen();
         if (state != null) {
-            screen.grid = state.getBoolean("grid");
-            screen.selected = Math.max(0, Math.min(screen.names.length-1, state.getInt("selected")));
+            screen.category(state.getInt("category",0));screen.grid = state.getBoolean("grid");
+            screen.selected = Math.max(0, Math.min(screen.order.length-1, state.getInt("selected")));
         }
         setContentView(screen);
         if(getIntent().hasExtra("open_app")){int id=getIntent().getIntExtra("open_app",-1);getIntent().removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length)screen.open(id);}
@@ -105,7 +105,7 @@ public final class MainActivity extends Activity {
         screen.refresh();
     }
     protected void onSaveInstanceState(Bundle state) {
-        state.putBoolean("grid", screen.grid); state.putInt("selected", screen.selected);
+        state.putInt("category",screen.category);state.putBoolean("grid", screen.grid); state.putInt("selected", screen.selected);
         super.onSaveInstanceState(state);
     }
     protected void onNewIntent(Intent intent) {
@@ -134,9 +134,10 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile","Media curentă","Caută în Leo","Acces rapid Home"}, new KeypadDialog.Action() {
+                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile","Media curentă","Caută în Leo","Acces rapid Home","Categorii aplicații"}, new KeypadDialog.Action() {
               public void select(int which) {
-                if(which==10){startActivity(new Intent(MainActivity.this,QuickHomeActivity.class));}
+                if(which==11){new KeypadDialog(MainActivity.this,"Categorii",AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int at){screen.category(at);}}).show();}
+                else if(which==10){startActivity(new Intent(MainActivity.this,QuickHomeActivity.class));}
                 else if(which==9){startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));}
                 else if(which==8){startActivity(new Intent(MainActivity.this,NowPlayingActivity.class));}
                 else if (which == 0) {
@@ -179,7 +180,7 @@ public final class MainActivity extends Activity {
         void reloadAppearance() {
             android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
             compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);showDbm=appearance.getBoolean("home-dbm",true);
-            order=AppCatalog.order(MainActivity.this);shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
+            order=AppCatalog.menuOrder(MainActivity.this,category);selected=Math.max(0,Math.min(selected,order.length-1));shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
             java.io.File file=Appearance.wallpaper(MainActivity.this);long stamp=file.lastModified(),size=file.length();
@@ -194,12 +195,14 @@ public final class MainActivity extends Activity {
         boolean warm=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("warm",false);
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
+        int category;
+        void category(int value){category=Math.floorMod(value,AppCatalog.CATEGORIES.length);order=AppCatalog.menuOrder(MainActivity.this,category);selected=0;invalidate();}
         int shortcut=-1;
         HomeFavorites.Entry[] favorites=new HomeFavorites.Entry[0];int favoriteIndex;HomeCards.Card[] cards=new HomeCards.Card[0];int cardIndex;
         void reloadCards(){HomeCards.Card[] next=HomeCards.read(MainActivity.this,System.currentTimeMillis());for(int n=0;n<next.length;n++)if(next[n].type==3&&favorites.length>0){HomeFavorites.Entry f=favorites[Math.min(favoriteIndex,favorites.length-1)];next[n]=new HomeCards.Card(3,"Favorit · "+(favoriteIndex+1)+" / "+favorites.length,f.name,"4 / 6 schimbă · OK deschide");}boolean changed=!HomeCards.signature(cards).equals(HomeCards.signature(next));cards=next;cardIndex=Math.min(cardIndex,Math.max(0,cards.length-1));if(shortcut>=4+cards.length)shortcut=-1;if(changed&&!grid)invalidate();}
         void openCard(){if(cards.length==0)return;int type=cards[cardIndex].type;if(type==3){if(favorites.length>0)startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("contact_id",favorites[favoriteIndex].id));else startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
         int[] shortcuts={0,2,6,22};
-        int[] order=AppCatalog.parse("");
+        int[] order=AppCatalog.menuOrder(MainActivity.this,0);
         float textScale=1f;
         Appearance.Palette palette=Appearance.palette(MainActivity.this);
         boolean compactClock,showSims=true,showUnread=true,showDbm=true;
@@ -273,9 +276,11 @@ public final class MainActivity extends Activity {
             // Green opens the dialer only; this app never places a call.
             if (key == KeyEvent.KEYCODE_CALL) { if (repeat == 0) open(0); return true; }
             int digit = key - KeyEvent.KEYCODE_1;
-            if(grid && key==KeyEvent.KEYCODE_0) { selected=9; invalidate(); return true; }
+            if(grid&&key==KeyEvent.KEYCODE_STAR){if(repeat==0)category(category-1);return true;}
+            if(grid&&key==KeyEvent.KEYCODE_POUND){if(repeat==0)category(category+1);return true;}
+            if(grid && key==KeyEvent.KEYCODE_0) { selected=Math.min(9,order.length-1); invalidate(); return true; }
             if (grid && digit >= 0 && digit < 9) {
-                selected = digit; invalidate(); return true;
+                selected = Math.min(order.length-1,(selected/9)*9+digit); invalidate(); return true;
             }
             if(!grid&&key==KeyEvent.KEYCODE_DPAD_UP){if(repeat==0)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return true;}
             if(!grid&&key==KeyEvent.KEYCODE_DPAD_DOWN){if(repeat==0)notifications();return true;}
@@ -285,10 +290,10 @@ public final class MainActivity extends Activity {
             if (delta != 0) {
                 if (!grid) grid = true;
                 else if(list) {
-                    if(key==KeyEvent.KEYCODE_DPAD_UP) selected=CircularNavigation.step(selected,-1,names.length);
-                    if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=CircularNavigation.step(selected,1,names.length);
+                    if(key==KeyEvent.KEYCODE_DPAD_UP) selected=CircularNavigation.step(selected,-1,order.length);
+                    if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=CircularNavigation.step(selected,1,order.length);
                 }
-                else if(selected==0&&delta<0)selected=names.length-1;else if(selected==names.length-1&&delta>0)selected=0;else selected=Math.max(0,Math.min(names.length-1,selected+delta));
+                else if(selected==0&&delta<0)selected=order.length-1;else if(selected==order.length-1&&delta>0)selected=0;else selected=Math.max(0,Math.min(order.length-1,selected+delta));
                 message = ""; invalidate(); return true;
             }
             return false;
@@ -387,19 +392,20 @@ public final class MainActivity extends Activity {
             } else {
                 p.setColor(palette.background); output.drawRect(0,0,240,276,p);
                 p.setColor(palette.bar);output.drawRect(0,0,240,34,p);
-                text(output,names[order[selected]],120,25,18,Color.WHITE,Paint.Align.CENTER);
+                text(output,AppCatalog.CATEGORIES[category]+" · * / #",120,12,10,palette.accent,Paint.Align.CENTER);
+                text(output,names[order[selected]],120,30,16,Color.WHITE,Paint.Align.CENTER);
                 if(list) {
-                    int first=Math.max(0,Math.min(names.length-5,selected-2));
-                    for(int row=0;row<5;row++) {
+                    int first=Math.max(0,Math.min(Math.max(0,order.length-5),selected-2));
+                    for(int row=0;row<Math.min(5,order.length);row++) {
                         int i=first+row; float y=60+row*42;
                         if(i==selected) round(output,7,y-19,233,y+19,7,palette.selection);
                         output.save(); output.translate(32,y); output.scale(.65f,.65f); icon(output,order[i],0,0); output.restore();
                         text(output,names[order[i]],57,y+5,14,i==selected?palette.ink:0xffe8e1f1,Paint.Align.LEFT);
                     }
-                    text(output,(selected+1)+" / "+names.length,120,267,10,0xffd3bddf,Paint.Align.CENTER);
+                    text(output,(selected+1)+" / "+order.length,120,267,10,0xffd3bddf,Paint.Align.CENTER);
                 } else {
                 int page=selected/9;
-                for(int i=page*9;i<Math.min(names.length,page*9+9);i++) {
+                for(int i=page*9;i<Math.min(order.length,page*9+9);i++) {
                     int cell=i%9;
                     float x=40+(cell%3)*80, y=67+(cell/3)*76;
                     if(i==selected) round(output,x-34,y-31,x+34,y+44,10,palette.selection);
@@ -408,7 +414,7 @@ public final class MainActivity extends Activity {
                     if(p.measureText(label)>70){while(label.length()>1&&p.measureText(label+"…")>70)label=label.substring(0,label.length()-1);label+="…";}
                     text(output,label,x,y+39,10,i==selected?palette.ink:0xffe8e1f1,Paint.Align.CENTER);
                 }
-                for(int i=0;i<(names.length+8)/9;i++) {p.setColor(i==page?0xffe0b8ff:0xff64536f); output.drawCircle(110+i*10,267,2,p);}
+                for(int i=0;i<(order.length+8)/9;i++) {p.setColor(i==page?0xffe0b8ff:0xff64536f); output.drawCircle(110+i*10,267,2,p);}
                 }
             }
             if(!message.isEmpty()) {

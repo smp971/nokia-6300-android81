@@ -4,7 +4,9 @@ Pe 23 octombrie 2026, portarea a trecut de la enumerare privată la serviciul
 Android: **o cameră HAL1, vizor în Cameră Leo și JPEG salvat în Pictures/Leo**.
 Prima imagine verificată se decodează la **480 × 640**, cu orientarea aplicată
 pixelilor. Aceasta este rezoluția verificată, nu o promisiune despre alte moduri.
-Nu există înregistrare video și nu a fost verificat blițul. Deschiderea/închiderea
+Nu există înregistrare video. Etapa [0.5 din 24 octombrie](LEO-MATURITY.md) adaugă
+controlul blițului: Lanternă confirmată fizic și activare LED la captură,
+cu modul Auto și calitatea expunerii încă de verificat. Deschiderea/închiderea
 poate încă dura câteva secunde în driver, chiar dacă tastele rămân responsive.
 Pornirea automată după repornire și un al doilea JPEG au fost verificate.
 
@@ -35,6 +37,7 @@ Deschiderea, configurarea, captura și închiderea HAL rulează pe HandlerThread
 tastele și revenirea nu așteaptă IPC-ul lent al driverului. Timeout-urile de
 15 secunde anulează starea UI; nu pot întrerupe un ioctl blocat în kernel.
 Rezultatele întârziate sunt invalidate la închiderea suprafeței sau a activității.
+Camera se deschide acum direct în vizor; diagnosticul este în Opțiuni.
 Eticheta centrală a barei este actualizată pe loc; nu se adaugă alte bare și nu
 se recreează SurfaceView. Procesul camerei nu reconfigurează serviciul de taste
 care aparține launcherului.

@@ -128,6 +128,7 @@ abstract class LeoActivity extends Activity {
     LinearLayout fields(String title) {
         begin(title); form=true;
         ScrollView scroll=new ScrollView(this); LinearLayout fields=new LinearLayout(this); fields.setOrientation(1);
+        fields.setPadding(dp(6),dp(5),dp(6),dp(6));scroll.setFillViewport(true);
         scroll.addView(fields); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1)); return fields;
     }
     EditText field(LinearLayout fields,String label,String value,int type) {
@@ -152,7 +153,8 @@ abstract class LeoActivity extends Activity {
             if(next!=null && next!=view && (next instanceof EditText || next instanceof CheckBox)) { next.requestFocus(); return true; }
             return false;
         }});
-        fields.addView(edit,new LinearLayout.LayoutParams(-1,-2)); return edit;
+        LinearLayout.LayoutParams fieldLayout=new LinearLayout.LayoutParams(-1,-2);fieldLayout.bottomMargin=dp(5);
+        fields.addView(edit,fieldLayout); return edit;
     }
     void options(String title,String[] values,final Choice action) {
         new KeypadDialog(this,title,values,new KeypadDialog.Action() { public void select(int i) { action.pick(i); } }).show();

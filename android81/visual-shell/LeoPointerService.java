@@ -17,12 +17,15 @@ public final class LeoPointerService extends AccessibilityService {
     private boolean active, scroll, gesturePending, consumePoundUp;
     private int x, y, width, height;
     private KeypadDialog menu;
+    private String foregroundPackage="";
+    private int menuGeneration;
     private boolean screenWatching;
     private final android.content.BroadcastReceiver screenReceiver=new android.content.BroadcastReceiver(){
         public void onReceive(android.content.Context c,android.content.Intent intent){
             boolean busy=AlarmRingService.ringing;
             try{busy|=((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall();}catch(RuntimeException ignored){}
             if(android.content.Intent.ACTION_SCREEN_OFF.equals(intent.getAction())){
+                menuGeneration++;
                 setActive(false);if(menu!=null)menu.dismiss();
                 if(!busy && getSharedPreferences("keyguard",0).getBoolean("screen_off",false))
                     getSharedPreferences("keyguard",0).edit().putBoolean("locked",true).apply();
@@ -93,11 +96,14 @@ public final class LeoPointerService extends AccessibilityService {
         instance.setActive(false); instance.setActive(true); return instance.active;
     }
     private void globalMenu() {
+        menuGeneration++;
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide","Acum se redă"},new KeypadDialog.Action() {
+            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide meniul","Acum se redă","Aplicații recente","Închide aplicația curentă"},new KeypadDialog.Action() {
                 public void select(int which) {
+                    if(which==9){closeForeground();return;}
+                    if(which==8){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,RecentAppsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}
                     if(which==7) startActivity(new android.content.Intent(LeoPointerService.this,NowPlayingActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
                     else if(which==0) startActivity(new android.content.Intent(LeoPointerService.this,NotificationsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
                     else if(which==1) setActive(!active);
@@ -110,6 +116,20 @@ public final class LeoPointerService extends AccessibilityService {
         menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
         menu.show();
         Log.i("LeoPointer","global menu opened");
+    }
+    private void closeForeground(){
+        setActive(false);
+        if(getPackageName().equals(foregroundPackage)){performGlobalAction(GLOBAL_ACTION_HOME);return;}
+        if(foregroundPackage.isEmpty()||foregroundPackage.equals("com.android.systemui")||foregroundPackage.equals("com.android.phone")||foregroundPackage.equals("com.android.server.telecom")||AlarmRingService.ringing){Toast.makeText(this,"Fereastră de sistem protejată",Toast.LENGTH_SHORT).show();return;}
+        try{if(((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall()){Toast.makeText(this,"Încheie mai întâi apelul",Toast.LENGTH_SHORT).show();return;}}catch(RuntimeException ignored){return;}
+        final String packageName=foregroundPackage;
+        final int ticket=++menuGeneration;
+        new Thread(new Runnable(){public void run(){TaskActions.Entry found=null;try{for(TaskActions.Entry task:TaskActions.recent(LeoPointerService.this))if(task.packageName.equals(packageName)){found=task;break;}}catch(RuntimeException ignored){}final TaskActions.Entry task=found;
+            movement.post(new Runnable(){public void run(){if(ticket!=menuGeneration||instance!=LeoPointerService.this)return;if(task==null){Toast.makeText(LeoPointerService.this,"Fereastra curentă nu poate fi închisă",Toast.LENGTH_SHORT).show();return;}
+                menu=new KeypadDialog(new ContextThemeWrapper(LeoPointerService.this,android.R.style.Theme_Material_NoActionBar),"Închizi "+task.label+"?",new String[]{"Păstrează","Închide fereastra"},new KeypadDialog.Action(){public void select(int at){if(at==1)new Thread(new Runnable(){public void run(){try{TaskActions.close(LeoPointerService.this,task.id);}catch(Exception e){movement.post(new Runnable(){public void run(){Toast.makeText(LeoPointerService.this,"Închidere indisponibilă",Toast.LENGTH_SHORT).show();}});}}},"LeoCloseTask").start();}});
+                menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);menu.show();
+            }});
+        }},"LeoTaskLookup").start();
     }
     private void setActive(boolean enable) {
         stopMovement();
@@ -206,7 +226,7 @@ public final class LeoPointerService extends AccessibilityService {
             },null);
         if(!sent) gesturePending=false;
     }
-    public void onAccessibilityEvent(AccessibilityEvent event) { }
+    public void onAccessibilityEvent(AccessibilityEvent event) {if(event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED&&(menu==null||!menu.isShowing())&&event.getPackageName()!=null)foregroundPackage=event.getPackageName().toString();}
     public void onInterrupt() { setActive(false); }
     public void onDestroy() { if(screenWatching)unregisterReceiver(screenReceiver);screenWatching=false;if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
 }

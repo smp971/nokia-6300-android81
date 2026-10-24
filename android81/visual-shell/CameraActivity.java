@@ -21,6 +21,9 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
     private View preview;
     private TextView previewStatus;
     private int cameraId;
+    private volatile List<String> flashModes=Collections.emptyList();
+    private volatile String flashMode="off";
+    private TextView cameraInfo;
     private HandlerThread cameraThread;
     private Handler cameraWork;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -30,7 +33,23 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
         cameraThread = new HandlerThread("LeoCamera");
         cameraThread.start();
         cameraWork = new Handler(cameraThread.getLooper());
-        diagnostic();
+        flashMode=getSharedPreferences("camera",0).getString("flash","off");
+        if(getIntent().getBooleanExtra("diagnostic",false))diagnostic();else launchPreview();
+    }
+    private void launchPreview(){if(checkSelfPermission(Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.CAMERA},73);return;}cameraId=0;viewfinder();}
+    static String flashLabel(String mode){return "torch".equals(mode)?"Lanternă":"on".equals(mode)?"Pornit":"auto".equals(mode)?"Auto":"Oprit";}
+    private void cameraMenu(){
+        options("Cameră",new String[]{"Fotografiază","Bliț · "+flashLabel(flashMode),"Ultima fotografie","Galerie","Diagnostic cameră"},new Choice(){public void pick(int at){if(at==0)capture();else if(at==1)chooseFlash();else if(at==2)lastPhoto();else if(at==3)startActivity(new android.content.Intent(CameraActivity.this,GalleryActivity.class));else diagnostic();}});
+    }
+    private void lastPhoto(){String value=getSharedPreferences("camera",0).getString("last-photo","");try{File file=new File(value);File folder=new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),"Leo");if(!file.isFile()||!file.getCanonicalFile().getParentFile().equals(folder.getCanonicalFile()))throw new IOException();startActivity(new android.content.Intent(this,GalleryActivity.class).setData(LeoFileProvider.uri(this,file)).putExtra("title","Ultima fotografie"));}catch(Exception e){notice("Nu există încă o fotografie salvată disponibilă");}}
+    private void chooseFlash(){
+        final ArrayList<String> modes=new ArrayList<String>(flashModes);if(modes.isEmpty()){notice("Driverul nu oferă controlul blițului");return;}
+        String[] labels=new String[modes.size()];for(int i=0;i<labels.length;i++)labels[i]=flashLabel(modes.get(i));
+        options("Bliț",labels,new Choice(){public void pick(int at){applyFlash(modes.get(at));}});
+    }
+    private void applyFlash(final String mode){
+        if(taking||opening){notice("Așteaptă camera");return;}final int ticket=generation;
+        cameraWork.post(new Runnable(){public void run(){final Camera device=camera;if(ticket!=generation||device==null)return;try{Camera.Parameters p=device.getParameters();p.setFlashMode(mode);device.setParameters(p);main.post(new Runnable(){public void run(){if(ticket!=generation)return;flashMode=mode;getSharedPreferences("camera",0).edit().putString("flash","torch".equals(mode)?"off":mode).apply();cameraInfo.setText("Bliț: "+flashLabel(mode)+" · 640 × 480");if("torch".equals(mode))main.postDelayed(new Runnable(){public void run(){if(ticket==generation&&"torch".equals(flashMode))applyFlash("off");}},30000);}});}catch(RuntimeException fail){main.post(new Runnable(){public void run(){if(ticket==generation)notice("Modul de bliț a fost refuzat de driver");}});}}});
     }
 
     private void diagnostic() {
@@ -59,12 +78,13 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
     private void viewfinder() {
         begin("Cameră Leo");
         preview = root;
+        cameraInfo=text("Se pregătește vizorul…",12);root.addView(cameraInfo);
         surface = new SurfaceView(this);
         root.addView(surface, new LinearLayout.LayoutParams(-1, 0, 1));
         surface.getHolder().addCallback(this);
-        left = new Runnable() { public void run() { capture(); } };
-        back = new Runnable() { public void run() { diagnostic(); } };
-        footer("Foto", "Se pornește…", "Înapoi");
+        left = new Runnable() { public void run() { cameraMenu(); } };
+        back = new Runnable() { public void run() { finish(); } };
+        footer("Opțiuni", "Se pornește…", "Înapoi");
         LinearLayout bar = (LinearLayout) root.getChildAt(root.getChildCount() - 1);
         previewStatus = (TextView) bar.getChildAt(1);
         surface.setFocusable(true);
@@ -87,6 +107,9 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
             try {
                 value = Camera.open(cameraId);
                 Camera.Parameters parameters = value.getParameters();
+                List<String> supported=parameters.getSupportedFlashModes();flashModes=supported==null?Collections.<String>emptyList():new ArrayList<String>(supported);
+                if(!flashModes.contains(flashMode))flashMode="off";
+                if(flashModes.contains(flashMode))parameters.setFlashMode(flashMode);
                 Camera.Size best = null;
                 for (Camera.Size size : parameters.getSupportedPreviewSizes())
                     if (size.width <= 640 && (best == null || size.width * size.height > best.width * best.height)) best = size;
@@ -117,7 +140,7 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
                         previewStatus.setText("Cameră oprită");
                     }});
                 }});
-                main.post(new Runnable() { public void run() { if (ticket == generation) previewStatus.setText("OK declanșează"); }});
+                main.post(new Runnable() { public void run() { if (ticket == generation) {previewStatus.setText("OK declanșează");cameraInfo.setText("Bliț: "+flashLabel(flashMode)+" · 640 × 480");} }});
             } catch (Exception error) {
                 closeCamera(value);
                 main.post(new Runnable() { public void run() {
@@ -142,7 +165,7 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
     private void release() {
         final Camera old;
         synchronized (cameraLock) {
-            ++generation; opening = false; taking = false;
+            ++generation; opening = false; taking = false;if("torch".equals(flashMode))flashMode="off";
             old = camera; camera = null;
         }
         if (old != null && cameraWork != null) cameraWork.post(new Runnable() { public void run() { closeCamera(old); }});
@@ -153,6 +176,7 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
         final int ticket = generation;
         final int captureTicket = ++captureSerial;
         taking = true;
+        previewStatus.setText("Capturează…");
         cameraWork.post(new Runnable() { public void run() {
             final Camera device = camera;
             if (ticket != generation || device == null) return;
@@ -167,7 +191,7 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
                             final File photo = File.createTempFile("LEO-", ".jpg", folder);
                             try (FileOutputStream out = new FileOutputStream(photo)) { out.write(jpeg); out.getFD().sync(); }
                             android.media.MediaScannerConnection.scanFile(CameraActivity.this, new String[]{photo.getPath()}, new String[]{"image/jpeg"}, null);
-                            main.post(new Runnable() { public void run() { if (ticket == generation) { taking = false; notice("Fotografie salvată în Pictures/Leo"); } }});
+                            main.post(new Runnable() { public void run() {getSharedPreferences("camera",0).edit().putString("last-photo",photo.getPath()).apply();if (ticket == generation) { taking = false;previewStatus.setText("Salvată ✓");notice("Fotografie salvată în Pictures/Leo"); } }});
                             cameraWork.post(new Runnable() { public void run() {
                                 if (ticket == generation && camera == device) try { device.startPreview(); } catch (RuntimeException ignored) { captureFailed(ticket); }
                             }});
@@ -188,7 +212,7 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
         if (root == preview && (key == 23 || key == 66 || key == KeyEvent.KEYCODE_CAMERA)) { if (event.getRepeatCount() == 0) capture(); return true; }
         return super.onKeyDown(key, event);
     }
-    public void onRequestPermissionsResult(int request, String[] permissions, int[] results) { super.onRequestPermissionsResult(request, permissions, results); if (request == 73) diagnostic(); }
+    public void onRequestPermissionsResult(int request, String[] permissions, int[] results) { super.onRequestPermissionsResult(request, permissions, results); if (request == 73) {if(results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED)launchPreview();else diagnostic();} }
     protected void onResume() { super.onResume(); if (root == preview && surface != null && surface.getHolder().getSurface().isValid() && camera == null && !opening) surfaceCreated(surface.getHolder()); }
     protected void onPause() { release(); super.onPause(); }
     protected void onDestroy() { release(); if (cameraThread != null) cameraThread.quitSafely(); main.removeCallbacksAndMessages(null); super.onDestroy(); }

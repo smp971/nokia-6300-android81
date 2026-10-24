@@ -56,9 +56,9 @@ public final class ContactsActivity extends LeoActivity {
     private void detail(final Entry entry) {
         ++loadGeneration;
         ArrayList<String> actions=new ArrayList<String>(); actions.add("Apelează\n"+entry.number); actions.add("Mesaj SMS"); actions.add("Editează"); actions.add("Șterge contactul");
-        actions.add(entry.starred?"Elimină din favorite":"Adaugă la favorite");actions.add("Exportă acest contact VCF");actions.add("Toate numerele / adaugă număr");actions.add("Fotografia contactului");actions.add("Grupe, aniversare și legături");
+        actions.add(entry.starred?"Elimină din favorite":"Adaugă la favorite");actions.add("Exportă acest contact VCF");actions.add("Toate numerele / adaugă număr");actions.add("Fotografia contactului");actions.add("Grupe, aniversare și legături");actions.add("Istoric apeluri cu acest contact");
         list(entry.name==null?"Contact":entry.name,actions,0,new Choice() { public void pick(int i) {
-            if(i==8)startActivity(new Intent(ContactsActivity.this,ContactExtrasActivity.class).putExtra("contact",entry.contact).putExtra("raw",entry.raw).putExtra("name",entry.name));else if(i==0||i==1) chooseNumber(entry,i==0);
+            if(i==9)startActivity(new Intent(ContactsActivity.this,PhoneActivity.class).putExtra("history",true).putExtra("history_number",entry.number));else if(i==8)startActivity(new Intent(ContactsActivity.this,ContactExtrasActivity.class).putExtra("contact",entry.contact).putExtra("raw",entry.raw).putExtra("name",entry.name));else if(i==0||i==1) chooseNumber(entry,i==0);
             else if(i==2) edit(entry);
             else if(i==5)startActivity(new Intent(ContactsActivity.this,VCardActivity.class).putExtra("contact",entry.contact));
             else if(i==6)numbers(entry);else if(i==7)photoMenu(entry);
