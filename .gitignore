@@ -28,6 +28,7 @@
 !/android81/app-tests/
 !/android81/email-keypad/
 !/android81/leo-adreno-init.rc
+!/android81/init.leo.gps.rc
 !/android81/init.leo.camera.rc
 !/android81/init.leo.connectivity.rc
 !/android81/init.leo.mtp.rc

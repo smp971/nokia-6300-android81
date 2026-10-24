@@ -29,7 +29,7 @@ final class NetworkTelemetry {
                 private void update(){
                     try{String name=phone.getNetworkOperatorName();if(name==null||name.isEmpty())name="Operator";ServiceState state=phone.getServiceState();String status=L.t("fără serviciu");
                         if(state!=null){if(state.getState()==ServiceState.STATE_IN_SERVICE){int type=phone.getDataNetworkType();if(type==TelephonyManager.NETWORK_TYPE_UNKNOWN)type=phone.getVoiceNetworkType();status=rat(type)+(dbm!=Integer.MIN_VALUE?" · "+dbm+" dBm":"");}else if(state.getState()==ServiceState.STATE_EMERGENCY_ONLY)status=L.t("doar urgențe");else if(state.getState()==ServiceState.STATE_POWER_OFF)status=L.t("radio oprit");}
-                        rows[slot]="SIM "+(slot+1)+" · "+name+" · "+status;
+                        rows[slot]="SIM "+(slot+1)+" · "+name+" · "+status+(ImsStatus.registered(slot)?" · VoLTE":"");
                     }catch(RuntimeException e){rows[slot]="SIM "+(slot+1)+L.t(" · indisponibil");}changed.run();
                 }
                 public void onServiceStateChanged(ServiceState s){update();}

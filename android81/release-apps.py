@@ -76,7 +76,7 @@ def package(destination, aosp=None, java=None, rebuilt=False):
         'A clean-machine rebuild and bit-for-bit APK reproducibility are not claimed.\n', encoding='utf-8')
     files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(folder.iterdir())}
     tracked = subprocess.check_output(['git', '-C', str(ROOT.parent), 'ls-files', '-z',
-        'android81/visual-shell', 'android81/keypad-ime', 'android81/build-visual-shell.sh',
+        'android81/visual-shell', 'android81/keypad-ime', 'android81/localization', 'android81/build-visual-shell.sh',
         'android81/build-keypad-ime.sh', 'android81/release-version.json',
         'android81/release-apps.py', 'android81/install-app-bundle.py']).decode().split('\0')
     hashes = {name: sha(ROOT.parent / name) for name in tracked if name and (ROOT.parent / name).is_file()}

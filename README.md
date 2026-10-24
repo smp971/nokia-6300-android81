@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 24 octombrie 2026** · **Aplicații instalate: 0.5.0-dev / cod 5**
+**Actualizat: 24 octombrie 2026** · **Versiune curentă: 0.6.0-dev / cod 6**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -31,6 +31,14 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 > publică de flash complet validată sunt încă de construit.
 
 ## Ce este nou
+
+**Leo 0.6 · conectivitate:** apel VoLTE de ieșire pe SIM 2, cu voce în ambele
+sensuri și date LTE păstrate; SMS SIM 2 trimis, livrat și primit. Leo afișează
+starea IMS pe SIM-ul selectat. Sunt adăugate comenzile Bluetooth HFP (proba cu
+cască amânată), atașamente Email (SMTP real amânat), temporizator/rafală/expunere
+în Cameră și aplicația GPS cu runtime GNSS experimental. Poziția GPS și filmarea
+nu sunt declarate funcționale. [Rezultate și limite](android81/LEO-06-CONNECTIVITY.md) ·
+[Pachet local cu verificări și revenire](android81/RUNTIME-UPDATE.md).
 
 **Leo în engleză și română:** limba interfeței se alege din Setări → Aspect →
 Personalizare → Language / Limbă. Catalog comun pentru shell, aplicații și
@@ -162,7 +170,7 @@ rapid și șabloane, ceas de birou, colecții vizuale și versuri locale.
 
 **Etapa 0.4, inclusă în 0.5:** include etapele anterioare, cititorul TXT/EPUB,
 jocurile pentru taste, colecțiile vizuale, panoul de conexiuni, actualizatorul
-local și Cameră Leo. Catalogul are **35 de ID-uri stabile**; meniul afișează acum **22 de intrări**, cu ordine configurabilă.
+local și Cameră Leo. Catalogul are **36 de ID-uri stabile**; meniul afișează acum **23 de intrări**, cu ordine configurabilă.
 
 Pentru cameră sunt publicate sursele și documentația, fără fotografiile personale
 folosite în probe. Captura „Componente comune” este un ecran de test randat real
@@ -249,7 +257,7 @@ de documentație.
 | **Cameră** | Fotografiere de bază funcțională | BF20A1, HAL1, vizor, JPEG 480 × 640 și pornire automată. Fluxul vizor → fotografie → Home a trecut fără repornirea proceselor urmărite. Deschiderea poate dura câteva secunde; LED-ul a fost confirmat; video, Auto și sesiuni lungi rămân de lucrat. [Detalii](android81/CAMERA-RUNTIME.md). |
 | **Interfața Leo** | Fundație comună finisată, meniu filtrat pe categorii | 66 de activități moștenesc baza comună; nu toate ecranele lor folosesc exclusiv acea compoziție. Home, Telefon, player și alte ecrane speciale necesită audit individual. Nu este revendicat un redesign complet al fiecărui ecran. |
 | **Meniu și accesibilitate** | Meniu global și mouse verificate în afara shell-ului | Probă peste Setări Android: deschidere meniu, pornire/oprire cursor, deplasare și derulare la margine. Testul de captură UI păstrează serviciul activ. [Audit UI](android81/LEO-UI-FOUNDATION.md). |
-| **Telefonie** | Apeluri/SMS SIM 1; apel VoLTE primit pe SIM 2 cu sunet și date LTE simultane; IMS pornește automat și recuperează clientul | Leo Night pe Android Telecom. Apelarea VoLTE de ieșire, SMS SIM 2 și DTMF mai au probe separate; întreruperile USB rămân documentate. |
+| **Telefonie** | Apeluri/SMS SIM 1; VoLTE primit și de ieșire plus SMS în ambele sensuri pe SIM 2; IMS pornește automat și recuperează clientul | Leo Night pe Android Telecom. Apelul VoLTE de ieșire a păstrat datele LTE; SMS SIM 2 are confirmare de livrare și răspuns recepționat. DTMF rămâne de verificat; întreruperile USB rămân documentate. |
 | **Media** | Muzică, FM/RDS, căști și A2DP cu confirmări reale | Microfonul Bluetooth, HFP și toate variantele de codec nu sunt validate. Fișierele media de probă nu echivalează cu suport universal pentru orice profil. |
 | **Surse** | 166 fișiere Java în shell, 37 de fișiere Java de probe Android și 5 Java host; modul comun de traducere separat | Inventar de fișiere, nu acoperire a testelor; tastatura și uneltele native sunt separate. |
 | **Recompilare** | 590 de proiecte AOSP fixate la SHA, patch-uri și rețete în repository | Rebuild integral pe PC curat nevalidat. Dump-ul și componentele proprietare sunt intrări private separate. |
@@ -284,10 +292,10 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
   a pornit după reboot și a raportat `HEALTHY`; recuperarea unui nou blocaj nu este încă probată. [Detalii](android81/RADIO-RECOVERY.md).
 
 - **Camera:** vizor și JPEG 480 × 640 funcționale în portul HAL1; filmarea nu este implementată. Lanternă și activarea LED-ului la captură au probe; modul Auto și expunerea în diferite scene rămân de validat. [Detalii și izolarea interfeței](android81/CAMERA-RUNTIME.md).
-- **GPS și ceilalți senzori Android:** integrarea rămâne incompletă.
+- **GPS:** aplicație și runtime GNSS experimental adăugate; încărcarea HAL-ului a trecut. Fixarea unei poziții și pornirea completă după reboot rămân de verificat. Ceilalți senzori Android au integrare incompletă.
 - **Vibrații:** calea audio funcționează fizic și prin API-ul Android adaptat. Amplitudinea variabilă, efectele predefinite și scenariile simultane cu apel/media nu sunt validate. [Corecția și probele](android81/LEO-HOME-HAPTICS.md#vibrații-cauza-și-corecția).
-- **VoLTE:** apel primit pe SIM 2 confirmat, cu sunet în ambele sensuri și date LTE simultane. [Pornirea automată și recuperarea clientului IMS](android81/IMS-RUNTIME.md) sunt integrate și verificate; apelurile VoLTE de ieșire și handover-ul rămân de validat. **VoWiFi:** nevalidat.
-- **MMS:** neimplementat. SMS pe SIM 2 și noua cale a mesajelor trimise necesită probe suplimentare.
+- **VoLTE:** apel primit pe SIM 2 confirmat, cu sunet în ambele sensuri și date LTE simultane. [Pornirea automată și recuperarea clientului IMS](android81/IMS-RUNTIME.md) sunt integrate și verificate; apelul VoLTE de ieșire pe SIM 2 a fost validat ulterior cu voce și date LTE; handover-ul rămâne nevalidat. **VoWiFi:** nevalidat.
+- **MMS:** neimplementat; pagina de diagnostic arată serviciul Android și configurația operatorului. SMS pe SIM 2 este confirmat în ambele sensuri, inclusiv livrarea mesajului trimis.
 - **Email / web:** primirea IMAP a funcționat; SMTP este nevalidat. Browserul text nu execută JavaScript, iar WebView a avut crash-uri GPU.
 - **FM și accesorii:** căștile sunt antena FM; o sesiune este limitată la o oră. HFP, microfonul Bluetooth și apelurile prin căști mai au nevoie de verificări.
 - **Performanță și securitate:** platformă Android 8.1 veche, kernel derivat din stock și build de dezvoltare; actualizările și o configurație de release întărită rămân de planificat.
@@ -330,6 +338,7 @@ android81/
 
 | Vrei să urmărești… | Începe de aici |
 | --- | --- |
+| Leo 0.6: SIM 2, HFP, GPS, Email și cameră | [Rezultate și limite](android81/LEO-06-CONNECTIVITY.md), [actualizare cu runtime-uri](android81/RUNTIME-UPDATE.md) |
 | Camera BF20A1, pornire și limite | [Integrarea runtime-ului camerei](android81/CAMERA-RUNTIME.md), [investigația inițială](android81/CAMERA-PORT-AUDIT.md) |
 | Maturizarea Leo · 0.5 | [Categorii, ferestre, SMS, ghid și bliț](android81/LEO-MATURITY.md) |
 | UI, meniu global și mouse | [Fundația vizuală, probe și limite](android81/LEO-UI-FOUNDATION.md) |

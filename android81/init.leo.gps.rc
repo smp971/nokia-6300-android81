@@ -1,0 +1,18 @@
+on post-fs-data
+    mkdir /data/misc/location 0770 gps system
+    mkdir /data/gps 0770 gps system
+
+# Register before LocationManager loads providers; no location request is made here.
+service leo_gnss /vendor/leo-gps/exec 0
+    class hal
+    user root
+    group root gps radio system inet net_raw net_admin
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+on property:ro.persistent_properties.ready=true && property:persist.leo.gps.enabled=1
+    start leo_gnss
+
+on property:persist.leo.gps.enabled=0
+    stop leo_gnss

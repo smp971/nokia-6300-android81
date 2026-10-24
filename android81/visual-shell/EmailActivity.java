@@ -18,8 +18,10 @@ public final class EmailActivity extends LeoActivity {
     private long account,mailbox;
     private String accountName="",mailboxName="",accountEmail="";
     private EditText to,subject,message;
-    protected void onCreate(Bundle state){super.onCreate(state);if(state!=null&&state.getBoolean("compose")){compose();to.setText(state.getString("to",""));subject.setText(state.getString("subject",""));message.setText(state.getString("message",""));}else accounts();}
-    protected void onSaveInstanceState(Bundle state){if(to!=null){state.putBoolean("compose",true);state.putString("to",to.getText().toString());state.putString("subject",subject.getText().toString());state.putString("message",message.getText().toString());}super.onSaveInstanceState(state);}
+    private final ArrayList<Uri> attachments=new ArrayList<Uri>();
+    private TextView attachmentStatus;
+    protected void onCreate(Bundle state){super.onCreate(state);if(state!=null&&state.getBoolean("compose")){compose();to.setText(state.getString("to",""));subject.setText(state.getString("subject",""));message.setText(state.getString("message",""));ArrayList<String> restored=state.getStringArrayList("attachments");if(restored!=null)for(String u:restored)if(attachments.size()<5)attachments.add(Uri.parse(u));attachmentLabel();}else accounts();}
+    protected void onSaveInstanceState(Bundle state){if(to!=null){state.putBoolean("compose",true);state.putString("to",to.getText().toString());state.putString("subject",subject.getText().toString());state.putString("message",message.getText().toString());ArrayList<String> uris=new ArrayList<String>();for(Uri u:attachments)uris.add(u.toString());state.putStringArrayList("attachments",uris);}super.onSaveInstanceState(state);}
     protected void onDestroy(){generation++;super.onDestroy();}
     protected void onRestart(){super.onRestart();if(to==null)accounts();}
     private Uri uri(String path){return BASE.buildUpon().appendPath(path).appendQueryParameter("limit","100").build();}
@@ -39,7 +41,7 @@ public final class EmailActivity extends LeoActivity {
     private void welcome(){
         list(L.t("Email Leo"),Arrays.asList(L.t("Adaugă un cont\nMeniu: configurare manuală"),L.t("Scrie un email\nEditor Leo pentru taste"),L.t("Despre Email Leo")),0,new Choice(){public void pick(int i){if(i==0)androidEmail();else if(i==1)compose();else about();}},L.t("Opțiuni"),new Runnable(){public void run(){menu();}});
     }
-    private void menu(){options("Email",new String[]{L.t("Actualizează lista locală"),L.t("Scrie un email"),L.t("Configurare cont"),L.t("Sincronizează contul"),L.t("Despre")},new Choice(){public void pick(int i){if(i==0)accounts();else if(i==1)compose();else if(i==2)androidEmail();else if(i==3)sync();else about();}});}
+    private void menu(){options("Email",new String[]{L.t("Actualizează lista locală"),L.t("Scrie un email"),L.t("Configurare cont"),L.t("Sincronizează contul"),L.t("Despre"),L.t("Email către mine")},new Choice(){public void pick(int i){if(i==0)accounts();else if(i==1)compose();else if(i==2)androidEmail();else if(i==3)sync();else if(i==4)about();else if(accountEmail.isEmpty())notice(L.t("Alege întâi un cont"));else{compose();to.setText(accountEmail);}}});}
     private void sync(){if(accountEmail.isEmpty()){notice(L.t("Alege întâi un cont"));return;}try{for(android.accounts.Account a:android.accounts.AccountManager.get(this).getAccountsByType("com.android.email"))if(a.name.equalsIgnoreCase(accountEmail)){Bundle extras=new Bundle();extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL,true);extras.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED,true);ContentResolver.requestSync(a,"com.android.email.provider",extras);notice(L.t("Sincronizare cerută; actualizează lista după terminare"));return;}notice(L.t("Contul IMAP de sincronizare nu este disponibil"));}catch(SecurityException denied){notice(L.t("Accesul la conturi nu este permis"));}}
     private void androidEmail(){
         Intent launch=getPackageManager().getLaunchIntentForPackage("com.android.email");
@@ -47,7 +49,7 @@ public final class EmailActivity extends LeoActivity {
     }
     private void unavailable(){list(L.t("Email Leo"),Arrays.asList(L.t("Deschide Email Android"),L.t("Reîncearcă accesul la conturi")),0,new Choice(){public void pick(int i){if(i==0)androidEmail();else accounts();}},"",null);notice(L.t("Accesul la motorul Email nu este disponibil"));}
     private void about(){
-        begin(L.t("Despre Email Leo"));ScrollView scroll=new ScrollView(this);scroll.addView(text(L.t("Conturile și sincronizarea sunt gestionate de Email Android. Leo afișează folderele și mesajele deja descărcate.\n\nÎn configurarea Android: sus/jos schimbă câmpul, Meniu oferă Continuă și Configurare manuală. În editorul Android, Meniu oferă trimiterea cu confirmare și salvarea ciornei.\n\nCompatibilitatea autentificării depinde de furnizor. Nu sunt încă validate conturi reale. Parolele se introduc doar în Email Android."),17));root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));back=new Runnable(){public void run(){accounts();}};footer("",L.t("Derulare"),L.t("Înapoi"));scroll.setFocusable(true);scroll.requestFocus();
+        begin(L.t("Despre Email Leo"));ScrollView scroll=new ScrollView(this);scroll.addView(text(L.t("Conturile și sincronizarea sunt gestionate de Email Android. Leo afișează folderele și mesajele deja descărcate.\n\nÎn configurarea Android: sus/jos schimbă câmpul, Meniu oferă Continuă și Configurare manuală. În editorul Android, Meniu oferă trimiterea cu confirmare și salvarea ciornei.\n\nCompatibilitatea autentificării depinde de furnizor. Primirea IMAP a fost confirmată; trimiterea SMTP se verifică separat pentru contul ales. Parolele se introduc doar în Email Android."),17));root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));back=new Runnable(){public void run(){accounts();}};footer("",L.t("Derulare"),L.t("Înapoi"));scroll.setFocusable(true);scroll.requestFocus();
     }
     private void folders(){
         final int token=++generation;loading(L.t("Foldere email"));back=new Runnable(){public void run(){accounts();}};
@@ -87,10 +89,23 @@ public final class EmailActivity extends LeoActivity {
     }
     private void compose(){
         generation++;LinearLayout fields=fields(L.t("Email nou"));to=field(fields,L.t("Către"),"",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);subject=field(fields,L.t("Subiect"),"",InputType.TYPE_CLASS_TEXT);message=field(fields,L.t("Mesaj"),"",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-        left=new Runnable(){public void run(){
-            final String address=to.getText().toString().trim();if(!android.util.Patterns.EMAIL_ADDRESS.matcher(address).matches()){notice(L.t("Introdu o adresă email validă"));return;}
-            options(L.t("Continuă în Email Android?"),new String[]{L.t("Înapoi la editor"),L.t("Deschide pentru confirmare")},new Choice(){public void pick(int i){if(i==1){Intent send=new Intent(Intent.ACTION_SENDTO,Uri.parse("mailto:"+Uri.encode(address,"@"))).setPackage("com.android.email");send.putExtra(Intent.EXTRA_SUBJECT,subject.getText().toString());send.putExtra(Intent.EXTRA_TEXT,message.getText().toString());try{startActivity(send);}catch(RuntimeException e){notice(L.t("Editorul Android nu este disponibil"));}}}});
-        }};footer(L.t("Continuă"),"Editor",L.t("Șterge"));to.requestFocus();
+        attachments.clear();attachmentStatus=text("",13);fields.addView(attachmentStatus);attachmentLabel();
+        left=new Runnable(){public void run(){options(L.t("Editor email"),new String[]{L.t("Continuă în Email Android"),L.t("Adaugă atașament"),L.t("Elimină atașamente")},new Choice(){public void pick(int i){if(i==0)handoff();else if(i==1){if(attachments.size()>=5){notice(L.t("Maximum 5 atașamente"));return;}startActivityForResult(new Intent(EmailActivity.this,FilesActivity.class).putExtra("pick_attachment",true),94);}else{attachments.clear();attachmentLabel();}}});}};
+        footer(L.t("Opțiuni"),"Editor",L.t("Șterge"));to.requestFocus();
+    }
+    private void attachmentLabel(){if(attachmentStatus!=null)attachmentStatus.setText(L.t("Atașamente · ")+attachments.size()+L.t(" · maximum 20 MiB/fișier"));}
+    protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==94&&result==RESULT_OK&&data!=null&&data.getData()!=null&&attachments.size()<5){Uri uri=data.getData();if("content".equals(uri.getScheme())&&!attachments.contains(uri)){attachments.add(uri);attachmentLabel();}}}
+    static Intent composeIntent(String address,String title,String text,ArrayList<Uri> files){
+        Intent send;
+        if(files.isEmpty())send=new Intent(Intent.ACTION_SENDTO,Uri.parse("mailto:"+Uri.encode(address,"@")));
+        else{send=new Intent(files.size()==1?Intent.ACTION_SEND:Intent.ACTION_SEND_MULTIPLE).setType("application/octet-stream");send.putExtra(Intent.EXTRA_EMAIL,new String[]{address});if(files.size()==1)send.putExtra(Intent.EXTRA_STREAM,files.get(0));else send.putParcelableArrayListExtra(Intent.EXTRA_STREAM,files);android.content.ClipData clip=android.content.ClipData.newRawUri("Leo attachment",files.get(0));for(int i=1;i<files.size();i++)clip.addItem(new android.content.ClipData.Item(files.get(i)));send.setClipData(clip);send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);}
+        // This Oreo Email build exports SENDTO only in its intent filters.
+        // Its exported external composer also handles SEND/MULTIPLE attachments.
+        if(!files.isEmpty())send.setClassName("com.android.email","com.android.email.activity.ComposeActivityEmailExternal");
+        return send.setPackage("com.android.email").putExtra(Intent.EXTRA_SUBJECT,title).putExtra(Intent.EXTRA_TEXT,text);
+    }
+    private void handoff(){final String address=to.getText().toString().trim();if(!android.util.Patterns.EMAIL_ADDRESS.matcher(address).matches()){notice(L.t("Introdu o adresă email validă"));return;}
+        options(L.t("Continuă în Email Android?"),new String[]{L.t("Înapoi la editor"),L.t("Deschide pentru confirmare")},new Choice(){public void pick(int i){if(i==1)try{startActivity(composeIntent(address,subject.getText().toString(),message.getText().toString(),new ArrayList<Uri>(attachments)));}catch(RuntimeException e){notice(L.t("Editorul Android nu este disponibil"));}}});
     }
     private static String safe(String value){return value==null?"":value;}
 }

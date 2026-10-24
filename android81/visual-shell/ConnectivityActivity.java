@@ -18,7 +18,7 @@ public final class ConnectivityActivity extends LeoActivity {
     private static final int AP_WPA2_PSK=4;
     private WifiManager wifi;
     private BluetoothAdapter bluetooth;
-    private BluetoothProfile input,a2dp;
+    private BluetoothProfile input,a2dp,headset;
     private String kind;
     private String hotspotResult="";
     private boolean registered, discoveryOwned;
@@ -34,15 +34,15 @@ public final class ConnectivityActivity extends LeoActivity {
         }
     };
     private final BluetoothProfile.ServiceListener profile=new BluetoothProfile.ServiceListener() {
-        public void onServiceConnected(int id,BluetoothProfile value) { if(id==BluetoothProfile.A2DP)a2dp=value;else input=value; if(!form) show(); }
-        public void onServiceDisconnected(int id) { if(id==BluetoothProfile.A2DP)a2dp=null;else input=null; if(!form) show(); }
+        public void onServiceConnected(int id,BluetoothProfile value) { if(id==BluetoothProfile.A2DP)a2dp=value;else if(id==BluetoothProfile.HEADSET)headset=value;else input=value; if(!form) show(); }
+        public void onServiceDisconnected(int id) { if(id==BluetoothProfile.A2DP)a2dp=null;else if(id==BluetoothProfile.HEADSET)headset=null;else input=null; if(!form) show(); }
     };
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         kind=getIntent().getStringExtra("kind"); if(kind==null) kind="wifi";
         wifi=(WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
         bluetooth=BluetoothAdapter.getDefaultAdapter();
-        if("bluetooth".equals(kind) && bluetooth!=null){bluetooth.getProfileProxy(this,profile,4);bluetooth.getProfileProxy(this,profile,BluetoothProfile.A2DP);}
+        if("bluetooth".equals(kind) && bluetooth!=null){bluetooth.getProfileProxy(this,profile,4);bluetooth.getProfileProxy(this,profile,BluetoothProfile.A2DP);bluetooth.getProfileProxy(this,profile,BluetoothProfile.HEADSET);}
     }
     protected void onResume() {
         super.onResume();
@@ -55,14 +55,14 @@ public final class ConnectivityActivity extends LeoActivity {
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        filter.addAction("android.bluetooth.input.profile.action.CONNECTION_STATE_CHANGED");filter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);filter.addAction(BluetoothA2dp.ACTION_PLAYING_STATE_CHANGED);
+        filter.addAction("android.bluetooth.input.profile.action.CONNECTION_STATE_CHANGED");filter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);filter.addAction(BluetoothA2dp.ACTION_PLAYING_STATE_CHANGED);filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);filter.addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED);
         registerReceiver(updates,filter); registered=true; show();
     }
     protected void onPause() { if(registered) unregisterReceiver(updates); registered=false; super.onPause(); }
     protected void onDestroy() {
         if(bluetooth!=null) {
             if(discoveryOwned) bluetooth.cancelDiscovery();
-            if(input!=null) bluetooth.closeProfileProxy(4,input);if(a2dp!=null)bluetooth.closeProfileProxy(BluetoothProfile.A2DP,a2dp);
+            if(input!=null) bluetooth.closeProfileProxy(4,input);if(a2dp!=null)bluetooth.closeProfileProxy(BluetoothProfile.A2DP,a2dp);if(headset!=null)bluetooth.closeProfileProxy(BluetoothProfile.HEADSET,headset);
         }
         super.onDestroy();
     }
@@ -159,7 +159,7 @@ public final class ConnectivityActivity extends LeoActivity {
         for(BluetoothDevice device:visible) {
             String name=device.getName(); if(name==null || name.isEmpty()) name=L.t("Dispozitiv fără nume");
             boolean connected=input!=null && input.getConnectionState(device)==BluetoothProfile.STATE_CONNECTED;
-            boolean audioConnected=a2dp!=null&&a2dp.getConnectionState(device)==BluetoothProfile.STATE_CONNECTED;rows.add(name+" · "+(audioConnected?L.t("Audio A2DP conectat"):connected?L.t("HID conectat"):device.getBondState()==BluetoothDevice.BOND_BONDED?L.t("Asociat"):L.t("Nou")));
+            boolean audioConnected=a2dp!=null&&a2dp.getConnectionState(device)==BluetoothProfile.STATE_CONNECTED;boolean callsConnected=headset!=null&&headset.getConnectionState(device)==BluetoothProfile.STATE_CONNECTED;rows.add(name+" · "+(callsConnected?(audioConnected?L.t("Apeluri HFP + muzică"):L.t("Apeluri HFP conectat")):audioConnected?L.t("Audio A2DP conectat"):connected?L.t("HID conectat"):device.getBondState()==BluetoothDevice.BOND_BONDED?L.t("Asociat"):L.t("Nou")));
         }
         list("Bluetooth Leo",rows,selected,new Choice(){public void pick(int i){
             if(i==0) { boolean accepted=bluetooth.isEnabled()?bluetooth.disable():bluetooth.enable(); if(!accepted) notice(L.t("Cererea Bluetooth a fost refuzată")); }
@@ -172,13 +172,13 @@ public final class ConnectivityActivity extends LeoActivity {
         }},L.t("Actualiz."),new Runnable(){public void run(){show();}});
     }
     private void deviceOptions(final BluetoothDevice device) {
-        options(L.t("Dispozitiv Bluetooth"),new String[]{device.getBondState()==BluetoothDevice.BOND_BONDED?L.t("Conectează mouse/taste"):L.t("Asociază"),L.t("Deconectează mouse/taste"),L.t("Setări Android"),L.t("Conectează audio stereo"),L.t("Deconectează audio stereo")},new Choice(){public void pick(final int i){
+        options(L.t("Dispozitiv Bluetooth"),new String[]{device.getBondState()==BluetoothDevice.BOND_BONDED?L.t("Conectează mouse/taste"):L.t("Asociază"),L.t("Deconectează mouse/taste"),L.t("Setări Android"),L.t("Conectează audio stereo"),L.t("Deconectează audio stereo"),L.t("Conectează apeluri HFP"),L.t("Deconectează apeluri HFP")},new Choice(){public void pick(final int i){
             if(i==2) { androidPage(Settings.ACTION_BLUETOOTH_SETTINGS); return; }
             bluetooth.cancelDiscovery();
             if(i==0 && device.getBondState()!=BluetoothDevice.BOND_BONDED) { if(!device.createBond()) notice(L.t("Asocierea nu a pornit")); return; }
-            if((i>=3?a2dp:input)==null) { notice(L.t("Profilul selectat nu este pregătit")); return; }
+            if((i>=5?headset:i>=3?a2dp:input)==null) { notice(L.t("Profilul selectat nu este pregătit")); return; }
             try {
-                BluetoothProfile target=i>=3?a2dp:input;if(i==3&&device.getBondState()!=BluetoothDevice.BOND_BONDED){if(!device.createBond())notice(L.t("Asocierea nu a pornit"));return;}Object accepted=target.getClass().getMethod(i==0||i==3?"connect":"disconnect",BluetoothDevice.class).invoke(target,device);
+                BluetoothProfile target=i>=5?headset:i>=3?a2dp:input;if((i==3||i==5)&&device.getBondState()!=BluetoothDevice.BOND_BONDED){if(!device.createBond())notice(L.t("Asocierea nu a pornit"));return;}Object accepted=target.getClass().getMethod(i==0||i==3||i==5?"connect":"disconnect",BluetoothDevice.class).invoke(target,device);
                 notice(Boolean.TRUE.equals(accepted)?L.t("Cerere trimisă; așteaptă starea"):L.t("Cererea nu a fost acceptată"));
             } catch(ReflectiveOperationException failure) { notice(L.t("Profilul selectat nu este disponibil")); }
         }});

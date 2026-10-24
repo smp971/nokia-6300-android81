@@ -4,7 +4,7 @@ import android.graphics.*;
 final class IconArt {
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF box=new RectF();private final Path path=new Path();
-    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc,0xff288cda,0xff239a82,0xff548fe0,0xffa651d6,0xffb67a35,0xffd95183,0xff1aabb0,0xff478de0,0xff5b748b};
+    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc,0xff288cda,0xff239a82,0xff548fe0,0xffa651d6,0xffb67a35,0xffd95183,0xff1aabb0,0xff478de0,0xff5b748b,0xff18a99d};
     private void round(Canvas c,float l,float t,float r,float b,float radius,int color){p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(color);c.drawRoundRect(l,t,r,b,radius,radius,p);}
     private void line(Canvas c,float a,float b,float x,float y){c.drawLine(a,b,x,y,p);}
         void draw(Canvas c,int index,float x,float y) {
@@ -16,6 +16,7 @@ final class IconArt {
                 case 31: c.drawRoundRect(-15,-8,15,10,5,5,p);line(c,-8,-3,-8,5);line(c,-12,1,-4,1);c.drawCircle(7,-2,1,p);c.drawCircle(11,4,1,p);break;
                 case 32: c.drawCircle(-10,8,4,p);c.drawCircle(10,8,4,p);c.drawCircle(0,-9,4,p);line(c,-8,4,-2,-5);line(c,8,4,2,-5);break;
                 case 33: c.drawArc(-13,-13,13,13,35,290,false,p);line(c,11,-10,12,0);line(c,12,0,3,-3);line(c,0,10,0,-5);break;
+                case 35: c.drawCircle(0,0,11,p);c.drawCircle(0,0,3,p);line(c,0,-17,0,-10);line(c,0,10,0,17);line(c,-17,0,-10,0);line(c,10,0,17,0);break;
                 case 34: c.drawRoundRect(-15,-8,15,12,3,3,p);c.drawCircle(0,2,6,p);line(c,-8,-8,-4,-13);line(c,-4,-13,7,-13);line(c,7,-13,10,-8);break;
                 case 28: c.drawCircle(0,0,14,p);c.drawArc(-5,-9,5,1,195,285,false,p);line(c,0,1,0,5);c.drawPoint(0,10,p);break;
                 case 27: c.drawRoundRect(-13,-10,13,12,2,2,p);line(c,-8,-10,-8,-2);line(c,-8,-2,7,-2);line(c,7,-2,7,-10);c.drawRect(-7,4,7,12,p);break;
