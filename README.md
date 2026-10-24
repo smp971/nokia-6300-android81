@@ -264,9 +264,9 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
 
 ### Limite cunoscute, pe scurt
 
-- **Calitatea vocii în apel:** au fost raportate probleme în ambele sensuri.
-  Profilul de calibrare KaiOS dedicat Leo este acum selectat explicit și încărcarea
-  lui este confirmată în HAL; comparația auditivă rămâne în curs.
+- **Calitatea vocii în apel:** după selectarea explicită a profilului de calibrare
+  KaiOS dedicat Leo, utilizatorul a confirmat că sunetul este în regulă în proba
+  de apel în ambele sensuri. Comportamentul după reboot rămâne de verificat.
   [Investigație și revenire](android81/AUDIO-CALL-QUALITY.md).
 
 - **Pornirea radioului:** a fost observat un boot cu ambele SIM-uri `READY`, dar

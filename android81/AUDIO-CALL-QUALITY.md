@@ -4,7 +4,8 @@
 
 The user reported poor call audio in both directions. Earlier confirmations of
 working calls establish connectivity and routing, not acceptable voice quality.
-This investigation therefore keeps call quality **under evaluation**.
+After explicitly selecting the Leo calibration, the user confirmed acceptable
+audio in the requested two-way call comparison: **“merge, e ok”**.
 
 ## Findings
 
@@ -70,8 +71,10 @@ queries still logged errors, so this is not an error-free initialization claim.
 Missing `.acdbdelta` files are reported by the library as well; no fabricated
 delta calibration was added.
 
-One real call comparison has been requested, covering reception at the earpiece
-and speech heard by the other participant. Its result is pending. Do not mark
-voice quality fixed based on successful file loading alone. If unchanged,
-separate clipping/echo from low bandwidth and inspect the active voice route,
-microphone path and negotiated call type before adjusting gain.
+The user completed the requested real call comparison, covering reception at
+the earpiece and speech heard by the other participant, and reported
+“merge, e ok”. The reported two-way quality problem is therefore resolved in
+this tested scenario. Keep the selected calibration; no gain adjustment is
+needed on this evidence. This confirmation does not establish quality on SIM 2,
+other audio routes or every network/call type. Persistence across a reboot has
+not yet been physically tested.
