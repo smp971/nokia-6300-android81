@@ -264,6 +264,11 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
 
 ### Limite cunoscute, pe scurt
 
+- **Calitatea vocii în apel:** au fost raportate probleme în ambele sensuri.
+  Profilul de calibrare KaiOS dedicat Leo este acum selectat explicit și încărcarea
+  lui este confirmată în HAL; comparația auditivă rămâne în curs.
+  [Investigație și revenire](android81/AUDIO-CALL-QUALITY.md).
+
 - **Pornirea radioului:** a fost observat un boot cu ambele SIM-uri `READY`, dar
   radio `POWER_OFF`. Recuperarea manuală a serviciilor a reușit; protecția automată
   instalată nu are încă o probă de reboot. [Detalii](android81/RADIO-RECOVERY.md).
