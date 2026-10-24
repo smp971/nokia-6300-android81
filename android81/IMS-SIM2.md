@@ -2,8 +2,9 @@
 
 **A supervised incoming VoLTE call on SIM 2 passed with two-way audio and
 simultaneous LTE data.** The selected-SIM client remains a controlled prototype;
-automatic startup, lifecycle recovery, outgoing IMS calls and handover are not
-yet validated.
+[automatic startup and client recovery now pass](IMS-RUNTIME.md). Outgoing IMS
+calls and handover remain unverified. The controlled-trial details below describe
+the state before permanent runtime integration.
 
 ## Observations
 
@@ -105,8 +106,9 @@ TelephonyProvider APN permissions; data selection therefore uses the separately
 platform-signed engineering activity. Android 8.1 getDataState can describe the
 default phone, so per-slot verification uses telephony.registry instead.
 
-Next: integrate selected-slot startup/teardown and stale-framework-binding
-recovery, then validate an outgoing IMS call and startup persistence. Incoming
+Follow-up: selected-slot startup/teardown, stale-framework-binding recovery and
+startup persistence are integrated and verified in IMS-RUNTIME.md. An outgoing
+IMS call remains a separate validation. Incoming
 call audio and simultaneous LTE data passed this one supervised test; fallback,
 handover, emergency calling and long-term reliability remain unverified.
 stop-ims-trial.py currently restores slot 0 only; do not use it for slot 1.

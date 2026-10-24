@@ -1,0 +1,60 @@
+# Selected-SIM IMS. Native services live in init, independently of USB/ADB.
+service leo_ims_qmi /system/vendor/leo-ims/bin/imsqmidaemon
+    class late_start
+    user system
+    group system radio log inet net_raw net_admin
+    socket ims_qmid stream 0660 system radio
+    setenv LD_LIBRARY_PATH /system/vendor/leo-radio/lib:/system/vendor/lib:/system/lib
+    setenv LD_PRELOAD /system/vendor/leo-radio/shim.so
+    seclabel u:r:init:s0
+    disabled
+
+service leo_ims_data /system/vendor/leo-ims/bin/imsdatadaemon
+    class late_start
+    user system
+    group system radio log inet net_raw net_admin
+    socket ims_datad stream 0660 system radio
+    setenv LD_LIBRARY_PATH /system/vendor/leo-radio/lib:/system/vendor/lib:/system/lib
+    setenv LD_PRELOAD /system/vendor/leo-radio/shim.so
+    seclabel u:r:init:s0
+    disabled
+
+service leo_ims_sockets /system/bin/sh /system/vendor/leo-ims/sockets.sh
+    class late_start
+    user root
+    group root radio system
+    seclabel u:r:init:s0
+    disabled
+
+service leo_ims_restore /system/bin/sh /system/vendor/leo-ims/restore.sh
+    class late_start
+    user root
+    group root radio system
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+service leo_ims_watchdog /system/bin/sh /system/vendor/leo-ims/watchdog.sh
+    class late_start
+    user root
+    group root radio system
+    seclabel u:r:init:s0
+    disabled
+
+on property:sys.boot_completed=1 && property:persist.leo.ims.enabled=1
+    start leo_ims_watchdog
+
+on property:persist.leo.ims.enabled=0
+    # The controller deregisters only after all calls are idle.
+    stop leo_ims_watchdog
+
+on property:sys.leo.ims.native=1 && property:persist.leo.ims.enabled=1
+    start leo_ims_qmi
+    start leo_ims_data
+    start leo_ims_sockets
+
+on property:sys.leo.ims.native=0
+    stop leo_ims_sockets
+    stop leo_ims_data
+    stop leo_ims_qmi
+    start leo_ims_restore

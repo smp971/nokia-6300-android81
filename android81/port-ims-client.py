@@ -11,6 +11,7 @@ import hashlib,json
 root=Path('/root/android81-leo/src/vendor/leo-ims-candidate/src')
 ims=root/'org/codeaurora/ims'
 framework=Path('/root/android81-leo/src/frameworks/base/telephony/java/com/android/ims/internal')
+runtime=Path(__file__).resolve().parent/'ims-runtime'
 reference=Path(__file__).resolve().parent/'output/ims-reference/client'
 manifest=json.loads((reference/'source-manifest.json').read_text())
 assert manifest['revision']=='f242858a8cbb2c9ad9b5b2e53d75380ae775727a'
@@ -78,6 +79,31 @@ def service(s):
     s=s.replace('mServiceSub = new ImsServiceSub[getNumSubscriptions()];','mImsPhoneId = LeoImsSlot.get();\n        mServiceSub = new ImsServiceSub[getNumSubscriptions()];')
     s=re.sub(r'^.*ImsVideoGlobals\.(?:init|getInstance)\([^\n]*\n','',s,flags=re.M)
     s=method(s,'initSubscriptionStatus','private void initSubscriptionStatus() { mServiceSub[0].registerForPhoneId(mImsPhoneId); }')
+    # Dispose a stale Android IMS phone before publishing the new Binder/UP event.
+    s=s.replace('        initSubscriptionStatus();','')
+    s=s.replace('        ServiceManager.addService("ims", mBinder);','''        initSubscriptionStatus();
+        android.os.SystemProperties.set("sys.leo.ims.client_slot", Integer.toString(mImsPhoneId));
+        android.os.SystemProperties.set("sys.leo.ims.registration", "2");
+        android.os.SystemProperties.set("sys.leo.ims.voice", "0");
+        Intent down = new Intent(ImsManager.ACTION_IMS_SERVICE_DOWN);
+        down.setPackage("com.android.phone");
+        down.putExtra(ImsManager.EXTRA_PHONE_ID, mImsPhoneId);
+        sendBroadcast(down);
+        ServiceManager.addService("ims", mBinder);''')
+    s=method(s,'onDestroy','''public void onDestroy() {
+        Intent down = new Intent(ImsManager.ACTION_IMS_SERVICE_DOWN);
+        down.setPackage("com.android.phone");
+        down.putExtra(ImsManager.EXTRA_PHONE_ID, mImsPhoneId);
+        sendBroadcast(down);
+        android.os.SystemProperties.set("sys.leo.ims.client_slot", "-1");
+        android.os.SystemProperties.set("sys.leo.ims.registration", "2");
+        android.os.SystemProperties.set("sys.leo.ims.voice", "0");
+        super.onDestroy();
+        // Legacy transport/session singletons must not survive a physical-slot change.
+        new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+            public void run() { android.os.Process.killProcess(android.os.Process.myPid()); }
+        }, 100);
+    }''')
     s=method(s,'handleModemStackReady','private void handleModemStackReady(Message msg) { throw new UnsupportedOperationException("Dynamic modem stack mapping is not supported"); }')
     needle='private final IImsService.Stub mBinder = new IImsService.Stub() {'
     assert needle in s
@@ -163,7 +189,7 @@ def subscription(s):
     s=s.replace('tracker.mRegListener = listener;','mLeoListeners.add(listener); tracker.mRegListener = mLeoListeners;')
     pattern=r'(ImsReasonInfo imsReasonInfo = new ImsReasonInfo\(.*?\);)(\s*for \(Map.Entry<Integer, ImsServiceClassTracker> e : mTrackerTable.entrySet\(\)\))'
     assert len(re.findall(pattern,s,re.S))==1
-    s=re.sub(pattern,r'\1\n            mLeoRegistrationState = regState;\n            Log.i(LOG_TAG, "LEO_IMS_REGISTRATION state=" + regState + " error=" + errorCode + " rat=" + imsRat);\n\2',s,flags=re.S)
+    s=re.sub(pattern,r'\1\n            mLeoRegistrationState = regState;\n            android.os.SystemProperties.set("sys.leo.ims.registration", Integer.toString(regState));\n            Log.i(LOG_TAG, "LEO_IMS_REGISTRATION state=" + regState + " error=" + errorCode + " rat=" + imsRat);\n\2',s,flags=re.S)
     at=s.index('private void handleSrvStatusUpdate(');end=body_end(s,s.index('{',at))
     s=s[:end-1]+'''
         boolean voice = false;
@@ -174,6 +200,7 @@ def subscription(s):
             }
         }
         mLeoVoiceAvailable = voice;
+        android.os.SystemProperties.set("sys.leo.ims.voice", voice ? "1" : "0");
     '''+s[end-1:]
     return append(s,'''private TelephonyManager mLeoTelephony;
     private android.telephony.PhoneStateListener mLeoSrvcc;
@@ -305,7 +332,7 @@ ET.register_namespace('android',android[1:-1])
 manifest=root.parent/'AndroidManifest.xml'
 tree=ET.parse(manifest);app=tree.getroot().find('application')
 sdk=tree.getroot().find('uses-sdk');sdk.set(android+'minSdkVersion','27');sdk.set(android+'targetSdkVersion','27')
-tree.getroot().set(android+'versionCode','2');tree.getroot().set(android+'versionName','1.1-selected-slot')
+tree.getroot().set(android+'versionCode','3');tree.getroot().set(android+'versionName','1.2-runtime')
 for child in list(app):
     if 'csvt' in child.get(android+'name','').lower():app.remove(child)
 for child in app.findall('service'):
@@ -313,5 +340,9 @@ for child in app.findall('service'):
     child.set(android+'process',':leo_ims')
 for permission in ('MODIFY_PHONE_STATE','READ_PHONE_STATE'):
     ET.SubElement(tree.getroot(),'uses-permission',{android+'name':'android.permission.'+permission})
+(ims/'LeoImsController.java').write_text((runtime/'LeoImsController.java').read_text())
+ET.SubElement(app,'service',{
+    android+'name':'.LeoImsController',android+'exported':'true',
+    android+'permission':'android.permission.MODIFY_PHONE_STATE',android+'process':':leo_controller'})
 tree.write(manifest,encoding='utf-8',xml_declaration=True)
 print('Applied selected-SIM Android 8.1 compatibility port; no automatic activation.')

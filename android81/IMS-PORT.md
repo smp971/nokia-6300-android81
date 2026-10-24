@@ -2,8 +2,9 @@
 
 Update, 24 October: [SIM 2 investigation](IMS-SIM2.md) adds an explicitly
 selected physical-slot client. A supervised SIM 2 incoming VoLTE call passed
-with two-way audio and simultaneous LTE data. Automatic IMS activation remains
-unintegrated. The primary-SIM registration below is historical.
+with two-way audio and simultaneous LTE data. [Automatic activation and client
+recovery are now integrated and verified](IMS-RUNTIME.md). The primary-SIM
+registration below is historical.
 
 ## Historical primary-SIM trial, 18 October
 
