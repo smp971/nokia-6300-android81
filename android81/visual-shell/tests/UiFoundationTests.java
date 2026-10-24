@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.*;
 import android.content.*;
@@ -19,12 +20,12 @@ public final class UiFoundationTests extends Instrumentation {
     private void check(boolean ok,String message){if(!ok)throw new AssertionError(message);checks++;}
     public void onCreate(Bundle b){start();}
     public void onStart(){Bundle result=new Bundle();try{
-        check(NetworkStartup.label("preparing",false,false,24000).contains("MODEMUL"),"pre-registration modem stage");
-        check(NetworkStartup.label("started",false,false,40000).contains("OPERATORUL"),"started RIL does not imply registered service");
-        check(NetworkStartup.label("started",true,false,40000).contains("CONECTAT"),"registration supersedes boot stage");
-        check(NetworkStartup.label("started",true,true,40000).equals("MOD AVION"),"airplane mode supersedes cached registration");
-        check(NetworkStartup.label("failed",false,false,40000).contains("NEREUȘITĂ"),"startup failure is explicit");
-        check(!NetworkStartup.label("started",false,false,200000).contains("CAUTĂ"),"startup banner is bounded");
+        check(NetworkStartup.label("preparing",false,false,24000).equals(L.t("REȚEA · PORNEȘTE MODEMUL")),"pre-registration modem stage");
+        check(NetworkStartup.label("started",false,false,40000).equals(L.t("REȚEA · CAUTĂ OPERATORUL")),"started RIL does not imply registered service");
+        check(NetworkStartup.label("started",true,false,40000).equals(L.t("L E O · CONECTAT")),"registration supersedes boot stage");
+        check(NetworkStartup.label("started",true,true,40000).equals(L.t("MOD AVION")),"airplane mode supersedes cached registration");
+        check(NetworkStartup.label("failed",false,false,40000).equals(L.t("REȚEA · PORNIRE NEREUȘITĂ")),"startup failure is explicit");
+        check(!NetworkStartup.label("started",false,false,200000).equals(L.t("REȚEA · CAUTĂ OPERATORUL")),"startup banner is bounded");
         check(LeoPointerService.edgeDirection(KeyEvent.KEYCODE_DPAD_DOWN,318,320)==1,"bottom edge scrolls down");
         check(LeoPointerService.edgeDirection(KeyEvent.KEYCODE_DPAD_UP,0,320)==-1,"top edge scrolls up");
         check(LeoPointerService.edgeDirection(KeyEvent.KEYCODE_DPAD_DOWN,160,320)==0,"no scroll in middle");

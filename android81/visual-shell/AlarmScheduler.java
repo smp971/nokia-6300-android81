@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.*;
 import android.content.*;
@@ -22,7 +23,7 @@ final class AlarmScheduler {
         saveDays(c,id,hour,minute,label,previous!=null?days(previous):daily?127:0,enabled);
     }
     static int days(JSONObject a){return a.has("days")?a.optInt("days"):a.optBoolean("daily")?127:0;}
-    static String daysLabel(JSONObject a){int d=days(a);if(d==0)return "o dată";if(d==127)return "zilnic";String[] names={"Lu","Ma","Mi","Jo","Vi","Sâ","Du"};StringBuilder s=new StringBuilder();for(int n=0;n<7;n++)if((d&(1<<n))!=0)s.append(names[n]).append(' ');return s.toString().trim();}
+    static String daysLabel(JSONObject a){int d=days(a);if(d==0)return L.t("o dată");if(d==127)return L.t("zilnic");String[] names={L.t("Lu"),L.t("Ma"),L.t("Mi"),L.t("Jo"),L.t("Vi"),L.t("Sâ"),L.t("Du")};StringBuilder s=new StringBuilder();for(int n=0;n<7;n++)if((d&(1<<n))!=0)s.append(names[n]).append(' ');return s.toString().trim();}
     static long next(long now,JSONObject a){return AlarmMath.next(now,a.optInt("hour"),a.optInt("minute"),TimeZone.getDefault(),days(a));}
     static void saveDays(Context c,int id,int hour,int minute,String label,int days,boolean enabled) throws JSONException {
         AlarmMath.next(System.currentTimeMillis(),hour,minute,TimeZone.getDefault(),days);

@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.*;
 import android.content.*;
@@ -17,16 +18,16 @@ public final class AlarmRingService extends Service {
     public IBinder onBind(Intent intent) { return null; }
     public int onStartCommand(Intent intent,int flags,int id) {
         if(intent!=null && "stop".equals(intent.getAction())) { stopSelf(); return START_NOT_STICKY; }
-        String label=intent==null?"Alarmă":intent.getStringExtra("label");
+        String label=intent==null?L.t("Alarmă"):intent.getStringExtra("label");
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        NotificationChannel channel=new NotificationChannel("leo-alarm","Alarme Leo",NotificationManager.IMPORTANCE_HIGH);
+        NotificationChannel channel=new NotificationChannel("leo-alarm",L.t("Alarme Leo"),NotificationManager.IMPORTANCE_HIGH);
         channel.setSound(null,null); manager.createNotificationChannel(channel);
         Intent show=new Intent(this,AlarmRingActivity.class).putExtra("label",label).putExtra("alarm_id",intent==null?-1:intent.getIntExtra("alarm_id",-1)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent open=PendingIntent.getActivity(this,101,show,PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent stop=PendingIntent.getService(this,102,new Intent(this,AlarmRingService.class).setAction("stop"),PendingIntent.FLAG_UPDATE_CURRENT);
         startForeground(310,new Notification.Builder(this,"leo-alarm").setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle(label).setContentText("OK: oprește alarma").setContentIntent(open).setFullScreenIntent(open,true)
-            .setOngoing(true).addAction(new Notification.Action.Builder(null,"Oprește",stop).build()).build());
+            .setContentTitle(label).setContentText(L.t("OK: oprește alarma")).setContentIntent(open).setFullScreenIntent(open,true)
+            .setOngoing(true).addAction(new Notification.Action.Builder(null,L.t("Oprește"),stop).build()).build());
         if(!ringing) {
             ringing=true; wake=((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"Leo:alarm"); wake.acquire(190000);
             if(SoundSchedule.allowAlarm(this,intent==null?-1:intent.getIntExtra("alarm_id",-1))) try {

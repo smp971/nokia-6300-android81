@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,10 +14,10 @@ public final class PointerTestActivity extends Activity {
     public void onCreate(Bundle state) {
         super.onCreate(state);
         FrameLayout root=new FrameLayout(this);
-        final Button button=new Button(this); button.setText("Test cursor : 0");
+        final Button button=new Button(this); button.setText(L.t("Test cursor : 0"));
         root.addView(button,new FrameLayout.LayoutParams(-1,100,Gravity.CENTER));
         button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { clicks++; button.setText("Test cursor : "+clicks); Log.i("LeoPointerTest","clicks="+clicks); }
+            public void onClick(View v) { clicks++; button.setText(L.t("Test cursor : ")+clicks); Log.i("LeoPointerTest","clicks="+clicks); }
         });
         setContentView(root);
         Log.i("LeoPointerTest","pointer ready="+LeoPointerService.startCenteredTest());

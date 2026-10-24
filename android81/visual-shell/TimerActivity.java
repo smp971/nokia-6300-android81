@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,23 +25,23 @@ public final class TimerActivity extends LeoActivity {
     private void show() {
         handler.removeCallbacks(tick); remaining=null;
         if(AlarmScheduler.state(this).getBoolean("timer",false)) {
-            begin("Temporizator"); remaining=text("",38); remaining.setGravity(Gravity.CENTER);
+            begin(L.t("Temporizator")); remaining=text("",38); remaining.setGravity(Gravity.CENTER);
             root.addView(remaining,new LinearLayout.LayoutParams(-1,0,1));
-            root.addView(text("Continuă și cu aplicația închisă",16));
+            root.addView(text(L.t("Continuă și cu aplicația închisă"),16));
             left=new Runnable() { public void run() {
-                options("Oprești temporizatorul?",new String[]{"Continuă","Oprește"},new Choice() { public void pick(int i) { if(i==1) { AlarmScheduler.cancelTimer(TimerActivity.this); show(); } } });
+                options(L.t("Oprești temporizatorul?"),new String[]{L.t("Continuă"),L.t("Oprește")},new Choice() { public void pick(int i) { if(i==1) { AlarmScheduler.cancelTimer(TimerActivity.this); show(); } } });
             }};
-            footer("Oprește","","Înapoi"); handler.post(tick);
+            footer(L.t("Oprește"),"",L.t("Înapoi")); handler.post(tick);
         } else {
-            LinearLayout fields=fields("Temporizator");
-            final EditText minutes=field(fields,"Minute (maximum 1440)","1",InputType.TYPE_CLASS_NUMBER);
-            final EditText seconds=field(fields,"Secunde (0–59)","0",InputType.TYPE_CLASS_NUMBER);
+            LinearLayout fields=fields(L.t("Temporizator"));
+            final EditText minutes=field(fields,L.t("Minute (maximum 1440)"),"1",InputType.TYPE_CLASS_NUMBER);
+            final EditText seconds=field(fields,L.t("Secunde (0–59)"),"0",InputType.TYPE_CLASS_NUMBER);
             minutes.setNextFocusDownId(seconds.getId()); seconds.setNextFocusUpId(minutes.getId());
             left=new Runnable() { public void run() {
                 try { AlarmScheduler.timer(TimerActivity.this,AlarmMath.duration(Integer.parseInt(minutes.getText().toString()),Integer.parseInt(seconds.getText().toString()))); show(); }
-                catch(RuntimeException invalid) { notice("Durata trebuie să fie între 1 secundă și 24 de ore"); }
+                catch(RuntimeException invalid) { notice(L.t("Durata trebuie să fie între 1 secundă și 24 de ore")); }
             }};
-            footer("Start","Următor","Șterge"); minutes.requestFocus();
+            footer("Start",L.t("Următor"),L.t("Șterge")); minutes.requestFocus();
         }
     }
 }

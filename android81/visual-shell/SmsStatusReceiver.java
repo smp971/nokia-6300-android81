@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.Activity;
 import android.content.*;
@@ -24,12 +25,12 @@ public final class SmsStatusReceiver extends BroadcastReceiver {
             if(success)try(DraftStore drafts=new DraftStore(context)){drafts.sent(saved.getString("draft-id",null),saved.getString("number",""),saved.getString("body",""));}
             SharedPreferences draft=context.getSharedPreferences("sms-draft",0);
             if(success && draft.getString("number","").equals(saved.getString("number","")) && draft.getString("body","").equals(saved.getString("body",""))) draft.edit().clear().putBoolean("migrated-multiple",true).commit();
-            String number=saved.getString("number",""); saved.edit().clear().putString("status",success?"SMS trimis către rețea · livrare neconfirmată":"Trimitere eșuată sau parțială; verifică înainte de reîncercare").commit();
-            SmsReceiver.notify(context,success?"SMS trimis către rețea":"SMS netrimis complet; ciornă păstrată",number);
+            String number=saved.getString("number",""); saved.edit().clear().putString("status",success?L.t("SMS trimis către rețea · livrare neconfirmată"):L.t("Trimitere eșuată sau parțială; verifică înainte de reîncercare")).commit();
+            SmsReceiver.notify(context,success?L.t("SMS trimis către rețea"):L.t("SMS netrimis complet; ciornă păstrată"),number);
         } catch(JSONException invalid) { }
         catch(RuntimeException unavailable) {
             // Keep temporary state for recovery instead of discarding the message.
-            SmsReceiver.notify(context,"Confirmare SMS: arhivă indisponibilă",saved.getString("number",""));
+            SmsReceiver.notify(context,L.t("Confirmare SMS: arhivă indisponibilă"),saved.getString("number",""));
         }
     }
 }

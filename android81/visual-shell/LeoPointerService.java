@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
@@ -100,7 +101,7 @@ public final class LeoPointerService extends AccessibilityService {
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide meniul","Acum se redă","Aplicații recente","Închide aplicația curentă","Pornire și oprire"},new KeypadDialog.Action() {
+            L.t("Meniu Leo"),new String[]{L.t("Notificări"),active?L.t("Oprește mouse-ul"):L.t("Mouse din taste"),L.t("Acasă"),L.t("Setări Leo"),L.t("Blochează tastele"),L.t("Configurări rapide"),L.t("Închide meniul"),L.t("Acum se redă"),L.t("Aplicații recente"),L.t("Închide aplicația curentă"),L.t("Pornire și oprire")},new KeypadDialog.Action() {
                 public void select(int which) {
                     if(which==10){openPowerMenu();return;}
                     if(which==9){closeForeground();return;}
@@ -121,13 +122,13 @@ public final class LeoPointerService extends AccessibilityService {
     private void closeForeground(){
         setActive(false);
         if(getPackageName().equals(foregroundPackage)){performGlobalAction(GLOBAL_ACTION_HOME);return;}
-        if(foregroundPackage.isEmpty()||foregroundPackage.equals("com.android.systemui")||foregroundPackage.equals("com.android.phone")||foregroundPackage.equals("com.android.server.telecom")||AlarmRingService.ringing){Toast.makeText(this,"Fereastră de sistem protejată",Toast.LENGTH_SHORT).show();return;}
-        try{if(((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall()){Toast.makeText(this,"Încheie mai întâi apelul",Toast.LENGTH_SHORT).show();return;}}catch(RuntimeException ignored){return;}
+        if(foregroundPackage.isEmpty()||foregroundPackage.equals("com.android.systemui")||foregroundPackage.equals("com.android.phone")||foregroundPackage.equals("com.android.server.telecom")||AlarmRingService.ringing){Toast.makeText(this,L.t("Fereastră de sistem protejată"),Toast.LENGTH_SHORT).show();return;}
+        try{if(((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall()){Toast.makeText(this,L.t("Încheie mai întâi apelul"),Toast.LENGTH_SHORT).show();return;}}catch(RuntimeException ignored){return;}
         final String packageName=foregroundPackage;
         final int ticket=++menuGeneration;
         new Thread(new Runnable(){public void run(){TaskActions.Entry found=null;try{for(TaskActions.Entry task:TaskActions.recent(LeoPointerService.this))if(task.packageName.equals(packageName)){found=task;break;}}catch(RuntimeException ignored){}final TaskActions.Entry task=found;
-            movement.post(new Runnable(){public void run(){if(ticket!=menuGeneration||instance!=LeoPointerService.this)return;if(task==null){Toast.makeText(LeoPointerService.this,"Fereastra curentă nu poate fi închisă",Toast.LENGTH_SHORT).show();return;}
-                menu=new KeypadDialog(new ContextThemeWrapper(LeoPointerService.this,android.R.style.Theme_Material_NoActionBar),"Închizi "+task.label+"?",new String[]{"Păstrează","Închide fereastra"},new KeypadDialog.Action(){public void select(int at){if(at==1)new Thread(new Runnable(){public void run(){try{TaskActions.close(LeoPointerService.this,task.id);}catch(Exception e){movement.post(new Runnable(){public void run(){Toast.makeText(LeoPointerService.this,"Închidere indisponibilă",Toast.LENGTH_SHORT).show();}});}}},"LeoCloseTask").start();}});
+            movement.post(new Runnable(){public void run(){if(ticket!=menuGeneration||instance!=LeoPointerService.this)return;if(task==null){Toast.makeText(LeoPointerService.this,L.t("Fereastra curentă nu poate fi închisă"),Toast.LENGTH_SHORT).show();return;}
+                menu=new KeypadDialog(new ContextThemeWrapper(LeoPointerService.this,android.R.style.Theme_Material_NoActionBar),L.t("Închizi ")+task.label+"?",new String[]{L.t("Păstrează"),L.t("Închide fereastra")},new KeypadDialog.Action(){public void select(int at){if(at==1)new Thread(new Runnable(){public void run(){try{TaskActions.close(LeoPointerService.this,task.id);}catch(Exception e){movement.post(new Runnable(){public void run(){Toast.makeText(LeoPointerService.this,L.t("Închidere indisponibilă"),Toast.LENGTH_SHORT).show();}});}}},"LeoCloseTask").start();}});
                 menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);menu.show();
             }});
         }},"LeoTaskLookup").start();
@@ -156,7 +157,7 @@ public final class LeoPointerService extends AccessibilityService {
             layout.gravity=Gravity.TOP|Gravity.LEFT; layout.x=x; layout.y=y;
             try { manager.addView(pointer,layout); active=true; }
             catch(RuntimeException error) { pointer=null; return; }
-            Toast.makeText(this,"Mouse: săgeți · margini sus/jos: derulare · OK clic · # oprire",Toast.LENGTH_LONG).show();
+            Toast.makeText(this,L.t("Mouse: săgeți · margini sus/jos: derulare · OK clic · # oprire"),Toast.LENGTH_LONG).show();
         } else {
             active=false;
             if(pointer!=null) { try { manager.removeView(pointer); } catch(RuntimeException ignored) { } pointer=null; }
@@ -195,7 +196,7 @@ public final class LeoPointerService extends AccessibilityService {
         if(key==KeyEvent.KEYCODE_POUND) { consumePoundUp=true; setActive(false); return true; }
         if(key==KeyEvent.KEYCODE_STAR) {
             stopMovement();
-            if(event.getRepeatCount()==0) { scroll=!scroll; pointer.invalidate(); Toast.makeText(this,scroll?"Derulare: sus / jos":"Deplasare cursor",Toast.LENGTH_SHORT).show(); }
+            if(event.getRepeatCount()==0) { scroll=!scroll; pointer.invalidate(); Toast.makeText(this,scroll?L.t("Derulare: sus / jos"):L.t("Deplasare cursor"),Toast.LENGTH_SHORT).show(); }
             return true;
         }
         if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {

@@ -7,8 +7,9 @@ JAVA="${LEO_JAVA_HOME:-/usr/lib/jvm/java-8-openjdk-amd64}/bin"
 VCARD="$SRC/out/target/common/obj/JAVA_LIBRARIES/com.android.vcard_intermediates/classes.jar"
 test -f "$VCARD"
 mkdir -p "$BUILD/classes"
+python3 "$TASK_DIR/localization/generate.py"
 "$SRC/out/host/linux-x86/bin/aapt" package -f -M "$TASK_DIR/visual-shell/AndroidManifest.xml" -S "$TASK_DIR/visual-shell/res" -I "$SRC/prebuilts/sdk/27/android.jar" -F "$BUILD/base.apk"
-"$JAVA/javac" -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "$SRC/prebuilts/sdk/27/android.jar" -classpath "$VCARD" -d "$BUILD/classes" "$TASK_DIR/visual-shell/"*.java
+"$JAVA/javac" -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "$SRC/prebuilts/sdk/27/android.jar" -classpath "$VCARD" -d "$BUILD/classes" "$TASK_DIR/visual-shell/"*.java "$TASK_DIR/localization/"*.java
 "$JAVA/jar" cf "$TASK_DIR/output/leo-visual-classes.jar" -C "$BUILD/classes" .
 "$JAVA/java" -jar "$SRC/prebuilts/sdk/tools/lib/dx.jar" --dex --output="$BUILD/classes.dex" "$BUILD/classes" "$VCARD"
 cp "$BUILD/base.apk" "$BUILD/unsigned.apk"

@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -64,7 +65,7 @@ public final class AndroidAppsActivity extends Activity {
             item.label=info.loadLabel(getPackageManager()).toString();
             item.icon=info.loadIcon(getPackageManager()); apps.add(item);
         }
-        final Collator collator=Collator.getInstance(new Locale("ro"));
+        final Collator collator=Collator.getInstance(L.locale());
         Collections.sort(apps,new Comparator<Entry>() {
             public int compare(Entry a,Entry b) {
                 boolean af=stored("favorites").contains(a.component.flattenToString()),bf=stored("favorites").contains(b.component.flattenToString());if(af!=bf)return af?-1:1;int result=collator.compare(a.label,b.label);
@@ -78,7 +79,7 @@ public final class AndroidAppsActivity extends Activity {
     protected void onSaveInstanceState(Bundle state) {
         state.putInt("selected",selected); super.onSaveInstanceState(state);
     }
-    private void menu(){final Entry item=apps.isEmpty()?null:apps.get(selected);new KeypadDialog(this,"Aplicații Android",new String[]{"Adaugă / elimină favoritul","Ascunde / arată selecția",showHidden?"Ascunde intrările ascunse":"Arată și intrările ascunse",favoritesOnly?"Toate aplicațiile":"Doar favorite","Informații aplicație","Aplicații implicite Android"},new KeypadDialog.Action(){public void select(int i){if(i==0||i==1){if(item==null)return;String key=i==0?"favorites":"hidden",id=item.component.flattenToString();java.util.Set<String> ids=new HashSet<String>(stored(key));if(!ids.remove(id))ids.add(id);getSharedPreferences("android-apps",0).edit().putStringSet(key,ids).apply();}else if(i==2)showHidden=!showHidden;else if(i==3)favoritesOnly=!favoritesOnly;else if(i==4){if(item!=null)try{startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:"+item.component.getPackageName())));}catch(RuntimeException e){error="Pagina Android nu este disponibilă";}return;}else{try{startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));}catch(RuntimeException e){error="Configurarea implicitelor nu este disponibilă";}return;}onResumeList();}}).show();}
+    private void menu(){final Entry item=apps.isEmpty()?null:apps.get(selected);new KeypadDialog(this,L.t("Aplicații Android"),new String[]{L.t("Adaugă / elimină favoritul"),L.t("Ascunde / arată selecția"),showHidden?L.t("Ascunde intrările ascunse"):L.t("Arată și intrările ascunse"),favoritesOnly?L.t("Toate aplicațiile"):L.t("Doar favorite"),L.t("Informații aplicație"),L.t("Aplicații implicite Android")},new KeypadDialog.Action(){public void select(int i){if(i==0||i==1){if(item==null)return;String key=i==0?"favorites":"hidden",id=item.component.flattenToString();java.util.Set<String> ids=new HashSet<String>(stored(key));if(!ids.remove(id))ids.add(id);getSharedPreferences("android-apps",0).edit().putStringSet(key,ids).apply();}else if(i==2)showHidden=!showHidden;else if(i==3)favoritesOnly=!favoritesOnly;else if(i==4){if(item!=null)try{startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:"+item.component.getPackageName())));}catch(RuntimeException e){error=L.t("Pagina Android nu este disponibilă");}return;}else{try{startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));}catch(RuntimeException e){error=L.t("Configurarea implicitelor nu este disponibilă");}return;}onResumeList();}}).show();}
     private void onResumeList(){reload();}
     public boolean onKeyDown(int key,KeyEvent event) {
         if(LeoActivity.isJackNavigationNoise(event))return true;
@@ -93,7 +94,7 @@ public final class AndroidAppsActivity extends Activity {
                 try {
                     startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
                         .setComponent(apps.get(selected).component));
-                } catch(RuntimeException unavailable) { error="Nu se poate deschide"; screen.invalidate(); }
+                } catch(RuntimeException unavailable) { error=L.t("Nu se poate deschide"); screen.invalidate(); }
             }
             return true;
         }
@@ -114,7 +115,7 @@ public final class AndroidAppsActivity extends Activity {
         }
         protected void onDraw(Canvas c) {
             c.save(); c.scale(getWidth()/240f,getHeight()/302f); c.drawColor(palette.background);
-            text(c,"Aplicații Android",120,27,18,Color.WHITE,Paint.Align.CENTER);
+            text(c,L.t("Aplicații Android"),120,27,18,Color.WHITE,Paint.Align.CENTER);
             int first=Math.max(0,Math.min(Math.max(0,apps.size()-5),selected-2));
             for(int row=0;row<5 && first+row<apps.size();row++) {
                 int index=first+row; float top=43+row*42;
@@ -123,13 +124,13 @@ public final class AndroidAppsActivity extends Activity {
                 c.save(); c.translate(13,top+5); item.icon.setBounds(0,0,28,28); item.icon.draw(c); c.restore();
                 text(c,fit((stored("favorites").contains(item.component.flattenToString())?"★ ":"")+(stored("hidden").contains(item.component.flattenToString())?"◌ ":"")+item.label,178),49,top+25,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
             }
-            if(apps.isEmpty()) text(c,"Nicio aplicație disponibilă",120,140,14,Color.WHITE,Paint.Align.CENTER);
+            if(apps.isEmpty()) text(c,L.t("Nicio aplicație disponibilă"),120,140,14,Color.WHITE,Paint.Align.CENTER);
             text(c,error.isEmpty()?(apps.isEmpty()?"0 / 0":(selected+1)+" / "+apps.size()):error,
                 120,268,11,0xffd3bddf,Paint.Align.CENTER);
             paint.setColor(palette.bar); c.drawRect(0,276,240,302,paint);
-            text(c,apps.isEmpty()?"":"Deschide",120,293,12,palette.accent,Paint.Align.CENTER);
-            text(c,"Opțiuni",8,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(c,"Înapoi",232,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
+            text(c,apps.isEmpty()?"":L.t("Deschide"),120,293,12,palette.accent,Paint.Align.CENTER);
+            text(c,L.t("Opțiuni"),8,293,11,Color.WHITE,Paint.Align.LEFT);
+            text(c,L.t("Înapoi"),232,293,11,Color.WHITE,Paint.Align.RIGHT); c.restore();
         }
     }
 }

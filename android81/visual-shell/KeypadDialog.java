@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -53,8 +54,8 @@ final class KeypadDialog extends Dialog {
                 paint.setColor(palette.bar); c.drawRect(0,250,240,280,paint);
                 paint.setColor(palette.accent);c.drawRect(0,250,240,251,paint);
                 text(c,(items.length==0?0:selected+1)+" / "+items.length,12,245,10,palette.accent,Paint.Align.LEFT);
-                text(c,items.length==0?"":"Alege",120,270,13,palette.accent,Paint.Align.CENTER);
-                text(c,"Înapoi",233,270,12,Color.WHITE,Paint.Align.RIGHT);
+                text(c,items.length==0?"":L.t("Alege"),120,270,13,palette.accent,Paint.Align.CENTER);
+                text(c,L.t("Înapoi"),233,270,12,Color.WHITE,Paint.Align.RIGHT);
                 c.restore();
             }
         };

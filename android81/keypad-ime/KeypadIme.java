@@ -1,4 +1,5 @@
 package ro.leo.keypad;
+import ro.leo.i18n.L;
 
 import android.inputmethodservice.InputMethodService;
 import android.graphics.Color;
@@ -32,6 +33,7 @@ public final class KeypadIme extends InputMethodService {
     private final Runnable commit=new Runnable() { public void run() { finishLetter(); } };
 
     public View onCreateInputView() {
+        ro.leo.i18n.Language.sync(this);
         strip=new TextView(this); strip.setTextSize(12); strip.setTextColor(Color.WHITE);
         strip.setBackgroundColor(0xff20162f); strip.setGravity(Gravity.CENTER);
         int padding=(int)(5*getResources().getDisplayMetrics().density);
@@ -41,7 +43,7 @@ public final class KeypadIme extends InputMethodService {
     public boolean onEvaluateInputViewShown() { return true; }
     public boolean onShowInputRequested(int flags,boolean changing) { return editing; }
     public void onStartInput(EditorInfo info,boolean restarting) {
-        super.onStartInput(info,restarting);
+        super.onStartInput(info,restarting);ro.leo.i18n.Language.sync(this);
         handler.removeCallbacks(commit); pending=-1; sequence=""; candidate=0; consumed.clear();
         inputClass=info.inputType & InputType.TYPE_MASK_CLASS;
         int variation=info.inputType & InputType.TYPE_MASK_VARIATION;
@@ -59,7 +61,7 @@ public final class KeypadIme extends InputMethodService {
     private void updateStrip() {
         if(strip!=null) strip.setText(inputClass==InputType.TYPE_CLASS_PHONE || inputClass==InputType.TYPE_CLASS_NUMBER
             || inputClass==InputType.TYPE_CLASS_DATETIME ? "123 · Taste numerice"
-            : (mode==0?"abc":mode==1?"ABC":mode==2?"123":mode==3?"T9":"T9 ABC")+" · # mod · "+(sequence.isEmpty()?"0 spațiu":suggestion()+" · "+(candidate%suggestions().size()+1)+"/"+suggestions().size()+" · * următor / ținut: anterior"));
+            : (mode==0?"abc":mode==1?"ABC":mode==2?"123":mode==3?"T9":"T9 ABC")+" · # mod · "+(sequence.isEmpty()?L.t("0 spațiu"):suggestion()+" · "+(candidate%suggestions().size()+1)+"/"+suggestions().size()+L.t(" · * următor / ținut: anterior")));
     }
     private java.util.List<String> suggestions(){if(!sequence.equals(cachedSequence)){cachedWords=personal.candidates(sequence);cachedSequence=sequence;}return cachedWords;}
     private String suggestion() { java.util.List<String> words=suggestions();if(words.isEmpty())return "";String word=words.get(candidate%words.size());return PredictiveDictionary.cased(word,mode,capitalizeSentence); }

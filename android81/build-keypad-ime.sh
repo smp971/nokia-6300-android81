@@ -5,8 +5,9 @@ SRC="${LEO_AOSP_ROOT:-/root/android81-leo/src}"
 BUILD="$(mktemp -d "${TMPDIR:-/tmp}/leo-keypad-build.XXXXXX")"
 JAVA="${LEO_JAVA_HOME:-/usr/lib/jvm/java-8-openjdk-amd64}/bin"
 mkdir -p "$BUILD/classes"
+python3 "$TASK_DIR/localization/generate.py"
 "$SRC/out/host/linux-x86/bin/aapt" package -f -M "$TASK_DIR/keypad-ime/AndroidManifest.xml" -S "$TASK_DIR/keypad-ime/res" -I "$SRC/prebuilts/sdk/27/android.jar" -F "$BUILD/base.apk"
-"$JAVA/javac" -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "$SRC/prebuilts/sdk/27/android.jar" -d "$BUILD/classes" "$TASK_DIR/keypad-ime/"*.java
+"$JAVA/javac" -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "$SRC/prebuilts/sdk/27/android.jar" -d "$BUILD/classes" "$TASK_DIR/keypad-ime/"*.java "$TASK_DIR/localization/"*.java
 "$JAVA/jar" cf "$TASK_DIR/output/leo-keypad-classes.jar" -C "$BUILD/classes" .
 "$JAVA/java" -jar "$SRC/prebuilts/sdk/tools/lib/dx.jar" --dex --output="$BUILD/classes.dex" "$BUILD/classes"
 cp "$BUILD/base.apk" "$BUILD/unsigned.apk"

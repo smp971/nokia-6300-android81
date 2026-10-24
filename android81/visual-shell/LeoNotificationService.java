@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.Notification;
 import android.content.*;
@@ -29,9 +30,9 @@ public final class LeoNotificationService extends NotificationListenerService {
         ArrayList<StatusBarNotification> available=new ArrayList<StatusBarNotification>();for(StatusBarNotification n:snapshot())if(n.getNotification().visibility!=Notification.VISIBILITY_SECRET)available.add(n);
         if(available.isEmpty())return new String[]{"",""};StatusBarNotification item=available.get(Math.floorMod(selected,available.size()));Notification n=item.getNotification();
         android.app.KeyguardManager keyguard=(android.app.KeyguardManager)context.getSystemService(Context.KEYGUARD_SERVICE);
-        if(keyguard!=null&&keyguard.isDeviceLocked()&&n.visibility!=Notification.VISIBILITY_PUBLIC){if(n.publicVersion==null)return new String[]{"Notificare privată","Deblochează pentru conținut"};n=n.publicVersion;}
+        if(keyguard!=null&&keyguard.isDeviceLocked()&&n.visibility!=Notification.VISIBILITY_PUBLIC){if(n.publicVersion==null)return new String[]{L.t("Notificare privată"),L.t("Deblochează pentru conținut")};n=n.publicVersion;}
         CharSequence title=n.extras.getCharSequence(Notification.EXTRA_TITLE),body=n.extras.getCharSequence(Notification.EXTRA_TEXT);
-        return new String[]{clip(title==null?item.getPackageName():title.toString()),mode==2&&body!=null?clip(body.toString()):"Sus / jos · alte notificări"};
+        return new String[]{clip(title==null?item.getPackageName():title.toString()),mode==2&&body!=null?clip(body.toString()):L.t("Sus / jos · alte notificări")};
     }
     private static String clip(String text){return text.length()>34?text.substring(0,33)+"…":text;}
     static final String CHANGED="ro.leo.visual.NOTIFICATIONS_CHANGED";

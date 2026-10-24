@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -29,7 +30,7 @@ public final class MainActivity extends Activity {
     private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.reloadCards();screen.invalidate();}};
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){screen.reloadAppearance();screen.reloadCards();}};
     private int speedKey=-1;
-    private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,"Tasta "+slot+" neatribuită · Contacte → Apelare rapidă",1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
+    private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,L.t("Tasta ")+slot+L.t(" neatribuită · Contacte → Apelare rapidă"),1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
     private final ArrayList<PhoneStateListener> phoneListeners = new ArrayList<PhoneStateListener>();
     private SubscriptionManager subscriptions;
@@ -133,10 +134,10 @@ public final class MainActivity extends Activity {
         return super.onKeyDown(key, event);
     }
     private void options() {
-        new KeypadDialog(this,"Opțiuni",new String[]{"Schimbă fundalul", "Mouse din taste", "Notificări", "Despre",
-                screen.list?"Afișare grilă":"Afișare listă","Configurări rapide","Personalizare","Reordonează aplicațiile","Media curentă","Caută în Leo","Acces rapid Home","Categorii aplicații"}, new KeypadDialog.Action() {
+        new KeypadDialog(this,L.t("Opțiuni"),new String[]{L.t("Schimbă fundalul"), L.t("Mouse din taste"), L.t("Notificări"), L.t("Despre"),
+                screen.list?L.t("Afișare grilă"):L.t("Afișare listă"),L.t("Configurări rapide"),L.t("Personalizare"),L.t("Reordonează aplicațiile"),L.t("Media curentă"),L.t("Caută în Leo"),L.t("Acces rapid Home"),L.t("Categorii aplicații")}, new KeypadDialog.Action() {
               public void select(int which) {
-                if(which==11){new KeypadDialog(MainActivity.this,"Categorii",AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int at){screen.category(at);}}).show();}
+                if(which==11){new KeypadDialog(MainActivity.this,L.t("Categorii"),AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int at){screen.category(at);}}).show();}
                 else if(which==10){startActivity(new Intent(MainActivity.this,QuickHomeActivity.class));}
                 else if(which==9){startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));}
                 else if(which==8){startActivity(new Intent(MainActivity.this,NowPlayingActivity.class));}
@@ -145,11 +146,11 @@ public final class MainActivity extends Activity {
                 }
                 else if (which == 1) {
                     if (!LeoPointerService.toggle()) new AlertDialog.Builder(MainActivity.this)
-                        .setMessage("Serviciul de cursor nu este activat.").setPositiveButton("OK", null).show();
+                        .setMessage(L.t("Serviciul de cursor nu este activat.")).setPositiveButton("OK", null).show();
                 }
                 else if (which == 2) notifications();
                 else if (which == 3) new AlertDialog.Builder(MainActivity.this).setTitle("Leo Visual")
-                    .setMessage("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare.")
+                    .setMessage(L.t("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare."))
                     .setPositiveButton("OK", null).show();
                 else if(which==7)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class).putExtra("order",true));
                 else if(which==6)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class));
@@ -199,7 +200,7 @@ public final class MainActivity extends Activity {
         void category(int value){category=Math.floorMod(value,AppCatalog.CATEGORIES.length);order=AppCatalog.menuOrder(MainActivity.this,category);selected=0;invalidate();}
         int shortcut=-1;
         HomeFavorites.Entry[] favorites=new HomeFavorites.Entry[0];int favoriteIndex;HomeCards.Card[] cards=new HomeCards.Card[0];int cardIndex;
-        void reloadCards(){HomeCards.Card[] next=HomeCards.read(MainActivity.this,System.currentTimeMillis());for(int n=0;n<next.length;n++)if(next[n].type==3&&favorites.length>0){HomeFavorites.Entry f=favorites[Math.min(favoriteIndex,favorites.length-1)];next[n]=new HomeCards.Card(3,"Favorit · "+(favoriteIndex+1)+" / "+favorites.length,f.name,"4 / 6 schimbă · OK deschide");}boolean changed=!HomeCards.signature(cards).equals(HomeCards.signature(next));cards=next;cardIndex=Math.min(cardIndex,Math.max(0,cards.length-1));if(shortcut>=4+cards.length)shortcut=-1;if(changed&&!grid)invalidate();}
+        void reloadCards(){HomeCards.Card[] next=HomeCards.read(MainActivity.this,System.currentTimeMillis());for(int n=0;n<next.length;n++)if(next[n].type==3&&favorites.length>0){HomeFavorites.Entry f=favorites[Math.min(favoriteIndex,favorites.length-1)];next[n]=new HomeCards.Card(3,L.t("Favorit · ")+(favoriteIndex+1)+" / "+favorites.length,f.name,L.t("4 / 6 schimbă · OK deschide"));}boolean changed=!HomeCards.signature(cards).equals(HomeCards.signature(next));cards=next;cardIndex=Math.min(cardIndex,Math.max(0,cards.length-1));if(shortcut>=4+cards.length)shortcut=-1;if(changed&&!grid)invalidate();}
         void openCard(){if(cards.length==0)return;int type=cards[cardIndex].type;if(type==3){if(favorites.length>0)startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("contact_id",favorites[favoriteIndex].id));else startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
         int[] shortcuts={0,2,6,22};
         int[] order=AppCatalog.menuOrder(MainActivity.this,0);
@@ -207,9 +208,9 @@ public final class MainActivity extends Activity {
         Appearance.Palette palette=Appearance.palette(MainActivity.this);
         boolean compactClock,showSims=true,showUnread=true,showDbm=true;
         final SimpleDateFormat timeFormat=new SimpleDateFormat("HH:mm",Locale.getDefault());
-        final SimpleDateFormat dateFormat=new SimpleDateFormat("EEEE, d MMMM",new Locale("ro"));
+        final SimpleDateFormat dateFormat=new SimpleDateFormat("EEEE, d MMMM",L.locale());
         String time = "", date = "", message = "", networkBanner="L E O · ACTIVE STANDBY";
-        final String[] simLabels = {"SIM 1: se verifică", "SIM 2: se verifică"};
+        final String[] simLabels = {L.t("SIM 1: se verifică"), L.t("SIM 2: se verifică")};
         final int[] signalDbm={Integer.MIN_VALUE,Integer.MIN_VALUE};
         final boolean[] inService={false,false};
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
@@ -233,10 +234,10 @@ public final class MainActivity extends Activity {
                 String prefix = "SIM " + (slot+1) + ": ";
                 try {
                     int sim = base.getSimState(slot);
-                    String status = sim == TelephonyManager.SIM_STATE_ABSENT ? "lipsă"
-                        : sim == TelephonyManager.SIM_STATE_PIN_REQUIRED ? "PIN necesar"
-                        : sim == TelephonyManager.SIM_STATE_PUK_REQUIRED ? "PUK necesar"
-                        : sim == TelephonyManager.SIM_STATE_READY ? "se conectează" : "indisponibil";
+                    String status = sim == TelephonyManager.SIM_STATE_ABSENT ? L.t("lipsă")
+                        : sim == TelephonyManager.SIM_STATE_PIN_REQUIRED ? L.t("PIN necesar")
+                        : sim == TelephonyManager.SIM_STATE_PUK_REQUIRED ? L.t("PUK necesar")
+                        : sim == TelephonyManager.SIM_STATE_READY ? L.t("se conectează") : L.t("indisponibil");
                     simLabels[slot] = prefix + status;
                     if (sim != TelephonyManager.SIM_STATE_READY) continue;
                     List<SubscriptionInfo> active = ((SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE)).getActiveSubscriptionInfoList();
@@ -247,22 +248,22 @@ public final class MainActivity extends Activity {
                         if(carrier == null || carrier.isEmpty()) carrier = info.getCarrierName() == null ? "" : info.getCarrierName().toString();
                         ServiceState service = phone.getServiceState();
                         String name = carrier.isEmpty() ? "operator" : carrier;
-                        if(service == null) simLabels[slot] = prefix + "se verifică";
+                        if(service == null) simLabels[slot] = prefix + L.t("se verifică");
                         else if(service.getState() == ServiceState.STATE_IN_SERVICE) {
                             inService[slot]=true;
                             int type = phone.getDataNetworkType();
                             String rat = type == TelephonyManager.NETWORK_TYPE_LTE ? " · 4G"
                                 : (type == TelephonyManager.NETWORK_TYPE_UMTS || type == TelephonyManager.NETWORK_TYPE_HSDPA
                                 || type == TelephonyManager.NETWORK_TYPE_HSUPA || type == TelephonyManager.NETWORK_TYPE_HSPA
-                                || type == TelephonyManager.NETWORK_TYPE_HSPAP) ? " · 3G" : " · conectat";
+                                || type == TelephonyManager.NETWORK_TYPE_HSPAP) ? " · 3G" : L.t(" · conectat");
                             simLabels[slot] = prefix + name + rat;
-                        } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = prefix + "doar urgențe";
-                        else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = prefix + "radio oprit";
-                        else simLabels[slot] = prefix + "fără serviciu";
+                        } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = prefix + L.t("doar urgențe");
+                        else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = prefix + L.t("radio oprit");
+                        else simLabels[slot] = prefix + L.t("fără serviciu");
                         break;
                     }
-                } catch(SecurityException ignored) { simLabels[slot] = prefix + "acces neacordat"; }
-                catch(RuntimeException ignored) { simLabels[slot] = prefix + "indisponibil"; }
+                } catch(SecurityException ignored) { simLabels[slot] = prefix + L.t("acces neacordat"); }
+                catch(RuntimeException ignored) { simLabels[slot] = prefix + L.t("indisponibil"); }
             }
         }
         boolean key(int key, int repeat) {
@@ -349,10 +350,10 @@ public final class MainActivity extends Activity {
                 }
             }
             if (intent == null || intent.resolveActivity(getPackageManager()) == null) {
-                message = names[index] + ": indisponibil"; invalidate(); return;
+                message = names[index] + L.t(": indisponibil"); invalidate(); return;
             }
             try { startActivity(intent); }
-            catch (RuntimeException ignored) { message = "Nu se poate deschide"; invalidate(); }
+            catch (RuntimeException ignored) { message = L.t("Nu se poate deschide"); invalidate(); }
         }
         void text(Canvas c, String s, float x, float y, float size, int color, Paint.Align align) {
             p.setShader(null); p.setStyle(Paint.Style.FILL); p.setTypeface(regular);
@@ -423,9 +424,9 @@ public final class MainActivity extends Activity {
                 text(output,message,120,261,12,Color.WHITE,Paint.Align.CENTER);
             }
             p.setColor(palette.bar); output.drawRect(0,276,240,302,p);
-            text(output,grid?"Opțiuni":"Notificări",8,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(output,grid?"Deschide":shortcut>=0?"Deschide":"Meniu",120,293,12,palette.selection,Paint.Align.CENTER);
-            text(output,grid||shortcut>=0?"Înapoi":"Contacte",232,293,11,Color.WHITE,Paint.Align.RIGHT);
+            text(output,grid?L.t("Opțiuni"):L.t("Notificări"),8,293,11,Color.WHITE,Paint.Align.LEFT);
+            text(output,grid?L.t("Deschide"):shortcut>=0?L.t("Deschide"):L.t("Meniu"),120,293,12,palette.selection,Paint.Align.CENTER);
+            text(output,grid||shortcut>=0?L.t("Înapoi"):L.t("Contacte"),232,293,11,Color.WHITE,Paint.Align.RIGHT);
             output.restore();UiMetrics.draw(android.os.SystemClock.elapsedRealtimeNanos()-drawStart);
         }
     }

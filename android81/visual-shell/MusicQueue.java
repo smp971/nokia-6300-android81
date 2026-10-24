@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 import java.util.*;
 /** Bounded in-memory queue; no media I/O or Android dependencies. */
 final class MusicQueue {
@@ -18,5 +19,5 @@ final class MusicQueue {
 
     boolean remove(int at){if(at<0||at>=sources.size())return false;history.clear();boolean current=at==index;sources.remove(at);titles.remove(at);if(sources.isEmpty())index=-1;else if(at<index)index--;else if(index>=sources.size())index=sources.size()-1;return current;}
     void move(int from,int to){if(from<0||to<0||from>=sources.size()||to>=sources.size()||from==to)return;history.clear();String uri=sources.remove(from),title=titles.remove(from);sources.add(to,uri);titles.add(to,title);if(index==from)index=to;else if(from<index&&to>=index)index--;else if(from>index&&to<=index)index++;}
-    String mode(){return (shuffle?"Aleatoriu":"În ordine")+" · "+(repeat==2?"Repetă piesa":repeat==1?"Repetă lista":"Fără repetare");}
+    String mode(){return (shuffle?L.t("Aleatoriu"):L.t("În ordine"))+" · "+(repeat==2?L.t("Repetă piesa"):repeat==1?L.t("Repetă lista"):L.t("Fără repetare"));}
 }

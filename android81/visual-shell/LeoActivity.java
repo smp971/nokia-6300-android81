@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -104,10 +105,10 @@ abstract class LeoActivity extends Activity {
             public void onItemClick(AdapterView<?> p,View v,int i,long id) { choice.pick(i); }
         });
         if(values.isEmpty()) {
-            TextView empty=text("Nicio intrare",18); empty.setGravity(Gravity.CENTER);
+            TextView empty=text(L.t("Nicio intrare"),18); empty.setGravity(Gravity.CENTER);
             root.addView(empty,new LinearLayout.LayoutParams(-1,0,1));
         } else root.addView(list,new LinearLayout.LayoutParams(-1,0,1));
-        footer(action,values.isEmpty()?"":"Deschide","Înapoi");
+        footer(action,values.isEmpty()?"":L.t("Deschide"),L.t("Înapoi"));
         list.requestFocus(); list.setSelection(focused[0]);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }

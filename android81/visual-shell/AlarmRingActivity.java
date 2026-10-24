@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.*;
@@ -13,8 +14,8 @@ public final class AlarmRingActivity extends LeoActivity {
         super.onCreate(state);
         LeoPointerService.prepareForAlarm();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED|WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        begin("Alarmă"); TextView label=text(getIntent().getStringExtra("label"),28); label.setGravity(Gravity.CENTER);
-        root.addView(label,new LinearLayout.LayoutParams(-1,0,1)); left=new Runnable() { public void run() { int id=getIntent().getIntExtra("alarm_id",-1);if(id>=0)AlarmScheduler.snooze(AlarmRingActivity.this,id);stop(); } }; footer(getIntent().getIntExtra("alarm_id",-1)>=0?"Amână":"Oprește","Oprește","Oprește");
+        begin(L.t("Alarmă")); TextView label=text(getIntent().getStringExtra("label"),28); label.setGravity(Gravity.CENTER);
+        root.addView(label,new LinearLayout.LayoutParams(-1,0,1)); left=new Runnable() { public void run() { int id=getIntent().getIntExtra("alarm_id",-1);if(id>=0)AlarmScheduler.snooze(AlarmRingActivity.this,id);stop(); } }; footer(getIntent().getIntExtra("alarm_id",-1)>=0?L.t("Amână"):L.t("Oprește"),L.t("Oprește"),L.t("Oprește"));
     }
     protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);recreate();}
     private void stop() { stopService(new Intent(this,AlarmRingService.class)); finish(); }

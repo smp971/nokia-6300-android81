@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 import android.content.*;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -65,7 +66,7 @@ public final class KeypadLockActivity extends LeoActivity {
         boolean charging;
         String time="",date="";
         String[] preview={"",""};HomeCards.Card[] cards=new HomeCards.Card[0];
-        final String[] sims={"SIM 1 · se verifică","SIM 2 · se verifică"};
+        final String[] sims={L.t("SIM 1 · se verifică"),L.t("SIM 2 · se verifică")};
         LockView(){
             super(KeypadLockActivity.this);setFocusable(true);setFocusableInTouchMode(true);requestFocus();
             int theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
@@ -73,24 +74,24 @@ public final class KeypadLockActivity extends LeoActivity {
         }
         void refresh(){
             Date now=new Date();time=android.text.format.DateFormat.getTimeFormat(KeypadLockActivity.this).format(now);
-            date=new java.text.SimpleDateFormat("EEEE, d MMMM",new Locale("ro")).format(now);
+            date=new java.text.SimpleDateFormat("EEEE, d MMMM",L.locale()).format(now);
             cards=HomeCards.lockInfo(KeypadLockActivity.this,System.currentTimeMillis());
             preview=LeoNotificationService.preview(KeypadLockActivity.this,previewIndex);
             TelephonyManager base=(TelephonyManager)getSystemService(TELEPHONY_SERVICE);
             List<SubscriptionInfo> active=null;
             try{active=SubscriptionManager.from(KeypadLockActivity.this).getActiveSubscriptionInfoList();}catch(RuntimeException ignored){}
             for(int slot=0;slot<2;slot++){
-                String prefix="SIM "+(slot+1)+" · ";sims[slot]=prefix+"indisponibil";
+                String prefix="SIM "+(slot+1)+" · ";sims[slot]=prefix+L.t("indisponibil");
                 try{
                     int state=base.getSimState(slot);
-                    if(state==TelephonyManager.SIM_STATE_ABSENT){sims[slot]=prefix+"lipsă";continue;}
-                    if(state==TelephonyManager.SIM_STATE_PIN_REQUIRED || state==TelephonyManager.SIM_STATE_PUK_REQUIRED){sims[slot]=prefix+"SIM blocat";continue;}
-                    sims[slot]=prefix+"se conectează";
+                    if(state==TelephonyManager.SIM_STATE_ABSENT){sims[slot]=prefix+L.t("lipsă");continue;}
+                    if(state==TelephonyManager.SIM_STATE_PIN_REQUIRED || state==TelephonyManager.SIM_STATE_PUK_REQUIRED){sims[slot]=prefix+L.t("SIM blocat");continue;}
+                    sims[slot]=prefix+L.t("se conectează");
                     if(active!=null)for(SubscriptionInfo sim:active)if(sim.getSimSlotIndex()==slot){
                         TelephonyManager phone=base.createForSubscriptionId(sim.getSubscriptionId());ServiceState service=phone.getServiceState();
                         if(service==null)break;
                         if(service.getState()==ServiceState.STATE_IN_SERVICE){String operator=phone.getNetworkOperatorName();if(operator==null || operator.isEmpty())operator=String.valueOf(sim.getCarrierName());sims[slot]=prefix+operator+(phone.getDataNetworkType()==TelephonyManager.NETWORK_TYPE_LTE?" · 4G":"");}
-                        else sims[slot]=prefix+(service.getState()==ServiceState.STATE_EMERGENCY_ONLY?"doar urgențe":service.getState()==ServiceState.STATE_POWER_OFF?"radio oprit":"fără serviciu");
+                        else sims[slot]=prefix+(service.getState()==ServiceState.STATE_EMERGENCY_ONLY?L.t("doar urgențe"):service.getState()==ServiceState.STATE_POWER_OFF?L.t("radio oprit"):L.t("fără serviciu"));
                         break;
                     }
                 }catch(RuntimeException ignored){}
@@ -112,11 +113,11 @@ public final class KeypadLockActivity extends LeoActivity {
             paint.setColor(Color.WHITE);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.2f);c.drawRoundRect(new RectF(205,13,228,24),2,2,paint);paint.setStyle(Paint.Style.FILL);c.drawRect(229,16,231,21,paint);c.drawRect(207,15,207+19*battery/100f,22,paint);
             label(c,time,120,76,43,Color.WHITE,Paint.Align.CENTER);label(c,date,120,98,13,0xffd1e2e5,Paint.Align.CENTER);
             label(c,sims[0],120,119,11,0xffd1e2e5,Paint.Align.CENTER);label(c,sims[1],120,136,11,0xffd1e2e5,Paint.Align.CENTER);label(c,UnreadState.label(),120,154,11,Color.WHITE,Paint.Align.CENTER);
-            if(getSharedPreferences("appearance",0).getBoolean("lock-info",true)){for(int i=0;i<2;i++){float x=12+i*112;paint.setColor(palette.card);c.drawRoundRect(x,163,x+104,207,7,7,paint);String title=i==0?"Meteo · cache":"Următoarea alarmă",value="Indisponibil";for(HomeCards.Card card:cards)if(card.type==i){value=card.main;break;}paint.setTextSize(11);int limit=paint.breakText(value,true,94,null);if(limit<value.length())value=value.substring(0,Math.max(0,limit-1))+"…";label(c,title,x+7,178,9,palette.accent,Paint.Align.LEFT);label(c,value,x+7,197,11,Color.WHITE,Paint.Align.LEFT);}}
+            if(getSharedPreferences("appearance",0).getBoolean("lock-info",true)){for(int i=0;i<2;i++){float x=12+i*112;paint.setColor(palette.card);c.drawRoundRect(x,163,x+104,207,7,7,paint);String title=i==0?L.t("Meteo · cache"):L.t("Următoarea alarmă"),value=L.t("Indisponibil");for(HomeCards.Card card:cards)if(card.type==i){value=card.main;break;}paint.setTextSize(11);int limit=paint.breakText(value,true,94,null);if(limit<value.length())value=value.substring(0,Math.max(0,limit-1))+"…";label(c,title,x+7,178,9,palette.accent,Paint.Align.LEFT);label(c,value,x+7,197,11,Color.WHITE,Paint.Align.LEFT);}}
             PlaybackService music=PlaybackService.instance;boolean fm=FmService.playing&&(music==null||!music.playing()),hasMusic=music!=null&&!music.queue.sources.isEmpty(),showMedia=getSharedPreferences("appearance",0).getBoolean("lock-media",true)&&(hasMusic||fm);
-            if(showMedia||!preview[0].isEmpty()){paint.setColor(palette.card);c.drawRoundRect(12,215,228,263,7,7,paint);if(showMedia){Bitmap art=fm?null:music.cover();if(art!=null&&!art.isRecycled()){paint.setColor(Color.WHITE);c.drawBitmap(art,null,new RectF(18,221,54,257),paint);}else{paint.setColor(palette.accent);c.drawCircle(36,239,15,paint);paint.setColor(palette.background);c.drawCircle(36,239,6,paint);}String title=fm?(FmService.stationName.isEmpty()?String.format(Locale.ROOT,"%.1f MHz",FmService.frequency/1000f):FmService.stationName):PlaybackService.title;paint.setTextSize(12);int n=paint.breakText(title,true,160,null);if(n<title.length())title=title.substring(0,Math.max(0,n-1))+"…";label(c,title,62,233,12,Color.WHITE,Paint.Align.LEFT);label(c,"4 ◀  5 "+(fm?"stop":music.playing()?"pauză":"redă")+"  6 ▶",62,251,11,palette.accent,Paint.Align.LEFT);}else{label(c,preview[0],120,233,12,Color.WHITE,Paint.Align.CENTER);label(c,preview[1],120,251,11,palette.accent,Paint.Align.CENTER);}}
-            paint.setColor(palette.bar);c.drawRoundRect(12,270,228,302,7,7,paint);label(c,armed>0?"Apasă * în 3 secunde":"Soft stânga, apoi *",120,291,14,Color.WHITE,Paint.Align.CENTER);
-            label(c,"Deblochează",10,315,11,Color.WHITE,Paint.Align.LEFT);label(c,"*",230,315,14,Color.WHITE,Paint.Align.RIGHT);
+            if(showMedia||!preview[0].isEmpty()){paint.setColor(palette.card);c.drawRoundRect(12,215,228,263,7,7,paint);if(showMedia){Bitmap art=fm?null:music.cover();if(art!=null&&!art.isRecycled()){paint.setColor(Color.WHITE);c.drawBitmap(art,null,new RectF(18,221,54,257),paint);}else{paint.setColor(palette.accent);c.drawCircle(36,239,15,paint);paint.setColor(palette.background);c.drawCircle(36,239,6,paint);}String title=fm?(FmService.stationName.isEmpty()?String.format(Locale.ROOT,"%.1f MHz",FmService.frequency/1000f):FmService.stationName):PlaybackService.title;paint.setTextSize(12);int n=paint.breakText(title,true,160,null);if(n<title.length())title=title.substring(0,Math.max(0,n-1))+"…";label(c,title,62,233,12,Color.WHITE,Paint.Align.LEFT);label(c,"4 ◀  5 "+(fm?"stop":music.playing()?L.t("pauză"):L.t("redă"))+"  6 ▶",62,251,11,palette.accent,Paint.Align.LEFT);}else{label(c,preview[0],120,233,12,Color.WHITE,Paint.Align.CENTER);label(c,preview[1],120,251,11,palette.accent,Paint.Align.CENTER);}}
+            paint.setColor(palette.bar);c.drawRoundRect(12,270,228,302,7,7,paint);label(c,armed>0?L.t("Apasă * în 3 secunde"):L.t("Soft stânga, apoi *"),120,291,14,Color.WHITE,Paint.Align.CENTER);
+            label(c,L.t("Deblochează"),10,315,11,Color.WHITE,Paint.Align.LEFT);label(c,"*",230,315,14,Color.WHITE,Paint.Align.RIGHT);
             c.restore();
         }
         public boolean onTouchEvent(android.view.MotionEvent event){return true;}

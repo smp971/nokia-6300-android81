@@ -32,6 +32,11 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 ## Ce este nou
 
+**Leo în engleză și română:** limba interfeței se alege din Setări → Aspect →
+Personalizare → Language / Limbă. Catalog comun pentru shell, aplicații și
+mesajele tastaturii; datele personale și dicționarul T9 românesc sunt păstrate.
+[Traducere, compilare și capturi](android81/LOCALIZATION.md).
+
 **Interfață și pornire:** antete comune în aplicațiile Leo, meniu de oprire din
 taste și inițializare radio începută la aproximativ 26 s, față de 42 s anterior.
 Ambele SIM-uri s-au înregistrat după reboot. Alegerea SIM-ului inițiază direct
@@ -246,7 +251,7 @@ de documentație.
 | **Meniu și accesibilitate** | Meniu global și mouse verificate în afara shell-ului | Probă peste Setări Android: deschidere meniu, pornire/oprire cursor, deplasare și derulare la margine. Testul de captură UI păstrează serviciul activ. [Audit UI](android81/LEO-UI-FOUNDATION.md). |
 | **Telefonie** | Apeluri și SMS SIM 1 confirmate în probele anterioare | Interfață proprie Leo Night pe Android Telecom. SIM 2 apeluri/SMS, DTMF și IMS au scenarii separate; întreruperile USB în timpul unor apeluri sunt încă documentate. |
 | **Media** | Muzică, FM/RDS, căști și A2DP cu confirmări reale | Microfonul Bluetooth, HFP și toate variantele de codec nu sunt validate. Fișierele media de probă nu echivalează cu suport universal pentru orice profil. |
-| **Surse** | 162 fișiere Java în shell, 36 de fișiere Java de probe Android și 5 Java host | Inventar de fișiere, nu acoperire a testelor; tastatura și uneltele native sunt separate. |
+| **Surse** | 166 fișiere Java în shell, 37 de fișiere Java de probe Android și 5 Java host; modul comun de traducere separat | Inventar de fișiere, nu acoperire a testelor; tastatura și uneltele native sunt separate. |
 | **Recompilare** | 590 de proiecte AOSP fixate la SHA, patch-uri și rețete în repository | Rebuild integral pe PC curat nevalidat. Dump-ul și componentele proprietare sunt intrări private separate. |
 | **Verificări** | Probe automate locale și confirmări hardware păstrate distinct | 77 de verificări Android au trecut în etapa 0.4 (32 fluxuri, 16 organizator, 11 browser, 18 PocketSuite). Ulterior: 13 verificări ale adaptorului camerei cu HAL fictiv, 18 PocketSuite reverificate, 16 UI Foundation și 86 Maturity în etapa 0.5; cele 16 UI Foundation au fost reverificate și pe 0.5. Sunt rulări diferite, cu suprapuneri; nu se însumează ca o suită unică. |
 | **Livrare** | Pachet local de actualizare a celor două aplicații, cu hash-uri verificate | Snapshot-ul recent a fost colectat din APK-urile construite (`rebuilt=false` în manifestul pachetului). Nu este ROM complet și nu include runtime-ul proprietar al camerei. |

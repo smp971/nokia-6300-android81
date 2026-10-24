@@ -1,11 +1,12 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 import android.content.Context;
 import android.graphics.*;
 import android.util.AtomicFile;
 import java.io.*;
 /** Four original, deterministic wallpapers. No downloaded artwork or animation. */
 final class StockWallpapers {
-    static final String[] NAMES={"Aurora mov","Orbită albastră","Valuri de jad","Apus geometric"};
+    static final String[] NAMES=L.array(new String[]{"Aurora mov","Orbită albastră","Valuri de jad","Apus geometric"});
     static void draw(Canvas c,int kind,float width,float height){
         c.save();c.scale(width/240f,height/302f);Paint p=new Paint(3);Path path=new Path();
         int[][] colors={{0xff120e35,0xff713b9c,0xffdf81b3},{0xff031529,0xff124887,0xff50afc4},{0xff082a2d,0xff257263,0xff93c5aa},{0xff321728,0xffa74d68,0xffffb77c}};

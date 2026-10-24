@@ -1,4 +1,5 @@
 package ro.leo.visual;
+import ro.leo.i18n.L;
 import android.content.*;
 import android.database.*;
 import android.os.Handler;
@@ -23,5 +24,5 @@ final class UnreadState {
     static void readThread(final Context c,final String address,final long through){readThread(c,address,through,null);}
     static void readThread(final Context c,final String address,final long through,final Runnable done){worker.execute(new Runnable(){public void run(){try(SmsStore store=new SmsStore(c)){ContentValues v=new ContentValues();v.put("unread",0);store.getWritableDatabase().update("inbox",v,"address=? AND date<=?",new String[]{address,""+through});try(Cursor row=store.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM inbox WHERE address=? AND unread=1",new String[]{address})){if(row.moveToFirst()&&row.getInt(0)==0)((android.app.NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE)).cancel("leo-sms",address.hashCode());}}catch(RuntimeException ignored){}finally{refresh(c);if(done!=null)done.run();}}});}
     static void readCalls(Context c,long through){SharedPreferences p=c.getSharedPreferences("unread",0);p.edit().putLong("calls_seen",Math.max(through,p.getLong("calls_seen",0))).apply();refresh(c);}
-    static String label(){int s=sms,n=calls;return s+(s==1?" SMS nou · ":" SMS noi · ")+n+(n==1?" apel pierdut":" apeluri pierdute");}
+    static String label(){int s=sms,n=calls;return s+(s==1?L.t(" SMS nou · "):L.t(" SMS noi · "))+n+(n==1?L.t(" apel pierdut"):L.t(" apeluri pierdute"));}
 }
