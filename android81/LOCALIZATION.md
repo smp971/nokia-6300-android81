@@ -64,7 +64,10 @@ of this update.
   locale, call/network status labels without a real call, English header and
   softkeys, unchanged user-authored Romanian text, app order, theme and input
   mode. The test restores its previous language preference.
-- 30 UI foundation checks passed in Romanian after localization.
+- 30 UI foundation checks passed in both Romanian and English after localization.
+  The fixture synchronizes language initialization on the main thread and holds
+  a bounded display wake lock while measuring views. It releases the wake lock
+  on exit; it does not change the screen timeout or any saved display setting.
 - Host checks passed: 137 unit-conversion, 484 prediction-dictionary, 275 keypad,
   17 browser, 28 pocket-suite, 36 organizer and 10 project-algorithm assertions.
 - Manual language activation and captures are documented with the installed

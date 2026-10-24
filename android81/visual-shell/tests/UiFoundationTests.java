@@ -1,5 +1,6 @@
 package ro.leo.visual;
 import ro.leo.i18n.L;
+import ro.leo.i18n.Language;
 
 import android.app.*;
 import android.content.*;
@@ -17,9 +18,15 @@ public final class UiFoundationTests extends Instrumentation {
     private ListView list;
     private View content,bar;
     private int count;
+    private PowerManager.WakeLock display;
     private void check(boolean ok,String message){if(!ok)throw new AssertionError(message);checks++;}
     public void onCreate(Bundle b){start();}
     public void onStart(){Bundle result=new Bundle();try{
+        // Instrumentation starts on a worker; synchronize with Application's
+        // locale setup before comparing a translated value with another one.
+        runOnMainSync(new Runnable(){public void run(){Language.sync(getTargetContext());}});
+        PowerManager power=(PowerManager)getTargetContext().getSystemService(android.content.Context.POWER_SERVICE);
+        display=power.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,"Leo:ui-fixture");display.acquire(45000);
         check(NetworkStartup.label("preparing",false,false,24000).equals(L.t("REȚEA · PORNEȘTE MODEMUL")),"pre-registration modem stage");
         check(NetworkStartup.label("started",false,false,40000).equals(L.t("REȚEA · CAUTĂ OPERATORUL")),"started RIL does not imply registered service");
         check(NetworkStartup.label("started",true,false,40000).equals(L.t("L E O · CONECTAT")),"registration supersedes boot stage");
@@ -79,6 +86,6 @@ public final class UiFoundationTests extends Instrumentation {
         check(activity.isFinishing(),"continue returns from power menu with keypad");
         result.putString("result","PASS "+checks+" UI foundation checks");
     }catch(Throwable e){result.putString("error",android.util.Log.getStackTraceString(e));}
-    finally{if(activity!=null)runOnMainSync(new Runnable(){public void run(){activity.finish();}});}
+    finally{if(activity!=null)runOnMainSync(new Runnable(){public void run(){activity.finish();}});if(display!=null&&display.isHeld())display.release();}
     finish(result.containsKey("error")?Activity.RESULT_CANCELED:Activity.RESULT_OK,result);}
 }
