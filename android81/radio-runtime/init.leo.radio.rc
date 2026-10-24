@@ -50,5 +50,11 @@ service leo_rild2 /system/vendor/bin/hw/rild -c 2 -l /system/vendor/leo-radio/li
     seclabel u:r:init:s0
     disabled
 
+# post-fs-data audio preload has completed before persistent properties load.
+# Do not wait for HOME/framework boot_completed to begin modem registration.
+on property:ro.persistent_properties.ready=true
+    start leo_radio_setup
+
+# Fallback for boot environments which do not publish persistent-ready.
 on property:sys.boot_completed=1
     start leo_radio_setup

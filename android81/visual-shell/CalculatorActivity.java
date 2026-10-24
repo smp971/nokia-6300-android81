@@ -73,7 +73,7 @@ public final class CalculatorActivity extends Activity {
         }
         final RetroStyle art=new RetroStyle();
         protected void onDraw(Canvas c) {
-            c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);art.title(c,"LEO CALC",palette.accent);
+            c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);UiChrome.header(c,"Calculator Leo",palette,art.p);
             art.panel(c,10,54,230,149,0xffd4e9c6,0xff8eaa91);
             art.text(c,"CALCULATOR  /  LEO CLASSIC",22,73,10,0xff314c40,Paint.Align.LEFT);
             String shown=expression.isEmpty()?"0":expression.replace('*','×').replace('/','÷');

@@ -41,7 +41,7 @@ public final class MainActivity extends Activity {
     private final Runnable clock = new Runnable() {
         public void run() {
             screen.refresh();
-            handler.postDelayed(this, 60000 - System.currentTimeMillis() % 60000);
+            handler.postDelayed(this,android.os.SystemClock.elapsedRealtime()<180000&&(!screen.inService[0]||!screen.inService[1])?2000:60000-System.currentTimeMillis()%60000);
         }
     };
     public void onCreate(Bundle state) {
@@ -208,7 +208,7 @@ public final class MainActivity extends Activity {
         boolean compactClock,showSims=true,showUnread=true,showDbm=true;
         final SimpleDateFormat timeFormat=new SimpleDateFormat("HH:mm",Locale.getDefault());
         final SimpleDateFormat dateFormat=new SimpleDateFormat("EEEE, d MMMM",new Locale("ro"));
-        String time = "", date = "", message = "";
+        String time = "", date = "", message = "", networkBanner="L E O · ACTIVE STANDBY";
         final String[] simLabels = {"SIM 1: se verifică", "SIM 2: se verifică"};
         final int[] signalDbm={Integer.MIN_VALUE,Integer.MIN_VALUE};
         final boolean[] inService={false,false};
@@ -216,14 +216,15 @@ public final class MainActivity extends Activity {
         public boolean isOpaque(){return true;}
         void refresh() {
             reloadCards();
-            String previousTime=time,previousDate=date,first=simLabels[0],second=simLabels[1];
+            String previousTime=time,previousDate=date,first=simLabels[0],second=simLabels[1],previousBanner=networkBanner;
             java.util.TimeZone zone=java.util.TimeZone.getDefault();timeFormat.setTimeZone(zone);dateFormat.setTimeZone(zone);
             Date now = new Date();
             time = timeFormat.format(now);
             date = dateFormat.format(now);
             updateSims();
+            networkBanner=NetworkStartup.label(NetworkStartup.stage(),inService[0]||inService[1],Settings.Global.getInt(getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0)!=0,android.os.SystemClock.elapsedRealtime());
             // Telemetry is cached while the grid is visible; it has no pixels there.
-            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)))invalidate();
+            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)||!networkBanner.equals(previousBanner)))invalidate();
         }
         void updateSims() {
             TelephonyManager base = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
@@ -372,7 +373,7 @@ public final class MainActivity extends Activity {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
                 boolean cardLayout=cards.length>0,small=compactClock||cardLayout;
                 round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);
-                text(output,"L E O  ·  ACTIVE STANDBY",120,27,10,0xffeee8fa,Paint.Align.CENTER);
+                text(output,networkBanner,120,27,10,0xffeee8fa,Paint.Align.CENTER);
                 text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);
                 text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);
                 for(int slot=0;showSims&&slot<2;slot++) {

@@ -18,7 +18,13 @@ def run(*args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--install', action='store_true')
+    parser.add_argument('--startup', action='store_true', help='Also update early radio startup script and init triggers; takes effect on reboot')
     args = parser.parse_args()
+    if args.startup:
+        FILES.update({
+            '/system/vendor/leo-radio/start.sh': (ROOT/'radio-runtime/start.sh', '755'),
+            '/system/etc/init/leo-radio.rc': (ROOT/'radio-runtime/init.leo.radio.rc', '644'),
+        })
     expected = {target: hashlib.sha256(source.read_bytes()).hexdigest()
                 for target, (source, _) in FILES.items()}
     if not args.install:

@@ -39,16 +39,16 @@ abstract class LeoActivity extends Activity {
         listTitle=null;listRows=null;listAdapter=null;
         palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
-        TextView heading=text(title,18); heading.setTypeface(android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.NORMAL));heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        TextView heading=text(title,18); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
         heading.setBackgroundColor(palette.card);
-        root.addView(heading,new LinearLayout.LayoutParams(-1,dp(38)));
+        root.addView(heading,new LinearLayout.LayoutParams(-1,dp(UiChrome.HEADER_DP)));
         View accent=new View(this);accent.setBackgroundColor(Appearance.mix(palette.card,palette.accent,.35f));root.addView(accent,new LinearLayout.LayoutParams(-1,dp(1)));
     }
     void footer(String a,String b,String c) {
         // Updating labels must not detach the content (especially a camera SurfaceView).
         boolean attach=softkeyBar==null;
-        if(attach){softkeyBar=new LinearLayout(this);softkeyBar.setBackgroundColor(palette.bar);}
+        if(attach){softkeyBar=new LinearLayout(this);softkeyBar.setBackgroundColor(palette.bar);softkeyBar.setPadding(0,dp(1),0,0);}
         LinearLayout bar=softkeyBar;
         String[] values={a,b,c};
         for(int i=0;i<3;i++) {
@@ -58,7 +58,7 @@ abstract class LeoActivity extends Activity {
             label.setAutoSizeTextTypeUniformWithConfiguration(9,Math.round(12*Appearance.textScale(this)),1,android.util.TypedValue.COMPLEX_UNIT_SP);
             if(i==1)label.setTextColor(palette.accent);
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-            if(attach)bar.addView(label,new LinearLayout.LayoutParams(0,dp(32),1));
+            if(attach)bar.addView(label,new LinearLayout.LayoutParams(0,dp(UiChrome.FOOTER_DP),1));
         }
         if(attach){root.addView(bar);setContentView(root);}
         if(!form) root.post(new Runnable() { public void run() {
@@ -80,6 +80,7 @@ abstract class LeoActivity extends Activity {
                 if(reuse instanceof TextView) label=(TextView)reuse;
                 else {
                     label=text("",17); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
+                    label.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_selected},new int[]{}},new int[]{palette.ink,Color.WHITE}));
                     label.setPadding(dp(10),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);
                     android.graphics.drawable.StateListDrawable surfaces=new android.graphics.drawable.StateListDrawable();
                     android.graphics.drawable.GradientDrawable selectedSurface=Appearance.surface(palette.selection,dp(4));selectedSurface.setStroke(dp(1),palette.accent);
@@ -114,7 +115,7 @@ abstract class LeoActivity extends Activity {
     private CharSequence rowText(String value){
         android.text.SpannableString styled=new android.text.SpannableString(value);
         int split=value.indexOf('\n');
-        if(split>=0&&split<value.length()-1)styled.setSpan(new android.text.style.RelativeSizeSpan(.82f),split+1,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if(split>=0&&split<value.length()-1){styled.setSpan(new android.text.style.RelativeSizeSpan(.82f),split+1,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);styled.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),0,split,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);}
         return styled;
     }
     void refreshRows(){if(listAdapter!=null)listAdapter.notifyDataSetChanged();}
@@ -123,7 +124,6 @@ abstract class LeoActivity extends Activity {
     private void paintSelection(View row,boolean selected) {
         if(!(row instanceof TextView)) return;
         row.setSelected(selected);
-        ((TextView)row).setTextColor(selected?palette.ink:Color.WHITE);
     }
     LinearLayout fields(String title) {
         begin(title); form=true;

@@ -100,8 +100,9 @@ public final class LeoPointerService extends AccessibilityService {
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide meniul","Acum se redă","Aplicații recente","Închide aplicația curentă"},new KeypadDialog.Action() {
+            "Meniu Leo",new String[]{"Notificări",active?"Oprește mouse-ul":"Mouse din taste","Acasă","Setări Leo","Blochează tastele","Configurări rapide","Închide meniul","Acum se redă","Aplicații recente","Închide aplicația curentă","Pornire și oprire"},new KeypadDialog.Action() {
                 public void select(int which) {
+                    if(which==10){openPowerMenu();return;}
                     if(which==9){closeForeground();return;}
                     if(which==8){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,RecentAppsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}
                     if(which==7) startActivity(new android.content.Intent(LeoPointerService.this,NowPlayingActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -163,6 +164,7 @@ public final class LeoPointerService extends AccessibilityService {
     }
     protected boolean onKeyEvent(KeyEvent event) {
         if(LeoActivity.isJackNavigationNoise(event)) return true;
+        if(PowerMenuActivity.visible)return false;
         int key=event.getKeyCode();
         boolean guard=KeypadLockActivity.locked(this);
         boolean call=false;
@@ -226,7 +228,15 @@ public final class LeoPointerService extends AccessibilityService {
             },null);
         if(!sent) gesturePending=false;
     }
-    public void onAccessibilityEvent(AccessibilityEvent event) {if(event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED&&(menu==null||!menu.isShowing())&&event.getPackageName()!=null)foregroundPackage=event.getPackageName().toString();}
+    private void openPowerMenu(){setActive(false);if(menu!=null)menu.dismiss();sendBroadcast(new android.content.Intent(android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS));startActivity(new android.content.Intent(this,PowerMenuActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK|android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));}
+    private boolean systemPowerDialog(AccessibilityEvent event){
+        String pkg=String.valueOf(event.getPackageName()),name=String.valueOf(event.getClassName());
+        if(!pkg.equals("android")&&!pkg.equals("com.android.systemui"))return false;
+        if(name.contains("GlobalActions"))return true;
+        int off=getResources().getIdentifier("global_action_power_off","string","android"),restart=getResources().getIdentifier("global_action_restart","string","android");
+        return off!=0&&restart!=0&&event.getText().contains(getString(off))&&event.getText().contains(getString(restart));
+    }
+    public void onAccessibilityEvent(AccessibilityEvent event) {if(event.getEventType()!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)return;if(systemPowerDialog(event)){openPowerMenu();return;}if((menu==null||!menu.isShowing())&&event.getPackageName()!=null)foregroundPackage=event.getPackageName().toString();}
     public void onInterrupt() { setActive(false); }
     public void onDestroy() { if(screenWatching)unregisterReceiver(screenReceiver);screenWatching=false;if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
 }

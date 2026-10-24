@@ -41,8 +41,8 @@ The script saves all 20 previous properties under ignored
 `output/audio-calibration/<timestamp>/before.json`, verifies the device, idle
 call state, active stock audio and file hashes, then restarts only Android audio
 services. It changes no mixer gains, kernel modules, modem configuration or
-global device identity. Properties persist across boots; a reboot with this
-selection has not yet been tested.
+global device identity. A subsequent real reboot retained these properties and the stock audio HAL
+returned to `active`; another physical call was not requested.
 
 Read-only inspection:
 
@@ -76,5 +76,5 @@ the earpiece and speech heard by the other participant, and reported
 “merge, e ok”. The reported two-way quality problem is therefore resolved in
 this tested scenario. Keep the selected calibration; no gain adjustment is
 needed on this evidence. This confirmation does not establish quality on SIM 2,
-other audio routes or every network/call type. Persistence across a reboot has
-not yet been physically tested.
+other audio routes or every network/call type. After the subsequent reboot the Leo selection persisted and the stock HAL
+returned active. Physical call quality was not retested after that reboot.

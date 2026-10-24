@@ -32,10 +32,15 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 ## Ce este nou
 
+**Interfață și pornire:** antete comune în aplicațiile Leo, meniu de oprire din
+taste și inițializare radio începută la aproximativ 26 s, față de 42 s anterior.
+Ambele SIM-uri s-au înregistrat după reboot. Alegerea SIM-ului inițiază direct
+apelul, fără confirmare suplimentară. [Schimbări, măsurători și capturi](android81/LEO-STARTUP-CHROME.md).
+
 **Rețea, 24 octombrie:** un blocaj `POWER_OFF` pe ambele SIM-uri după pornire a
 fost recuperat prin restartul serviciilor RIL. Vodafone/LTE și vocea Orange sunt
 din nou înregistrate. Este instalată o protecție limitată pentru aceeași stare;
-activarea ei la următorul boot rămâne de probat. [Diagnostic și limite](android81/RADIO-RECOVERY.md).
+după reboot a raportat `HEALTHY`, fără restart; recuperarea unui nou blocaj rămâne de probat. [Diagnostic și limite](android81/RADIO-RECOVERY.md).
 
 **Leo 0.5 aduce ordine în meniu și mai mult control din taste.**
 
@@ -266,12 +271,12 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
 
 - **Calitatea vocii în apel:** după selectarea explicită a profilului de calibrare
   KaiOS dedicat Leo, utilizatorul a confirmat că sunetul este în regulă în proba
-  de apel în ambele sensuri. Comportamentul după reboot rămâne de verificat.
+  de apel în ambele sensuri. După reboot, profilul Leo s-a păstrat și HAL-ul a revenit activ; nu s-a repetat apelul.
   [Investigație și revenire](android81/AUDIO-CALL-QUALITY.md).
 
 - **Pornirea radioului:** a fost observat un boot cu ambele SIM-uri `READY`, dar
   radio `POWER_OFF`. Recuperarea manuală a serviciilor a reușit; protecția automată
-  instalată nu are încă o probă de reboot. [Detalii](android81/RADIO-RECOVERY.md).
+  a pornit după reboot și a raportat `HEALTHY`; recuperarea unui nou blocaj nu este încă probată. [Detalii](android81/RADIO-RECOVERY.md).
 
 - **Camera:** vizor și JPEG 480 × 640 funcționale în portul HAL1; filmarea nu este implementată. Lanternă și activarea LED-ului la captură au probe; modul Auto și expunerea în diferite scene rămân de validat. [Detalii și izolarea interfeței](android81/CAMERA-RUNTIME.md).
 - **GPS și ceilalți senzori Android:** integrarea rămâne incompletă.

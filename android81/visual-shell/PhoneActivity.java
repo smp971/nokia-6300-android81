@@ -143,13 +143,9 @@ public final class PhoneActivity extends LeoActivity {
             String[] labels=new String[accounts.size()];
             for(int i=0;i<labels.length;i++) { PhoneAccount account=telecom.getPhoneAccount(accounts.get(i)); labels[i]=accountSlot(accounts.get(i).getId())+" · "+(account==null?"Cont de apel":account.getLabel().toString()); }
             options("Alege SIM pentru apel",labels,new Choice() { public void pick(final int index) {
-                options("Apel: "+destination,new String[]{"Anulează","Apelează"},new Choice() { public void pick(int confirmed) {
-                    if(confirmed==1) {
-                        Bundle extras=new Bundle(); extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,accounts.get(index));
-                        try { telecom.placeCall(Uri.fromParts("tel",destination,null),extras); }
-                        catch(RuntimeException failure) { notice("Apelul nu a putut fi inițiat"); }
-                    }
-                }});
+                Bundle extras=new Bundle(); extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,accounts.get(index));
+                try { telecom.placeCall(Uri.fromParts("tel",destination,null),extras); }
+                catch(RuntimeException failure) { notice("Apelul nu a putut fi inițiat"); }
             }});
         } catch(SecurityException denied) { notice("Permisiunea de telefonie lipsește"); }
     }

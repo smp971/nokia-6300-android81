@@ -56,9 +56,10 @@ SHA-256. System a fost readus read-only. Biblioteca RIL, boot și recovery sunt 
   a emite comenzi radio. Acoperă recuperarea eligibilă și cazurile de excludere.
 - `--check` pe telefonul recuperat a raportat `HEALTHY`.
 - Rularea normală a scriptului pe rețeaua sănătoasă a ieșit cu `HEALTHY`, fără restart.
-- **Regula init este instalată; pornirea ei la următorul reboot și recuperarea
-  automată a unui nou blocaj nu au fost încă probate.** Nu am întrerupt rețeaua
-  recuperată pentru a provoca artificial eșecul.
+- **Regula init a pornit la reboot și a raportat `HEALTHY`, fără restart RIL.**
+  Recuperarea automată a unui nou blocaj nu este încă probată; nu am întrerupt
+  rețeaua pentru a provoca artificial eșecul. Pornirea radio mai devreme și
+  timpii măsurați sunt documentați în [LEO-STARTUP-CHROME.md](LEO-STARTUP-CHROME.md).
 
 ```powershell
 # Citește numai clasificarea stării curente:

@@ -5,9 +5,18 @@ export PATH=/system/bin
 base=/system/vendor/leo-radio
 export LD_LIBRARY_PATH=$base/lib:/system/vendor/lib:/system/lib
 exec >>/data/local/tmp/leo-radio-setup.log 2>&1
-date
 test -f /leo-framework-internal
 test "$(getprop ro.boot.hwid)" = 0x0
+# /dev is recreated each boot. The fallback trigger must not run setup twice.
+mkdir /dev/leo-radio-started 2>/dev/null || exit 0
+stage() {
+    read -r elapsed rest < /proc/uptime
+    echo "LEO_RADIO_BOOT $elapsed $1"
+    setprop sys.leo.radio.start_state "$1"
+    setprop "sys.leo.radio.time.$1" "$elapsed"
+}
+trap 'stage failed' EXIT
+stage preparing
 mkdir -p /dev/block/bootdevice/by-name
 for entry in /sys/class/block/mmcblk0p*; do
     name= number=
@@ -40,12 +49,14 @@ setprop persist.radio.adb_log_on 0
 setprop ctl.stop ril-daemon
 setprop ctl.start leo_rmt_storage
 setprop ctl.start leo_per_mgr
+stage storage
 # The stock loader needs APR's OFFLINE state, before RIL powers the modem.
 # This hook does nothing when the one-shot early audio preload was not armed.
 if [ "$(getprop sys.leo.audio.state)" = core_preloaded ]; then
     sleep 1
     /system/bin/sh /vendor/leo-audio/start.sh boot-dsp || true
 fi
+stage transport
 if [ "$(getprop persist.leo.data.enabled)" = 1 ]; then
     mkdir -p /dev/socket/netmgr /data/misc/net
     chown radio:radio /dev/socket/netmgr /data/misc/net
@@ -61,4 +72,6 @@ fi
 sleep 1
 setprop ctl.start leo_rild1
 setprop ctl.start leo_rild2
+stage started
+trap - EXIT
 echo LEO_RADIO_SERVICES_STARTED
