@@ -33,4 +33,5 @@
     <instrumentation android:name="ro.leo.visual.UiFoundationTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.MaturityTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.LocalizationTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.SimDataTrial" android:targetPackage="ro.leo.visual" />
 </manifest>

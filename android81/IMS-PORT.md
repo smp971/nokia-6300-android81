@@ -1,5 +1,12 @@
 # Android 8.1 legacy IMS port — 18 October 2026
 
+Update, 24 October: [SIM 2 investigation](IMS-SIM2.md) adds an explicitly
+selected physical-slot client. A supervised SIM 2 incoming VoLTE call passed
+with two-way audio and simultaneous LTE data. Automatic IMS activation remains
+unintegrated. The primary-SIM registration below is historical.
+
+## Historical primary-SIM trial, 18 October
+
 **Result: the port compiles, runs on the phone, binds to Android telephony and
 successfully registers IMS voice on the primary Vodafone SIM. No call was made;
 call audio, incoming calls, emergency calling and handover remain unverified.**

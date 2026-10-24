@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build the isolated primary-SIM IMS port; does not install or start it.
+# Build the isolated selected-SIM IMS port; does not install or start it.
 set -eo pipefail
 TASK_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$TASK_DIR/environment.sh"

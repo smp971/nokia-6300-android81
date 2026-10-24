@@ -249,7 +249,7 @@ de documentație.
 | **Cameră** | Fotografiere de bază funcțională | BF20A1, HAL1, vizor, JPEG 480 × 640 și pornire automată. Fluxul vizor → fotografie → Home a trecut fără repornirea proceselor urmărite. Deschiderea poate dura câteva secunde; LED-ul a fost confirmat; video, Auto și sesiuni lungi rămân de lucrat. [Detalii](android81/CAMERA-RUNTIME.md). |
 | **Interfața Leo** | Fundație comună finisată, meniu filtrat pe categorii | 66 de activități moștenesc baza comună; nu toate ecranele lor folosesc exclusiv acea compoziție. Home, Telefon, player și alte ecrane speciale necesită audit individual. Nu este revendicat un redesign complet al fiecărui ecran. |
 | **Meniu și accesibilitate** | Meniu global și mouse verificate în afara shell-ului | Probă peste Setări Android: deschidere meniu, pornire/oprire cursor, deplasare și derulare la margine. Testul de captură UI păstrează serviciul activ. [Audit UI](android81/LEO-UI-FOUNDATION.md). |
-| **Telefonie** | Apeluri și SMS SIM 1 confirmate în probele anterioare | Interfață proprie Leo Night pe Android Telecom. SIM 2 apeluri/SMS, DTMF și IMS au scenarii separate; întreruperile USB în timpul unor apeluri sunt încă documentate. |
+| **Telefonie** | Apeluri/SMS SIM 1; apel VoLTE primit pe SIM 2, cu sunet și date LTE simultane, într-o probă controlată | Leo Night pe Android Telecom. Activarea permanentă IMS, apelarea VoLTE de ieșire, SMS SIM 2 și DTMF mai au probe separate; întreruperile USB rămân documentate. |
 | **Media** | Muzică, FM/RDS, căști și A2DP cu confirmări reale | Microfonul Bluetooth, HFP și toate variantele de codec nu sunt validate. Fișierele media de probă nu echivalează cu suport universal pentru orice profil. |
 | **Surse** | 166 fișiere Java în shell, 37 de fișiere Java de probe Android și 5 Java host; modul comun de traducere separat | Inventar de fișiere, nu acoperire a testelor; tastatura și uneltele native sunt separate. |
 | **Recompilare** | 590 de proiecte AOSP fixate la SHA, patch-uri și rețete în repository | Rebuild integral pe PC curat nevalidat. Dump-ul și componentele proprietare sunt intrări private separate. |
@@ -286,7 +286,7 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
 - **Camera:** vizor și JPEG 480 × 640 funcționale în portul HAL1; filmarea nu este implementată. Lanternă și activarea LED-ului la captură au probe; modul Auto și expunerea în diferite scene rămân de validat. [Detalii și izolarea interfeței](android81/CAMERA-RUNTIME.md).
 - **GPS și ceilalți senzori Android:** integrarea rămâne incompletă.
 - **Vibrații:** calea audio funcționează fizic și prin API-ul Android adaptat. Amplitudinea variabilă, efectele predefinite și scenariile simultane cu apel/media nu sunt validate. [Corecția și probele](android81/LEO-HOME-HAPTICS.md#vibrații-cauza-și-corecția).
-- **VoLTE / VoWiFi:** o înregistrare IMS experimentală nu validează apeluri IMS.
+- **VoLTE:** apel primit pe SIM 2 confirmat într-o probă controlată, cu sunet în ambele sensuri și date LTE simultane. Pornirea automată și ciclul de viață IMS mai necesită integrare; [raportul probei](android81/IMS-SIM2.md). **VoWiFi:** nevalidat.
 - **MMS:** neimplementat. SMS pe SIM 2 și noua cale a mesajelor trimise necesită probe suplimentare.
 - **Email / web:** primirea IMAP a funcționat; SMTP este nevalidat. Browserul text nu execută JavaScript, iar WebView a avut crash-uri GPU.
 - **FM și accesorii:** căștile sunt antena FM; o sesiune este limitată la o oră. HFP, microfonul Bluetooth și apelurile prin căști mai au nevoie de verificări.

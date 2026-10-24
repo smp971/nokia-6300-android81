@@ -4,6 +4,6 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.WRITE_APN_SETTINGS"/>
     <application android:label="Leo radio diagnostic" android:theme="@android:style/Theme.Material.NoActionBar">
-        <activity android:name=".RadioTest" android:exported="true"/>
+        <activity android:name=".RadioTest" android:exported="true" android:permission="android.permission.MODIFY_PHONE_STATE"/>
     </application>
 </manifest>

@@ -1,6 +1,6 @@
 """Apply the Android 8.1 compatibility port to a fresh, pinned local IMS study tree.
 
-Scope: legacy socket transport, primary SIM, MMTEL voice. No RTT, CSVT or
+Scope: legacy socket transport, one explicitly selected SIM, MMTEL voice. No RTT, CSVT or
 multi-endpoint implementation is advertised. Vendor source stays in ignored files.
 """
 from pathlib import Path
@@ -37,6 +37,17 @@ def append(s,code):
 
 def update(path,fn):path.write_text(fn(path.read_text()))
 
+(ims/'LeoImsSlot.java').write_text('''package org.codeaurora.ims;
+/** Fixed for the lifetime of a controlled trial; never remap an active call. */
+final class LeoImsSlot {
+    static int get() {
+        int slot = android.os.SystemProperties.getInt("sys.leo.ims.slot", 0);
+        if (slot < 0 || slot > 1) throw new IllegalArgumentException("Selected IMS slot must be 0 or 1");
+        return slot;
+    }
+}
+''')
+
 # Public API moves/renames retain the underlying values and behavior.
 for path in root.rglob('*.java'):
     s=path.read_text().replace('VideoProfile.VideoState.','VideoProfile.')
@@ -63,9 +74,10 @@ for filename,handler in [('ImsEcbmImpl.java','ImsEcbmImplHandler'),('ImsConfigIm
 
 def service(s):
     s=re.sub(r'^import com.android.internal.telephony.ModemStackController[^;]*;\n','',s,flags=re.M)
-    s=s.replace('private ModemStackController mModemStackController;','// Leo: primary LTE slot is fixed to phone 0 for this study.')
+    s=s.replace('private ModemStackController mModemStackController;','// Leo: one selected LTE slot, fixed for the process lifetime.')
+    s=s.replace('mServiceSub = new ImsServiceSub[getNumSubscriptions()];','mImsPhoneId = LeoImsSlot.get();\n        mServiceSub = new ImsServiceSub[getNumSubscriptions()];')
     s=re.sub(r'^.*ImsVideoGlobals\.(?:init|getInstance)\([^\n]*\n','',s,flags=re.M)
-    s=method(s,'initSubscriptionStatus','private void initSubscriptionStatus() { mImsPhoneId = 0; mServiceSub[0].registerForPhoneId(0); }')
+    s=method(s,'initSubscriptionStatus','private void initSubscriptionStatus() { mServiceSub[0].registerForPhoneId(mImsPhoneId); }')
     s=method(s,'handleModemStackReady','private void handleModemStackReady(Message msg) { throw new UnsupportedOperationException("Dynamic modem stack mapping is not supported"); }')
     needle='private final IImsService.Stub mBinder = new IImsService.Stub() {'
     assert needle in s
@@ -75,15 +87,15 @@ def service(s):
             return super.onTransact(code, data, reply, flags);
         }
         public void addRegistrationListener(int phoneId, int serviceClass, IImsRegistrationListener listener) {
-            if (phoneId != 0 || serviceClass != ImsServiceClass.MMTEL) throw new IllegalArgumentException("Only primary MMTEL is supported");
+            if (phoneId != mImsPhoneId || serviceClass != ImsServiceClass.MMTEL) throw new IllegalArgumentException("Only selected MMTEL is supported");
             mServiceSub[0].addRegistrationListener(listener);
         }
         public com.android.ims.internal.IImsMultiEndpoint getMultiEndpointInterface(int serviceId) { return null; }
 ''')
-    s=s.replace('return openForSub(1, serviceClass, incomingCallIntent, listener);','if (phoneId != 0 || serviceClass != ImsServiceClass.MMTEL) return -1;\n           return openForSub(1, serviceClass, incomingCallIntent, listener);')
-    s=s.replace('public IImsConfig getConfigInterface(int phoneId) {','public IImsConfig getConfigInterface(int phoneId) {\n            if (phoneId != 0) return null;')
+    s=s.replace('return openForSub(1, serviceClass, incomingCallIntent, listener);','if (phoneId != mImsPhoneId || serviceClass != ImsServiceClass.MMTEL) return -1;\n           return openForSub(1, serviceClass, incomingCallIntent, listener);')
+    s=s.replace('public IImsConfig getConfigInterface(int phoneId) {','public IImsConfig getConfigInterface(int phoneId) {\n            if (phoneId != mImsPhoneId) return null;')
     for name in ('turnOnIms','turnOffIms'):
-        s=s.replace('public void '+name+'(int phoneId) {','public void '+name+'(int phoneId) {\n            if (phoneId != 0) return;')
+        s=s.replace('public void '+name+'(int phoneId) {','public void '+name+'(int phoneId) {\n            if (phoneId != mImsPhoneId) return;')
     s=method(s,'isConnected','''public boolean isConnected(int serviceId, int serviceType, int callType) {
         ImsServiceSub service = mServiceSubMap.get(serviceId);
         return service != null && serviceType == ImsCallProfile.SERVICE_TYPE_NORMAL && callType == ImsCallProfile.CALL_TYPE_VOICE && service.isVoiceReadyForLeo();
@@ -95,7 +107,8 @@ def service(s):
     }''')
     return append(s,'''public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getBooleanExtra("leoReconfigure", false)) {
-            ImsManager.updateImsServiceConfig(this, 0, true);
+            if (LeoImsSlot.get() != mImsPhoneId) throw new IllegalStateException("Stop IMS before changing slot");
+            ImsManager.updateImsServiceConfig(this, mImsPhoneId, true);
         }
         return START_NOT_STICKY;
     }
@@ -128,7 +141,7 @@ fanout+='}\n';(ims/'LeoRegistrationFanout.java').write_text(fanout)
 def subscription(s):
     s=s.replace('import com.android.internal.telephony.PhoneBase;','import com.android.internal.telephony.Phone;').replace('import com.android.internal.telephony.PhoneProxy;','')
     s=method(s,'setPhoneId','''public void setPhoneId(int phoneId) {
-        if (phoneId != 0) throw new IllegalArgumentException("Only primary SIM supported");
+        if (phoneId != LeoImsSlot.get()) throw new IllegalArgumentException("Only selected SIM supported");
         if (mPhoneId == phoneId) return;
         int[] subscriptions = android.telephony.SubscriptionManager.getSubId(phoneId);
         if (subscriptions == null || subscriptions.length == 0) throw new IllegalStateException("SIM not ready");
@@ -168,7 +181,7 @@ def subscription(s):
     private volatile int mLeoRegistrationState = ImsQmiIF.Registration.NOT_REGISTERED;
     private volatile boolean mLeoVoiceAvailable;
     public boolean isVoiceReadyForLeo() { return mLeoRegistrationState == ImsQmiIF.Registration.REGISTERED && mLeoVoiceAvailable; }
-    public void dumpForLeo(java.io.PrintWriter out) { out.println("LEO_IMS slot=0 registration=" + mLeoRegistrationState + " voice_available=" + mLeoVoiceAvailable); }
+    public void dumpForLeo(java.io.PrintWriter out) { out.println("LEO_IMS slot=" + LeoImsSlot.get() + " phone=" + mPhoneId + " registration=" + mLeoRegistrationState + " voice_available=" + mLeoVoiceAvailable); }
     public void closeForLeo(int serviceId) {
         ImsServiceClassTracker tracker = mServiceIdTable.remove(serviceId);
         if (tracker != null) { mTrackerTable.values().remove(tracker); tracker.mRegListener = null; tracker.mIncomingCallIntent = null; }
@@ -180,6 +193,13 @@ def subscription(s):
     }
 ''')
 update(ims/'ImsServiceSub.java',subscription)
+
+# Choose the socket before starting its receiver thread; no transient SIM 1 bind.
+def selected_socket(s):
+    needle='mInstanceId = 0; // default socket'
+    assert needle in s
+    return s.replace(needle,'mInstanceId = LeoImsSlot.get(); // selected physical SIM')
+update(ims/'ImsSenderRxr.java',selected_socket)
 
 def tracker(s):
     s=re.sub(r'^.*intent.putExtra\(ImsManager.EXTRA_UNKNOWN_CALL_(?:ADDRESS|STATE),.*\n','',s,flags=re.M)
@@ -285,6 +305,7 @@ ET.register_namespace('android',android[1:-1])
 manifest=root.parent/'AndroidManifest.xml'
 tree=ET.parse(manifest);app=tree.getroot().find('application')
 sdk=tree.getroot().find('uses-sdk');sdk.set(android+'minSdkVersion','27');sdk.set(android+'targetSdkVersion','27')
+tree.getroot().set(android+'versionCode','2');tree.getroot().set(android+'versionName','1.1-selected-slot')
 for child in list(app):
     if 'csvt' in child.get(android+'name','').lower():app.remove(child)
 for child in app.findall('service'):
@@ -293,4 +314,4 @@ for child in app.findall('service'):
 for permission in ('MODIFY_PHONE_STATE','READ_PHONE_STATE'):
     ET.SubElement(tree.getroot(),'uses-permission',{android+'name':'android.permission.'+permission})
 tree.write(manifest,encoding='utf-8',xml_declaration=True)
-print('Applied primary-SIM Android 8.1 compatibility port.')
+print('Applied selected-SIM Android 8.1 compatibility port; no automatic activation.')

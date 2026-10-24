@@ -16,7 +16,8 @@ extern int atoi(const char *);
 int main(int argc,char **argv){
     if(argc!=2 && argc!=3)return 2;
     unsigned duration=argc==3?(unsigned)atoi(argv[2]):20;
-    if(duration<1 || duration>180)return 2;
+    /* Explicit longer window for one supervised call; default stays 20 s. */
+    if(duration<1 || duration>900)return 2;
     const char *name,*binary;
     if(!strcmp(argv[1],"qmi")){name="ims_qmid";binary="/tmp/leo-ims/imsqmidaemon";}
     else if(!strcmp(argv[1],"data")){name="ims_datad";binary="/tmp/leo-ims/imsdatadaemon";}
