@@ -32,6 +32,11 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 ## Ce este nou
 
+**Rețea, 24 octombrie:** un blocaj `POWER_OFF` pe ambele SIM-uri după pornire a
+fost recuperat prin restartul serviciilor RIL. Vodafone/LTE și vocea Orange sunt
+din nou înregistrate. Este instalată o protecție limitată pentru aceeași stare;
+activarea ei la următorul boot rămâne de probat. [Diagnostic și limite](android81/RADIO-RECOVERY.md).
+
 **Leo 0.5 aduce ordine în meniu și mai mult control din taste.**
 
 - **22 de intrări vizibile, șase categorii:** Toate, Comunicare, Media, Unelte,
@@ -258,6 +263,10 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
 | **Validări ulterioare** | USB/ADB, autonomie, sesiuni lungi, accesorii și SIM 2 | Măsurători și probe separate, reluate când sunt prioritizate |
 
 ### Limite cunoscute, pe scurt
+
+- **Pornirea radioului:** a fost observat un boot cu ambele SIM-uri `READY`, dar
+  radio `POWER_OFF`. Recuperarea manuală a serviciilor a reușit; protecția automată
+  instalată nu are încă o probă de reboot. [Detalii](android81/RADIO-RECOVERY.md).
 
 - **Camera:** vizor și JPEG 480 × 640 funcționale în portul HAL1; filmarea nu este implementată. Lanternă și activarea LED-ului la captură au probe; modul Auto și expunerea în diferite scene rămân de validat. [Detalii și izolarea interfeței](android81/CAMERA-RUNTIME.md).
 - **GPS și ceilalți senzori Android:** integrarea rămâne incompletă.

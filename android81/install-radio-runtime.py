@@ -35,7 +35,9 @@ if __name__ == '__main__':
     files[base+'lib/libqmi_cci.so'] = (OUT/'radio-ipc/lib/libqmi_cci.so', 0o644)
     files[base+'shim.so'] = (OUT/'radio-ipc-shim.so', 0o644)
     files[base+'start.sh'] = (ROOT/'radio-runtime/start.sh', 0o755)
+    files[base+'recover.sh'] = (ROOT/'radio-runtime/recover.sh', 0o755)
     files['etc/init/leo-radio.rc'] = (ROOT/'radio-runtime/init.leo.radio.rc', 0o644)
+    files['etc/init/leo-radio-recovery.rc'] = (ROOT/'radio-runtime/init.leo.radio-recovery.rc', 0o644)
     for name in ('rmt_storage', 'pm-service', 'irsc_util'):
         files[base+'bin/'+name] = (ROOT.parent/'analysis/system/bin'/name, 0o755)
     files[base+'sec_config'] = (ROOT.parent/'analysis/system/etc/sec_config', 0o644)

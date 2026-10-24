@@ -1,0 +1,10 @@
+service leo_radio_recovery /system/bin/sh /system/vendor/leo-radio/recover.sh
+    class late_start
+    user root
+    group root radio system
+    seclabel u:r:init:s0
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start leo_radio_recovery
