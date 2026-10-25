@@ -33,12 +33,20 @@ Oprirea explicită se face prin setarea `persist.leo.gps.enabled=0`. Comanda tre
 executată în namespace-ul Android prin `framework-command.py`, ca celelalte
 comenzi ale portului. Nu sunt necesare modificări boot/recovery/modem/NV.
 
-## Ce trebuie confirmat
+## Verificări din 25 octombrie
 
-1. Pornirea automată a serviciului și furnizorul `gps` din LocationManager.
-2. Inițializarea către modem după o cerere reală de localizare.
-3. Sateliți și o poziție obținută într-un loc cu vizibilitate bună spre cer.
-4. Oprirea cererilor la ieșirea din GPS Leo și o sesiune mai lungă fără regresii radio.
+Serviciul `leo_gnss` pornește automat și Android enumeră furnizorul `gps`.
+Proba `GpsRuntimeTrial` a deschis aplicația, a făcut o cerere reală timp de
+30 de secunde și a confirmat oprirea ei la ieșire. Nu s-au observat sateliți
+și nu s-a obținut o poziție în această probă; amplasarea telefonului nu a fost
+confirmată ca având vizibilitate spre cer. Rezultatul confirmă ciclul cererii,
+nu funcționarea recepției GNSS.
+
+## Ce trebuie confirmat în continuare
+
+1. Inițializarea completă către modem după o cerere reală de localizare.
+2. Sateliți și o poziție obținută într-un loc cu vizibilitate bună spre cer.
+3. O sesiune mai lungă fără regresii radio.
 
 Absența unei poziții în interior nu dovedește o defecțiune. Coordonatele, jurnalele
 brute și locurile salvate rămân locale. Nu se publică în GitHub.

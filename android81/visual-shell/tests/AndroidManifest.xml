@@ -36,4 +36,5 @@
     <instrumentation android:name="ro.leo.visual.SimDataTrial" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.ConnectivitySuiteTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.CameraControlsTests" android:targetPackage="ro.leo.visual" android:targetProcesses="ro.leo.visual:camera" />
+    <instrumentation android:name="ro.leo.visual.GpsRuntimeTrial" android:targetPackage="ro.leo.visual" />
 </manifest>

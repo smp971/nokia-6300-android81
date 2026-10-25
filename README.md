@@ -292,7 +292,7 @@ utilizatorului; statutul lor nu devine automat „rezolvat”.
   a pornit după reboot și a raportat `HEALTHY`; recuperarea unui nou blocaj nu este încă probată. [Detalii](android81/RADIO-RECOVERY.md).
 
 - **Camera:** vizor și JPEG 480 × 640 funcționale în portul HAL1; filmarea nu este implementată. Lanternă și activarea LED-ului la captură au probe; modul Auto și expunerea în diferite scene rămân de validat. [Detalii și izolarea interfeței](android81/CAMERA-RUNTIME.md).
-- **GPS:** aplicație și runtime GNSS experimental adăugate; încărcarea HAL-ului a trecut. Fixarea unei poziții și pornirea completă după reboot rămân de verificat. Ceilalți senzori Android au integrare incompletă.
+- **GPS:** aplicație și runtime GNSS experimental adăugate; încărcarea HAL-ului a trecut. Pornirea automată, furnizorul Android și ciclul cererii au trecut; în proba de 30 s nu au fost observați sateliți și nu s-a obținut o poziție. Ceilalți senzori Android au integrare incompletă.
 - **Vibrații:** calea audio funcționează fizic și prin API-ul Android adaptat. Amplitudinea variabilă, efectele predefinite și scenariile simultane cu apel/media nu sunt validate. [Corecția și probele](android81/LEO-HOME-HAPTICS.md#vibrații-cauza-și-corecția).
 - **VoLTE:** apel primit pe SIM 2 confirmat, cu sunet în ambele sensuri și date LTE simultane. [Pornirea automată și recuperarea clientului IMS](android81/IMS-RUNTIME.md) sunt integrate și verificate; apelul VoLTE de ieșire pe SIM 2 a fost validat ulterior cu voce și date LTE; handover-ul rămâne nevalidat. **VoWiFi:** nevalidat.
 - **MMS:** neimplementat; pagina de diagnostic arată serviciul Android și configurația operatorului. SMS pe SIM 2 este confirmat în ambele sensuri, inclusiv livrarea mesajului trimis.

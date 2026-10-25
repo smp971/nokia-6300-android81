@@ -1,6 +1,6 @@
 """Capture/verify a local Leo runtime update; no boot images or user data.
 
-Capture reads the already validated phone, so it is a deployment snapshot, not
+Capture reads the existing Leo phone, so it is a deployment snapshot, not
 a claim that proprietary inputs can be rebuilt from this Git repository alone.
 """
 import argparse
@@ -87,9 +87,12 @@ def capture(phone,destination):
     targets=sorted(set(targets))
     if not all(allowed(t) for t in targets):raise ValueError('Capture outside runtime scope')
     # One archive transfer keeps the audit bounded even with hundreds of camera libraries.
-    phone.script('cd / && tar -cf /tmp/leo-runtime-capture.tar '+shlex.join([t.lstrip('/') for t in targets]))
     with tempfile.TemporaryDirectory() as tmp:
-        local=Path(tmp)/'capture.tar';phone.run('pull','/tmp/leo-runtime-capture.tar',str(local))
+        local=Path(tmp)/'capture.tar'
+        command=shlex.join(['/sbin/leo-framework-exec','/system/bin/sh','-c',
+                            'cd / && tar -cf - '+shlex.join([t.lstrip('/') for t in targets])])
+        # Stream directly to the PC; a large /tmp archive could exhaust phone RAM.
+        with local.open('wb') as output:subprocess.run(phone.adb+['exec-out',command],stdout=output,check=True,timeout=180)
         with tarfile.open(local) as tar:
             members=tar.getmembers()
             if {m.name for m in members}!={t.lstrip('/') for t in targets} or len(members)!=len(targets):raise ValueError('Unexpected capture member')
@@ -109,7 +112,7 @@ def capture(phone,destination):
     m=dict(format='leo-runtime-update',schema=1,**version,files=rows,installer_sha256=digest(installer),
            source_commit=subprocess.check_output(['git','-C',str(ROOT.parent),'rev-parse','HEAD']).decode().strip(),
            source_sha256=sources,working_tree_dirty=bool(subprocess.check_output(['git','-C',str(ROOT.parent),'status','--porcelain'])),
-           provenance='Validated-device snapshot plus locally rebuilt Java apps; proprietary runtime inputs required.',
+           provenance='Deployed-device snapshot plus locally rebuilt Java apps; see audit for validation; proprietary inputs required.',
            kernel='4.9.240-perf-g4f9e270fd77f',requires='Existing internal Leo Android port, root namespace wrapper, matching development signers')
     destination.parent.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(destination,'x',zipfile.ZIP_DEFLATED) as z:
