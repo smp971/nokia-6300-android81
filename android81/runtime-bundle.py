@@ -4,6 +4,7 @@ Capture reads the existing Leo phone, so it is a deployment snapshot, not
 a claim that proprietary inputs can be rebuilt from this Git repository alone.
 """
 import argparse
+import base64
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -90,9 +91,13 @@ def capture(phone,destination):
     with tempfile.TemporaryDirectory() as tmp:
         local=Path(tmp)/'capture.tar'
         command=shlex.join(['/sbin/leo-framework-exec','/system/bin/sh','-c',
-                            'cd / && tar -cf - '+shlex.join([t.lstrip('/') for t in targets])])
+                            'set -o pipefail; cd / && tar -cf - '+shlex.join([t.lstrip('/') for t in targets])+' | base64'])
         # Stream directly to the PC; a large /tmp archive could exhaust phone RAM.
-        with local.open('wb') as output:subprocess.run(phone.adb+['exec-out',command],stdout=output,check=True,timeout=180)
+        # Legacy recovery adbd lacks exec-out and rewrites LF even with shell -T.
+        # Encode before that boundary, then validate/decode on the host.
+        with local.open('wb') as output:subprocess.run(phone.adb+['shell',command],stdout=output,check=True,timeout=180)
+        encoded=local.read_bytes().replace(b'\r',b'').replace(b'\n',b'')
+        local.write_bytes(base64.b64decode(encoded,validate=True))
         with tarfile.open(local) as tar:
             members=tar.getmembers()
             if {m.name for m in members}!={t.lstrip('/') for t in targets} or len(members)!=len(targets):raise ValueError('Unexpected capture member')
@@ -101,6 +106,11 @@ def capture(phone,destination):
                 if not member.isfile() or mode not in (0o644,0o755):raise ValueError('Symlink/type/mode refused: '+target)
                 raw=tar.extractfile(member).read();name='payload/%04d'%len(rows)
                 rows[name]=dict(target=target,kind='system',mode=mode,bytes=len(raw),sha256=digest(raw));raws[name]=raw
+    source_hashes={row['target']:row['sha256'] for row in rows.values()}
+    for line in phone.shell('/system/bin/sha256sum',*source_hashes).splitlines():
+        actual,target=line.split(None,1)
+        if source_hashes.pop(target,None)!=actual:raise ValueError('Capture differs from device: '+target)
+    if source_hashes:raise ValueError('Missing source hash output')
     for package,name in [('ro.leo.keypad','leo-keypad-ime.apk'),('ro.leo.visual','leo-visual.apk')]:
         raw=(ROOT/'output'/name).read_bytes();key='payload/%04d'%len(rows)
         rows[key]=dict(target=package,kind='app',mode=0o644,bytes=len(raw),sha256=digest(raw));raws[key]=raw
