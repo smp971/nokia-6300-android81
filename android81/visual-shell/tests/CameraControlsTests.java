@@ -29,7 +29,16 @@ public final class CameraControlsTests extends Instrumentation {
         set("burstCount",1);set("reviewAfter",true);call("capture");
         boolean review=false;for(int i=0;i<120&&!review;i++){for(android.app.ActivityManager.AppTask task:((android.app.ActivityManager)getTargetContext().getSystemService(android.content.Context.ACTIVITY_SERVICE)).getAppTasks()){android.app.ActivityManager.RecentTaskInfo info=task.getTaskInfo();if(info.topActivity!=null&&GalleryActivity.class.getName().equals(info.topActivity.getClassName()))review=true;}if(!review)SystemClock.sleep(100);}
         check(review,"single-photo review opens Gallery");check(get("camera")==null,"review releases the camera");
-        getUiAutomation(2).injectInputEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK),true);getUiAutomation(2).injectInputEvent(new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK),true);
+        // Gallery runs outside the instrumented camera process; wait for its actual input window.
+        boolean focused=false;for(int i=0;i<50&&!focused;i++){
+            android.os.ParcelFileDescriptor fd=getUiAutomation(2).executeShellCommand("dumpsys window windows");
+            StringBuilder dump=new StringBuilder();try(BufferedReader reader=new BufferedReader(new InputStreamReader(new android.os.ParcelFileDescriptor.AutoCloseInputStream(fd)))){String line;while((line=reader.readLine())!=null)dump.append(line).append('\n');}
+            focused=java.util.regex.Pattern.compile("mCurrentFocus=.*GalleryActivity").matcher(dump).find();
+            if(!focused)SystemClock.sleep(100);
+        }
+        if(!focused)throw new AssertionError("review input window not focused");
+        long backTime=SystemClock.uptimeMillis();
+        getUiAutomation(2).injectInputEvent(new KeyEvent(backTime,backTime,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK,0),true);getUiAutomation(2).injectInputEvent(new KeyEvent(backTime,SystemClock.uptimeMillis(),KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK,0),true);
         for(int i=0;i<100&&get("camera")==null;i++)SystemClock.sleep(100);check(get("camera")!=null,"camera resumes after review");
         set("reviewAfter",false);set("delaySeconds",3);set("burstCount",1);before=photos();call("capture");check((Boolean)get("countdown"),"timer armed");
         runOnMainSync(new Runnable(){public void run(){page.finish();}});SystemClock.sleep(3700);

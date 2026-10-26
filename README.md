@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 24 octombrie 2026** · **Versiune pregătită: 0.7.0-dev / cod 7**
+**Actualizat: 26 octombrie 2026** · **Versiune instalată: 0.7.0-dev / cod 7**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -32,10 +32,11 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 ## Ce este nou
 
-**Leo 0.7 este compilat:** filtre în istoricul apelurilor, selecție text SMS, file
+**Leo 0.7 este instalat și verificat pe Nokia:** filtre în istoricul apelurilor, selecție text SMS, file
 comune, zoom și previzualizare foto, backup cu alarme și preferințe. Controlerul
-IMS nou este instalat și limitează recuperarea automată a lipsei de voce. Instalarea
-finală a aplicațiilor și ultimele probe așteaptă reconectarea USB.
+IMS nou limitează recuperarea automată a lipsei de voce. Au trecut 10 verificări
+ale filelor Telefon, 26 de contracte locale și 13 verificări ale camerei. Vocea IMS
+și datele LTE sunt active; declanșarea automată pe o defecțiune reală rămâne de urmărit.
 [Implementare, rezultate și limite](android81/LEO-07-POLISH.md).
 
 **Leo 0.6 · conectivitate:** apel VoLTE de ieșire pe SIM 2, cu voce în ambele
