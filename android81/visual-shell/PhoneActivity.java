@@ -35,7 +35,10 @@ public final class PhoneActivity extends LeoActivity {
     private TextView[] simChips;
     private Button recent;
     private NetworkTelemetry network;
-    private int page,generation;
+    private int page;private volatile int generation;
+    private String historyQuery="";
+    private int historySim=-1;
+    private boolean missedOnly;
     private String draft="";
     private final RowArtwork historyArt=new RowArtwork(this);
     private final ArrayList<ContactIdentity> historyPeople=new ArrayList<ContactIdentity>();
@@ -59,23 +62,25 @@ public final class PhoneActivity extends LeoActivity {
         if(selected==0)dial(draft);else if(selected==1)history();else stats();
     }
     private void tabs(){
-        LinearLayout tabs=new LinearLayout(this);tabBar=tabs;tabs.setBackgroundColor(palette.bar);
-        for(int i=0;i<tabNames.length;i++){
-            final int index=i;TextView tab=text(tabNames[i],13);tab.setPadding(0,0,0,0);tab.setGravity(Gravity.CENTER);tab.setFocusableInTouchMode(true);
-            android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},PhoneTheme.surface(palette,palette.card,true));states.addState(new int[]{},Appearance.surface(i==page?palette.card:palette.bar,dp(5)));tab.setBackground(states);tab.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_focused},new int[]{}},new int[]{palette.ink,Color.WHITE}));
-            tab.setOnClickListener(new View.OnClickListener(){public void onClick(View v){switchPage(index);}});
-            tab.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_DPAD_DOWN){if(e.getAction()==KeyEvent.ACTION_DOWN){if(page==0)number.requestFocus();else for(int n=0;n<root.getChildCount();n++)if(root.getChildAt(n) instanceof ListView){root.getChildAt(n).requestFocus();break;}}return true;}return false;}});
-            tabs.addView(tab,new LinearLayout.LayoutParams(0,dp(28),1));
-        }
-        root.addView(tabs,1);
-        if(page!=0)tabs.getChildAt(page).requestFocus();
+        tabBar=KeypadTabs.create(this,tabNames,page,new Choice(){public void pick(int index){switchPage(index);}},new Runnable(){public void run(){if(page==0)number.requestFocus();else KeypadTabs.focusList(PhoneActivity.this);}});
+        root.addView(tabBar,1);if(page!=0)focusTabs();
     }
     private void menu(){
-        options(L.t("Telefon"),new String[]{L.t("Apelează"),L.t("Istoric apeluri"),L.t("Statistici"),L.t("Contacte"),L.t("Editează favorite"),L.t("Demo apel Leo"),L.t("Integrarea apelurilor")},new Choice(){public void pick(int i){
+        if(page==1){historyMenu();return;}phoneMenu();
+    }
+    private void historyMenu(){
+        options(L.t("Istoric apeluri"),new String[]{L.t("Caută în istoric"),L.t("Filtrează SIM-ul"),missedOnly?L.t("Arată toate apelurile"):L.t("Doar apeluri pierdute"),L.t("Resetează filtrele"),L.t("Opțiuni telefon")},new Choice(){public void pick(int n){
+            if(n==0){LinearLayout f=fields(L.t("Caută în istoric"));final EditText q=field(f,L.t("Nume sau număr"),historyQuery,InputType.TYPE_CLASS_TEXT);left=new Runnable(){public void run(){historyQuery=q.getText().toString().trim();history();}};back=new Runnable(){public void run(){history();}};footer(L.t("Caută"),"",L.t("Șterge"));q.requestFocus();}
+            else if(n==1)options(L.t("Filtrează SIM-ul"),new String[]{L.t("Ambele SIM-uri"),"SIM 1","SIM 2"},new Choice(){public void pick(int s){historySim=s-1;history();}});
+            else if(n==2){missedOnly=!missedOnly;history();}else if(n==3){historyQuery="";historySim=-1;missedOnly=false;history();}else phoneMenu();
+        }});
+    }
+    private void phoneMenu(){
+        options(L.t("Telefon"),new String[]{L.t("Apelează"),L.t("Istoric apeluri"),L.t("Statistici"),L.t("Contacte"),L.t("Editează favorite"),L.t("Demo apel Leo"),L.t("Integrarea apelurilor"),L.t("Apeluri pierdute")},new Choice(){public void pick(int i){
             if(i==0){if(page!=0)dial(draft);else chooseSim();}else if(i==1)switchPage(1);else if(i==2)switchPage(2);
             else if(i==3)startActivity(new Intent(PhoneActivity.this,ContactsActivity.class));
             else if(i==4)options(L.t("Alege căsuța"),new String[]{L.t("Favorit 1"),L.t("Favorit 2"),L.t("Favorit 3")},new Choice(){public void pick(int slot){favoriteMenu(slot);}});
-            else if(i==5)startActivity(new Intent(PhoneActivity.this,InCallActivity.class).putExtra("demo",true));else integration();
+            else if(i==5)startActivity(new Intent(PhoneActivity.this,InCallActivity.class).putExtra("demo",true));else if(i==7){missedOnly=true;historyQuery="";historySim=-1;switchPage(1);}else integration();
         }});
     }
     private void integration(){final TelecomManager t=(TelecomManager)getSystemService(TELECOM_SERVICE);String current=t.getDefaultDialerPackage();options(L.t("Apeluri în Leo"),new String[]{L.t("Rol telefon · ")+(getPackageName().equals(current)?L.t("Leo activ"):"Android"),L.t("Activează Telefon Leo"),L.t("Deschide apelul curent")},new Choice(){public void pick(int i){if(i==1){try{startActivity(new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME,getPackageName()));}catch(RuntimeException e){notice(L.t("Alegerea telefonului implicit nu este disponibilă"));}}else if(i==2){if(LeoInCallService.current()!=null)startActivity(new Intent(PhoneActivity.this,InCallActivity.class));else notice(L.t("Niciun apel curent în Leo"));}}});}
@@ -153,21 +158,28 @@ public final class PhoneActivity extends LeoActivity {
     }
     private void history() {
         page=1;networkText=null;final int token=++generation;
+        final String query=historyQuery;final int simFilter=historySim;final boolean missed=missedOnly;
         final ArrayList<String> labels=new ArrayList<String>(),numbers=new ArrayList<String>();
+        final android.util.LruCache<String,ContactIdentity> identities=new android.util.LruCache<String,ContactIdentity>(128);
         final ArrayList<Long> missedDates=new ArrayList<Long>();
         final ArrayList<ContactIdentity> people=new ArrayList<ContactIdentity>();final ArrayList<String> descriptions=new ArrayList<String>();
         worker.execute(new Runnable() { public void run() {
             try(Cursor c=getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.NUMBER,CallLog.Calls.CACHED_NAME,CallLog.Calls.DATE,CallLog.Calls.TYPE,CallLog.Calls.PHONE_ACCOUNT_ID,CallLog.Calls.NUMBER_PRESENTATION,CallLog.Calls.DURATION},null,null,CallLog.Calls.DATE+" DESC")) {
                 SimpleDateFormat date=new SimpleDateFormat("dd.MM HH:mm",java.util.Locale.getDefault());
-                while(c!=null && c.moveToNext() && labels.size()<100) {
+                int scanned=0;while(c!=null && c.moveToNext() && labels.size()<100 && scanned++<5000) {
+                    if(token!=generation||Thread.currentThread().isInterrupted())return;
                     String p=c.getString(0),name=c.getString(1); int type=c.getInt(3);
                     if(type==CallLog.Calls.MISSED_TYPE)missedDates.add(c.getLong(2));
-                    String only=getIntent().getStringExtra("history_number");if(only!=null&&!PhoneNumberUtils.compare(only,p))continue;boolean allowed=c.getInt(5)==TelecomManager.PRESENTATION_ALLOWED;numbers.add(allowed?p:"");ContactIdentity identity=ContactIdentity.find(PhoneActivity.this,allowed?p:"");people.add(identity);String description=(type==CallLog.Calls.OUTGOING_TYPE?L.t("Efectuat"):type==CallLog.Calls.MISSED_TYPE?L.t("Pierdut"):L.t("Primit"))+" · "+accountSlot(c.getString(4))+" · "+date.format(new Date(c.getLong(2)))+L.t("\nDurată · ")+duration(c.getLong(6));descriptions.add(description);labels.add(identity.name+"\n"+description.substring(0,description.indexOf("\n")));
+                    String only=getIntent().getStringExtra("history_number");if(only!=null&&!PhoneNumberUtils.compare(only,p))continue;boolean allowed=c.getInt(5)==TelecomManager.PRESENTATION_ALLOWED;
+                    String slotLabel=accountSlot(c.getString(4));int slot=slotLabel.startsWith("SIM 1")?0:slotLabel.startsWith("SIM 2")?1:-1;
+                    if(!HistoryFilter.matches(allowed?p:"",allowed?name:"",type,slot,"",simFilter,missed))continue;
+                    String identityKey=allowed&&p!=null?p:"";ContactIdentity identity=identities.get(identityKey);if(identity==null){identity=ContactIdentity.find(PhoneActivity.this,identityKey);identities.put(identityKey,identity);}if(!HistoryFilter.matches(allowed?p:"",identity.name,type,slot,query,simFilter,missed))continue;
+                    numbers.add(allowed?p:"");people.add(identity);String description=(type==CallLog.Calls.OUTGOING_TYPE?L.t("Efectuat"):type==CallLog.Calls.MISSED_TYPE?L.t("Pierdut"):L.t("Primit"))+" · "+slotLabel+" · "+date.format(new Date(c.getLong(2)))+L.t("\nDurată · ")+duration(c.getLong(6));descriptions.add(description);labels.add(identity.name+"\n"+description.substring(0,description.indexOf("\n")));
                 }
                 ui(new Runnable() { public void run() {
                     if(token!=generation)return;long through=0;
-                    for(Long value:missedDates)through=Math.max(through,value);CallNotices.clearMissed(PhoneActivity.this);UnreadState.readCalls(PhoneActivity.this,through);
-                    historyPeople.clear();historyPeople.addAll(people);list(L.t("Istoric apeluri"),labels,0,new Choice() { public void pick(int i) { callDetail(people.get(i),numbers.get(i),descriptions.get(i)); } },L.t("Opțiuni"),new Runnable(){public void run(){menu();}});tabs();
+                    for(Long value:missedDates)through=Math.max(through,value);if(query.isEmpty()&&simFilter<0){CallNotices.clearMissed(PhoneActivity.this);UnreadState.readCalls(PhoneActivity.this,through);}
+                    historyPeople.clear();historyPeople.addAll(people);list(L.t("Istoric apeluri"),labels,0,new Choice() { public void pick(int i) { callDetail(people.get(i),numbers.get(i),descriptions.get(i)); } },L.t("Opțiuni"),new Runnable(){public void run(){menu();}});if(!query.isEmpty()||simFilter>=0||missed){TextView info=text((simFilter<0?L.t("Ambele SIM-uri"):"SIM "+(simFilter+1))+(missed?" · "+L.t("Pierdute"):"")+(query.isEmpty()?"":" · "+query),12);info.setSingleLine();info.setEllipsize(android.text.TextUtils.TruncateAt.END);root.addView(info,1);}tabs();
                     back=new Runnable() { public void run() { dial(draft); } };
                 }});
             } catch(RuntimeException denied) { ui(new Runnable() { public void run() { if(token==generation){dial(draft);notice(L.t("Istoricul nu poate fi citit"));} } }); }
@@ -200,7 +212,7 @@ public final class PhoneActivity extends LeoActivity {
         if(tabBar!=null&&tabBar.getParent()==root&&!(getCurrentFocus() instanceof EditText)
                 &&(page!=0||(getCurrentFocus()!=null&&getCurrentFocus().getParent()==tabBar))
                 &&(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){
-            if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0){switchPage((page+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:2))%3);if(page==0)focusTabs();}
+            if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0){switchPage(KeypadTabs.next(page,key==KeyEvent.KEYCODE_DPAD_RIGHT?1:-1,3));if(page==0)focusTabs();}
             return true;
         }
         if(page==0&&key==KeyEvent.KEYCODE_CALL){if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0)chooseSim();return true;}

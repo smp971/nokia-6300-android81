@@ -25,9 +25,7 @@ controlată a runtime-ului IMS, fără apel activ, a recuperat înregistrarea cu
 și date LTE validate. Modemul/RIL nu au fost repornite. Cauza lipsei de capabilități
 nu este încă stabilită; această probă nu demonstrează o remediere permanentă.
 
-## Cameră
-
-### Corecție Telefon · 26 octombrie
+## Corecție Telefon · 26 octombrie
 
 Filele Telefon sunt accesibile și după navigarea cu mouse-ul: Sus din câmpul
 numărului focalizează fila, stânga/dreapta schimbă pagina, iar Jos intră în
@@ -35,6 +33,8 @@ conținut. Stânga/dreapta funcționează și din listele Istoric/Statistici, p�
 editarea cursorului în număr și navigarea între favorite. Corecția este instalată
 pe Nokia și a trecut cele zece verificări `PhoneTabsTests`, fără inițiere de apeluri.
 
+
+## Cameră
 
 Meniul camerei adaugă temporizator de 3/5/10 secunde, rafală de 3/5 fotografii,
 reglarea expunerii numai dacă HAL-ul o declară și o pagină pentru capabilități video.

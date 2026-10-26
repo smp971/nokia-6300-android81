@@ -341,6 +341,7 @@ for child in app.findall('service'):
 for permission in ('MODIFY_PHONE_STATE','READ_PHONE_STATE'):
     ET.SubElement(tree.getroot(),'uses-permission',{android+'name':'android.permission.'+permission})
 (ims/'LeoImsController.java').write_text((runtime/'LeoImsController.java').read_text())
+(ims/'ImsRecoveryPolicy.java').write_text((runtime/'ImsRecoveryPolicy.java').read_text())
 ET.SubElement(app,'service',{
     android+'name':'.LeoImsController',android+'exported':'true',
     android+'permission':'android.permission.MODIFY_PHONE_STATE',android+'process':':leo_controller'})

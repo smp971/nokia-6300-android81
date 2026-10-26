@@ -69,7 +69,7 @@ abstract class LeoActivity extends Activity {
     void list(String title,final List<String> values,int selected,final Choice choice,String action,Runnable command) {
         begin(title); left=command;
         listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
-        final ListView list=new ListView(this); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
+        final ListView list=new ListView(this);list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
         list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
         final BaseAdapter adapter=new BaseAdapter() {

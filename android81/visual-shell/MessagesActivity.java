@@ -135,6 +135,7 @@ public final class MessagesActivity extends LeoActivity {
         return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?L.t("Primit"):m.type==Telephony.Sms.MESSAGE_TYPE_SENT?(m.delivery==1?L.t("Livrat · raport operator"):m.delivery==2?L.t("Livrare eșuată"):m.delivery==3?L.t("Raport · livrare neconfirmată"):m.delivery==0?L.t("Trimis · așteaptă raport"):L.t("Trimis către rețea")):m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?L.t("Eșuat"):L.t("În așteptare");
     }
     private String messageSim(Message m) { return preview?"SIM "+(m.sub+1):sim(m.sub); }
+    static String statusMark(int type,int delivery){return type==Telephony.Sms.MESSAGE_TYPE_INBOX?"↓":type==Telephony.Sms.MESSAGE_TYPE_FAILED||delivery==2?"!":type==Telephony.Sms.MESSAGE_TYPE_SENT?(delivery==1?"✓✓":"✓"):"…";}
     private void detail(final String address,final ArrayList<Message> rows,final int index) {
         viewingMessages=false;loadingMessages=false;
         Message m=rows.get(index);
@@ -155,7 +156,7 @@ public final class MessagesActivity extends LeoActivity {
             String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):L.t("SMS în așteptare · fără confirmare");
             if(!status.isEmpty())root.addView(text(status,14));
         }
-        final ListView thread=new ListView(this);thread.setDivider(null);thread.setSelector(android.R.color.transparent);
+        final ListView thread=new ListView(this);thread.setFocusableInTouchMode(true);thread.setDivider(null);thread.setSelector(android.R.color.transparent);
         thread.setPadding(dp(5),0,dp(5),0);
         final int[] focus={Math.max(0,Math.min(selected,rows.size()-1))};
         final SimpleDateFormat day=new SimpleDateFormat("dd MMM yyyy",Locale.getDefault());
@@ -183,8 +184,8 @@ public final class MessagesActivity extends LeoActivity {
                 LinearLayout.LayoutParams lp=(LinearLayout.LayoutParams)bubble.getLayoutParams();
                 lp.leftMargin=received?0:dp(18);lp.rightMargin=received?dp(18):0;bubble.setLayoutParams(lp);
                 ((TextView)bubble.getChildAt(0)).setText(m.body);
-                TextView meta=(TextView)bubble.getChildAt(1);meta.setText(clock.format(new Date(m.date))+" · "+messageSim(m)+" · "+state(m));
-                int slot=preview?m.sub:-1;try{if(!preview){SubscriptionInfo info=SubscriptionManager.from(MessagesActivity.this).getActiveSubscriptionInfo(m.sub);if(info!=null)slot=info.getSimSlotIndex();}}catch(RuntimeException ignored){}meta.setTextColor(m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?0xffffb8ad:slot==0?0xff8fc7ff:slot==1?0xff88e5c6:0xffccd2dd);meta.setCompoundDrawables(new AvatarArt(received?address:L.t("Eu"),dp(19)),null,null,null);meta.setCompoundDrawablePadding(dp(5));
+                TextView meta=(TextView)bubble.getChildAt(1);meta.setText(statusMark(m.type,m.delivery)+" "+clock.format(new Date(m.date))+" · "+messageSim(m)+" · "+state(m));
+                int slot=preview?m.sub:-1;try{if(!preview){SubscriptionInfo info=SubscriptionManager.from(MessagesActivity.this).getActiveSubscriptionInfo(m.sub);if(info!=null)slot=info.getSimSlotIndex();}}catch(RuntimeException ignored){}meta.setTextColor(m.type==Telephony.Sms.MESSAGE_TYPE_FAILED||m.delivery==2?0xffffb8ad:slot==0?0xff8fc7ff:slot==1?0xff88e5c6:0xffccd2dd);meta.setCompoundDrawables(new AvatarArt(received?address:L.t("Eu"),dp(19)),null,null,null);meta.setCompoundDrawablePadding(dp(5));
                 row.setTag(received);paintBubble(row,i==focus[0]);return row;
             }
         };
@@ -208,13 +209,13 @@ public final class MessagesActivity extends LeoActivity {
     }
     private void messageOptions(final String address,final ArrayList<Message> rows,final int index) {
         final boolean hasMessage=index>=0 && index<rows.size();
-        options(L.t("Conversație"),new String[]{L.t("Răspunde","message"),L.t("Detalii mesaj"),L.t("Redirecționează"),L.t("Copiază textul"),L.t("Copiază numărul"),L.t("Caută în conversație"),L.t("Reîmprospătează"),L.t("Răspuns din șablon")},new Choice() { public void pick(int i) {
+        options(L.t("Conversație"),new String[]{L.t("Răspunde","message"),L.t("Detalii mesaj"),L.t("Redirecționează"),L.t("Copiază textul"),L.t("Copiază numărul"),L.t("Caută în conversație"),L.t("Reîmprospătează"),L.t("Răspuns din șablon"),L.t("Selectează text")},new Choice() { public void pick(int i) {
             if(i==7){replyAddress=address;templates(false);}else if(i==0)compose(address);
             else if(i==5)search(address,rows);
             else if(i==6)load(address);
             else if(hasMessage) {
                 Message m=rows.get(index);
-                if(i==1)detail(address,rows,index);
+                if(i==8)startActivity(new Intent(MessagesActivity.this,TextSelectionActivity.class).putExtra("text",m.body));else if(i==1)detail(address,rows,index);
                 else if(i==2)forward(m);
                 else if(i==3 || i==4) {
                     ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);

@@ -35,7 +35,7 @@ public final class GalleryActivity extends LeoActivity {
     private void grid() {
         stopSlides();viewer=false; zoom=1; generation++; clearImages(); begin(L.t("Galerie · ")+images.size()); face=new Face(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable() { public void run() { if(images.isEmpty()) load(); else imageOptions(); } }; footer(L.t("Opțiuni"),L.t("Deschide"),L.t("Înapoi"));
-        face.setFocusable(true); face.requestFocus(); back=getIntent().getData()!=null?null:new Runnable(){public void run(){albums();}}; thumbnails();
+        face.setFocusableInTouchMode(true); face.requestFocus(); back=getIntent().getData()!=null?null:new Runnable(){public void run(){albums();}}; thumbnails();
     }
     private void thumbnails() {
         final int token=++generation,start=selected/6*6; final ArrayList<Uri> snapshot=new ArrayList<Uri>(images); for(Bitmap b:thumbs.values()) b.recycle(); thumbs.clear();
@@ -49,7 +49,7 @@ public final class GalleryActivity extends LeoActivity {
         if((getIntent().getBooleanExtra("contact_photo",false)||getIntent().getBooleanExtra("pick_image",false))&&!images.isEmpty()){setResult(RESULT_OK,new Intent().setData(images.get(selected)));finish();return;}
         if(images.isEmpty()) return; slides.removeCallbacks(advance);viewer=true; zoom=1;rotation=0;panX=panY=0; final int token=++generation; if(photo!=null) { photo.recycle(); photo=null; }
         begin((selected+1)+" / "+images.size()); face=new Face(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1)); left=new Runnable() { public void run() { imageOptions(); } };
-        back=new Runnable() { public void run() { grid(); } }; footer(L.t("Opțiuni"),"Zoom",L.t("Grilă")); face.setFocusable(true); face.requestFocus();
+        back=new Runnable() { public void run() { if(getIntent().getBooleanExtra("quick_review",false))finish();else grid(); } }; footer(L.t("Opțiuni"),"Zoom",getIntent().getBooleanExtra("quick_review",false)?L.t("Înapoi"):L.t("Grilă")); face.setFocusableInTouchMode(true); face.requestFocus();
         final Uri uri=images.get(selected);
         worker.execute(new Runnable() { public void run() { Bitmap result=null; try { result=Appearance.decode(GalleryActivity.this,uri,640); } catch(Exception|OutOfMemoryError ignored) { }
             final Bitmap loaded=result; runOnUiThread(new Runnable() { public void run() { if(closed||token!=generation) { if(loaded!=null) loaded.recycle(); return; } photo=loaded; face.invalidate();if(slideshow)slides.postDelayed(advance,getSharedPreferences("gallery",0).getInt("interval",5)*1000L); if(loaded==null) notice(L.t("Imaginea nu poate fi decodată")); } });

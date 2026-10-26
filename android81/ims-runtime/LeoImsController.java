@@ -47,6 +47,8 @@ public final class LeoImsController extends Service {
         filter.addAction("android.intent.action.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED");
         filter.addAction("android.intent.action.SIM_STATE_CHANGED");
         registerReceiver(changes,filter);
+        int boot=Settings.Global.getInt(getContentResolver(),Settings.Global.BOOT_COUNT,-1);
+        if(boot>=0&&saved.getInt("recovery_boot",-2)!=boot)saved.edit().putInt("recovery_boot",boot).putInt("recoveries",0).putLong("recovery_last",-1).remove("voice_missing_since").commit();
     }
     public int onStartCommand(Intent i,int flags,int id){handler.removeCallbacks(tick);handler.post(tick);return START_STICKY;}
     public IBinder onBind(Intent i){return null;}
@@ -106,6 +108,24 @@ public final class LeoImsController extends Service {
         Intent intent=new Intent(this,ImsService.class);intent.putExtra("leoReconfigure",true);
         startService(intent);lastConfigure=SystemClock.elapsedRealtime();state("registering");
     }
+    private boolean recoverVoice(SubscriptionInfo info){
+        boolean registered=SystemProperties.getInt("sys.leo.ims.registration",2)==1;
+        boolean voice=SystemProperties.getBoolean("sys.leo.ims.voice",false);
+        long now=SystemClock.elapsedRealtime(),since=saved.getLong("voice_missing_since",-1);
+        if(!registered||voice||info==null){if(since>=0)saved.edit().remove("voice_missing_since").commit();return false;}
+        if(since<0||since>now){since=now;saved.edit().putLong("voice_missing_since",since).commit();}
+        TelephonyManager phone=((TelephonyManager)getSystemService(TELEPHONY_SERVICE)).createForSubscriptionId(info.getSubscriptionId());
+        boolean lte=phone.getDataNetworkType()==TelephonyManager.NETWORK_TYPE_LTE;
+        int boot=Settings.Global.getInt(getContentResolver(),Settings.Global.BOOT_COUNT,-1);
+        int count=saved.getInt("recoveries",0);
+        if(boot<0||!ImsRecoveryPolicy.ready(now,since,saved.getLong("recovery_last",-1),count,registered,voice,lte,busy()))return false;
+        // Recheck at the last boundary; never dismantle IMS during an active call.
+        if(busy())return false;
+        if(!saved.edit().putInt("recoveries",count+1).putLong("recovery_last",now).remove("voice_missing_since").commit())return false;
+        SystemProperties.set("sys.leo.ims.recoveries",Integer.toString(count+1));
+        Log.w(TAG,"Recovering IMS voice capability; bounded idle retry "+(count+1));
+        beginStop();return true;
+    }
     private void step() throws Exception {
         boolean enabled=SystemProperties.getBoolean("persist.leo.ims.enabled",false);
         boolean airplane=Settings.Global.getInt(getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0)!=0;
@@ -134,6 +154,7 @@ public final class LeoImsController extends Service {
         }
         if(!SystemProperties.getBoolean("sys.leo.ims.native_ready",false)){state("waiting_native");return;}
         if(client()==null){startClient();return;}
+        if(recoverVoice(info))return;
         if(SystemProperties.getInt("sys.leo.ims.registration",2)==1 && SystemProperties.getBoolean("sys.leo.ims.voice",false)){
             state("registered");return;
         }
