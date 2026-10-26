@@ -27,6 +27,15 @@ nu este încă stabilită; această probă nu demonstrează o remediere permanen
 
 ## Cameră
 
+### Corecție Telefon · 26 octombrie
+
+Filele Telefon sunt accesibile și după navigarea cu mouse-ul: Sus din câmpul
+numărului focalizează fila, stânga/dreapta schimbă pagina, iar Jos intră în
+conținut. Stânga/dreapta funcționează și din listele Istoric/Statistici, păstrând
+editarea cursorului în număr și navigarea între favorite. Corecția este instalată
+pe Nokia și a trecut cele zece verificări `PhoneTabsTests`, fără inițiere de apeluri.
+
+
 Meniul camerei adaugă temporizator de 3/5/10 secunde, rafală de 3/5 fotografii,
 reglarea expunerii numai dacă HAL-ul o declară și o pagină pentru capabilități video.
 Ieșirea din cameră anulează declanșarea întârziată și eliberează dispozitivul.
