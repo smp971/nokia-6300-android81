@@ -30,6 +30,7 @@ public final class PhoneActivity extends LeoActivity {
     private final Runnable findMatches=new Runnable(){public void run(){updateMatches();}};
 
     private LinearLayout favoriteRow;
+    private LinearLayout tabBar;
     private TextView networkText;
     private TextView[] simChips;
     private Button recent;
@@ -58,12 +59,12 @@ public final class PhoneActivity extends LeoActivity {
         if(selected==0)dial(draft);else if(selected==1)history();else stats();
     }
     private void tabs(){
-        LinearLayout tabs=new LinearLayout(this);tabs.setBackgroundColor(palette.bar);
+        LinearLayout tabs=new LinearLayout(this);tabBar=tabs;tabs.setBackgroundColor(palette.bar);
         for(int i=0;i<tabNames.length;i++){
-            final int index=i;TextView tab=text(tabNames[i],13);tab.setPadding(0,0,0,0);tab.setGravity(Gravity.CENTER);tab.setFocusable(true);
+            final int index=i;TextView tab=text(tabNames[i],13);tab.setPadding(0,0,0,0);tab.setGravity(Gravity.CENTER);tab.setFocusableInTouchMode(true);
             android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},PhoneTheme.surface(palette,palette.card,true));states.addState(new int[]{},Appearance.surface(i==page?palette.card:palette.bar,dp(5)));tab.setBackground(states);tab.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_focused},new int[]{}},new int[]{palette.ink,Color.WHITE}));
             tab.setOnClickListener(new View.OnClickListener(){public void onClick(View v){switchPage(index);}});
-            tab.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){if(e.getAction()==KeyEvent.ACTION_DOWN&&e.getRepeatCount()==0)switchPage((index+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:2))%3);return true;}return false;}});
+            tab.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_DPAD_DOWN){if(e.getAction()==KeyEvent.ACTION_DOWN){if(page==0)number.requestFocus();else for(int n=0;n<root.getChildCount();n++)if(root.getChildAt(n) instanceof ListView){root.getChildAt(n).requestFocus();break;}}return true;}return false;}});
             tabs.addView(tab,new LinearLayout.LayoutParams(0,dp(28),1));
         }
         root.addView(tabs,1);
@@ -93,7 +94,7 @@ public final class PhoneActivity extends LeoActivity {
 
         favoriteRow=new LinearLayout(this);LinearLayout.LayoutParams favoritesLayout=new LinearLayout.LayoutParams(-1,dp(76));favoritesLayout.topMargin=dp(6);favoritesLayout.bottomMargin=dp(6);fields.addView(favoriteRow,favoritesLayout);favoriteCards();
         recent=new Button(this);recent.setAllCaps(false);recent.setText(L.t("Ultimul apel\nSe verifică jurnalul…"));recent.setTextSize(13);recent.setTextColor(Color.WHITE);recent.setGravity(Gravity.LEFT|Gravity.CENTER_VERTICAL);recent.setPadding(dp(9),0,dp(7),0);recent.setMinHeight(0);recent.setMinimumHeight(0);recent.setMaxLines(3);recent.setEllipsize(android.text.TextUtils.TruncateAt.END);recent.setBackground(PhoneTheme.focus(palette,palette.card));recent.setOnClickListener(new View.OnClickListener(){public void onClick(View v){switchPage(1);}});fields.addView(recent,new LinearLayout.LayoutParams(-1,dp(60)));loadRecent();
-        number.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(e.getAction()==KeyEvent.ACTION_DOWN){if(key==KeyEvent.KEYCODE_DPAD_DOWN){if(matches.getVisibility()==View.VISIBLE)matches.requestFocus();else favoriteRow.getChildAt(0).requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP){((LinearLayout)root.getChildAt(1)).getChildAt(0).requestFocus();return true;}}return false;}});
+        number.setOnKeyListener(new View.OnKeyListener(){public boolean onKey(View v,int key,KeyEvent e){if(e.getAction()==KeyEvent.ACTION_DOWN){if(key==KeyEvent.KEYCODE_DPAD_DOWN){if(matches.getVisibility()==View.VISIBLE)matches.requestFocus();else favoriteRow.getChildAt(0).requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP){focusTabs();return true;}}return false;}});
         left=new Runnable(){public void run(){menu();}};footer(L.t("Opțiuni"),L.t("Verde: apel"),L.t("Înapoi"));tabs();number.requestFocus();updateMatches();
     }
     private void updateSimChips(){if(simChips==null)return;String[] rows=network.summary().split("\n",-1);for(int i=0;i<2;i++)simChips[i].setText(i<rows.length?rows[i]:"SIM "+(i+1));}
@@ -191,8 +192,17 @@ public final class PhoneActivity extends LeoActivity {
         }});
     }
     private static String duration(long seconds){return String.format(java.util.Locale.ROOT,"%d:%02d:%02d",seconds/3600,(seconds/60)%60,seconds%60);}
+    private void focusTabs(){if(tabBar!=null)tabBar.getChildAt(page).requestFocus();}
     public boolean dispatchKeyEvent(KeyEvent event) {
         int key=event.getKeyCode();
+        // Switch from every non-editor area, including lists that wrap vertically.
+        // Keep left/right available for editing a phone number.
+        if(tabBar!=null&&tabBar.getParent()==root&&!(getCurrentFocus() instanceof EditText)
+                &&(page!=0||(getCurrentFocus()!=null&&getCurrentFocus().getParent()==tabBar))
+                &&(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){
+            if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0){switchPage((page+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:2))%3);if(page==0)focusTabs();}
+            return true;
+        }
         if(page==0&&key==KeyEvent.KEYCODE_CALL){if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0)chooseSim();return true;}
         return super.dispatchKeyEvent(event);
     }
