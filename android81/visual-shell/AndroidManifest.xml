@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="10" android:versionName="0.10.0-dev">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="11" android:versionName="0.11.0-dev">
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -195,5 +195,6 @@
         <activity android:name=".CompanionActivity" android:exported="false" android:screenOrientation="portrait" />
         <service android:name=".AutomationService" android:exported="false" />
         <service android:name=".CompanionService" android:exported="false" />
+        <activity android:name=".AndroidControlsActivity" android:exported="false" android:screenOrientation="portrait" />
 </application>
 </manifest>

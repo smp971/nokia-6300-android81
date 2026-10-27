@@ -96,13 +96,18 @@ public final class LeoPointerService extends AccessibilityService {
         if(instance==null) return false;
         instance.setActive(false); instance.setActive(true); return instance.active;
     }
+    static boolean openAndroidPanel(boolean quick) {
+        if(instance==null || KeypadLockActivity.locked(instance)) return false;
+        instance.setActive(false);
+        return instance.performGlobalAction(quick?GLOBAL_ACTION_QUICK_SETTINGS:GLOBAL_ACTION_NOTIFICATIONS);
+    }
     private void globalMenu() {
         menuGeneration++;
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            L.t("Meniu Leo"),new String[]{L.t("Notificări"),active?L.t("Oprește mouse-ul"):L.t("Mouse din taste"),L.t("Acasă"),L.t("Setări Leo"),L.t("Blochează tastele"),L.t("Configurări rapide"),L.t("Închide meniul"),L.t("Acum se redă"),L.t("Aplicații recente"),L.t("Închide aplicația curentă"),L.t("Pornire și oprire"),L.t("Transferuri Bluetooth"),L.t("Comenzile paginii"),L.t("Spațiu de lucru"),L.t("Leo Studio")},new KeypadDialog.Action() {
-                public void select(int which) {if(which==13||which==14){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,which==13?WorkspaceActivity.class:PremiumStudioActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==11){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,BluetoothTransfersActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==12){setActive(false);ContextHelp.open(LeoPointerService.this,foregroundClass);return;}
+            L.t("Meniu Leo"),new String[]{L.t("Notificări"),active?L.t("Oprește mouse-ul"):L.t("Mouse din taste"),L.t("Acasă"),L.t("Setări Leo"),L.t("Blochează tastele"),L.t("Configurări rapide"),L.t("Închide meniul"),L.t("Acum se redă"),L.t("Aplicații recente"),L.t("Închide aplicația curentă"),L.t("Pornire și oprire"),L.t("Transferuri Bluetooth"),L.t("Comenzile paginii"),L.t("Spațiu de lucru"),L.t("Leo Studio"),L.t("Android din taste")},new KeypadDialog.Action() {
+                public void select(int which) {if(which==15){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,AndroidControlsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==13||which==14){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,which==13?WorkspaceActivity.class:PremiumStudioActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==11){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,BluetoothTransfersActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==12){setActive(false);ContextHelp.open(LeoPointerService.this,foregroundClass);return;}
                     if(which==10){openPowerMenu();return;}
                     if(which==9){closeForeground();return;}
                     if(which==8){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,RecentAppsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}

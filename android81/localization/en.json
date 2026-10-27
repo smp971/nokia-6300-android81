@@ -2654,5 +2654,11 @@
   "Studio · Grafit": "Studio · Graphite",
   "Aspect Studio": "Studio look",
   "Aplici aspectul Studio?": "Apply the Studio look?",
-  "Importă aplicație web Leo": "Import Leo web app"
+  "Importă aplicație web Leo": "Import Leo web app",
+  "Android din taste": "Android keypad controls",
+  "Notificări Android\nPanoul de sistem · D-pad și OK": "Android notifications\nSystem panel · D-pad and OK",
+  "Configurări rapide Android\nStânga / dreapta schimbă panoul": "Android quick settings\nLeft / right switches panel",
+  "Setări Android\nSoft stânga: acțiuni Android / Leo": "Android Settings\nLeft softkey: Android / Leo actions",
+  "Notificări Leo\nGrupuri și acțiuni detaliate": "Leo notifications\nGroups and detailed actions",
+  "Serviciul tastelor trebuie să fie conectat": "The keypad service must be connected"
 }

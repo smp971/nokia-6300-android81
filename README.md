@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.10.0-dev / cod 10**
+**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.11.0-dev / cod 11**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -31,6 +31,20 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 > publică de flash complet validată sunt încă de construit.
 
 ## Ce este nou
+
+**Leo 0.11 · Android din taste:** un punct comun pentru panoul Android de
+notificări, comenzile rapide Android, Setări Android și notificările Leo.
+Este disponibil din meniul fizic global și din Setări Leo → Telefon.
+Adaptarea SystemUI și Settings folosește un contur mentă pentru selecție,
+cu surse, build și instalare cu revenire temporizată.
+[Implementare, verificări și limite](android81/LEO-11-ANDROID-KEYPAD.md).
+Au trecut **65 de verificări**: adaptorul, componentele native instalate,
+pagina nouă și regresia interfeței comune Leo. Notificarea locală de test
+a fost selectată și deschisă cu OK. Nu s-a repetat proba după repornire.
+Această etapă nu înseamnă că toate aplicațiile Android au fost adaptate;
+migrarea hook-ului central DecorView rămâne separată de instalarea APK-urilor.
+
+<img src="android81/screenshots/leo11-android-controls.png" width="180" alt="Android din taste în Leo">
 
 **Leo 0.10 · construim o platformă:** Leo Studio reunește aplicații HTML locale,
 spațiul de lucru, automatizări opt-in, Companion PC prin Wi-Fi și recuperare.

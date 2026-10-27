@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.systemtests">
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
+    <application android:label="Leo system keypad tests" android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity android:name=".KeypadFixtureActivity" android:exported="false" />
+    </application>
+    <instrumentation android:name=".KeypadFrameworkTests" android:targetPackage="ro.leo.systemtests" />
+    <instrumentation android:name=".NativeSystemUiTests" android:targetPackage="ro.leo.systemtests" />
+</manifest>
