@@ -1,9 +1,9 @@
-# Pachetul aplicațiilor Leo · 0.12.0-dev
+# Pachetul aplicațiilor Leo · 0.13.0-dev
 
-Versiunea curentă este `0.12.0-dev`, cod 12. Ambele aplicații au fost compilate
+Versiunea curentă este `0.13.0-dev`, cod 13. Ambele aplicații au fost compilate
 individual în această etapă; pachetul colectează exact APK-urile verificate pe
 telefon cu `--package-only` și înregistrează corect `rebuilt=false`.
-[Rezultatele etapei](LEO-12-DAILY-CANDIDATE.md).
+[Rezultatele etapei](LEO-13-DAILY-TOOLS.md).
 Pentru reconstruire completă folosește `--build`, după `--check`.
 
 Acesta este pachetul celor două aplicații. Cele trei APK-uri Android adaptate
@@ -28,7 +28,7 @@ construite anterior, și verificat prin instalatorul offline. Manifestul său in
 `rebuilt=false`. Runtime-ul proprietar al camerei se instalează separat și nu este
 inclus în pachetul celor două aplicații.
 
-## Etapa curentă · 0.5.0-dev / cod 5
+## Etapa istorică · 0.5.0-dev / cod 5
 
 Include [meniul pe categorii, ferestrele recente, dosarele SMS și controlul
 blițului](LEO-MATURITY.md), pe lângă etapele anterioare. Ambele APK-uri sunt
@@ -66,14 +66,14 @@ folosită de proiect, pentru compatibilitatea actualizărilor.
 
 ## Rezultat și verificare
 
-`leo-apps-0.5.0-dev/` conține:
+`leo-apps-0.13.0-dev/` conține:
 
 - `leo-visual.apk` și `leo-keypad-ime.apk`;
 - `manifest.json`: versiune, țintă, dimensiuni/hash-uri, commit, starea arborelui,
   hash-urile surselor și ale intrărilor de build;
 - `install-app-bundle.py` și `README.txt`.
 
-Se produce și `leo-apps-0.5.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
+Se produce și `leo-apps-0.13.0-dev.zip`, al cărui SHA-256 este afișat. Din folderul
 extras, pe Windows sau Linux:
 
 ```bash

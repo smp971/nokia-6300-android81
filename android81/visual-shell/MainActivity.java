@@ -26,6 +26,7 @@ import java.util.Locale;
 /** Native HOME artwork and keypad layout; uses Android phone services. */
 public final class MainActivity extends Activity {
     private Screen screen;
+    private final NavigationPace navigationPace=new NavigationPace();
     private boolean offeredSetup;private boolean homeVisible;private int favoriteGeneration;private final java.util.concurrent.ExecutorService favoriteWorker=java.util.concurrent.Executors.newSingleThreadExecutor();
     private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.reloadCards();screen.invalidate();}};
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){screen.reloadAppearance();screen.reloadCards();}};
@@ -120,7 +121,7 @@ public final class MainActivity extends Activity {
             screen.grid = false; screen.message = ""; screen.invalidate();
         }
     }
-    public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
+    public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event)||navigationPace.consume(this,event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){boolean quick=key==KeyEvent.KEYCODE_5&&speedKey==key;handler.removeCallbacks(speed);speedKey=-1;if(quick)startActivity(new Intent(this,QuickHomeActivity.class));return true;}return super.onKeyUp(key,event);}
     public boolean onKeyDown(int key, KeyEvent event) {
         if(!screen.grid&&screen.shortcut>=4&&screen.cards.length>0){int type=screen.cards[screen.cardIndex].type;if((type==2||type==3)&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(event.getRepeatCount()==0){if(type==3){if(key==KeyEvent.KEYCODE_5)screen.openCard();else if(screen.favorites.length>0){screen.favoriteIndex=CircularNavigation.step(screen.favoriteIndex,key==KeyEvent.KEYCODE_4?-1:1,screen.favorites.length);screen.reloadCards();screen.invalidate();}}else{PlaybackService s=PlaybackService.instance;if(s!=null&&(s.playing()||!FmService.playing)){if(key==KeyEvent.KEYCODE_5)s.toggle();else s.next(key==KeyEvent.KEYCODE_6);}else if(FmService.playing){if(key==KeyEvent.KEYCODE_5)stopService(new Intent(this,FmService.class));else if(FmService.instance!=null)FmService.instance.seek(key==KeyEvent.KEYCODE_6);}screen.reloadCards();screen.invalidate();}}return true;}}

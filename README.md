@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.12.0-dev / cod 12**
+**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.13.0-dev / cod 13**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -31,6 +31,16 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 > în recovery; flash-ul și restaurarea acestui pachet nu sunt încă validate pe hardware.
 
 ## Ce este nou
+
+**Leo 0.13 · instrumente pentru fiecare zi:** căutare pe categorii și rute către
+Setări, media curentă fixată în Aplicații recente, program sonor mai accesibil,
+descărcări cu progres și reîncercare, repetarea săgeților configurabilă și ghid
+de configurare care își reia pasul. Funcțiile existente sunt extinse, fără copii
+noi în meniu. NFC a fost verificat și rămâne indisponibil pe acest dispozitiv.
+[Rute, capturi și verificări](android81/LEO-13-DAILY-TOOLS.md).
+
+<img src="android81/screenshots/leo13-recent.png" width="180" alt="Media curentă în Aplicații recente">
+<img src="android81/screenshots/leo13-accessibility.png" width="180" alt="Repetarea săgeților în Accesibilitate Leo">
 
 **Leo 0.12 · pregătit de utilizare:** diagnostic local pentru Home/T9/meniul global,
 poziție în liste, pictograme comune cache-uite și mai puține actualizări inutile.

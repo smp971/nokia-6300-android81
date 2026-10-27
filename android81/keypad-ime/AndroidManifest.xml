@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.keypad" android:versionCode="12" android:versionName="0.12.0-dev">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.keypad" android:versionCode="13" android:versionName="0.13.0-dev">
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
     <permission android:name="ro.leo.keypad.MANAGE_BACKUP" android:protectionLevel="signature" />
     <application android:label="Leo Keypad" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar">

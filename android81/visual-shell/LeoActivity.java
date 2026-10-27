@@ -26,6 +26,7 @@ abstract class LeoActivity extends Activity {
     private LinearLayout softkeyBar;
     private ListView activeList;private final UiRowCache rowCache=new UiRowCache();
     private String listTitle;private java.util.ArrayList<String> listRows;private BaseAdapter listAdapter;
+    private final NavigationPace navigationPace=new NavigationPace();
     private TextView heading;private ListPositionDrawable listPosition;
     protected void onCreate(Bundle state) {
         super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
@@ -177,6 +178,7 @@ abstract class LeoActivity extends Activity {
     public boolean dispatchKeyEvent(KeyEvent event) {long start=android.os.SystemClock.elapsedRealtimeNanos();try{return dispatchLeoKey(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     private boolean dispatchLeoKey(KeyEvent event) {
         if(isJackNavigationNoise(event)) return true;
+        if(navigationPace.consume(this,event))return true;
         if(CircularNavigation.dispatch(this,event))return true;
         if(event.getKeyCode()==KeyEvent.KEYCODE_MENU && left!=null) {
             if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) left.run(); return true;

@@ -48,4 +48,5 @@
     <instrumentation android:name="ro.leo.visual.CompanionLanTrial" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.AndroidControlsTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.DailyCandidateTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.DailyToolsTests" android:targetPackage="ro.leo.visual" />
 </manifest>
