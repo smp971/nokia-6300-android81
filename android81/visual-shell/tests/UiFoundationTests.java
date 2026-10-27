@@ -20,6 +20,7 @@ public final class UiFoundationTests extends Instrumentation {
     private int count;
     private PowerManager.WakeLock display;
     private void check(boolean ok,String message){if(!ok)throw new AssertionError(message);checks++;}
+    private void focus(final boolean expected){long until=SystemClock.uptimeMillis()+3000;while(SystemClock.uptimeMillis()<until){final boolean[] focused={false};runOnMainSync(new Runnable(){public void run(){focused[0]=activity.hasWindowFocus();}});if(focused[0]==expected)return;SystemClock.sleep(30);}throw new AssertionError("Power menu window focus did not settle");}
     public void onCreate(Bundle b){start();}
     public void onStart(){Bundle result=new Bundle();try{
         // Instrumentation starts on a worker; synchronize with Application's
@@ -77,10 +78,10 @@ public final class UiFoundationTests extends Instrumentation {
         }});
         runOnMainSync(new Runnable(){public void run(){activity.finish();}});
         activity=(LeoActivity)startActivitySync(new Intent(getTargetContext(),PowerMenuActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        waitForIdleSync();
+        waitForIdleSync();focus(true);
         sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
-        check(!activity.isFinishing(),"choosing restart only opens confirmation");
-        sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);waitForIdleSync();
+        focus(false);check(!activity.isFinishing(),"choosing restart only opens confirmation");
+        sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);waitForIdleSync();focus(true);
         check(!activity.isFinishing(),"back cancels power confirmation without closing page");
         sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
         check(activity.isFinishing(),"continue returns from power menu with keypad");

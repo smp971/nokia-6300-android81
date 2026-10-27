@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.13.0-dev / cod 13**
+**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.14.0-dev / cod 14**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -31,6 +31,16 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 > în recovery; flash-ul și restaurarea acestui pachet nu sunt încă validate pe hardware.
 
 ## Ce este nou
+
+**Leo 0.14 · ziua ta, din taste:** agenda zilnică adună Calendarul, alarma și
+listele nebifate din Notițe; contactele primesc activitate comună apeluri/SMS,
+iar Galeria reutilizează miniaturile. Cititorul deschide Markdown și PDF, cu
+reluarea paginii PDF și căutare în documentele text. Notificările pot fi amânate,
+iar tastele lungi 2–9 pot deschide aplicații. Comenzile protejate sunt păstrate.
+[Acces, verificări și limite](android81/LEO-14-DAILY-EXPERIENCE.md).
+
+<img src="android81/screenshots/leo14-markdown.png" width="180" alt="Markdown local în cititorul Leo">
+<img src="android81/screenshots/leo14-pdf.png" width="180" alt="PDF în Leo, pagina 2 și zoom din taste">
 
 **Leo 0.13 · instrumente pentru fiecare zi:** căutare pe categorii și rute către
 Setări, media curentă fixată în Aplicații recente, program sonor mai accesibil,

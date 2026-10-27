@@ -45,9 +45,10 @@ public final class NotificationsActivity extends LeoActivity {
     private void actions(final StatusBarNotification n){
             final Notification.Action[] actions=n.getNotification().actions;
             ArrayList<String> labels=new ArrayList<String>();labels.add(getPackageName().equals(n.getPackageName())&&"leo-sms".equals(n.getTag())?L.t("Deschide conversația Leo"):L.t("Deschide"));labels.add(n.isClearable()?L.t("Elimină"):L.t("Permanentă · nu se elimină"));
-            if(actions!=null)for(Notification.Action action:actions)labels.add(safe(action.title));
+            if(actions!=null)for(Notification.Action action:actions)labels.add(safe(action.title));final int snoozeAt=labels.size();if(LeoNotificationService.canSnooze(n))labels.add(L.t("Amintește-mi mai târziu"));
             options(L.t("Notificare"),labels.toArray(new String[0]),new Choice(){public void pick(int i){
-                if(i==0)open(n);
+                if(i==snoozeAt&&LeoNotificationService.canSnooze(n)){options(L.t("Amână notificarea"),new String[]{L.t("5 minute"),L.t("15 minute"),L.t("1 oră")},new Choice(){public void pick(int at){notice(LeoNotificationService.snooze(n,new long[]{300000,900000,3600000}[at])?L.t("Notificare amânată"):L.t("Notificarea nu poate fi amânată"));show();}});}
+                else if(i==0)open(n);
                 else if(i==1){if(LeoNotificationService.dismiss(n))show();}
                 else if(actions!=null&&i-2<actions.length)notificationAction(n,actions[i-2]);
             }});

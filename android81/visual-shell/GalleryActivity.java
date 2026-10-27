@@ -14,13 +14,14 @@ public final class GalleryActivity extends LeoActivity {
     private final ArrayList<Uri> allImages=new ArrayList<Uri>();private final ArrayList<String> allNames=new ArrayList<String>(),buckets=new ArrayList<String>(),bucketLabels=new ArrayList<String>();private String album="";
     private final ArrayList<Uri> images=new ArrayList<Uri>();
     private final ArrayList<String> names=new ArrayList<String>();
+    private final android.util.LruCache<String,Bitmap> thumbnailCache=new android.util.LruCache<String,Bitmap>(2097152){protected int sizeOf(String key,Bitmap bitmap){return bitmap.getAllocationByteCount();}};
     private final HashMap<Integer,Bitmap> thumbs=new HashMap<Integer,Bitmap>();
     private final LinkedHashSet<String> marked=new LinkedHashSet<String>();
     private Set<String> favorites(){return new HashSet<String>(getSharedPreferences("gallery",0).getStringSet("favorites",Collections.<String>emptySet()));}
-    private int selected,generation,zoom=1; private float panX,panY;private boolean viewer,closed,slideshow;private int rotation;private final android.os.Handler slides=new android.os.Handler();
+    private int selected,zoom=1;private volatile int generation; private float panX,panY;private boolean viewer,closed,slideshow;private int rotation;private final android.os.Handler slides=new android.os.Handler();
     private final Runnable advance=new Runnable(){public void run(){if(slideshow&&!closed&&!images.isEmpty()){selected=CircularNavigation.step(selected,1,images.size());open();}}}; private Bitmap photo; private Face face;
     protected void onCreate(Bundle state) { super.onCreate(state);if(getIntent().getData()!=null){images.add(getIntent().getData());names.add(getIntent().getStringExtra("title")==null?L.t("Imagine"):getIntent().getStringExtra("title"));grid();open();}else load(); }
-    private void load() {
+    private void load() {thumbnailCache.evictAll();
         begin(L.t("Galerie")); root.addView(text(L.t("Se încarcă…"),18),new LinearLayout.LayoutParams(-1,0,1)); footer("","",L.t("Înapoi"));
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Uri> found=new ArrayList<Uri>(); final ArrayList<String> labels=new ArrayList<String>(),ids=new ArrayList<String>(),folderNames=new ArrayList<String>();
@@ -31,18 +32,18 @@ public final class GalleryActivity extends LeoActivity {
         }});
     }
     private void albums(){stopSlides();face=null;generation++;viewer=false;clearImages();final LinkedHashMap<String,String> groups=new LinkedHashMap<String,String>();groups.put("",L.t("Toate imaginile"));groups.put("@favorites",L.t("★ Favorite"));for(int i=0;i<buckets.size();i++)groups.put(buckets.get(i),bucketLabels.get(i));final ArrayList<String> ids=new ArrayList<String>(groups.keySet());ArrayList<String> labels=new ArrayList<String>();for(String id:ids){int count=0;for(int k=0;k<buckets.size();k++)if(id.isEmpty()||id.equals(buckets.get(k))||id.equals("@favorites")&&favorites().contains(allImages.get(k).toString()))count++;labels.add(groups.get(id)+"\n"+count+L.t(" imagini"));}list(L.t("Albume foto"),labels,0,new Choice(){public void pick(int at){album=ids.get(at);images.clear();names.clear();for(int i=0;i<allImages.size();i++)if(album.isEmpty()||album.equals(buckets.get(i))||album.equals("@favorites")&&favorites().contains(allImages.get(i).toString())){images.add(allImages.get(i));names.add(allNames.get(i));}selected=0;grid();}},L.t("Reîncarcă"),new Runnable(){public void run(){load();}});}
-    private void clearImages() { if(photo!=null) { photo.recycle(); photo=null; } for(Bitmap b:thumbs.values()) b.recycle(); thumbs.clear(); }
+    private void clearImages() { if(photo!=null) { photo.recycle(); photo=null; } thumbs.clear(); }
     private void grid() {
         stopSlides();viewer=false; zoom=1; generation++; clearImages(); begin(L.t("Galerie · ")+images.size()); face=new Face(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable() { public void run() { if(images.isEmpty()) load(); else imageOptions(); } }; footer(L.t("Opțiuni"),L.t("Deschide"),L.t("Înapoi"));
         face.setFocusableInTouchMode(true); face.requestFocus(); back=getIntent().getData()!=null?null:new Runnable(){public void run(){albums();}}; thumbnails();
     }
     private void thumbnails() {
-        final int token=++generation,start=selected/6*6; final ArrayList<Uri> snapshot=new ArrayList<Uri>(images); for(Bitmap b:thumbs.values()) b.recycle(); thumbs.clear();
+        final int token=++generation,start=selected/6*6; final ArrayList<Uri> snapshot=new ArrayList<Uri>(images); thumbs.clear();
         worker.execute(new Runnable() { public void run() {
             final HashMap<Integer,Bitmap> loaded=new HashMap<Integer,Bitmap>();
-            for(int i=start;i<Math.min(snapshot.size(),start+6);i++) try { loaded.put(i,Appearance.decode(GalleryActivity.this,snapshot.get(i),128)); } catch(Exception|OutOfMemoryError ignored) { }
-            runOnUiThread(new Runnable() { public void run() { if(closed||token!=generation) { for(Bitmap b:loaded.values()) b.recycle(); return; } thumbs.putAll(loaded); face.invalidate(); } });
+            for(int i=start;i<Math.min(snapshot.size(),start+6)&&token==generation;i++) try { Bitmap image=thumbnailCache.get(snapshot.get(i).toString());if(image==null)image=Appearance.decode(GalleryActivity.this,snapshot.get(i),128);if(image!=null)loaded.put(i,image); } catch(Exception|OutOfMemoryError ignored) { }
+            runOnUiThread(new Runnable() { public void run() { if(closed||token!=generation)return;for(Map.Entry<Integer,Bitmap> entry:loaded.entrySet())thumbnailCache.put(snapshot.get(entry.getKey()).toString(),entry.getValue());thumbs.putAll(loaded); face.invalidate(); } });
         }});
     }
     private void open() {
@@ -89,7 +90,7 @@ public final class GalleryActivity extends LeoActivity {
     }
     private int panStep(KeyEvent e){return dp(Math.min(48,12+e.getRepeatCount()*3));}
     protected void onPause(){stopSlides();super.onPause();}
-    protected void onDestroy() {stopSlides(); closed=true; generation++; clearImages(); super.onDestroy(); }
+    protected void onDestroy() {stopSlides(); closed=true; generation++; clearImages();thumbnailCache.evictAll(); super.onDestroy(); }
     private final class Face extends View {
         final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
         Face() { super(GalleryActivity.this); }
