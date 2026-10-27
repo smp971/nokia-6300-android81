@@ -35,7 +35,7 @@ public final class PhoneActivity extends LeoActivity {
     private TextView[] simChips;
     private Button recent;
     private NetworkTelemetry network;
-    private int page;private volatile int generation;
+    private int page;private volatile int generation;private boolean contentRequested;
     private String historyQuery="";
     private int historySim=-1;
     private boolean missedOnly;
@@ -57,13 +57,13 @@ public final class PhoneActivity extends LeoActivity {
     protected void onSaveInstanceState(Bundle state) {
         state.putString("number",number==null?draft:number.getText().toString());state.putInt("page",page);super.onSaveInstanceState(state);
     }
-    private void switchPage(int selected){
+    private void switchPage(int selected){contentRequested=false;
         if(page==0&&number!=null)draft=number.getText().toString();
         if(selected==0)dial(draft);else if(selected==1)history();else stats();
     }
     private void tabs(){
-        tabBar=KeypadTabs.create(this,tabNames,page,new Choice(){public void pick(int index){switchPage(index);}},new Runnable(){public void run(){if(page==0)number.requestFocus();else KeypadTabs.focusList(PhoneActivity.this);}});
-        root.addView(tabBar,1);if(page!=0)focusTabs();
+        tabBar=KeypadTabs.create(this,tabNames,page,new Choice(){public void pick(int index){switchPage(index);}},new Runnable(){public void run(){if(page==0)number.requestFocus();else requestContent();}});
+        root.addView(tabBar,1);if(page!=0){if(contentRequested)requestContent();else focusTabs();}
     }
     private void menu(){
         if(page==1){historyMenu();return;}phoneMenu();
@@ -157,7 +157,7 @@ public final class PhoneActivity extends LeoActivity {
         } catch(SecurityException denied) { notice(L.t("Permisiunea de telefonie lipsește")); }
     }
     private void history() {
-        page=1;networkText=null;final int token=++generation;
+        page=1;networkText=null;contentRequested=false;final int token=++generation;loadingPage(L.t("Istoric apeluri"));
         final String query=historyQuery;final int simFilter=historySim;final boolean missed=missedOnly;
         final ArrayList<String> labels=new ArrayList<String>(),numbers=new ArrayList<String>();
         final android.util.LruCache<String,ContactIdentity> identities=new android.util.LruCache<String,ContactIdentity>(128);
@@ -192,7 +192,7 @@ public final class PhoneActivity extends LeoActivity {
         back=new Runnable(){public void run(){history();}};footer(L.t("Opțiuni"),L.t("Detalii"),L.t("Înapoi"));
     }
     private void stats(){
-        page=2;networkText=null;final int token=++generation;
+        page=2;networkText=null;contentRequested=false;final int token=++generation;loadingPage(L.t("Statistici apeluri"));
         worker.execute(new Runnable(){public void run(){
             final long[] values=new long[7];final java.util.LinkedHashMap<String,long[]> perSim=new java.util.LinkedHashMap<String,long[]>();final java.util.HashMap<String,String> simNames=new java.util.HashMap<String,String>();
             try{java.util.List<android.telephony.SubscriptionInfo> subscriptions=android.telephony.SubscriptionManager.from(PhoneActivity.this).getActiveSubscriptionInfoList();if(subscriptions!=null)for(android.telephony.SubscriptionInfo sim:subscriptions){String label="SIM "+(sim.getSimSlotIndex()+1);simNames.put(""+sim.getSubscriptionId(),label);if(sim.getIccId()!=null)simNames.put(sim.getIccId(),label);}}catch(RuntimeException ignored){}
@@ -204,6 +204,8 @@ public final class PhoneActivity extends LeoActivity {
         }});
     }
     private static String duration(long seconds){return String.format(java.util.Locale.ROOT,"%d:%02d:%02d",seconds/3600,(seconds/60)%60,seconds%60);}
+    private void loadingPage(String title){begin(title);root.addView(text(L.t("Se încarcă…"),16),new LinearLayout.LayoutParams(-1,0,1));left=new Runnable(){public void run(){menu();}};back=new Runnable(){public void run(){dial(draft);}};footer(L.t("Opțiuni"),"",L.t("Înapoi"));tabs();}
+    private void requestContent(){contentRequested=true;for(int n=0;n<root.getChildCount();n++)if(root.getChildAt(n) instanceof android.widget.ListView&&root.getChildAt(n).requestFocus()){contentRequested=false;return;}}
     private void focusTabs(){if(tabBar!=null)tabBar.getChildAt(page).requestFocus();}
     public boolean dispatchKeyEvent(KeyEvent event) {
         int key=event.getKeyCode();

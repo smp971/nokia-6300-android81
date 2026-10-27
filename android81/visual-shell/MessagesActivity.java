@@ -24,7 +24,7 @@ import java.text.Normalizer;
 /** SMS reader/composer; no automatic transmission and no change of default SMS app. */
 public final class MessagesActivity extends LeoActivity {
     private String current="",draftId;
-    private int folder;
+    private int folder,organization;
     private boolean composing;
     private boolean preview;
     private boolean viewingMessages;
@@ -104,11 +104,12 @@ public final class MessagesActivity extends LeoActivity {
         viewingMessages=true;loadingMessages=false;
         final ArrayList<Message> rows=new ArrayList<Message>(); ArrayList<String> labels=new ArrayList<String>();
         final HashSet<String> unread=new HashSet<String>();if(!preview)try(SmsStore s=new SmsStore(this);Cursor c=s.getReadableDatabase().rawQuery("SELECT DISTINCT address FROM inbox WHERE unread=1",null)){while(c.moveToNext())unread.add(c.getString(0));}catch(RuntimeException ignored){}HashSet<String> threads=new HashSet<String>();
+        Collections.sort(messages,new Comparator<Message>(){public int compare(Message a,Message b){if(address.isEmpty()){boolean ap=ConversationPrefs.has(MessagesActivity.this,"pinned",a.address),bp=ConversationPrefs.has(MessagesActivity.this,"pinned",b.address);if(ap!=bp)return ap?-1:1;}return Long.compare(b.date,a.date);}});
         for(Message m:messages) {
             if(address.isEmpty()) {
-                if(!SmsFolders.accepts(folder,m.type))continue;
+                if(!SmsFolders.accepts(folder,m.type)||!ConversationPrefs.visible(this,organization,m.address))continue;
                 if(!threads.add(m.address)) continue;
-                rows.add(m); labels.add((unread.contains(m.address)?"● ":"")+(m.identity==null?m.address:m.identity.name)+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
+                rows.add(m); labels.add((ConversationPrefs.has(this,"pinned",m.address)?"★ ":"")+(unread.contains(m.address)?"● ":"")+(m.identity==null?m.address:m.identity.name)+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
             } else if(m.address.equals(address)) {
                 rows.add(m);
             }
@@ -122,11 +123,11 @@ public final class MessagesActivity extends LeoActivity {
         list(folder==0?L.t("Mesaje"):L.t("Mesaje · ")+SmsFolders.LABELS[folder],labels,0,new Choice() { public void pick(int i) {
             load(rows.get(i).address);
         } },L.t("Opțiuni"),new Runnable() { public void run() {
-            options(L.t("Mesaje"),new String[]{L.t("SMS nou"),L.t("Caută în toate mesajele"),L.t("Ciorne salvate"),L.t("Previzualizare notificări"),L.t("Șabloane SMS"),L.t("Dosare mesaje")},new Choice() { public void pick(int i) {
-                if(i==5){options(L.t("Dosare"),SmsFolders.LABELS,new Choice(){public void pick(int at){folder=at;load("");}});}else if(i==4){replyAddress="";templates(false);}else if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)drafts();else {final SharedPreferences p=getSharedPreferences("sms-options",0);options(L.t("Text în notificări"),new String[]{L.t("Ascunde textul"),L.t("Arată o previzualizare")},new Choice(){public void pick(int mode){p.edit().putBoolean("preview",mode==1).apply();notice(L.t("Preferință salvată pentru mesajele noi"));}});}
+            options(L.t("Mesaje"),new String[]{L.t("SMS nou"),L.t("Caută în toate mesajele"),L.t("Ciorne salvate"),L.t("Previzualizare notificări"),L.t("Șabloane SMS"),L.t("Dosare mesaje"),L.t("Primite / Arhivate / Filtrate")},new Choice() { public void pick(int i) {
+                if(i==6){options(L.t("Conversații"),new String[]{L.t("Principale"),L.t("Arhivate"),L.t("Expeditori filtrați")},new Choice(){public void pick(int n){organization=n;load("");}});}else if(i==5){options(L.t("Dosare"),SmsFolders.LABELS,new Choice(){public void pick(int at){folder=at;load("");}});}else if(i==4){replyAddress="";templates(false);}else if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)drafts();else {final SharedPreferences p=getSharedPreferences("sms-options",0);options(L.t("Text în notificări"),new String[]{L.t("Ascunde textul"),L.t("Arată o previzualizare")},new Choice(){public void pick(int mode){p.edit().putBoolean("preview",mode==1).apply();notice(L.t("Preferință salvată pentru mesajele noi"));}});}
             }});
         } });
-        TextView folders=text("‹ "+SmsFolders.LABELS[folder]+L.t(" › · stânga / dreapta"),12);folders.setGravity(Gravity.CENTER);folders.setTextColor(palette.accent);root.addView(folders,1);
+        TextView folders=text((organization==1?L.t("Arhivate"):organization==2?L.t("Expeditori filtrați"):L.t("Principale"))+" · ‹ "+SmsFolders.LABELS[folder]+L.t(" › · stânga / dreapta"),12);folders.setGravity(Gravity.CENTER);folders.setTextColor(palette.accent);root.addView(folders,1);
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
         String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):L.t("SMS în așteptare · fără confirmare");
         if(!status.isEmpty()) root.addView(text(status,14),1);
@@ -209,8 +210,8 @@ public final class MessagesActivity extends LeoActivity {
     }
     private void messageOptions(final String address,final ArrayList<Message> rows,final int index) {
         final boolean hasMessage=index>=0 && index<rows.size();
-        options(L.t("Conversație"),new String[]{L.t("Răspunde","message"),L.t("Detalii mesaj"),L.t("Redirecționează"),L.t("Copiază textul"),L.t("Copiază numărul"),L.t("Caută în conversație"),L.t("Reîmprospătează"),L.t("Răspuns din șablon"),L.t("Selectează text")},new Choice() { public void pick(int i) {
-            if(i==7){replyAddress=address;templates(false);}else if(i==0)compose(address);
+        options(L.t("Conversație"),new String[]{L.t("Răspunde","message"),L.t("Detalii mesaj"),L.t("Redirecționează"),L.t("Copiază textul"),L.t("Copiază numărul"),L.t("Caută în conversație"),L.t("Reîmprospătează"),L.t("Răspuns din șablon"),L.t("Selectează text"),ConversationPrefs.has(this,"pinned",address)?L.t("Desprinde conversația"):L.t("Fixează conversația"),ConversationPrefs.has(this,"archived",address)?L.t("Dezarhivează"):L.t("Arhivează"),ConversationPrefs.has(this,"blocked",address)?L.t("Deblochează în Leo"):L.t("Filtrează expeditorul în Leo"),L.t("Numere și linkuri")},new Choice() { public void pick(int i) {
+            if(i>=9&&i<=11){final String group=i==9?"pinned":i==10?"archived":"blocked";if(i==11&&!ConversationPrefs.has(MessagesActivity.this,group,address))options(L.t("Păstrează SMS, ascunde notificările în Leo?"),new String[]{L.t("Anulează"),L.t("Filtrează")},new Choice(){public void pick(int yes){if(yes==1)organize(group,address);}});else organize(group,address);}else if(i==12){if(hasMessage)links(rows.get(index).body);}else if(i==7){replyAddress=address;templates(false);}else if(i==0)compose(address);
             else if(i==5)search(address,rows);
             else if(i==6)load(address);
             else if(hasMessage) {
@@ -225,6 +226,8 @@ public final class MessagesActivity extends LeoActivity {
             } else notice(L.t("Niciun mesaj selectat"));
         }});
     }
+    private void organize(String group,String address){if(preview){notice(L.t("Demo · fără salvare"));return;}try{ConversationPrefs.toggle(this,group,address);UnreadState.refresh(this);if(group.equals("blocked"))((android.app.NotificationManager)getSystemService(NOTIFICATION_SERVICE)).cancel("leo-sms",address.hashCode());load("");}catch(RuntimeException e){notice(L.t("Preferința nu poate fi salvată"));}}
+    private void links(String body){final ArrayList<String> links=MessageLinks.extract(body);if(links.isEmpty()){notice(L.t("Niciun număr sau link găsit"));return;}options(L.t("Numere și linkuri"),links.toArray(new String[0]),new Choice(){public void pick(int n){Uri uri=Uri.parse(links.get(n));try{if("tel".equals(uri.getScheme()))startActivity(new Intent(MessagesActivity.this,PhoneActivity.class).setAction(Intent.ACTION_DIAL).setData(uri));else if("mailto".equals(uri.getScheme()))startActivity(new Intent(MessagesActivity.this,EmailActivity.class).putExtra("compose_to",uri.getSchemeSpecificPart()));else startActivity(new Intent(MessagesActivity.this,BrowserActivity.class).setData(uri));}catch(RuntimeException e){notice(L.t("Nu există o aplicație compatibilă"));}}});}
     private static String searchable(String text) {
         return Normalizer.normalize(text==null?"":text,Normalizer.Form.NFD).replaceAll("\\p{M}+","").toLowerCase(Locale.ROOT);
     }

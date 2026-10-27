@@ -15,7 +15,7 @@ final class UnreadState {
     private static boolean watching;
     static synchronized void watch(final Context c){if(watching)return;watching=true;final Context app=c.getApplicationContext();app.getContentResolver().registerContentObserver(CallLog.Calls.CONTENT_URI,true,new ContentObserver(new Handler(android.os.Looper.getMainLooper())){public void onChange(boolean self){refresh(app);}});refresh(app);}
     static synchronized void refresh(Context context){final Context c=context.getApplicationContext();dirty=true;if(queued)return;queued=true;worker.execute(new Runnable(){public void run(){for(;;){synchronized(UnreadState.class){dirty=false;}try{
-        int s=0,n=0;try(SmsStore store=new SmsStore(c);Cursor row=store.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM inbox WHERE unread=1",null)){if(row.moveToFirst())s=row.getInt(0);}
+        int s=0,n=0;try(SmsStore store=new SmsStore(c);Cursor row=store.getReadableDatabase().rawQuery("SELECT address FROM inbox WHERE unread=1",null)){while(row.moveToNext())if(!ConversationPrefs.has(c,"blocked",row.getString(0)))s++;}
         SharedPreferences p=c.getSharedPreferences("unread",0);boolean initialized=p.contains("calls_seen");long seen=p.getLong("calls_seen",0),latest=seen;
         try(Cursor row=c.getContentResolver().query(CallLog.Calls.CONTENT_URI,new String[]{CallLog.Calls.DATE},CallLog.Calls.TYPE+"=? AND "+CallLog.Calls.DATE+">?",new String[]{""+CallLog.Calls.MISSED_TYPE,""+seen},null)){while(row!=null&&row.moveToNext()){n++;latest=Math.max(latest,row.getLong(0));}}
         if(!initialized){p.edit().putLong("calls_seen",latest).commit();n=0;}sms=s;calls=n;

@@ -20,7 +20,7 @@ public final class EmailActivity extends LeoActivity {
     private EditText to,subject,message;
     private final ArrayList<Uri> attachments=new ArrayList<Uri>();
     private TextView attachmentStatus;
-    protected void onCreate(Bundle state){super.onCreate(state);if(state!=null&&state.getBoolean("compose")){compose();to.setText(state.getString("to",""));subject.setText(state.getString("subject",""));message.setText(state.getString("message",""));ArrayList<String> restored=state.getStringArrayList("attachments");if(restored!=null)for(String u:restored)if(attachments.size()<5)attachments.add(Uri.parse(u));attachmentLabel();}else accounts();}
+    protected void onCreate(Bundle state){super.onCreate(state);if(state!=null&&state.getBoolean("compose")){compose();to.setText(state.getString("to",""));subject.setText(state.getString("subject",""));message.setText(state.getString("message",""));ArrayList<String> restored=state.getStringArrayList("attachments");if(restored!=null)for(String u:restored)if(attachments.size()<5)attachments.add(Uri.parse(u));attachmentLabel();}else if(getIntent().hasExtra("compose_to")){compose();to.setText(getIntent().getStringExtra("compose_to"));}else accounts();}
     protected void onSaveInstanceState(Bundle state){if(to!=null){state.putBoolean("compose",true);state.putString("to",to.getText().toString());state.putString("subject",subject.getText().toString());state.putString("message",message.getText().toString());ArrayList<String> uris=new ArrayList<String>();for(Uri u:attachments)uris.add(u.toString());state.putStringArrayList("attachments",uris);}super.onSaveInstanceState(state);}
     protected void onDestroy(){generation++;super.onDestroy();}
     protected void onRestart(){super.onRestart();if(to==null)accounts();}

@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 26 octombrie 2026** · **Versiune instalată: 0.7.0-dev / cod 7**
+**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.8.0-dev / cod 8**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -31,6 +31,18 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 > publică de flash complet validată sunt încă de construit.
 
 ## Ce este nou
+
+**Leo 0.8 · mai comod zilnic:** numere duplicate în Contacte, conversații SMS
+fixate/arhivate și filtrare locală, card Agenda pe Home, poziție separată pentru
+piesele lungi, egalizator opțional, patru profiluri vizuale personale și centru de
+aplicații cu spațiu ocupat, permisiuni și dezinstalare din taste. Colecțiile vizuale,
+scurtăturile, favoritele și modurile playerului existente se păstrează.
+[Utilizare, verificări și limite](android81/LEO-08-DAILY-USE.md).
+
+| Profiluri personale | Centrul de aplicații |
+| --- | --- |
+| <img src="android81/screenshots/leo08-profiles.png" width="180" alt="Patru profiluri vizuale personale"> | <img src="android81/screenshots/leo08-app-center.png" width="180" alt="Administrarea Leo din taste"> |
+
 
 **Leo 0.7 este instalat și verificat pe Nokia:** filtre în istoricul apelurilor, selecție text SMS, file
 comune, zoom și previzualizare foto, backup cu alarme și preferințe. Controlerul

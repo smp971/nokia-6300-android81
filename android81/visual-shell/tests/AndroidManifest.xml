@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual.tests">
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <application android:label="Leo local feature checks" android:allowBackup="false"><receiver android:name="ro.leo.visual.NotificationFixture" android:exported="false" /><activity android:name="ro.leo.visual.ShareProbeActivity" android:label="Leo · destinație locală de probă" android:exported="true"><intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="text/plain"/></intent-filter></activity></application>
     <instrumentation android:name="ro.leo.visual.FeatureTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.UpgradeTests" android:targetPackage="ro.leo.visual" />
@@ -39,4 +40,5 @@
     <instrumentation android:name="ro.leo.visual.GpsRuntimeTrial" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.PhoneTabsTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.SixPolishTests" android:targetPackage="ro.leo.visual" />
+<instrumentation android:name="ro.leo.visual.DailyUse08Tests" android:targetPackage="ro.leo.visual" />
 </manifest>

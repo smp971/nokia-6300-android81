@@ -10,14 +10,14 @@ public final class PhoneTabsTests extends Instrumentation {
     public void onCreate(Bundle args){start();}
     public void onStart(){Bundle out=new Bundle();try{
         page=(PhoneActivity)startActivitySync(new Intent(getTargetContext(),PhoneActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        final EditText number=(EditText)get("number");runOnMainSync(new Runnable(){public void run(){number.setText("123");number.setSelection(2);number.requestFocus();}});
+        final EditText number=(EditText)get("number");runOnMainSync(new Runnable(){public void run(){page.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON|WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);number.setText("123");number.setSelection(2);number.requestFocus();}});
         key(KeyEvent.KEYCODE_DPAD_LEFT);check((Integer)get("page")==0&&number.getSelectionStart()==1,"left edits number instead of changing tab");
         setInTouchMode(true);
         runOnMainSync(new Runnable(){public void run(){number.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_UP));}});
         ready(0);check(true,"tabs reachable from number in touch mode");
         key(KeyEvent.KEYCODE_DPAD_RIGHT);ready(1);check(true,"dial to history");
         key(KeyEvent.KEYCODE_DPAD_RIGHT);ready(2);check(true,"history to statistics");
-        key(KeyEvent.KEYCODE_DPAD_DOWN);check(page.getCurrentFocus() instanceof ListView,"down enters statistics list");
+        key(KeyEvent.KEYCODE_DPAD_DOWN);for(int n=0;n<100&&!(page.getCurrentFocus() instanceof ListView);n++){SystemClock.sleep(100);waitForIdleSync();}check(page.getCurrentFocus() instanceof ListView,"down enters statistics list, including while loading");
         key(KeyEvent.KEYCODE_DPAD_RIGHT);ready(0);check(true,"statistics list wraps to dial tab");
         check("123".equals(((EditText)get("number")).getText().toString()),"draft preserved");
         key(KeyEvent.KEYCODE_DPAD_LEFT);ready(2);check(true,"backward wrap to statistics");

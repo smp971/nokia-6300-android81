@@ -28,7 +28,7 @@ public final class BrowserActivity extends LeoActivity {
     private static final class Page {String url,title;Spanned text;int y,link;}
     private volatile int generation;
     private volatile HttpURLConnection connection;
-    protected void onCreate(Bundle b){super.onCreate(b);font=Math.max(14,Math.min(26,getSharedPreferences("browser",0).getInt("font",17)));home();}
+    protected void onCreate(Bundle b){super.onCreate(b);font=Math.max(14,Math.min(26,getSharedPreferences("browser",0).getInt("font",17)));if(getIntent().getData()!=null&&("https".equals(getIntent().getData().getScheme())||"http".equals(getIntent().getData().getScheme()))){home();fetch(getIntent().getData().toString());}else home();}
     protected void onDestroy(){generation++;HttpURLConnection c=connection;if(c!=null)c.disconnect();super.onDestroy();}
     private void home(){generation++;trail.clear();scrollY=0;linkIndex=-1;search="";match=-1;current="leo:home";title=L.t("Browser text");document=Html.fromHtml(L.t("<h2>Leo · Web în mod text</h2><p>0 adresă · 2 caută în pagină · 8 următorul rezultat. Stânga/dreapta sau 4/6 aleg linkul, 5 îl deschide. */# schimbă textul, 1/3 început/sfârșit.</p><p>Pagini simple: text HTML. Fără JavaScript, formulare web, video sau descărcări. Unele site-uri necesită un motor complet.</p><p><a href='https://example.org/'>Deschide example.org</a></p>"),Html.FROM_HTML_MODE_LEGACY);display();}
     private void display(){
