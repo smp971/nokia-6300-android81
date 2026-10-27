@@ -24,6 +24,7 @@ abstract class LeoActivity extends Activity {
     boolean form;
     Appearance.Palette palette;
     private LinearLayout softkeyBar;
+    private ListView activeList;private final UiRowCache rowCache=new UiRowCache();
     private String listTitle;private java.util.ArrayList<String> listRows;private BaseAdapter listAdapter;
     protected void onCreate(Bundle state) {
         super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
@@ -31,6 +32,7 @@ abstract class LeoActivity extends Activity {
     }
     protected void onResume(){super.onResume();ContextHelp.current=new java.lang.ref.WeakReference<LeoActivity>(this);}
     String helpControls(){if(softkeyBar==null)return "";StringBuilder out=new StringBuilder();for(int n=0;n<softkeyBar.getChildCount();n++){String value=((TextView)softkeyBar.getChildAt(n)).getText().toString();if(!value.isEmpty())out.append(n==0?L.t("Stânga · "):n==1?"OK · ":L.t("Dreapta · ")).append(value).append("\n");}return out.toString().trim();}
+    protected void onPause(){if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
     protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
     int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     TextView text(String value,int size) {
@@ -39,7 +41,7 @@ abstract class LeoActivity extends Activity {
     }
     void begin(String title) {
         form=false; left=null; back=null; softkeyBar=null;
-        listTitle=null;listRows=null;listAdapter=null;
+        activeList=null;listTitle=null;listRows=null;listAdapter=null;
         palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
         TextView heading=text(title,18); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
@@ -69,9 +71,10 @@ abstract class LeoActivity extends Activity {
         }});
     }
     void list(String title,final List<String> values,int selected,final Choice choice,String action,Runnable command) {
+        if(getIntent().getBooleanExtra("workspace_resume",false)){selected=WorkspaceSessions.selection(this,getClass().getSimpleName());getIntent().removeExtra("workspace_resume");}
         begin(title); left=command;
         listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
-        final ListView list=new ListView(this);list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
+        final ListView list=new ListView(this);activeList=list;list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
         list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
         final BaseAdapter adapter=new BaseAdapter() {
@@ -115,13 +118,10 @@ abstract class LeoActivity extends Activity {
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }
     boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;if(listRows.equals(rows))return true;listRows.clear();listRows.addAll(rows);listAdapter.notifyDataSetChanged();return true;}
-    private CharSequence rowText(String value){
-        android.text.SpannableString styled=new android.text.SpannableString(value);
-        int split=value.indexOf('\n');
-        if(split>=0&&split<value.length()-1){styled.setSpan(new android.text.style.RelativeSizeSpan(.82f),split+1,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);styled.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),0,split,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);}
-        return styled;
-    }
     void refreshRows(){if(listAdapter!=null)listAdapter.notifyDataSetChanged();}
+    private CharSequence rowText(String value){
+        return rowCache.get(value);
+    }
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
     void onListSelection(String title,int index){}
     private void paintSelection(View row,boolean selected) {

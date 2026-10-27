@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.9.0-dev / cod 9**
+**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.10.0-dev / cod 10**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -31,6 +31,22 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 > publică de flash complet validată sunt încă de construit.
 
 ## Ce este nou
+
+**Leo 0.10 · construim o platformă:** Leo Studio reunește aplicații HTML locale,
+spațiul de lucru, automatizări opt-in, Companion PC prin Wi-Fi și recuperare.
+Listele comune reutilizează textele stilizate; aspectul opțional Studio · Grafit
+aduce o paletă întunecată cu accent mentă. Motorul web existent a rulat efectiv
+JavaScript și comenzile D-pad pe Nokia; nu este un browser nou sau un port KaiOS.
+[Funcții, probe și limite](android81/LEO-10-PLATFORM.md) ·
+[Construiește o aplicație web](android81/web-app-sdk/README.md).
+
+**Verificat:** 137 probe automate și 6 probe PC/Nokia prin Wi-Fi.
+IMS a rămas în reînregistrare, cu LTE conectat; VoLTE nu este reconfirmat.
+
+| Leo Studio | Runtime HTML local |
+| --- | --- |
+| <img src="android81/screenshots/leo10-studio.png" width="180" alt="Centrul Leo Studio"> | <img src="android81/screenshots/leo10-web-runtime.png" width="180" alt="Pocket Board din HTML și JavaScript"> |
+
 
 **Leo 0.9 · găsește, organizează, înțelege:** căutare în SMS, calendar și fișiere;
 servicii de apel și numere blocate; pagină proprie de transferuri Bluetooth;

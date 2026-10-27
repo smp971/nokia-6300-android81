@@ -9,7 +9,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
         try {
             String action=intent.getAction();
             if(Intent.ACTION_BOOT_COMPLETED.equals(action) || Intent.ACTION_TIME_CHANGED.equals(action) || Intent.ACTION_TIMEZONE_CHANGED.equals(action) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
-                AlarmScheduler.restore(context);CalendarReminders.schedule(context);try{SoundSchedule.sync(context);}catch(RuntimeException e){FaultLedger.record(context,"SoundSchedule",e);}return;
+                try{AutomationRules.sync(context);}catch(RuntimeException e){FaultLedger.record(context,"Automations",e);}AlarmScheduler.restore(context);CalendarReminders.schedule(context);try{SoundSchedule.sync(context);}catch(RuntimeException e){FaultLedger.record(context,"SoundSchedule",e);}return;
             }
             if(!AlarmScheduler.FIRE.equals(action)) return;
             String kind=intent.getStringExtra("kind"),label=L.t("Temporizator");int ringingId=-1;

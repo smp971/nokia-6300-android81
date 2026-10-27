@@ -1,0 +1,7 @@
+package ro.leo.visual;
+import ro.leo.i18n.L;import android.content.*;import android.os.Bundle;import java.util.*;
+public final class PremiumStudioActivity extends LeoActivity {
+ android.graphics.drawable.Drawable rowIcon(String title,int index){return new AppBadge(new String[]{"web","Muzică","Configurări rapide","Conexiuni","Actualizări","Diagnostic"}[index],dp(30));}
+ protected void onCreate(Bundle b){super.onCreate(b);show();}
+ void show(){list(L.t("Leo Studio"),Arrays.asList(L.t("Aplicații web Leo\nHTML, CSS și JavaScript · offline"),L.t("Spațiu de lucru\nAplicații, poziții și media"),L.t("Automatizări locale\nReguli alese de tine"),L.t("Companion PC\nFișiere prin Wi-Fi"),L.t("Actualizări și revenire\nAPK-uri verificate"),L.t("Recuperare și stare\nPornire și diagnostic")),0,new Choice(){public void pick(final int n){startActivity(new Intent(PremiumStudioActivity.this,new Class<?>[]{WebAppsActivity.class,WorkspaceActivity.class,AutomationsActivity.class,CompanionActivity.class,UpdatesActivity.class,RecoveryCenterActivity.class}[n]));}},L.t("Aspect Studio"),new Runnable(){public void run(){options(L.t("Aplici aspectul Studio?"),new String[]{L.t("Păstrează"),L.t("Aplică")},new Choice(){public void pick(int n){if(n==1){android.content.SharedPreferences.Editor edit=getSharedPreferences("appearance",0).edit().putInt("theme",Appearance.THEMES.length-1).putInt("accent",-1).putBoolean("unified-phone",true);for(String app:StyleSettingsActivity.APPS)edit.remove("app-theme-"+app);edit.apply();show();}}});}});}
+}

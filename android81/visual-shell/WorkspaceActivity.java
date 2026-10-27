@@ -1,0 +1,6 @@
+package ro.leo.visual;
+import ro.leo.i18n.L;import android.content.*;import android.os.Bundle;import java.util.*;import org.json.*;
+public final class WorkspaceActivity extends LeoActivity {
+ protected void onResume(){super.onResume();show();}
+ void show(){final JSONArray rows=WorkspaceSessions.read(WorkspaceActivity.this);ArrayList<String> labels=new ArrayList<String>();labels.add(L.t("Acum se redă"));labels.add(L.t("Ferestre Android"));for(int n=0;n<rows.length();n++){JSONObject r=rows.optJSONObject(n);labels.add(WorkspaceSessions.label(r)+"\n"+android.text.format.DateFormat.format("HH:mm",r.optLong("time")));}list(L.t("Spațiu de lucru"),labels,0,new Choice(){public void pick(int at){try{if(at==0)startActivity(new Intent(WorkspaceActivity.this,NowPlayingActivity.class));else if(at==1)startActivity(new Intent(WorkspaceActivity.this,RecentAppsActivity.class));else startActivity(WorkspaceSessions.destination(WorkspaceActivity.this,rows.getJSONObject(at-2)));}catch(Exception e){notice(L.t("Destinație indisponibilă"));}}},L.t("Golește lista"),new Runnable(){public void run(){options(L.t("Golești istoricul Leo?"),new String[]{L.t("Păstrează"),L.t("Golește lista")},new Choice(){public void pick(int n){if(n==1){getSharedPreferences("workspace",0).edit().remove("screens").apply();show();}}});}});}
+}

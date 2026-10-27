@@ -78,3 +78,4 @@
 
 !/android81/fm-runtime/
 !/android81/fm-runtime/*.c
+!/android81/web-app-sdk/

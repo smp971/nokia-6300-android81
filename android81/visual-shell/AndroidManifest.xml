@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="9" android:versionName="0.9.0-dev">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="10" android:versionName="0.10.0-dev">
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -186,5 +186,14 @@
 <activity android:name=".ContextHelpActivity" android:exported="false" android:screenOrientation="portrait" />
 <activity android:name=".BluetoothTransfersActivity" android:exported="false" android:screenOrientation="portrait" />
 <activity android:name=".RecorderLibraryActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".WorkspaceActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".RecoveryCenterActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".PremiumStudioActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".WebAppsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".WebRuntimeActivity" android:exported="false" android:screenOrientation="portrait" android:process=":webapps" />
+        <activity android:name=".AutomationsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".CompanionActivity" android:exported="false" android:screenOrientation="portrait" />
+        <service android:name=".AutomationService" android:exported="false" />
+        <service android:name=".CompanionService" android:exported="false" />
 </application>
 </manifest>
