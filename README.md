@@ -30,6 +30,19 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 > Sursele și uneltele sunt disponibile. Există un constructor de ZIP privat prin ADB
 > în recovery; flash-ul și restaurarea acestui pachet nu sunt încă validate pe hardware.
 
+## Instalare și recuperare
+
+Am pregătit un **candidat privat pentru instalare curată 0.14**, cu boot/system,
+userdata ext4 nouă și aplicațiile necesare integrate în system. Tastatura și
+runtime-ul FM nu mai depind de fișiere de dezvoltare din `/data`. Setările Home,
+IME, audio și accesul root al shell-ului se pregătesc la prima pornire.
+
+[Procedura din KaiOS root/ADB, kitul recovery și revenirea la stock](android81/FLASH-FROM-STOCK.md)
+explică pachetele și comenzile. Sunt verificate offline; **flash-ul curat și
+rollback-ul nu au fost încă probate pe hardware**. ZIP-ul se instalează prin ADB
+în recovery root, iar formatarea cere opțiuni explicite și backup-uri verificate.
+Imaginile firmware și datele utilizatorului nu sunt publicate în Git.
+
 ## Ce este nou
 
 **Leo 0.14 · ziua ta, din taste:** agenda zilnică adună Calendarul, alarma și

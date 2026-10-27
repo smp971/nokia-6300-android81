@@ -23,7 +23,8 @@
 #include <sys/wait.h>
 #include <sys/prctl.h>
 #include <linux/videodev2.h>
-#define BASE "/data/leo-fm"
+#define BASE "/system/vendor/leo-fm"
+#define STATE_DIR "/data/leo-fm"
 #define TRANSPORT "/sys/module/radio_iris_transport/parameters/fmsmd_set"
 #define STATE (V4L2_CID_PRIVATE_BASE+4)
 static volatile sig_atomic_t interrupted;
@@ -42,7 +43,7 @@ static int audio_command(const char *action){
 static int valid_frequency(const char *text,unsigned *value){char *end;unsigned long f=strtoul(text,&end,10);if(*end||f<87500||f>108000||f%100)return -1;*value=(unsigned)f;return 0;}
 static int line(int fd,char *text,unsigned capacity,int timeout){unsigned used=0;double deadline=now()+timeout/1000.0;while(used+1<capacity){struct pollfd p={fd,POLLIN,0};int remaining=(int)((deadline-now())*1000);if(remaining<=0||poll(&p,1,remaining)<=0)return -1;char c;if(read(fd,&c,1)!=1)return -1;if(c=='\n'){text[used]=0;return 0;}text[used++]=c;}return -1;}
 static int session_connect(void){
-    int allowed_fd=open("/system/etc/leo-terminal-root.uid",O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if(allowed_fd<0)return -1;struct stat st;char uid[32]={0};int count=read(allowed_fd,uid,sizeof(uid)-1);int trusted=!fstat(allowed_fd,&st)&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022);close(allowed_fd);char *end;unsigned long allowed=strtoul(uid,&end,10);if(!trusted||count<=0||allowed<10000||allowed>19999||(*end!='\n'&&*end))return -1;
+    int allowed_fd=open("/data/system/leo-terminal-root.uid",O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if(allowed_fd<0)return -1;struct stat st;char uid[32]={0};int count=read(allowed_fd,uid,sizeof(uid)-1);int trusted=!fstat(allowed_fd,&st)&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022);close(allowed_fd);char *end;unsigned long allowed=strtoul(uid,&end,10);if(!trusted||count<=0||allowed<10000||allowed>19999||(*end!='\n'&&*end))return -1;
     int server=socket(AF_UNIX,SOCK_STREAM|SOCK_CLOEXEC,0);if(server<0)return -1;struct sockaddr_un address={0};address.sun_family=AF_UNIX;const char endpoint[]="leo.fm.session.v1";memcpy(address.sun_path+1,endpoint,sizeof(endpoint));if(bind(server,(struct sockaddr*)&address,offsetof(struct sockaddr_un,sun_path)+1+strlen(endpoint))||listen(server,1)){close(server);return -1;}
     struct pollfd ready={server,POLLIN,0};if(poll(&ready,1,10000)<=0){close(server);return -1;}int fd=accept4(server,NULL,NULL,SOCK_CLOEXEC);close(server);if(fd<0)return -1;struct ucred peer;socklen_t size=sizeof(peer);if(getsockopt(fd,SOL_SOCKET,SO_PEERCRED,&peer,&size)||(peer.uid!=0&&peer.uid!=allowed)){close(fd);return -1;}char command[64];if(line(fd,command,sizeof(command),10000)||command[0]!='T'||valid_frequency(command+1,&selected_khz)){close(fd);return -1;}return fd;
 }
@@ -180,8 +181,9 @@ int main(int argc,char **argv){
     else if(argc!=2||(strcmp(argv[1],"--receive")&&strcmp(argv[1],"--watchdog-test")&&strcmp(argv[1],"--scan")&&!route_check&&!session_mode)){fprintf(stderr,"Usage: fm-trial --receive | --scan | --listen KHZ | --watchdog-test\n");return 2;}
     if(route_check||session_mode)listen_mode=1;
     int test=!strcmp(argv[1],"--watchdog-test");scan_mode=!strcmp(argv[1],"--scan");
-    int lock=open(BASE "/session.lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600);if(lock<0)return 3;int locked=0;for(int n=0;n<(session_mode?80:1);n++){if(!flock(lock,LOCK_EX|LOCK_NB)){locked=1;break;}usleep(100000);}if(!locked){perror("exclusive session");return 3;}
-    int log=open(BASE "/trial.log",O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW|O_CLOEXEC,0600);if(log<0)return 4;dup2(log,1);dup2(log,2);close(log);setvbuf(stdout,NULL,_IONBF,0);
+    if(mkdir(STATE_DIR,0700)&&errno!=EEXIST)return 3;
+    int lock=open(STATE_DIR "/session.lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600);if(lock<0)return 3;int locked=0;for(int n=0;n<(session_mode?80:1);n++){if(!flock(lock,LOCK_EX|LOCK_NB)){locked=1;break;}usleep(100000);}if(!locked){perror("exclusive session");return 3;}
+    int log=open(STATE_DIR "/trial.log",O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW|O_CLOEXEC,0600);if(log<0)return 4;dup2(log,1);dup2(log,2);close(log);setvbuf(stdout,NULL,_IONBF,0);
     signal(SIGHUP,SIG_IGN);signal(SIGPIPE,SIG_IGN);signal(SIGTERM,stopped);signal(SIGINT,stopped);setsid();
     printf("FM_TRIAL begin uptime=%.3f mode=%s\n",now(),test?"watchdog-test":scan_mode?"muted scan":listen_mode?"headset audio":"muted receive");
     if(session_mode){session_fd=session_connect();if(session_fd<0){printf("session connection rejected or timed out\n");return 5;}}

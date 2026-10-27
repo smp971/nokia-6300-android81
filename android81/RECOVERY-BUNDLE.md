@@ -1,5 +1,17 @@
 # Copie privată și ZIP pentru recovery
 
+**Nou: [procedură KaiOS → Leo, instalare curată și revenire](FLASH-FROM-STOCK.md).**
+Candidatul 0.14 poate include userdata nouă (schema 2, `--fresh`), cu aplicațiile
+și runtime-ul necesar integrate în system. Cere `--wipe-data` și originale stock
+verificate; boot este scris ultimul. Schema 1 de mai jos păstrează datele și rămâne
+un snapshot de actualizare, fără garanția unei porniri după formatare.
+
+Instalatorul cere recovery root cu proces `recovery` real. Imaginea SD de diagnostic
+care pornește Android nu este potrivită, chiar dacă ocupă partiția recovery.
+Kitul separat include imaginea root ADB salvată anterior și un bootstrap din KaiOS
+root; nu a fost rescrisă pe telefon în această etapă.
+
+
 Constructorul împachetează starea portului Leo existent pe acest Nokia. Nu este
 un ROM universal, o migrare verificată din KaiOS nemodificat sau un ZIP semnat
 pentru meniul stock „Apply update”. Instalarea este prin **ADB în recovery-ul

@@ -16,7 +16,7 @@ package=native('/system/bin/dumpsys','package','ro.leo.visual')
 found=re.search(r'^\s*userId=(\d+)\s*$',package,re.M);assert found
 uid=int(found.group(1));assert 10000<=uid<20000
 uidfile=root/'output/leo-terminal-root.uid';uidfile.write_bytes((str(uid)+'\n').encode())
-files={'/system/bin/leo-terminal-root':(root/'output/leo-terminal-root',0o755),'/system/bin/leo-su':(root/'output/leo-terminal-root',0o755),'/system/etc/init/leo-terminal-root.rc':(root/'device/nokia/leo/init.leo.terminal-root.rc',0o644),'/system/etc/leo-terminal-root.uid':(uidfile,0o600)}
+files={'/system/bin/leo-terminal-root':(root/'output/leo-terminal-root',0o755),'/system/bin/leo-su':(root/'output/leo-terminal-root',0o755),'/system/etc/init/leo-terminal-root.rc':(root/'device/nokia/leo/init.leo.terminal-root.rc',0o644),'/data/system/leo-terminal-root.uid':(uidfile,0o600)}
 reportfile=root/'output/terminal-root-install.json'
 old=json.loads(reportfile.read_text(encoding='utf-8')) if reportfile.exists() else {}
 hashes={}
@@ -44,7 +44,7 @@ if running:
 native('/system/bin/mount','-o','remount,rw','/system')
 try:
     for index,(dest,(source,mode)) in enumerate(files.items()):
-        native('/system/bin/cp','/tmp/leo-terminal-install-'+str(index),dest+'.new');native('/system/bin/chown','0:0',dest+'.new');native('/system/bin/chmod',format(mode,'o'),dest+'.new');native('/system/bin/restorecon',dest+'.new');native('/system/bin/mv',dest+'.new',dest)
+        native('/system/bin/cp','/tmp/leo-terminal-install-'+str(index),dest+'.new');native('/system/bin/chown','0:0',dest+'.new');native('/system/bin/chmod',format(mode,'o'),dest+'.new');native('/system/bin/restorecon',dest+'.new');native('/system/bin/mv',dest+'.new',dest);native('/system/bin/restorecon',dest)
     native('/system/bin/sync')
 finally:native('/system/bin/mount','-o','remount,ro','/system')
 for dest,digest in hashes.items():assert native('/system/bin/sha256sum',dest).split()[0]==digest

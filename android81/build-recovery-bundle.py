@@ -26,6 +26,7 @@ def run(*args):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('snapshot',type=Path)
+    parser.add_argument('--fresh',action='store_true',help='Build an explicitly destructive clean-install candidate, with empty userdata')
     parser.add_argument('--output',type=Path,default=ROOT/'output/recovery-bundles')
     args=parser.parse_args();snapshot=args.snapshot.resolve()
     meta=json.loads((snapshot/'snapshot.json').read_text())
@@ -34,7 +35,7 @@ def main():
     version=json.loads((ROOT/'release-version.json').read_text())['version']
     assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9.-]+)?',version)
     assert meta['version']==version,'Snapshot and source versions differ'
-    dest=args.output/('leo-recovery-'+version+'-'+snapshot.name)
+    dest=args.output/('leo-'+('fresh' if args.fresh else 'recovery')+'-'+version+'-'+snapshot.name)
     dest.mkdir(parents=True,exist_ok=False)
     (dest/'images').mkdir();(dest/'runtime').mkdir()
     for part in ('boot','system','recovery'):
@@ -60,6 +61,20 @@ def main():
     for overlay in meta['overlays']:
         run('debugfs','-R','dump '+overlay['destination']+' "'+linux(check)+'"',system_linux)
         assert sha(check)==overlay['sha256'],'Overlay readback mismatch: '+overlay['package']
+    clean=None
+    if args.fresh:
+        clean_spec=importlib.util.spec_from_file_location('clean_system',ROOT/'prepare-clean-system.py')
+        clean_module=importlib.util.module_from_spec(clean_spec);clean_spec.loader.exec_module(clean_module)
+        clean=clean_module.prepare(system,dest,linux,run)
+        data=dest/'images/userdata.img'
+        run('/root/android81-leo/src/out/host/linux-x86/bin/make_ext4fs','-l','2566893568','-a','data',linux(data))
+        with data.open('r+b') as empty:empty.truncate(2566897152)
+        # Android's legacy formatter leaves unset inode-bitmap padding. Repair
+        # only this newly generated blank PC image, then require a clean check.
+        repair=subprocess.run(['wsl','-d','kaios','--','e2fsck','-f','-y',linux(data)],capture_output=True,text=True,timeout=300)
+        if repair.returncode not in (0,1):raise RuntimeError(repair.stdout+repair.stderr)
+        run('e2fsck','-f','-n',linux(data))
+        (dest/'clean-system-audit.json').write_text(json.dumps(clean,indent=2)+'\n')
     run('e2fsck','-f','-n',system_linux)
     helper=ROOT/'output/recovery-shell-candidate';bundle.static_arm(helper.read_bytes())
     shutil.copyfile(helper,dest/'runtime/busybox')
@@ -73,20 +88,33 @@ def main():
         'Only system and boot are written, in that order; recovery and data are retained.\n'
         'Keep the original snapshot and stock backups separately. Do not interrupt flashing.\n'
         'Flash/restore on hardware has not been validated by an offline build.\n',encoding='utf-8')
-    result={'format':'leo-private-recovery-bundle','schema':1,'version':version,'private':True,
+    allowed=bundle.ALLOWED | ({'images/userdata.img'} if args.fresh else set())
+    if args.fresh:
+        (dest/'README.txt').write_text('PRIVATE CLEAN-INSTALL CANDIDATE, Nokia 695d only.\n'
+            'Erases ALL internal user data. Boot/system plus newly generated empty userdata.\n'
+            'No accounts, messages, passwords, logs or calibration copied from userdata.\n'
+            'Root ADB recovery required; this ZIP is NOT signed for stock Apply update.\n'
+            'Offline verification: python install-recovery-bundle.py PACKAGE.zip\n'
+            'Preflight: add --preflight --serial 695d --adb PATH_TO_ADB\n'
+            'Installation additionally requires --install --confirm-target 695d --wipe-data --stock-backups DIRECTORY\n'
+            'Keep verified original boot-kaios.img, system-kaios.img, recovery-device.img.\n'
+            'System and blank userdata are written/verified first, boot LAST. Recovery/radio retained.\n'
+            'Clean boot and hardware flash are NOT yet validated. Do not use on other devices.\n',encoding='utf-8')
+    result={'format':'leo-private-recovery-bundle','schema':2 if args.fresh else 1,'version':version,'private':True,
             'serial':'695d','snapshot':snapshot.name,'source_commit':subprocess.check_output(
                 ['git','-C',str(ROOT.parent),'rev-parse','HEAD']).decode().strip(),
             'working_tree_dirty':bool(subprocess.check_output(['git','-C',str(ROOT.parent),'status','--porcelain'])),
-            'build_tool_sha256':{name:sha(ROOT/name) for name in ['snapshot-leo-rom.py','build-recovery-bundle.py','install-recovery-bundle.py']},
+            'build_tool_sha256':{name:sha(ROOT/name) for name in ['snapshot-leo-rom.py','build-recovery-bundle.py','install-recovery-bundle.py']+(['prepare-clean-system.py','leo-first-setup.sh','leo-clean-audio-seed.sh'] if args.fresh else [])},
             'source_system_sha256':meta['partitions']['system']['sha256'],
             'recovery_backup_sha256':meta['partitions']['recovery']['sha256'],
             'overlays':meta['overlays'],'hardware_flash_validated':False,
-            'files':{name:{'bytes':(dest/name).stat().st_size,'sha256':sha(dest/name)} for name in sorted(bundle.ALLOWED)}}
+            'files':{name:{'bytes':(dest/name).stat().st_size,'sha256':sha(dest/name)} for name in sorted(allowed)}}
+    if clean:result['clean_install_audit']=clean
     bundle.validate_manifest(result)
     (dest/'manifest.json').write_text(json.dumps(result,indent=2)+'\n')
     archive=Path(str(dest)+'.zip')
     with zipfile.ZipFile(archive,'x',zipfile.ZIP_DEFLATED,compresslevel=6) as output:
-        for name in sorted(bundle.ALLOWED|{'manifest.json'}):output.write(dest/name,name)
+        for name in sorted(allowed|{'manifest.json'}):output.write(dest/name,name)
     bundle.verify(archive)
     print('Offline verified private recovery ZIP: '+str(archive),flush=True)
     print('ZIP SHA-256: '+sha(archive),flush=True)

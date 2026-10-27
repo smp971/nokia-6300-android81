@@ -22,7 +22,7 @@ static const char endpoint[]="leo.terminal.root.v1";
 static int transfer(int fd,void *buffer,size_t size,int writing){char *p=buffer;while(size){ssize_t n=writing?write(fd,p,size):read(fd,p,size);if(n<0&&errno==EINTR)continue;if(n<=0)return -1;p+=n;size-=n;}return 0;}
 static socklen_t address(struct sockaddr_un *a){memset(a,0,sizeof(*a));a->sun_family=AF_UNIX;memcpy(a->sun_path+1,endpoint,sizeof(endpoint));return offsetof(struct sockaddr_un,sun_path)+1+sizeof(endpoint);}
 static uid_t allowed_uid(void){
-    int fd=open("/system/etc/leo-terminal-root.uid",O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if(fd<0)return (uid_t)-1;
+    int fd=open("/data/system/leo-terminal-root.uid",O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if(fd<0)return (uid_t)-1;
     struct stat s;char value[32]={0};ssize_t n=read(fd,value,sizeof(value)-1);int ok=!fstat(fd,&s)&&S_ISREG(s.st_mode)&&s.st_uid==0&&!(s.st_mode&0022);close(fd);
     char *end;unsigned long uid=strtoul(value,&end,10);if(!ok||n<=0||uid<10000||uid>19999||(*end!='\n'&&*end!=0))return (uid_t)-1;return (uid_t)uid;
 }

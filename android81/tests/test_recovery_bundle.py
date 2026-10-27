@@ -59,4 +59,95 @@ class RecoveryGuards(unittest.TestCase):
                 rom.recovery_preflight(['adb','-s','695d'],self.manifest(),Path('fixture-helper'))
             self.assertFalse(any(' of=' in ' '.join(call.args[0]) for call in calls.call_args_list))
 
+    def fresh(self):
+        meta=self.manifest();meta['schema']=2
+        meta['files']['images/userdata.img']={'bytes':2566897152,'sha256':'b'*64}
+        return meta
+
+    def test_clean_schema_exact_partition_size(self):
+        self.assertEqual(rom.validate_manifest(self.fresh())['schema'],2)
+        meta=self.fresh();meta['files']['images/userdata.img']['bytes']-=512
+        with self.assertRaises(ValueError):rom.validate_manifest(meta)
+
+    def test_wipe_must_be_explicit_and_only_for_clean_bundle(self):
+        for meta,wipe in [(self.fresh(),False),(self.manifest(),True)]:
+            with self.assertRaises(ValueError):rom.check_install_flags(meta,'695d','695d',wipe)
+        rom.check_install_flags(self.fresh(),'695d','695d',True)
+
+    def test_boot_is_written_last(self):
+        self.assertEqual(rom.flash_order(self.fresh()),['system','userdata','boot'])
+        self.assertEqual(rom.flash_order(self.manifest()),['system','boot'])
+
+    def test_mounted_userdata_refuses_clean_install(self):
+        mounts='25 1 259:7 / /data rw - ext4 /dev/block/mmcblk0p39 rw\n'
+        with self.assertRaisesRegex(RuntimeError,'mounted'):rom.assert_unmounted(mounts,self.fresh())
+        rom.assert_unmounted(mounts,self.manifest())
+
+    def test_original_backups_required(self):
+        with self.assertRaisesRegex(ValueError,'stock-backups'):rom.verify_stock_backups(None)
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ValueError,'Missing original'):rom.verify_stock_backups(Path(directory))
+
+    def test_unrelated_partitions_never_allowed(self):
+        for name in ('modem','persist','recovery','modemst1'):
+            meta=self.fresh();meta['files']['images/'+name+'.img']={'bytes':100,'sha256':'a'*64}
+            with self.assertRaises(ValueError):rom.validate_manifest(meta)
+
+entry_spec=importlib.util.spec_from_file_location('root_entry',Path(__file__).parents[1]/'install-root-recovery.py')
+entry=importlib.util.module_from_spec(entry_spec);entry_spec.loader.exec_module(entry)
+
+class RecoveryEntryGuards(unittest.TestCase):
+    def run_entry(self,*flags):
+        from types import SimpleNamespace
+        with patch('sys.argv',['install-root-recovery.py','fixture.img',*flags]), \
+             patch.object(entry.Path,'stat',return_value=SimpleNamespace(st_size=entry.SIZE)), \
+             patch.object(entry,'digest',return_value=entry.RESCUE_SHA):
+            entry.main()
+
+    def test_default_verification_does_not_contact_phone(self):
+        with patch.object(entry.subprocess,'run') as adb:
+            self.run_entry()
+            adb.assert_not_called()
+
+    def test_wrong_serial_refused_before_adb(self):
+        with patch.object(entry.subprocess,'run') as adb:
+            with self.assertRaisesRegex(ValueError,'serial'):
+                self.run_entry('--install','--serial','samsung','--confirm-target','samsung')
+            adb.assert_not_called()
+
+    def test_nonstock_phone_refused_before_push_or_dd(self):
+        def adb(args,**kwargs):
+            command=' '.join(args);output=''
+            if ' id;' in command:output='uid=0(root)'
+            elif '/proc/cmdline' in command:output='androidboot.serialno=695d'
+            elif '/uevent' in command:
+                part,number,major,minor=next(row for row in [('boot',29,179,29),('system',30,179,30),('recovery',33,259,1)] if f'mmcblk0p{row[1]}/uevent' in command)
+                output=f'PARTNAME={part}\nMAJOR={major}\nMINOR={minor}'
+            elif '/size' in command:output=str((838860800 if 'mmcblk0p30' in command else entry.SIZE)//512)
+            elif ' stat ' in command:
+                output=next(value for part,value in [('boot','b3:1d'),('system','b3:1e'),('recovery','103:1')] if '/dev/leo-rescue-'+part in command)
+            elif 'sha256sum' in command:output='0'*64+'  /dev/leo-rescue-boot'
+            return subprocess.CompletedProcess(args,0,stdout=(output+'\nLEO_RESCUE_RC_0\n').encode(),stderr=b'')
+        with patch.object(entry.subprocess,'run',side_effect=adb) as calls:
+            with self.assertRaisesRegex(RuntimeError,'Stock boot/system'):
+                self.run_entry('--install','--serial','695d','--confirm-target','695d')
+            self.assertFalse(any('push' in call.args[0] or ' dd ' in ' '.join(call.args[0]) for call in calls.call_args_list))
+
+clean_spec=importlib.util.spec_from_file_location('clean_system',Path(__file__).parents[1]/'prepare-clean-system.py')
+clean=importlib.util.module_from_spec(clean_spec);clean_spec.loader.exec_module(clean)
+
+class SystemMetadataGuards(unittest.TestCase):
+    GOOD='Inode: 1568 Type: regular Mode: 0755 Flags: 0x80000\nUser: 0 Group: 0 Project: 0\nsecurity.selinux = "u:object_r:system_file:s0"'
+    def test_expected_executable_metadata(self):
+        clean.verify_metadata(self.GOOD,0o755)
+    def test_broad_permissions_rejected(self):
+        with self.assertRaisesRegex(RuntimeError,'mode'):
+            clean.verify_metadata(self.GOOD.replace('0755','0777'),0o755)
+    def test_wrong_owner_rejected(self):
+        with self.assertRaisesRegex(RuntimeError,'owner'):
+            clean.verify_metadata(self.GOOD.replace('User: 0','User: 10000'),0o755)
+    def test_wrong_context_rejected(self):
+        with self.assertRaisesRegex(RuntimeError,'SELinux'):
+            clean.verify_metadata(self.GOOD.replace('system_file','unlabeled'),0o755)
+
 if __name__=='__main__':unittest.main()

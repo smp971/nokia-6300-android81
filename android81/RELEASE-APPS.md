@@ -1,5 +1,12 @@
 # Pachetul aplicațiilor Leo · 0.14.0-dev
 
+**Compatibilitate după pregătirea ROM-ului curat:** sursa FM curentă folosește
+`/system/vendor/leo-fm`, iar brokerul root folosește UID-ul generat la boot în
+`/data/system`. Instalează această variantă împreună cu imaginea system potrivită;
+un APK recompilat singur peste vechiul runtime FM din `/data` nu face migrarea.
+Arhiva de aplicații 0.14 verificată mai jos și APK-ul încă instalat pe telefon
+rămân perechea anterioară. [Detalii și pachet complet](FLASH-FROM-STOCK.md).
+
 Versiunea curentă este `0.14.0-dev`, cod 14. Ambele aplicații au fost compilate
 individual în această etapă; pachetul colectează exact APK-urile verificate pe
 telefon cu `--package-only` și înregistrează corect `rebuilt=false`.
