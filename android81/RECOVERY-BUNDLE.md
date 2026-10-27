@@ -86,3 +86,7 @@ imaginea rezultată și `e2fsck -f -n`. SHA-256:
 
 Manifestul indică surse modificate față de commit-ul de bază (`working_tree_dirty=true`),
 cu hash-urile exacte ale uneltelor. Nu a fost prezentat drept build dintr-un commit curat.
+
+După reconectare, preflight-ul a fost executat pe telefonul cu Android pornit:
+a returnat `Active Android detected` și a refuzat fără scrieri de partiții.
+Calea de instalare efectivă în recovery rămâne nevalidată pe hardware.

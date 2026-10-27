@@ -42,6 +42,13 @@ Aceste valori nu măsoară primul pixel și nu constituie o medie de autonomie s
 un test de funcționare continuă. USB/ADB s-a deconectat ulterior: această problemă
 rămâne deschisă și nu este ascunsă de rezultatul pozitiv al pornirii.
 
+După reconectarea USB, hash-urile active pentru Leo Visual, Leo Keypad,
+SystemUI, Settings și PackageInstaller au corespuns APK-urilor testate.
+Pagina Daily readiness a confirmat Home, T9, meniul global și accesul la
+notificări pregătite, cu 157 MiB disponibili în momentul capturii.
+Preflight-ul real al instalatorului recovery a refuzat corect Android activ,
+fără scrieri de partiții. Aceasta verifică refuzul, nu calea de flash.
+
 ## Cadrele interfeței
 
 Două probe înainte și două după, câte 40 de evenimente de navigare:
@@ -60,6 +67,7 @@ oricărui lag sau un anumit FPS. Datele brute rămân local în `output/performa
 
 ## Capturi de pe telefon
 
+<img src="screenshots/leo12-readiness.png" width="180" alt="Verificarea finală Daily readiness după repornire">
 <img src="screenshots/leo12-list.png" width="180" alt="Listă locală de test, poziția 3 din 3">
 <img src="screenshots/leo12-permission.png" width="180" alt="Dialog Android, Refuză selectat din taste">
 <img src="screenshots/leo12-volume.png" width="180" alt="Slider Android de volum selectat din taste">
