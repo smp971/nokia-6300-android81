@@ -28,7 +28,8 @@ def copy_changed(source, destination):
 if not args.apps_only:
     copy_changed(ROOT / 'framework-keypad/LeoKeypadNavigation.java',
                  base / 'core/java/com/android/internal/policy/LeoKeypadNavigation.java')
-for app in [base / 'packages/SystemUI', args.source / 'packages/apps/Settings']:
+for app in [base / 'packages/SystemUI', args.source / 'packages/apps/Settings',
+            args.source / 'packages/apps/PackageInstaller']:
     local = app / 'src/com/android/internal/policy/LeoKeypadNavigation.java'
     local.parent.mkdir(parents=True, exist_ok=True)
     copy_changed(ROOT / 'framework-keypad/LeoKeypadNavigation.java', local)
@@ -159,3 +160,46 @@ insert(path, anchor, '''        // LEO_SETTINGS_FOCUS: app-local helper also wor
             return true;
         }
 ''' + anchor, 'LEO_SETTINGS_FOCUS')
+
+path = base / 'packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java'
+anchor = '    private final class CustomDialog extends Dialog {\n'
+insert(path, anchor, anchor + '''        // LEO_VOLUME_KEYPAD: preserve hardware volume/back handling and the native slider.
+        @Override
+        public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+            rescheduleTimeoutH();
+            if (com.android.internal.policy.LeoKeypadNavigation.dispatch(getWindow().getDecorView(), event)) return true;
+            return super.dispatchKeyEvent(event);
+        }
+
+''', 'LEO_VOLUME_KEYPAD')
+anchor = '        if (mHovering) return 16000;\n'
+insert(path,anchor,anchor+'''        // LEO_VOLUME_TIMEOUT: enough time to reach a slider using physical keys.
+        if (com.android.internal.policy.LeoKeypadNavigation.enabled(mContext)) return 8000;
+''','LEO_VOLUME_TIMEOUT')
+anchor = '        if (mShowing) return;\n        mShowing = true;\n'
+insert(path,anchor,'''        // LEO_VOLUME_FOCUS: touch-only volume windows discard D-pad events by default.
+        if (com.android.internal.policy.LeoKeypadNavigation.enabled(mContext)) {
+            mWindow.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+        }
+''' + anchor,'LEO_VOLUME_FOCUS')
+
+path = base / 'packages/SystemUI/src/com/android/systemui/volume/VolumeDialogControllerImpl.java'
+anchor = '    private boolean shouldShowUI(int flags) {\n        updateStatusBar();\n'
+insert(path,anchor,anchor+'''        // LEO_VOLUME_WAKEFULNESS: a hot SystemUI update can miss cached keyguard wake callbacks.
+        if (com.android.internal.policy.LeoKeypadNavigation.enabled(mContext)) {
+            android.os.PowerManager power=(android.os.PowerManager)mContext.getSystemService(Context.POWER_SERVICE);
+            return mStatusBar != null && power != null && power.isInteractive()
+                    && (flags & AudioManager.FLAG_SHOW_UI) != 0;
+        }
+''','LEO_VOLUME_WAKEFULNESS')
+
+path = args.source / 'packages/apps/PackageInstaller/src/com/android/packageinstaller/permission/ui/GrantPermissionsActivity.java'
+anchor = '    @Override\n    public void onCreate(Bundle icicle) {\n'
+insert(path, anchor, '''    // LEO_PERMISSION_KEYPAD: selects native permission buttons; Android still decides permission grants.
+    @Override
+    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+        if (com.android.internal.policy.LeoKeypadNavigation.dispatch(getWindow().getDecorView(), event)) return true;
+        return super.dispatchKeyEvent(event);
+    }
+
+''' + anchor, 'LEO_PERMISSION_KEYPAD')

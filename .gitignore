@@ -23,6 +23,7 @@
 !/android81/tests/
 /android81/tests/*
 !/android81/tests/test_app_bundle.py
+!/android81/tests/test_recovery_bundle.py
 !/android81/repro/
 !/android81/audio-abi/
 !/android81/app-tests/

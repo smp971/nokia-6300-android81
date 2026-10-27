@@ -10,9 +10,9 @@ cd "$SRC"
 source build/envsetup.sh
 lunch aosp_leo_go-eng
 if [ "${1:-}" = "--apps-only" ]; then
-    make -j4 SystemUI Settings
+    make -j4 SystemUI Settings PackageInstaller
 else
-    make -j4 framework SystemUI Settings
+    make -j4 framework SystemUI Settings PackageInstaller
 fi
 mkdir -p "$TASK_DIR/output/framework-keypad"
 if [ "${1:-}" != "--apps-only" ]; then
@@ -20,6 +20,7 @@ if [ "${1:-}" != "--apps-only" ]; then
 fi
 cp out/target/product/leo/system/priv-app/SystemUI/SystemUI.apk "$TASK_DIR/output/framework-keypad/SystemUI.apk"
 cp out/target/product/leo/system/priv-app/Settings/Settings.apk "$TASK_DIR/output/framework-keypad/Settings.apk"
+cp out/target/product/leo/system/priv-app/PackageInstaller/PackageInstaller.apk "$TASK_DIR/output/framework-keypad/PackageInstaller.apk"
 sha256sum "$TASK_DIR/output/framework-keypad/"*.apk
 if [ "${1:-}" != "--apps-only" ]; then
     sha256sum "$TASK_DIR/output/framework-keypad/framework.jar"

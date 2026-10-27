@@ -1,4 +1,4 @@
-"""Back up and update only the two Leo Android system APKs, with timed rollback.
+"""Back up and update selected Leo Android system APKs, with timed rollback.
 
 No boot image, framework jar, modem, resource package or application data writes.
 """
@@ -20,19 +20,25 @@ ADB = ['D:/ROMS/platform-tools/adb.exe', '-s', '695d']
 BACKUP = ROOT / 'output/system-keypad-before'
 ACTIVE = ROOT / 'output/system-keypad-active.json'
 ACK = '/tmp/leo-system-keypad-ack-none'
-PACKAGES = [('com.android.systemui', 'SystemUI.apk'), ('com.android.settings', 'Settings.apk')]
+PACKAGES = [('com.android.systemui', 'SystemUI.apk'), ('com.android.settings', 'Settings.apk'),
+            ('com.android.packageinstaller', 'PackageInstaller.apk')]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('mode', choices=['backup', 'install', 'ack', 'rollback'])
-parser.add_argument('--only', choices=['both', 'systemui', 'settings'], default='both')
+parser.add_argument('--only', choices=['both', 'all', 'systemui', 'settings', 'packageinstaller'], default='both')
 parser.add_argument('--rollback-seconds', type=int, default=240,
                     help='Bounded test window before restoring APKs (60..900 seconds)')
+parser.add_argument('--backup-dir',type=Path,default=BACKUP,
+                    help='Separate verified baseline for a new development milestone')
 args = parser.parse_args()
+BACKUP=args.backup_dir.resolve()
 assert 60 <= args.rollback_seconds <= 900, 'Rollback window must be 60..900 seconds'
 previous_ack = None
 if args.mode == 'install' and ACTIVE.exists():
     previous_ack = json.loads(ACTIVE.read_text(encoding='utf-8'))['ack']
     assert re.fullmatch(r'/tmp/leo-system-keypad-ack-[a-z0-9-]+', previous_ack)
-if args.only != 'both':
+if args.only == 'both':
+    PACKAGES = PACKAGES[:2]
+elif args.only != 'all':
     PACKAGES = [row for row in PACKAGES if row[0] == 'com.android.' + args.only]
 if args.mode in ('ack', 'rollback') and ACTIVE.exists():
     ACK = json.loads(ACTIVE.read_text(encoding='utf-8'))['ack']
@@ -108,11 +114,11 @@ assert 'androidboot.serialno=695d' in fw('/system/bin/cat', '/proc/cmdline').dec
 assert 'Validated internal Android partitions.' in fw('/system/bin/cat', '/leo-framework-internal').decode()
 BACKUP.mkdir(exist_ok=True)
 manifest_path = BACKUP / 'manifest.json'
-if not manifest_path.exists():
-    if args.mode != 'backup':
-        raise SystemExit('Create a verified backup first')
-    manifest = {}
+manifest = json.loads(manifest_path.read_text(encoding='utf-8')) if manifest_path.exists() else {}
+if args.mode == 'backup':
     for package, filename in PACKAGES:
+        if package in manifest:
+            continue
         path = installed(package)
         expected = checksum(path)
         remote = '/tmp/leo-system-before-' + filename
@@ -122,12 +128,12 @@ if not manifest_path.exists():
         assert digest(BACKUP / filename) == expected
         manifest[package] = {'path': path, 'sha256': expected, 'file': filename}
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf-8')
-manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
 for package, filename in PACKAGES:
+    assert package in manifest, 'Create a verified backup first: ' + package
     assert digest(BACKUP / filename) == manifest[package]['sha256'], 'Backup hash mismatch'
 
 if args.mode == 'backup':
-    print('Verified backups of active SystemUI and Settings APKs; no system changes')
+    print('Verified original APK backups for selected packages; no system changes')
 elif args.mode == 'ack':
     assert ACTIVE.exists(), 'No timed installation to acknowledge'
     fw('/system/bin/touch', ACK)

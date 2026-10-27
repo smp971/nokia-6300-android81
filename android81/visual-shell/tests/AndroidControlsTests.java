@@ -35,11 +35,11 @@ public final class AndroidControlsTests extends Instrumentation {
             waitForIdleSync();
             runOnMainSync(new Runnable(){public void run(){
                 choices=find(page.root);
-                check(choices!=null && choices.getCount()==4,"four distinct Android/Leo routes");
+                check(choices!=null && choices.getCount()==5,"five distinct Android/Leo routes");
                 check(choices.getSelectedItemPosition()==0,"first route selected");
             }});
             sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);waitForIdleSync();
-            check(choices.getSelectedItemPosition()==3,"Up wraps to Leo notifications");
+            check(choices.getSelectedItemPosition()==4,"Up wraps to native Android volume");
             sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);waitForIdleSync();
             check(choices.getSelectedItemPosition()==0,"Down wraps to Android notifications");
             android.graphics.Bitmap image=getUiAutomation(

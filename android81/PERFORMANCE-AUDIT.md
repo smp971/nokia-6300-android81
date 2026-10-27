@@ -95,3 +95,15 @@ secțiunea din 19 octombrie descriu configurația acelei probe.
 Persistența este configurată, dar nu s-a făcut un reboot separat pentru această
 validare. Nicio partiție boot/recovery nu a fost rescrisă. Detalii și limite în
 [nota vizuală](LEO-STYLE-EMAIL.md).
+# Comparație suplimentară · 27 octombrie · Leo 0.12
+
+În două probe de navigare, mediana `FrameCompleted − IntendedVsync` a trecut de
+la 10,18/10,21 ms pe 0.11 la 5,48/5,44 ms pe 0.12. p95 a fost 12,77/11,80 ms,
+respectiv 7,24/8,63 ms. Fiecare probă a injectat 40 de evenimente din traseul
+de navigare; numărul cadrelor raportate a fost 79/80 înainte și 88/88 după.
+Datele brute sunt locale în `output/performance/leo12-before` și `leo12-after`.
+
+S-au redus actualizările identice ale footerului și rândurilor, cererile IME și
+desenarea repetată a pictogramelor. Nu este un experiment care izolează fiecare
+schimbare; procesele de fundal pot diferi. Nu măsoară latența fizică tastă–ecran
+și nu demonstrează un anumit FPS. [Etapa completă](LEO-12-DAILY-CANDIDATE.md).

@@ -13,8 +13,11 @@ public final class AndroidControlsActivity extends LeoActivity {
                 L.t("Notificări Android\nPanoul de sistem · D-pad și OK"),
                 L.t("Configurări rapide Android\nStânga / dreapta schimbă panoul"),
                 L.t("Setări Android\nSoft stânga: acțiuni Android / Leo"),
-                L.t("Notificări Leo\nGrupuri și acțiuni detaliate")), 0, new Choice() {
+                L.t("Notificări Leo\nGrupuri și acțiuni detaliate"),
+                L.t("Volum Android\nD-pad selectează · stânga/dreapta reglează")), 0, new Choice() {
             public void pick(int at) {
+                if(at==4){((android.media.AudioManager)getSystemService(AUDIO_SERVICE)).adjustStreamVolume(
+                    android.media.AudioManager.STREAM_MUSIC,android.media.AudioManager.ADJUST_SAME,android.media.AudioManager.FLAG_SHOW_UI);return;}
                 if (at < 2) {
                     if (!LeoPointerService.openAndroidPanel(at == 1)) {
                         notice(L.t("Serviciul tastelor trebuie să fie conectat"));

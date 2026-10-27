@@ -10,7 +10,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import java.util.List;
 
 /** Native APK integration: focuses controls, opens only its own silent notification. */
-public final class NativeSystemUiTests extends Instrumentation {
+public class NativeSystemUiTests extends Instrumentation {
     int checks;
     boolean shadeOnly;
     UiAutomation automation() {

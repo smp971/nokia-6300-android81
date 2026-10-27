@@ -26,6 +26,7 @@ abstract class LeoActivity extends Activity {
     private LinearLayout softkeyBar;
     private ListView activeList;private final UiRowCache rowCache=new UiRowCache();
     private String listTitle;private java.util.ArrayList<String> listRows;private BaseAdapter listAdapter;
+    private TextView heading;private ListPositionDrawable listPosition;
     protected void onCreate(Bundle state) {
         super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -41,10 +42,10 @@ abstract class LeoActivity extends Activity {
     }
     void begin(String title) {
         form=false; left=null; back=null; softkeyBar=null;
-        activeList=null;listTitle=null;listRows=null;listAdapter=null;
+        activeList=null;listTitle=null;listRows=null;listAdapter=null;listPosition=null;
         palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
-        TextView heading=text(title,18); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        heading=text(title,18); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
         heading.setBackgroundColor(palette.card);
         root.addView(heading,new LinearLayout.LayoutParams(-1,dp(UiChrome.HEADER_DP)));
@@ -58,15 +59,17 @@ abstract class LeoActivity extends Activity {
         String[] values={a,b,c};
         for(int i=0;i<3;i++) {
             TextView label=attach?text(values[i],12):(TextView)bar.getChildAt(i);
-            label.setText(values[i]);label.setSingleLine(true);label.setEllipsize(TextUtils.TruncateAt.END);
+            if(!TextUtils.equals(label.getText(),values[i]))label.setText(values[i]);
+            if(attach){label.setSingleLine(true);label.setEllipsize(TextUtils.TruncateAt.END);
             label.setPadding(dp(5),0,dp(5),0);
             label.setAutoSizeTextTypeUniformWithConfiguration(9,Math.round(12*Appearance.textScale(this)),1,android.util.TypedValue.COMPLEX_UNIT_SP);
             if(i==1)label.setTextColor(palette.accent);
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
             if(attach)bar.addView(label,new LinearLayout.LayoutParams(0,dp(UiChrome.FOOTER_DP),1));
+            }
         }
         if(attach){root.addView(bar);setContentView(root);}
-        if(!form) root.post(new Runnable() { public void run() {
+        if(attach&&!form) root.post(new Runnable() { public void run() {
             ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(),0);
         }});
     }
@@ -77,6 +80,9 @@ abstract class LeoActivity extends Activity {
         final ListView list=new ListView(this);activeList=list;list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
         list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
+        listPosition=new ListPositionDrawable(palette,getResources().getDisplayMetrics().density);
+        listPosition.position(focused[0],values.size());
+        heading.setCompoundDrawables(heading.getCompoundDrawables()[0],null,listPosition,null);
         final BaseAdapter adapter=new BaseAdapter() {
             public int getCount() { return rows.size(); }
             public Object getItem(int i) { return rows.get(i); }
@@ -87,19 +93,22 @@ abstract class LeoActivity extends Activity {
                 else {
                     label=text("",17); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
                     label.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_selected},new int[]{}},new int[]{palette.ink,Color.WHITE}));
-                    label.setPadding(dp(10),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);
+                    label.setPadding(dp(10),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);label.setCompoundDrawablePadding(dp(9));
                     android.graphics.drawable.StateListDrawable surfaces=new android.graphics.drawable.StateListDrawable();
                     android.graphics.drawable.GradientDrawable selectedSurface=Appearance.surface(palette.selection,dp(4));selectedSurface.setStroke(dp(1),palette.accent);
                     surfaces.addState(new int[]{android.R.attr.state_selected},selectedSurface);
                     surfaces.addState(new int[]{},Appearance.surface(palette.card,dp(4)));label.setBackground(surfaces);
                 }
-                label.setText(rowText(rows.get(i)));label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setCompoundDrawablePadding(dp(9)); paintSelection(label,i==focused[0]); return label;
+                CharSequence styled=rowText(rows.get(i));if(!TextUtils.equals(label.getText(),styled))label.setText(styled);
+                if(!stableRowIcons()||!(label.getTag() instanceof Integer)||((Integer)label.getTag())!=i){label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setTag(i);}
+                paintSelection(label,i==focused[0]); return label;
             }
         };
         listAdapter=adapter;list.setAdapter(adapter);
         list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> p,View v,int i,long id) {
                 int previous=focused[0]; focused[0]=i;
+                if(listPosition!=null)listPosition.position(i,rows.size());
                 onListSelection(title,i);
                 if(previous!=i) paintSelection(list.getChildAt(previous-list.getFirstVisiblePosition()),false);
                 paintSelection(v,true);
@@ -123,6 +132,7 @@ abstract class LeoActivity extends Activity {
         return rowCache.get(value);
     }
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
+    boolean stableRowIcons(){return false;}
     void onListSelection(String title,int index){}
     private void paintSelection(View row,boolean selected) {
         if(!(row instanceof TextView)) return;

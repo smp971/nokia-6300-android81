@@ -12,8 +12,9 @@ public final class ProjectAlgorithms {
         count++;
     }
     public static void main(String[] args) throws Exception {
-        check(Arrays.equals(HomeCards.order("3,3,-1,100,2"), new int[]{3,2,0,1}), "card order sanitized");
-        check(Arrays.equals(HomeCards.order(""), new int[]{0,1,2,3}), "default card order retained");
+        check(Arrays.equals(HomeCards.order("3,3,-1,100,2"), new int[]{3,2,0,1,4}), "card order sanitized including workspace");
+        check(Arrays.equals(HomeCards.order(""), new int[]{0,1,2,3,4}), "default card order retains all five cards");
+        check(Arrays.equals(HomeCards.order("4,2,4,invalid"),new int[]{4,2,0,1,3}),"workspace order and duplicate removal retained");
         check(ContactExtras.monthDay("--02-29")[1] == 29, "yearless leap day accepted");
         check(ContactExtras.monthDay("2004-12-31")[0] == 11, "full birthday date accepted");
         boolean rejected = false;

@@ -48,6 +48,7 @@ public final class LeoKeypadNavigation {
     public static boolean dispatch(View root, KeyEvent event) {
         String name = root.getContext().getPackageName();
         if (!("com.android.settings".equals(name) || "com.android.systemui".equals(name)
+                || "com.android.packageinstaller".equals(name)
                 || "android".equals(name)) || !enabled(root.getContext())) return false;
         // SystemUI checks its actual panel state before dispatching. Android dialogs
         // retain the WindowManager keyguard check; ordinary Settings windows keep
@@ -63,11 +64,17 @@ public final class LeoKeypadNavigation {
     /** Exposed internally so the exact helper can be exercised before system installation. */
     public static boolean navigate(View root, KeyEvent event) {
         int code = event.getKeyCode();
+        State state = STATES.get(root);
+        if (state != null && (code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT)) {
+            View target=state.selected.get();
+            if (target instanceof android.widget.SeekBar && target.isShown() && target.isEnabled()) {
+                return target.dispatchKeyEvent(event);
+            }
+        }
         if (code != KeyEvent.KEYCODE_DPAD_DOWN && code != KeyEvent.KEYCODE_DPAD_UP
                 && code != KeyEvent.KEYCODE_DPAD_CENTER && code != KeyEvent.KEYCODE_ENTER) {
             return false;
         }
-        State state = STATES.get(root);
         if (state == null) {
             state = new State();
             STATES.put(root, state);
@@ -137,7 +144,7 @@ public final class LeoKeypadNavigation {
             actions.add(view);
             return;
         }
-        if (view.isClickable()) {
+        if (view.isClickable() || view instanceof android.widget.SeekBar) {
             Rect bounds = new Rect();
             view.getGlobalVisibleRect(bounds);
             boolean duplicate = false;

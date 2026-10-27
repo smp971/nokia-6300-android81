@@ -119,7 +119,6 @@ public final class FilesActivity extends LeoActivity {
         String lower=file.getName().toLowerCase(Locale.ROOT);if(lower.endsWith(".leoapp.zip")){startActivity(new Intent(this,WebAppsActivity.class).putExtra("web_package",file.getAbsolutePath()));return;}if(lower.endsWith(".epub")){startActivity(new Intent(this,ReaderActivity.class).putExtra("file",file.getAbsolutePath()));return;}if(lower.startsWith("leo-apps-")&&lower.endsWith(".zip")){startActivity(new Intent(this,UpdatesActivity.class).putExtra("file",file.getAbsolutePath()));return;}
         try {
             android.net.Uri uri=LeoFileProvider.uri(this,file);
-            Intent view=new Intent(Intent.ACTION_VIEW);
             String extension=file.getName().contains(".")?file.getName().substring(file.getName().lastIndexOf('.')+1).toLowerCase(Locale.ROOT):"";
             String mime=android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
             if(extension.equals("apk")){apk(file);return;}
@@ -129,8 +128,7 @@ public final class FilesActivity extends LeoActivity {
             if(file.getName().toLowerCase(Locale.ROOT).endsWith(".ics")){startActivity(new Intent(this,CalendarToolsActivity.class).putExtra("file",file.getAbsolutePath()));return;}
             if(file.getName().endsWith(".leo-people.json")){startActivity(new Intent(this,PeopleBackupActivity.class).putExtra("file",file.getAbsolutePath()));return;}
             if(file.getName().endsWith(".leo-backup.json")){startActivity(new Intent(this,BackupActivity.class).putExtra("file",file.getAbsolutePath()));return;}
-            view.setDataAndType(uri,mime==null?"application/octet-stream":mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(view);
+            ShareHubActivity.view(this,uri,mime);
         } catch(Exception failure) { notice(L.t("Nicio aplicație disponibilă pentru acest fișier")); }
     }
     private void apk(File f){if(!f.getName().toLowerCase(Locale.ROOT).endsWith(".apk")){notice(L.t("Alege un fișier APK"));return;}startActivity(new Intent(this,ApkInstallActivity.class).putExtra("file",f.getAbsolutePath()));}

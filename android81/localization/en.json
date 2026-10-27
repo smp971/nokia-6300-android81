@@ -2660,5 +2660,19 @@
   "Configurări rapide Android\nStânga / dreapta schimbă panoul": "Android quick settings\nLeft / right switches panel",
   "Setări Android\nSoft stânga: acțiuni Android / Leo": "Android Settings\nLeft softkey: Android / Leo actions",
   "Notificări Leo\nGrupuri și acțiuni detaliate": "Leo notifications\nGroups and detailed actions",
-  "Serviciul tastelor trebuie să fie conectat": "The keypad service must be connected"
+  "Serviciul tastelor trebuie să fie conectat": "The keypad service must be connected",
+  "De verificat": "Check needed",
+  "Pregătit de utilizare": "Daily readiness",
+  "Home Leo": "Leo Home",
+  "Tastatură T9": "T9 keyboard",
+  "Meniu global și mouse": "Global menu and mouse",
+  "Acces notificări Leo": "Leo notification access",
+  "Memorie disponibilă": "Available memory",
+  "Pornirea interfeței": "Interface startup",
+  "În curs de verificare": "Awaiting verification",
+  "Diagnostic detaliat": "Detailed diagnostics",
+  "Date locale, fără teste de apel": "Local checks, without call tests",
+  "Reverifică": "Check again",
+  "Milestone software de la pornire; nu măsoară primul pixel de pe ecran.": "Software milestone since boot; does not measure the first visible pixel.",
+  "Volum Android\nD-pad selectează · stânga/dreapta reglează": "Android volume\nD-pad selects · left/right adjusts"
 }

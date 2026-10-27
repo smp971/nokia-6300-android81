@@ -1,4 +1,17 @@
-# Pachetul aplicațiilor Leo · 0.5.0-dev
+# Pachetul aplicațiilor Leo · 0.12.0-dev
+
+Versiunea curentă este `0.12.0-dev`, cod 12. Ambele aplicații au fost compilate
+individual în această etapă; pachetul colectează exact APK-urile verificate pe
+telefon cu `--package-only` și înregistrează corect `rebuilt=false`.
+[Rezultatele etapei](LEO-12-DAILY-CANDIDATE.md).
+Pentru reconstruire completă folosește `--build`, după `--check`.
+
+Acesta este pachetul celor două aplicații. Cele trei APK-uri Android adaptate
+se construiesc separat cu `build-framework-keypad.sh` și se instalează prin
+`install-system-keypad.py --only all`; nu sunt incluse aici. Pentru boot/system
+există separat [constructorul privat recovery](RECOVERY-BUNDLE.md).
+
+## Context istoric · 0.4–0.5
 
 Acesta actualizează **Leo Visual și Leo Keypad** peste un port Leo Android 8.1
 existent. Nu este un ROM instalabil și nu conține boot/recovery, modem, dump,

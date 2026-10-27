@@ -13,7 +13,7 @@ bare pentru softkey-uri, aplicații native și detalii inspirate de KaiOS și Sy
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.11.0-dev / cod 11**
+**Actualizat: 27 octombrie 2026** · **Versiune instalată: 0.12.0-dev / cod 12**
 
 Ultimele etape: [Leo 0.5 · meniu, ferestre și bliț](android81/LEO-MATURITY.md) · [Camera BF20A1](android81/CAMERA-RUNTIME.md) ·
 [UI coerent, meniu global și mouse](android81/LEO-UI-FOUNDATION.md) ·
@@ -27,10 +27,22 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 [Recompilare](#pentru-cei-care-vor-să-construiască) · [Documentație](#harta-proiectului)
 
 > **Starea proiectului: prototip funcțional, utilizare experimentală.**
-> Sursele și uneltele sunt disponibile; un ROM release instalabil și o procedură
-> publică de flash complet validată sunt încă de construit.
+> Sursele și uneltele sunt disponibile. Există un constructor de ZIP privat prin ADB
+> în recovery; flash-ul și restaurarea acestui pachet nu sunt încă validate pe hardware.
 
 ## Ce este nou
+
+**Leo 0.12 · pregătit de utilizare:** diagnostic local pentru Home/T9/meniul global,
+poziție în liste, pictograme comune cache-uite și mai puține actualizări inutile.
+Dialogurile Android de permisiuni și volum răspund din taste. Au trecut **95 de
+verificări Android și 27 pe PC**; versiunea a pornit automat după repornire.
+Mediana cadrelor din traseul măsurat a coborât de la circa 10,2 la 5,4–5,5 ms;
+aceasta nu măsoară întârzierea fizică tastă–ecran. USB/ADB încă se poate deconecta.
+[Rezultate, capturi și limite](android81/LEO-12-DAILY-CANDIDATE.md) ·
+[Snapshot și ZIP privat de recuperare](android81/RECOVERY-BUNDLE.md).
+
+<img src="android81/screenshots/leo12-list.png" width="180" alt="Poziția în lista Leo">
+<img src="android81/screenshots/leo12-volume.png" width="180" alt="Volum Android din taste">
 
 **Leo 0.11 · Android din taste:** un punct comun pentru panoul Android de
 notificări, comenzile rapide Android, Setări Android și notificările Leo.
