@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="8" android:versionName="0.8.0-dev">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.visual" android:versionCode="9" android:versionName="0.9.0-dev">
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -181,5 +181,10 @@
         <activity android:name=".ContactDuplicatesActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".VisualProfilesActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".AppControlActivity" android:exported="false" android:screenOrientation="portrait" />
-    </application>
+    <activity android:name=".CallToolsActivity" android:exported="false" android:screenOrientation="portrait" />
+<activity android:name=".AccessibilitySettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+<activity android:name=".ContextHelpActivity" android:exported="false" android:screenOrientation="portrait" />
+<activity android:name=".BluetoothTransfersActivity" android:exported="false" android:screenOrientation="portrait" />
+<activity android:name=".RecorderLibraryActivity" android:exported="false" android:screenOrientation="portrait" />
+</application>
 </manifest>

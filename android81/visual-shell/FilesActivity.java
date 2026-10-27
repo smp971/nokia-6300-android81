@@ -47,7 +47,7 @@ public final class FilesActivity extends LeoActivity {
                     selected=entries.get(i); if(selected.isDirectory()) browse(selected); else fileOptions(selected);
                 } },L.t("Opțiuni"),new Runnable() { public void run() { directoryOptions(); } });listing=root;if(!entries.isEmpty())selected=entries.get(Math.min(focused,entries.size()-1));
                 back=new Runnable() { public void run() { if(directory.equals(base)) locations(); else browse(directory.getParentFile()); } };
-                if(inaccessible) notice(L.t("Folderul nu poate fi citit; verifică permisiunile"));
+                String wanted=getIntent().getStringExtra("select_file");if(wanted!=null){getIntent().removeExtra("select_file");for(File f:found)if(f.getAbsolutePath().equals(wanted)&&f.isFile()){selected=f;fileOptions(f);break;}}if(inaccessible) notice(L.t("Folderul nu poate fi citit; verifică permisiunile"));
             }});
         }});
     }

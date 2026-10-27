@@ -41,4 +41,6 @@
     <instrumentation android:name="ro.leo.visual.PhoneTabsTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.SixPolishTests" android:targetPackage="ro.leo.visual" />
 <instrumentation android:name="ro.leo.visual.DailyUse08Tests" android:targetPackage="ro.leo.visual" />
+<instrumentation android:name="ro.leo.visual.Complete09Tests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.BluetoothFileTrial" android:targetPackage="ro.leo.visual" />
 </manifest>

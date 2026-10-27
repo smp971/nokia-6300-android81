@@ -32,7 +32,7 @@ final class KeypadDialog extends Dialog {
             final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
             public boolean isOpaque(){return true;}
             void text(Canvas c,String value,float x,float y,int size,int color,Paint.Align align) {
-                paint.setTextSize(size); paint.setColor(color); paint.setTextAlign(align);
+                paint.setTextSize(size*Math.min(1.3f,Appearance.textScale(getContext()))); paint.setColor(color); paint.setTextAlign(align);
                 float max=align==Paint.Align.LEFT?218:220;
                 if(paint.measureText(value)>max){int count=paint.breakText(value,true,max-paint.measureText("…"),null);value=value.substring(0,count)+"…";}
                 c.drawText(value,x,y,paint);

@@ -29,6 +29,8 @@ abstract class LeoActivity extends Activity {
         super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
+    protected void onResume(){super.onResume();ContextHelp.current=new java.lang.ref.WeakReference<LeoActivity>(this);}
+    String helpControls(){if(softkeyBar==null)return "";StringBuilder out=new StringBuilder();for(int n=0;n<softkeyBar.getChildCount();n++){String value=((TextView)softkeyBar.getChildAt(n)).getText().toString();if(!value.isEmpty())out.append(n==0?L.t("Stânga · "):n==1?"OK · ":L.t("Dreapta · ")).append(value).append("\n");}return out.toString().trim();}
     protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
     int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     TextView text(String value,int size) {

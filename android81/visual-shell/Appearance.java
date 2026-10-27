@@ -7,7 +7,7 @@ import android.util.AtomicFile;
 import java.io.*;
 
 final class Appearance {
-    static float textScale(Context c){return c.getSharedPreferences("appearance",0).getBoolean("large-text",false)?1.15f:1f;}
+    static float textScale(Context c){return AccessibilityPrefs.scale(c);}
     static final String[] THEMES=L.array(new String[]{"Violet","Apus","Ocean","Pădure","Clasic · Albastru","Coral","S60 · Rubiniu","Electro · Jad","LCD · Chihlimbar","Material · Noapte","Leo Night · Turcoaz","Nordic · Albastru","Solar · Chihlimbar"});
     static final int[][] COLORS={{0xff241047,0xff593185,0xffbc6e91},{0xff243959,0xff98707c,0xffedb17c},{0xff081d36,0xff17628b,0xff58b6be},{0xff102d28,0xff3c7657,0xffaac47e},{0xff091a37,0xff205cb4,0xff5fc9ed},{0xff32182c,0xffa44162,0xffffad83},{0xff280d2b,0xff9c255f,0xffff779f},{0xff061f28,0xff08796b,0xff83f1b0},{0xff2e2212,0xff79633a,0xffffd085},{0xff101c20,0xff29474b,0xff61dacc},{0xff141025,0xff30394e,0xff42d5c4},{0xff101c30,0xff355a87,0xff8ebfff},{0xff281e12,0xff6d5030,0xffffcb74}};
     static final class Palette {
@@ -17,7 +17,7 @@ final class Appearance {
         Palette(int[] colors){gradient=colors;background=mix(colors[0],0xff080e19,.48f);bar=mix(colors[0],0xff03070e,.6f);card=mix(colors[0],colors[1],.24f);accent=colors[2];selection=mix(colors[2],Color.WHITE,.84f);ink=mix(colors[0],Color.BLACK,.18f);}
     }
     static final int[] ACCENTS={0xff58daca,0xffffbe57,0xff8ebcff,0xffff7b9c,0xffbca2ff,0xffa4df78};
-    static Palette palette(Context c){android.content.SharedPreferences p=c.getSharedPreferences("appearance",0);String app=c.getClass().getSimpleName();int theme=p.getInt("app-theme-"+app,-1);if(theme<0&&!p.getBoolean("unified-phone",false)&&(c instanceof PhoneActivity||c instanceof InCallActivity))return PhoneTheme.palette();int i=theme<0?p.getInt("theme",p.getBoolean("warm",false)?1:0):theme;i=Math.max(0,Math.min(COLORS.length-1,i));int[] colors=COLORS[i].clone();int accent=p.getInt("accent",-1);if(accent>=0&&accent<ACCENTS.length)colors[2]=ACCENTS[accent];return new Palette(colors);}
+    static Palette palette(Context c){if(AccessibilityPrefs.contrast(c))return new Palette(0xff000000,0xff000000,0xff181818,0xffffff00,0xffffffff,0xff000000);android.content.SharedPreferences p=c.getSharedPreferences("appearance",0);String app=c.getClass().getSimpleName();int theme=p.getInt("app-theme-"+app,-1);if(theme<0&&!p.getBoolean("unified-phone",false)&&(c instanceof PhoneActivity||c instanceof InCallActivity))return PhoneTheme.palette();int i=theme<0?p.getInt("theme",p.getBoolean("warm",false)?1:0):theme;i=Math.max(0,Math.min(COLORS.length-1,i));int[] colors=COLORS[i].clone();int accent=p.getInt("accent",-1);if(accent>=0&&accent<ACCENTS.length)colors[2]=ACCENTS[accent];return new Palette(colors);}
     static int mix(int a,int b,float f){return Color.rgb((int)(Color.red(a)*(1-f)+Color.red(b)*f),(int)(Color.green(a)*(1-f)+Color.green(b)*f),(int)(Color.blue(a)*(1-f)+Color.blue(b)*f));}
     static android.graphics.drawable.GradientDrawable surface(int color,int radius){android.graphics.drawable.GradientDrawable d=new android.graphics.drawable.GradientDrawable();d.setColor(color);d.setCornerRadius(Math.min(radius,10));return d;}
     static android.graphics.drawable.StateListDrawable fieldSurface(Palette p,int radius){

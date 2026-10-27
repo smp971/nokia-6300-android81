@@ -76,8 +76,8 @@ public final class PhoneActivity extends LeoActivity {
         }});
     }
     private void phoneMenu(){
-        options(L.t("Telefon"),new String[]{L.t("Apelează"),L.t("Istoric apeluri"),L.t("Statistici"),L.t("Contacte"),L.t("Editează favorite"),L.t("Demo apel Leo"),L.t("Integrarea apelurilor"),L.t("Apeluri pierdute")},new Choice(){public void pick(int i){
-            if(i==0){if(page!=0)dial(draft);else chooseSim();}else if(i==1)switchPage(1);else if(i==2)switchPage(2);
+        options(L.t("Telefon"),new String[]{L.t("Apelează"),L.t("Istoric apeluri"),L.t("Statistici"),L.t("Contacte"),L.t("Editează favorite"),L.t("Demo apel Leo"),L.t("Integrarea apelurilor"),L.t("Apeluri pierdute"),L.t("Servicii de apel")},new Choice(){public void pick(int i){
+            if(i==8)startActivity(new Intent(PhoneActivity.this,CallToolsActivity.class));else if(i==0){if(page!=0)dial(draft);else chooseSim();}else if(i==1)switchPage(1);else if(i==2)switchPage(2);
             else if(i==3)startActivity(new Intent(PhoneActivity.this,ContactsActivity.class));
             else if(i==4)options(L.t("Alege căsuța"),new String[]{L.t("Favorit 1"),L.t("Favorit 2"),L.t("Favorit 3")},new Choice(){public void pick(int slot){favoriteMenu(slot);}});
             else if(i==5)startActivity(new Intent(PhoneActivity.this,InCallActivity.class).putExtra("demo",true));else if(i==7){missedOnly=true;historyQuery="";historySim=-1;switchPage(1);}else integration();

@@ -27,7 +27,7 @@ public final class SmsReceiver extends BroadcastReceiver {
             notifyReceived(context,address,body.toString());
         } catch(Exception failed) { notify(context,L.t("SMS primit: stocare indisponibilă"),address); }
     }
-    static void notifyReceived(Context c,String number,String body){if(ConversationPrefs.has(c,"blocked",number))return;NotificationManager m=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);m.createNotificationChannel(new NotificationChannel("leo-sms",L.t("Mesaje Leo"),NotificationManager.IMPORTANCE_DEFAULT));m.notify("leo-sms",number.hashCode(),build(c,L.t("Mesaj SMS nou"),number,c.getSharedPreferences("sms-options",0).getBoolean("preview",false)?body:null));}
+    static void notifyReceived(Context c,String number,String body){if(ConversationPrefs.has(c,"blocked",number))return;AccessibilityPrefs.alert(c,"sms");NotificationManager m=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);m.createNotificationChannel(new NotificationChannel("leo-sms",L.t("Mesaje Leo"),NotificationManager.IMPORTANCE_DEFAULT));m.notify("leo-sms",number.hashCode(),build(c,L.t("Mesaj SMS nou"),number,c.getSharedPreferences("sms-options",0).getBoolean("preview",false)?body:null));}
     static void notify(Context context,String title,String number) {
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.createNotificationChannel(new NotificationChannel("leo-sms",L.t("Mesaje Leo"),NotificationManager.IMPORTANCE_DEFAULT));

@@ -104,11 +104,11 @@ public final class AndroidAppsActivity extends Activity {
         final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         AppList() { super(AndroidAppsActivity.this); setFocusable(true); requestFocus(); }
         void text(Canvas c,String value,float x,float y,int size,int color,Paint.Align align) {
-            paint.setTextSize(size); paint.setColor(color); paint.setTextAlign(align);
+            paint.setTextSize(size*Appearance.textScale(AndroidAppsActivity.this)); paint.setColor(color); paint.setTextAlign(align);
             c.drawText(value,x,y,paint);
         }
         String fit(String value,int width) {
-            paint.setTextSize(14);
+            paint.setTextSize(14*Appearance.textScale(AndroidAppsActivity.this));
             if(paint.measureText(value)<=width) return value;
             while(value.length()>0 && paint.measureText(value+"…")>width) value=value.substring(0,value.length()-1);
             return value+"…";

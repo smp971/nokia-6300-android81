@@ -15,14 +15,14 @@ import java.util.*;
 /** Local calendar backed by the Android CalendarProvider; no account synchronization. */
 public final class CalendarActivity extends LeoActivity {
     private final Calendar day=Calendar.getInstance();
-    private long calendarId=-1;
+    private long calendarId=-1,searchEvent=-1;
     private boolean month;private int pageGeneration;private volatile int dotsGeneration;private final HashSet<Integer> eventDays=new HashSet<Integer>();
     private MonthFace face;
     private static final class Event { long id,start,end; String title,rule;int reminder=-1; }
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         day.setTimeInMillis(state!=null?state.getLong("day",System.currentTimeMillis()):getIntent().getLongExtra("day",System.currentTimeMillis()));
-        showMonth();
+        searchEvent=getIntent().getLongExtra("event_id",-1);if(searchEvent>=0)events(false);else showMonth();
     }
     protected void onSaveInstanceState(Bundle state) { state.putLong("day",day.getTimeInMillis()); super.onSaveInstanceState(state); }
     private void showMonth() {
@@ -65,7 +65,7 @@ public final class CalendarActivity extends LeoActivity {
                     }
                 }
                 ui(new Runnable() { public void run() {
-                    if(page!=pageGeneration)return;ArrayList<String> labels=new ArrayList<String>(); SimpleDateFormat time=new SimpleDateFormat(agenda?"dd.MM.yyyy HH:mm":"HH:mm",Locale.getDefault());
+                    if(page!=pageGeneration)return;if(searchEvent>=0){long wanted=searchEvent;searchEvent=-1;for(Event e:rows)if(e.id==wanted){detail(e,agenda);return;}}ArrayList<String> labels=new ArrayList<String>(); SimpleDateFormat time=new SimpleDateFormat(agenda?"dd.MM.yyyy HH:mm":"HH:mm",Locale.getDefault());
                     for(Event e:rows) labels.add(e.title+"\n"+time.format(new Date(e.start)));
                     list(agenda?L.t("Agenda · 90 zile"):new SimpleDateFormat("dd.MM.yyyy",Locale.ROOT).format(day.getTime()),labels,0,new Choice() { public void pick(int i) { detail(rows.get(i),agenda); } },L.t("Nou"),new Runnable() { public void run() { edit(null); } });
                     back=new Runnable() { public void run() { showMonth(); } };

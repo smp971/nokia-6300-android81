@@ -59,7 +59,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         UnreadState.watch(this);android.content.IntentFilter filter=new android.content.IntentFilter(UnreadState.CHANGED);filter.addAction("ro.leo.visual.MUSIC_CHANGED");filter.addAction(FmService.CHANGED);registerReceiver(badges,filter);UnreadState.refresh(this);
-        for(String name:new String[]{"appearance","weather","alarms"})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
+        for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
         if(!offeredSetup&&!KeypadLockActivity.locked(this)&&!getSharedPreferences("setup",0).getBoolean("complete",false)){offeredSetup=true;startActivity(new Intent(this,SetupWizardActivity.class));}
         screen.reloadAppearance();
         screen.reloadCards();homeVisible=true;loadHomeFavorites();
@@ -72,7 +72,7 @@ public final class MainActivity extends Activity {
     }
     protected void onPause() {homeVisible=false;favoriteGeneration++;
         handler.removeCallbacks(clock);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
-        for(String name:new String[]{"appearance","weather","alarms"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
+        for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();
         super.onPause();
@@ -176,7 +176,7 @@ public final class MainActivity extends Activity {
         final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
 
         Bitmap wallpaper;
-        long wallpaperStamp=-1,wallpaperSize=-1;
+        long wallpaperStamp=-1,wallpaperSize=-1;boolean highContrast;
         int theme;
         void reloadAppearance() {
             android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
@@ -185,9 +185,9 @@ public final class MainActivity extends Activity {
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
             java.io.File file=Appearance.wallpaper(MainActivity.this);long stamp=file.lastModified(),size=file.length();
-            if(stamp!=wallpaperStamp||size!=wallpaperSize){
+            boolean contrast=AccessibilityPrefs.contrast(MainActivity.this);if(stamp!=wallpaperStamp||size!=wallpaperSize||highContrast!=contrast){highContrast=contrast;
                 if(wallpaper!=null){wallpaper.recycle();wallpaper=null;}
-                if(file.isFile())wallpaper=BitmapFactory.decodeFile(file.getPath());
+                if(file.isFile()&&!highContrast)wallpaper=BitmapFactory.decodeFile(file.getPath());
                 wallpaperStamp=stamp;wallpaperSize=size;
             }
             invalidate();

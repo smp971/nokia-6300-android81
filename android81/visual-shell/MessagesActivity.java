@@ -116,7 +116,7 @@ public final class MessagesActivity extends LeoActivity {
         }
         if(!address.isEmpty()) {
             Collections.reverse(rows);
-            conversation(address,rows);
+            long wanted=getIntent().getLongExtra("search_date",0);int focus=rows.size()-1;if(wanted>0){long distance=Long.MAX_VALUE;for(int n=0;n<rows.size();n++){long delta=Math.abs(rows.get(n).date-wanted);if(delta<distance){distance=delta;focus=n;}}getIntent().removeExtra("search_date");}conversation(address,rows,focus);
             if(!preview) { long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through); }
             return;
         }

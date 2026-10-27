@@ -18,7 +18,7 @@ public final class LeoPointerService extends AccessibilityService {
     private boolean active, scroll, gesturePending, consumePoundUp;
     private int x, y, width, height;
     private KeypadDialog menu;
-    private String foregroundPackage="";
+    private String foregroundPackage="",foregroundClass="";private boolean helpHeld,helpShown;private final android.os.Handler helpTimer=new android.os.Handler();private final Runnable holdHelp=new Runnable(){public void run(){if(helpHeld&&!KeypadLockActivity.locked(LeoPointerService.this)&&!InCallActivity.visible&&!AlarmRingService.ringing&&!PowerMenuActivity.visible){helpShown=true;setActive(false);if(menu!=null)menu.dismiss();ContextHelp.open(LeoPointerService.this,foregroundClass);}}};
     private int menuGeneration;
     private boolean screenWatching;
     private final android.content.BroadcastReceiver screenReceiver=new android.content.BroadcastReceiver(){
@@ -26,7 +26,7 @@ public final class LeoPointerService extends AccessibilityService {
             boolean busy=AlarmRingService.ringing;
             try{busy|=((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall();}catch(RuntimeException ignored){}
             if(android.content.Intent.ACTION_SCREEN_OFF.equals(intent.getAction())){
-                menuGeneration++;
+                menuGeneration++;helpHeld=false;helpTimer.removeCallbacks(holdHelp);
                 setActive(false);if(menu!=null)menu.dismiss();
                 if(!busy && getSharedPreferences("keyguard",0).getBoolean("screen_off",false))
                     getSharedPreferences("keyguard",0).edit().putBoolean("locked",true).apply();
@@ -101,8 +101,8 @@ public final class LeoPointerService extends AccessibilityService {
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            L.t("Meniu Leo"),new String[]{L.t("Notificări"),active?L.t("Oprește mouse-ul"):L.t("Mouse din taste"),L.t("Acasă"),L.t("Setări Leo"),L.t("Blochează tastele"),L.t("Configurări rapide"),L.t("Închide meniul"),L.t("Acum se redă"),L.t("Aplicații recente"),L.t("Închide aplicația curentă"),L.t("Pornire și oprire")},new KeypadDialog.Action() {
-                public void select(int which) {
+            L.t("Meniu Leo"),new String[]{L.t("Notificări"),active?L.t("Oprește mouse-ul"):L.t("Mouse din taste"),L.t("Acasă"),L.t("Setări Leo"),L.t("Blochează tastele"),L.t("Configurări rapide"),L.t("Închide meniul"),L.t("Acum se redă"),L.t("Aplicații recente"),L.t("Închide aplicația curentă"),L.t("Pornire și oprire"),L.t("Transferuri Bluetooth"),L.t("Comenzile paginii")},new KeypadDialog.Action() {
+                public void select(int which) {if(which==11){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,BluetoothTransfersActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==12){setActive(false);ContextHelp.open(LeoPointerService.this,foregroundClass);return;}
                     if(which==10){openPowerMenu();return;}
                     if(which==9){closeForeground();return;}
                     if(which==8){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,RecentAppsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}
@@ -181,7 +181,7 @@ public final class LeoPointerService extends AccessibilityService {
         // Keep the softkey's context-specific actions intact.
         if(key==KeyEvent.KEYCODE_MENU && event.getScanCode()==212) {
             if(InCallActivity.visible)return false;
-            if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) globalMenu();
+            if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0){helpHeld=true;helpShown=false;helpTimer.postDelayed(holdHelp,650);}else if(event.getAction()==KeyEvent.ACTION_UP){boolean shortPress=helpHeld&&!helpShown;helpHeld=false;helpTimer.removeCallbacks(holdHelp);if(shortPress)globalMenu();}
             return true;
         }
         if(menu!=null && menu.isShowing()) return false;
@@ -237,7 +237,7 @@ public final class LeoPointerService extends AccessibilityService {
         int off=getResources().getIdentifier("global_action_power_off","string","android"),restart=getResources().getIdentifier("global_action_restart","string","android");
         return off!=0&&restart!=0&&event.getText().contains(getString(off))&&event.getText().contains(getString(restart));
     }
-    public void onAccessibilityEvent(AccessibilityEvent event) {if(event.getEventType()!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)return;if(systemPowerDialog(event)){openPowerMenu();return;}if((menu==null||!menu.isShowing())&&event.getPackageName()!=null)foregroundPackage=event.getPackageName().toString();}
+    public void onAccessibilityEvent(AccessibilityEvent event) {if(event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED&&event.getClassName()!=null&&(menu==null||!menu.isShowing()))foregroundClass=event.getClassName().toString();if(event.getEventType()!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)return;if(systemPowerDialog(event)){openPowerMenu();return;}if((menu==null||!menu.isShowing())&&event.getPackageName()!=null)foregroundPackage=event.getPackageName().toString();}
     public void onInterrupt() { setActive(false); }
-    public void onDestroy() { if(screenWatching)unregisterReceiver(screenReceiver);screenWatching=false;if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
+    public void onDestroy() {helpHeld=false;helpTimer.removeCallbacksAndMessages(null); if(screenWatching)unregisterReceiver(screenReceiver);screenWatching=false;if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
 }
