@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Căutare | SMS din provider și arhiva Leo, evenimente, fișiere; acces direct la rezultat | Fixture SMS, deduplicare, filtrare, calendar real temporar și limite de directoare: trecute |
 | Telefon | Apel în așteptare, redirecționare, numere blocate, adăugare/conferință/comutare când Telecom permite | Blocare/deblocare pe provider Android: trecut; codurile operatorului sunt pregătite în dialer și cer apelare explicită; conferința/operatorul rămân de testat |
-| Bluetooth | Destinații asociate, confirmare trimitere, progres, acceptare/refuz, anulare și istoric | Trimitere Nokia → Samsung: status OPP 200, 41 octeți și conținut confirmate; primirea rămâne de verificat |
+| Bluetooth | Destinații asociate, confirmare trimitere, progres, acceptare/refuz, anulare și istoric | Nokia ↔ Samsung: status OPP 200 în ambele sensuri, 41 octeți și SHA-256 identic |
 | Reportofon | Voce 16 kHz/64 kbps, echilibrat 22,05 kHz/96 kbps, detaliat 44,1 kHz/128 kbps; mono AAC/M4A | Validarea profilurilor și filtrelor: trecută; înregistrarea reală amânată de utilizator |
 | Bibliotecă înregistrări | Azi, ultimele 7 zile, favorite, căutare T9/text, sortare, redenumire, partajare, ștergere cu confirmare | Nu se modifică fișiere în timpul înregistrării; maximum 500 intrări afișate |
 | Accesibilitate | Contrast ridicat, text normal/mare/foarte mare în liste și formulare, vibrații opționale SMS/mementouri | Paletă și limite scalare: trecute; unele ecrane desenate pe canvas păstrează geometria proprie; vibrația noilor notificări nu a fost confirmată fizic |
@@ -51,7 +51,7 @@ telefon deja asociat și aprobat de utilizator. Trimite exclusiv fișierul local
 
 ## De finalizat
 
-Primire text Samsung → Nokia și verificare conținut; o înregistrare reală cu
+O înregistrare reală cu
 profilurile noi; verificarea fizică a ajutorului și vibrațiilor; servicii operator
 și conferință pe un SIM ales explicit. Implementat nu înseamnă testat pe rețea.
 
@@ -66,3 +66,11 @@ oprea procesul Leo, iar Android omora procesul Bluetooth dependent de providerul
 Leo; rezultatul era status 400. `BluetoothFileTrial` a fost corectat să aștepte
 rezultatul transferului nou, maximum două minute. Trimiterea a trecut după această
 corecție, fără schimbarea driverelor sau a stivei Bluetooth.
+
+Returul Samsung → Nokia a reușit de asemenea: transferul primit este marcat OPP
+200, confirmare de primire 1, 41/41 octeți. Fișierul se află în
+`/storage/emulated/0/bluetooth/leo-bluetooth-test.txt`. Citirea conținutului și
+SHA-256 pe Nokia au confirmat identitatea cu originalul și cu fișierul primit
+pe Samsung: `a668714886be728d7d2296e009e35668bee37cf4422cc5980bed447739711745`.
+Proba confirmă transferul text în ambele sensuri; fișierele mari, anularea și
+refuzarea unei primiri nu au fost încă testate practic.

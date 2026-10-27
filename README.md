@@ -36,8 +36,8 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 servicii de apel și numere blocate; pagină proprie de transferuri Bluetooth;
 profiluri de calitate și bibliotecă pentru reportofon; contrast ridicat și text
 mărit; ajutor contextual prin apăsarea lungă a tastei fizice Meniu.
-Au trecut **31 de verificări noi și 70 de regresie** pe Nokia. Trimiterea unui fișier text prin
-Bluetooth către Samsung este confirmată; primirea rămâne de verificat; înregistrarea cu noile profiluri și
+Au trecut **31 de verificări noi și 70 de regresie** pe Nokia. Transferul unui fișier text prin
+Bluetooth Nokia ↔ Samsung este confirmat în ambele sensuri; înregistrarea cu noile profiluri și
 serviciile operatorului nu sunt încă validate practic.
 [Ce include, audit și limite](android81/LEO-09-COMPLETION.md).
 
