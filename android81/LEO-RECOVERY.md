@@ -35,11 +35,15 @@ pornire directă. Dovezile sunt legate de hash-ul exact în
 
 KaiOS a ajuns la meniul său de pe SD, apoi o repornire normală a revenit în Leo.
 Boot și system interne au rămas identice SHA-256 cu backup-ul dinaintea probei.
-ADB din KaiOS nu apare momentan; ADB din Leo și recovery funcționează.
-Validările sunt legate de imaginile exacte în fișierele `leo-recovery/*validation.json`.
-**Candidatul curent**, cu politica de diagnostic KaiOS și demontarea SD înaintea
-acțiunilor de alimentare, este compilat; instalarea lui așteaptă revenirea conexiunii
-USB. Manifestul nu îl marchează ca validat pe hardware pe baza unui build anterior.
+ADB root din KaiOS funcționează acum: UID 0, `b2g=running` și
+`sys.boot_completed=1`. Tabela montărilor confirmă system/data/cache pe loop0/1/2,
+iar cele patru partiții interne protejate raportează read-only. SELinux global
+rămâne enforcing; numai domeniile de diagnostic adbd/shell sunt permissive.
+**Limită USB:** după pornire, ADB s-a deconectat; reconectarea fizică a cablului
+a restabilit accesul fără repornirea KaiOS. Stabilitatea ADB nu este rezolvată.
+Imaginea curentă de mai jos este instalată și verificată prin recitire SHA-256;
+revenirea normală în Leo a fost verificată prin markerul Android intern.
+Validările și proveniența capturilor sunt în `leo-recovery/*validation.json`.
 
 D-pad sus/jos schimbă selecția, inclusiv între primul și ultimul rând.
 OK, verde sau soft stânga selectează; Înapoi/soft dreapta sau roșu revine.

@@ -39,14 +39,16 @@ root funcționale**. Renderer dedicat RGB565 pentru ecranul de 240 × 320.
 Backup-ul pe SD a trecut verificarea integrală; instalarea ROM-ului și restaurarea
 din meniu rămân netestate.
 Extragerea completă a pachetului ROM pe card a trecut și pentru userdata de peste
-2 GiB, după adaptarea antetului ZIP64. Ultimul candidat include și corecții de
-diagnostic ADB KaiOS, încă în așteptarea probei pe telefon.
+2 GiB, după adaptarea antetului ZIP64. Imaginea curentă este instalată și
+confirmă ADB root în KaiOS, montările SD și protecțiile partițiilor interne.
 [Captură, kit și limite](android81/LEO-RECOVERY.md).
 
 [KaiOS pe SD, cu Android păstrat intern](android81/KAIOS-SD.md) are acum imagini
 verificate pe card și un selector PID 1 implementat. Opțiunea „KaiOS from SD”
 este experimentală. Prima pornire a ajuns la meniul KaiOS, confirmat pe telefon;
-ADB din KaiOS și verificarea serviciilor lui rămân de rezolvat.
+ADB root funcționează și montările system/data/cache de pe SD sunt confirmate.
+**USB rămâne instabil după pornire:** reconectarea cablului a restabilit ADB.
+Serviciile KaiOS necesită probe separate; revenirea normală în Leo funcționează.
 
 
 Am pregătit un **candidat privat pentru instalare curată 0.14**, cu boot/system,

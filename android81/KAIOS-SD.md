@@ -3,7 +3,8 @@
 Leo Recovery 0.2 include un selector timpuriu și opțiunea **KaiOS from SD**.
 Imaginile au fost copiate și verificate pe cardul telefonului. **Prima pornire
 a ajuns la meniul KaiOS, confirmat de utilizator.** Integrarea rămâne experimentală:
-serviciile KaiOS nu au fost reverificate, iar ADB nu apare în configurația lui USB.
+serviciile KaiOS nu au fost reverificate complet. ADB root funcționează, dar se
+deconectează după pornire și a necesitat reconectarea fizică USB.
 
 ## Cum este construit
 
@@ -63,11 +64,12 @@ Constructorul redirecționează montările system/userdata/cache, inclusiv mont�
 directe din init și din modul charger. Elimină formatarea automată și criptarea
 footer din fstab și scoate cardul din lista volumelor gestionate de vold.
 Daemonul OTA nu pornește automat. ADB este cerut în configurația inițială.
-Pentru diagnosticul ADB, candidatul nou păstrează domeniul serviciului `adbd` și
+Pentru diagnosticul ADB, imaginea instalată păstrează domeniul serviciului `adbd` și
 adaugă numai `adbd` și `shell` în bitmap-ul permissive al politicii stock verificate.
 ID-urile au fost citite cu libsepol pentru acest dump; regulile AV și celelalte
 domenii nu sunt rescrise, iar SELinux global nu este dezactivat. Această corecție
-necesită încă proba pe telefon; prima eliminare a argumentului `su` nu a fost suficientă.
+a trecut proba pe telefon: UID 0 și SELinux global enforcing. Prima eliminare
+a argumentului `su` nu a fost suficientă.
 
 Modemul, SIM-urile, firmware-ul, persist și NV sunt comune telefonului;
 **aceasta nu este o izolare completă a serviciilor radio**. Stock KaiOS poate
@@ -83,11 +85,18 @@ modifica starea/configurația acestor servicii. Nu copiem datele personale din L
   init; selectorul a fost corectat pentru a decide după PID 1.
 - Proba loop-urilor, a celor trei montări ext4, a mutării SD și a protecțiilor RO
   a trecut pe telefon, cu restaurarea protecțiilor după probă.
-- Meniul KaiOS a fost confirmat vizual după boot. PC-ul vede USB Qualcomm 9092,
-  fără interfață ADB; tabela montărilor din KaiOS nu a putut fi colectată încă.
+- Meniul KaiOS a fost confirmat vizual după boot. Imaginea curentă expune USB
+  Qualcomm 9091 și ADB root. `b2g=running` și `sys.boot_completed=1`.
+- Tabela montărilor a fost colectată din KaiOS: loop0/1/2 folosesc imaginile de
+  pe `/leo-sd`; system este read-only, data/cache read-write. Toate cele patru
+  blocuri interne protejate raportează read-only.
 - Repornirea normală din KaiOS a revenit în Leo, confirmat vizual și prin ADB:
   markerul Android intern este prezent, iar protecțiile RO ale partițiilor s-au resetat.
-- Serviciile KaiOS și ADB din această variantă rămân de verificat/corectat.
+- ADB s-a întrerupt după pornire; reconectarea fizică USB l-a restabilit fără
+  reboot. Stabilitatea USB și funcțiile radio/media KaiOS rămân de verificat.
+- Captura automată KaiOS nu a reușit: screencap nu găsește display-ul, iar
+  citirea directă a framebuffer-ului este refuzată. Captura recovery existentă
+  provine dintr-o probă anterioară; nu este prezentată ca o captură KaiOS.
 
 Jurnalul selectorului, dacă revine în recovery, este `/leo-selector.log`.
 Proba nativă `leo-boot-selector --probe-loops`, disponibilă doar în recovery root,
