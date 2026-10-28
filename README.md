@@ -33,6 +33,9 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 ## Instalare și recuperare
 
+[Pachete private în GitHub Releases și alegerea kitului](android81/GITHUB-PACKAGES.md)
+· [Candidatul de recuperare QPST/QFIL](android81/QFIL-RECOVERY.md).
+
 **Leo Recovery 0.2:** recovery nativ pentru D-pad/OK, cu instalare din SD,
 backup boot/system/recovery, revenire stock și diagnostic. Imaginea ARM este
 instalată și verificată pe telefon: **pornire directă, meniu, taste fizice și ADB
