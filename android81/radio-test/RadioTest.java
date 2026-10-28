@@ -22,6 +22,7 @@ public class RadioTest extends Activity {
                 String operator=tm.createForSubscriptionId(sub).getSimOperator();
                 android.telephony.SubscriptionManager sm=(android.telephony.SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE);
                 android.telephony.SubscriptionInfo info=sm.getActiveSubscriptionInfo(sub);
+                if(mutating && info==null)throw new IllegalStateException("Active subscription missing");
                 Log.i("LeoRadioTest","sub="+sub+" operator="+operator+" subscription="+(info==null?"missing":("slot="+info.getSimSlotIndex()+" mcc="+info.getMcc()+" mnc="+info.getMnc())));
                 if(getIntent().getBooleanExtra("selectData",false)){
                     int slot=getIntent().getIntExtra("dataSlot",-1);

@@ -10,6 +10,7 @@
 *.kl text eol=lf
 *.md text eol=lf
 *.java text eol=lf
+android81/device/nokia/leo/apns-conf.xml text eol=lf
 android81/repro/** text eol=lf
 android81/repro/patches/*.patch -whitespace
 *.ps1 text eol=crlf

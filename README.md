@@ -43,6 +43,11 @@ After a wipe, choose the data SIM and configure network/Wi-Fi preferences again.
 LTE/IMS have not been revalidated on the fresh installation. USB/ADB still drops
 occasionally; disconnecting USB for ten seconds and reconnecting restored it.
 
+The development system now includes [Romanian/European APN defaults](android81/APN-CATALOG.md):
+844 public profiles, including 18 for Romania, with Internet/MMS/IMS and MVNO
+matching retained. Both SIMs report LTE-preferred mode, but simultaneous dual LTE
+and dual VoLTE are not yet validated; the current IMS port manages one selected slot.
+
 | Package | Purpose and limits |
 | --- | --- |
 | Clean Leo ROM | Tested system/boot installation with blank userdata; requires the documented post-install fix |

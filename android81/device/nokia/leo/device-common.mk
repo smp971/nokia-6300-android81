@@ -1,6 +1,7 @@
 # Shared Nokia hardware bring-up configuration.
 DEVICE_PACKAGE_OVERLAYS += device/nokia/leo/overlay
 PRODUCT_COPY_FILES += \
+    device/nokia/leo/apns-conf.xml:system/etc/apns-conf.xml \
     device/nokia/leo/init.leo.hwui.rc:system/etc/init/leo-hwui-full-frame.rc \
     device/nokia/leo/init.leo.haptic.rc:system/etc/init/leo-haptic.rc \
     device/nokia/leo/leo-connectivity.xml:system/etc/permissions/leo-connectivity.xml \
