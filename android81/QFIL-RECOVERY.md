@@ -1,63 +1,64 @@
-# Leo Recovery prin QPST / QFIL · candidat experimental
+# Leo Recovery through QPST / QFIL · experimental candidate
 
-Kit privat pentru exemplarul **Nokia 6300 4G TA-1286 / ADB 695d**, cu GPT-ul
-original intact. Este o cale de reinstalare a recovery-ului când Android nu mai
-pornește. Nu este un kit de reparare a GPT-ului sau a bootloaderului.
+Private kit for **Nokia 6300 4G TA-1286 / ADB 695d**, with the original GPT intact.
+It can reinstall recovery when Android no longer boots. It does not repair GPT
+or the bootloader.
 
-**Validat offline; flash-ul QFIL și acceptarea loaderului în EDL nu sunt probate.**
-Imaginea Leo Recovery inclusă a pornit pe telefon și a instalat ROM-ul prin SD.
-Acest rezultat nu validează transportul Sahara/Firehose sau aplicația QFIL.
+**Offline-checked; QFIL flashing and loader acceptance in EDL are untested.**
+The included Leo Recovery image booted on the phone and installed the ROM from
+SD. That result does not validate Sahara/Firehose transport or QFIL itself.
 
-## Conținut și țintă
+## Contents and target
 
-| Fișier | Rol |
+| File | Purpose |
 | --- | --- |
-| `8k.mbn` | Loader ARM32 MSM8909 local, cu SHA-256 fixat; acceptare EDL neconfirmată |
-| `leo-recovery.img` | Leo Recovery 0.2, 33.554.432 octeți |
-| `rawprogram0.xml` | O singură scriere: recovery, p33, LBA 2488416, 65536 sectoare de 512 octeți |
-| `patch0.xml` | Gol; fără modificări GPT |
-| `manifest.json`, `SHA256SUMS.txt` | Proveniență, geometrie, dimensiuni și hash-uri |
+| `8k.mbn` | Pinned local ARM32 MSM8909 loader; EDL acceptance unconfirmed |
+| `leo-recovery.img` | Leo Recovery 0.2, 33,554,432 bytes |
+| `rawprogram0.xml` | One write: recovery, p33, LBA 2488416, 65536 sectors of 512 bytes |
+| `patch0.xml` | Empty; no GPT changes |
+| `manifest.json`, `SHA256SUMS.txt` | Provenance, geometry, sizes and hashes |
 
-Nu sunt incluse ținte pentru GPT, bootchain, modem, NV, persist, system, boot sau
-userdata. Kitul nu șterge datele. QFIL nu verifică automat serialul ADB 695d:
-modelul și geometria trebuie confirmate înaintea folosirii pe telefon.
+No GPT, bootchain, modem, NV, persist, system, boot or userdata write targets are
+included. The kit itself does not wipe data. QFIL does not automatically check
+ADB serial 695d: confirm the phone variant and geometry before using it.
 
-Loaderul este identic SHA-256 cu cel din folderul local `nokia-6300-qfil-safe`.
-Documentația acelui kit mai vechi notează citiri defectuoase și sesiuni instabile;
-nu este dovadă de flash QFIL reușit. XML-ul nu cere citire automată prin acest
-loader. După programare, hash-ul partiției recovery trebuie verificat separat
-prin ADB root, iar orice eroare de scriere trebuie investigată, nu ignorată.
+The loader matches the SHA-256 of the local `nokia-6300-qfil-safe` copy. That
+older kit's notes mention defective reads and unstable sessions, not proof of
+successful QFIL flashing. XML does not request automatic readback through this
+loader. After programming, separately verify the recovery partition hash through
+root ADB. Investigate write errors rather than ignoring them.
 
-## Folosire când vom valida QFIL
+## Procedure for a future QFIL validation
 
-1. Extrage ZIP-ul într-un folder separat și verifică SHA256SUMS.
-2. Telefonul trebuie să expună **Qualcomm 9008 / EDL**. Modul 900E de crash nu
-   confirmă că este pregătit pentru programare. Păstrează driverul Qualcomm
-   potrivit QFIL; nu este necesară schimbarea driverului telefonului în modul Leo.
-3. În QFIL, folosește Flat Build, memoria eMMC și loaderul inclus `8k.mbn`.
-   Încarcă exclusiv `rawprogram0.xml` și `patch0.xml` din acest kit.
-   **Erase All Before Download trebuie să fie dezactivat.**
-4. Revizuiește ținta: **numai recovery**. Dacă loaderul este respins sau nu
-   răspunde, păstrează jurnalul; compatibilitatea nu este demonstrată de existența
-   fișierului și nu alegem un loader pentru alt chipset la întâmplare.
-5. După scriere și verificare, pornește Leo Recovery cu combinația fizică
-   deja folosită pe acest exemplar. Apoi poți instala pachetul Leo aprobat de pe
-   SD; acea operație separată șterge datele și cere backup și confirmare.
+1. Extract into a separate folder and verify SHA256SUMS.
+2. The phone must expose **Qualcomm 9008 / EDL**. A 900E crash interface does not
+   establish readiness for programming. Use the Qualcomm driver appropriate for
+   QFIL; the phone's normal Leo-mode driver does not need changing.
+3. Select Flat Build, eMMC storage and the included `8k.mbn`. Load only this
+   kit's `rawprogram0.xml` and `patch0.xml`.
+   **Erase All Before Download must be disabled.**
+4. Review the target: **recovery only**. If the loader is rejected or does not
+   respond, preserve the log. Possession of the file does not demonstrate
+   compatibility; do not substitute a random other-chipset loader.
+5. After writing and verification, boot Leo Recovery with the physical key
+   combination already used on this development phone. Installing the approved
+   Leo ROM from SD is a separate operation that erases data and requires backup
+   and confirmation.
 
-Modemul/NV nu sunt restaurate de acest kit. O defecțiune în GPT, bootchain sau
-hardware necesită un diagnostic separat. Nu se promite recuperarea oricărui brick.
+The kit does not restore modem/NV. GPT, bootchain or hardware failure requires
+separate diagnosis; recovery from every kind of brick is not promised.
 
-## Reconstruire pe PC, fără telefon
+## Rebuild on the PC, without a phone
 
 ```powershell
 python android81/build-qfil-recovery.py
 ```
 
-Constructorul verifică CRC-urile GPT, pozițiile celor patru partiții OS cunoscute,
-hash-ul loaderului și hash-ul recovery-ului aprobat. XML-ul este generat doar
-pentru recovery și patch-ul este gol. Un ZIP existent nu este suprascris.
+The builder verifies GPT CRCs, the four known OS partition locations, the loader
+hash and the approved recovery hash. XML contains only recovery and patches are
+empty. Existing ZIP output is not overwritten.
 
-Interfața generală Flat Build / Browse / Load XML este descrisă și în
-[documentația producătorului Quectel](https://developer.quectel.com/doc/sbc/Quectel-Pi-H1/en/OS/Debian/system_flash.html).
-Acea pagină privește o placă UFS diferită: configurația noastră eMMC și ținta
-recovery provin din GPT-ul Nokia verificat, nu din imaginile acelei plăci.
+The general Flat Build / Browse / Load XML interface is also documented by
+[Quectel](https://developer.quectel.com/doc/sbc/Quectel-Pi-H1/en/OS/Debian/system_flash.html).
+That page concerns a different UFS board. This kit's eMMC settings and recovery
+target come from the verified Nokia GPT, not that board's images.

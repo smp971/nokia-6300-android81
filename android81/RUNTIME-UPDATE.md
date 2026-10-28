@@ -1,31 +1,30 @@
-# Pachet local de actualizare Leo
+# Local Leo runtime updates
 
-`runtime-bundle.py` produce un ZIP verificabil pentru **portul Leo deja instalat
-în memoria internă**, cu kernelul `4.9.240-perf-g4f9e270fd77f` și wrapper-ul root
-existent. Nu instalează Android peste KaiOS și nu este ZIP flashabil în recovery.
+`runtime-bundle.py` creates a verifiable ZIP for an **existing internal Leo port**
+with kernel `4.9.240-perf-g4f9e270fd77f` and the existing root wrapper. This is
+neither an Android-over-KaiOS installer nor a recovery-flashable ZIP.
 
-## Conținut și proveniență
+## Contents and provenance
 
-- Leo Visual și Leo Keypad recompilate local, cu versiunea din `release-version.json`.
-- Runtime-urile private radio, audio, cameră, IMS și GPS instalate pe telefon.
-- Fișierele init Leo și configurațiile audio/GPS incluse explicit în lista permisă.
-- Manifest: dimensiuni, SHA-256, commit, hash-uri ale surselor și starea directorului Git.
+- Locally rebuilt Leo Visual/Keypad, versioned by `release-version.json`.
+- Private radio, audio, camera, IMS and GPS runtimes installed on the phone.
+- Explicitly allowlisted Leo init files and audio/GPS configuration.
+- Manifest with sizes, SHA-256, commit, source hashes and Git tree state.
 
-Captura citește numai fișiere de sistem permise. Nu citește `/data`, cardul SD,
-partițiile modem/NV, conturile sau cheile. Include biblioteci proprietare din dump;
-ZIP-ul rămâne local și nu se comite automat pe GitHub.
+Capture reads only allowed system files, excluding userdata, SD, modem/NV,
+accounts and keys. Proprietary dump libraries are included; the ZIP is not
+committed automatically.
 
-Acesta este un **snapshot al configurației instalate**, cu o procedură repetabilă
-de împachetare. Nu demonstrează o recompilare completă pe un PC curat sau rezultate
-identice octet cu octet. Boot-ul, framework-ul modificat, serviciile FM/MTP,
-calibrarea audio și configurația de bază Leo rămân premise ale actualizării.
+This is a snapshot of the installed configuration with repeatable packaging,
+not proof of a clean-host rebuild or bit-identical results. Boot, modified
+framework, FM/MTP services, audio calibration and base Leo configuration remain
+prerequisites.
 
-## Pregătire
+## Prepare
 
-Recompilează aplicațiile prin `build-keypad-ime.sh` și `build-visual-shell.sh` în
-mediul descris în [REBUILD.md](REBUILD.md). GNSS se construiește prin
-`build-gps-runtime.sh`; celelalte runtime-uri au scripturile și instrucțiunile
-din documentele lor. Păstrează aceiași semnatari pentru actualizarea APK-urilor.
+Rebuild apps with `build-keypad-ime.sh` and `build-visual-shell.sh` using the
+[build guide](REBUILD.md). GNSS uses `build-gps-runtime.sh`; other runtimes have
+their own recipes/reports. Retain APK signers for updates.
 
 ```text
 python android81/runtime-bundle.py OUTPUT.zip --capture --serial SERIAL --adb PATH_TO_ADB
@@ -33,28 +32,27 @@ python android81/runtime-bundle.py OUTPUT.zip
 python android81/runtime-bundle.py OUTPUT.zip --check-device --serial SERIAL --adb PATH_TO_ADB
 ```
 
-Verificarea fără opțiuni este offline. `--check-device` compară toate hash-urile
-cu telefonul și nu scrie nimic. ZIP-urile cu fișiere suplimentare, hash-uri greșite,
-destinații duplicate, căi în afara listei sau traversări `..` sunt respinse.
+No-option verification is offline. `--check-device` compares every hash with
+the phone without writing. Extra files, bad hashes, duplicate destinations,
+non-allowlisted paths and `..` traversal are rejected.
 
-## Instalare și revenire
+## Install and roll back
 
 ```text
 python android81/runtime-bundle.py OUTPUT.zip --install --backup NEW_BACKUP_FOLDER --serial SERIAL --adb PATH_TO_ADB
 python android81/runtime-bundle.py OUTPUT.zip --rollback NEW_BACKUP_FOLDER --serial SERIAL --adb PATH_TO_ADB
 ```
 
-Instalatorul cere un serial explicit, verifică platforma și absența apelurilor,
-salvează originalele într-un director nou pe PC, transferă și verifică toate
-fișierele înaintea scrierilor. Fișierele de sistem sunt înlocuite prin redenumire;
-`/system` revine read-only. APK-urile sunt actualizate cu datele aplicațiilor păstrate.
-Nu schimbă rolurile HOME/IME/dialer, nu formatează și nu repornește automat.
+The installer requires an explicit serial, checks the platform and absence of
+calls, backs originals up to a new PC folder, then transfers/verifies all files
+before writing. System files are replaced by rename and system returns read-only.
+APK updates retain app data. Home/IME/dialer roles remain unchanged; there is no
+format or automatic reboot.
 
-Instalarea multor fișiere nu este o tranzacție atomică. O întrerupere USB sau o
-eroare la un APK poate lăsa o actualizare parțială. Directorul de backup permite
-revenirea explicită după reconectare; nu există recuperare automată garantată.
-Nu șterge backup-ul până după verificarea unei porniri complete.
+Multi-file installation is not atomic. USB loss or an APK failure can leave a
+partial update. The backup folder enables explicit rollback after reconnecting;
+automatic recovery is not guaranteed. Retain it until a full boot is checked.
 
-Probele offline se rulează cu `python android81/test-runtime-bundle.py`.
-Instalarea și revenirea unui pachet întreg necesită o probă separată; verificarea
-hash-urilor și testele offline nu sunt o validare a unui flash complet.
+Run offline tests with `python android81/test-runtime-bundle.py`. Installing and
+rolling back a complete runtime bundle require a separate test. Hash checks and
+host tests are not a full-flash validation.

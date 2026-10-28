@@ -1,42 +1,42 @@
-# Recompilare Leo Android 8.1
+# Rebuilding Leo Android 8.1
 
-Repository-ul păstrează sursele aplicațiilor Leo, configurația dispozitivului,
-uneltele native și scripturile de portare. `repro/aosp-manifest.xml` fixează cele
-590 de proiecte upstream din checkout-ul de dezvoltare prin SHA de commit.
-`repro/sources.json` și patch-urile asociate păstrează modificările locale AOSP.
-Sursele AOSP se descarcă din Android Git; nu sunt duplicate ca arhivă în GitHub.
+This repository contains Leo app sources, device configuration, native tools and
+porting scripts. `repro/aosp-manifest.xml` pins the development checkout's 590
+upstream projects to commit SHAs. `repro/sources.json` and its patches preserve
+local AOSP changes. Android sources are fetched from Android Git rather than
+being duplicated as an archive here.
 
-**Limite:** acesta este un pachet de surse și rețete de dezvoltare. Reconstruirea
-de la zero pe un PC nou nu a fost validată integral. Nu oferă încă un ROM complet
-instalabil, iar sistemul folosit pe telefon include componente proprietare din
-dump-ul original. O recompilare nu înseamnă că imaginile rezultate pot fi scrise
-direct pe partiții. Nicio comandă din `repro/` nu folosește ADB și nu flashează.
+**Scope:** a full rebuild from scratch on a clean PC has not been validated.
+The running port requires proprietary components from the original dump. Clean
+installation of the prepared private ROM has since passed on hardware; see
+[installation and its required fix](FLASH-FROM-STOCK.md). That does not validate
+arbitrary newly built images. The `repro/` commands do not use ADB or flash.
 
-## Recompilarea numai a aplicațiilor Leo
+## Building just the Leo apps
 
-Există un [generator de pachet numerotat](RELEASE-APPS.md), cu preflight, două APK-uri,
-manifest SHA-256 și instalator explicit. Scripturile aplicațiilor acceptă acum
-`LEO_AOSP_ROOT` și `LEO_JAVA_HOME`; valorile implicite rămân cele de mai jos.
-Acesta nu înlocuiește pregătirea arborelui AOSP și nu construiește un ROM complet.
+The [versioned app-bundle generator](RELEASE-APPS.md) provides preflight checks,
+two APKs, a SHA-256 manifest and an explicit installer. App build scripts accept
+`LEO_AOSP_ROOT` and `LEO_JAVA_HOME`. This does not replace AOSP tree preparation
+or build a complete ROM.
 
-## Mediul utilizat
+## Development environment
 
-Build-urile actuale rulează în WSL/Linux x86-64, Ubuntu 22.04.5, cu Git 2.34.1,
-OpenJDK 8 (1.8.0_504), Python 2.7.18 pentru uneltele Android vechi și Python
-3.10.12 pentru scripturi. Nu folosi Java 17 în locul Java 8 pentru acest arbore.
-Sunt necesare și repo, make, GCC/G++, multilib, rsync, zip/unzip, curl, bison,
-flex, gperf, bc și bibliotecile host cerute de AOSP 8.1. Arborele complet și
-intermediarii ocupă mult mai mult spațiu decât acest repository.
+Recorded builds use x86-64 WSL/Linux, Ubuntu 22.04.5, Git 2.34.1, OpenJDK 8
+(1.8.0_504), Python 2.7.18 for old Android tools and Python 3.10.12 for scripts.
+Some newer Windows packaging tools use Python 3.11. Do not substitute Java 17
+for Java 8 in this tree. Other dependencies include repo, make, GCC/G++, multilib,
+rsync, zip/unzip, curl, bison, flex, gperf, bc and AOSP 8.1 host libraries.
+The full checkout and intermediates are much larger than this repository.
 
-Scripturile existente folosesc intenționat `/root/android81-leo/src` și
-`/usr/lib/jvm/java-8-openjdk-amd64`. Folosește aceste căi în prima recompilare.
-`stage-device.sh` găsește acum sursele dispozitivului relativ la repository,
-indiferent unde ai clonat proiectul. Unele unelte istorice de instalare/diagnostic
-au încă trasee Windows și WSL specifice PC-ului de dezvoltare.
+Existing scripts deliberately default to `/root/android81-leo/src` and
+`/usr/lib/jvm/java-8-openjdk-amd64`; use those paths for the first rebuild.
+`stage-device.sh` locates device sources relative to this repository. Some
+historical installation/diagnostic tools still use development-PC-specific
+Windows and WSL paths.
 
-## Obținerea surselor
+## Fetching sources
 
-Clonează repository-ul privat cu autentificarea ta GitHub. În WSL/Linux:
+Clone the private repository using your GitHub authentication. In WSL/Linux:
 
 ```bash
 git clone https://github.com/smp971/nokia-6300-android81.git
@@ -44,99 +44,93 @@ cd nokia-6300-android81
 bash android81/repro/checkout.sh
 ```
 
-Checkout-ul folosește manifestul din clona locală Git. Remote-urile AOSP din
-manifest sunt absolute, astfel încât sursele Android să vină din Android Git.
-Un checkout existent nu este resincronizat sau resetat automat.
-
-Pentru verificarea și aplicarea modificărilor pe o bază exactă:
+The checkout uses the manifest from your local clone. AOSP remotes are absolute
+Android Git URLs. An existing checkout is not automatically resynced or reset.
+Check and apply local changes against the exact base:
 
 ```bash
 python3 android81/repro/apply.py --check-only
 python3 android81/repro/apply.py
 ```
 
-Scriptul verifică reviziile și hash-urile, refuză conflictele cu editări locale
-și recunoaște patch-urile deja aplicate. Configurația `device/nokia/leo` este
-stagiată separat din sursele canonice din acest repository.
+The script checks revisions/hashes, refuses conflicts with local edits and
+recognizes patches already applied. `device/nokia/leo` is staged separately from
+the canonical sources here.
 
-## Fișiere locale ale dispozitivului
+## Private device inputs
 
-`device/nokia/leo/prebuilt/kernel` nu este în Git. Ai nevoie de kernelul potrivit
-TA-1286, extras din propria copie de boot, sau de un kernel recompilat și validat.
-Nu îl înlocui cu o imagine goală doar ca să treacă build-ul.
+`device/nokia/leo/prebuilt/kernel` is not tracked. Supply the correct TA-1286
+kernel from your own boot backup or a rebuilt, validated kernel. An empty
+placeholder is not a substitute.
 
-Pentru hardware sunt necesare bibliotecile/firmware-ul/modulele originale KaiOS,
-extrase în structura locală a proiectului. Driverele Qualcomm din dump nu au cod
-sursă disponibil în acest repository. Partițiile modem/EFS, datele utilizatorului,
-cheile ADB private și credențialele nu se publică. Configurația opțională de ADB
-folosește numai cheia **publică** proprie în `device/nokia/leo/local/adb_keys`.
+Hardware needs original KaiOS libraries, firmware and modules extracted into
+the local project layout. Qualcomm driver source is not available here.
+Modem/EFS partitions, user data, private ADB keys and credentials are excluded.
+Optional ADB setup uses only your **public** key in
+`device/nokia/leo/local/adb_keys`.
 
-Sursa GPL a kernelului este referită prin `fetch-leo-kernel.sh`: proiectul
-`bmndc/nokia-leo`, commit `949a9f7b2c109f307e72b25fec2dc5cb4d119dec`, directorul
-`kernel/msm-4.9`. Configurația originală este păstrată sub
-`device/nokia/leo/reference-stock/`; `build-kernel-uhid.sh` documentează build-ul
-UHID și dependența de certificatul public extras cu uneltele locale. Aceasta nu
-oferă automat un boot.img pentru instalare.
+`fetch-leo-kernel.sh` references GPL kernel source from `bmndc/nokia-leo`, commit
+`949a9f7b2c109f307e72b25fec2dc5cb4d119dec`, directory `kernel/msm-4.9`.
+Stock configuration is under `device/nokia/leo/reference-stock/`.
+`build-kernel-uhid.sh` documents UHID compilation and the public certificate
+extracted by local tools. This does not automatically produce an installable
+boot.img.
 
-## Aplicațiile Leo
+## Leo applications
 
-După configurarea hostului și furnizarea kernelului local:
+With the host and local kernel prepared:
 
 ```bash
 bash android81/repro/build-apps.sh
 ```
 
-Acesta pregătește uneltele host și biblioteca vCard, apoi compilează:
+This prepares host tools and the vCard library, then builds:
 
-- `android81/output/leo-visual.apk`: HOME și aplicațiile Leo;
-- `android81/output/leo-keypad-ime.apk`: tastatura fizică multi-tap / T9.
+- `android81/output/leo-visual.apk`: Home and Leo apps;
+- `android81/output/leo-keypad-ime.apk`: physical multi-tap/T9 keyboard.
 
-Dacă arborele AOSP a fost deja compilat, editările de UI necesită doar:
+With AOSP already built, UI changes normally need only:
 
 ```bash
 bash android81/build-visual-shell.sh
 ```
 
-Ultima variantă Leo a fost recompilată, instalată și verificată pe telefon.
-Rețeta `repro/build-apps.sh` a fost rulată cu succes pe checkout-ul actual: a
-pregătit uneltele și a recompilat ambele APK-uri. Separat, cele zece patch-uri
-au trecut o probă de aplicare pe fișierele upstream originale; rezultatul pentru
-toate cele 25 de fișiere modificate a coincis cu sursele de dezvoltare. Această
-probă nu înlocuiește validarea completă pe un host nou.
-`build-visual-shell.sh` include automat toate fișierele Java din `visual-shell/`.
-Semnarea folosește cheile de dezvoltare AOSP din checkout, nu chei private ale
-utilizatorului. Nu înlocui semnatarul unei aplicații instalate păstrând datele.
+The recipe ran successfully in the existing development checkout and rebuilt
+both APKs. Separately, ten patches were applied to original upstream files;
+all 25 modified files matched the development sources. These results do not
+replace validation on a clean host.
 
-## Alte componente
+`build-visual-shell.sh` automatically includes all Java files in `visual-shell/`.
+Signing uses AOSP development keys from the checkout, not the user's private
+keys. Keep the signer when updating an installed app while retaining its data.
 
-| Componentă | Rețetă |
+## Other components
+
+| Component | Recipe |
 | --- | --- |
-| Email AOSP, resurse corectate și comenzi din taste | `build-email-resources.sh` |
-| Interfața Android pentru apeluri din taste | `build-call-keypad.sh` |
-| Reînnoirea ADB la schimbarea modului USB | `build-usb-adbd-renew.sh` |
-| Lumina tastelor | `build-keylight.sh` |
-| Decodor WMA Leo | `build-wma-decoder.sh` |
-| Kernel UHID | `fetch-leo-kernel.sh`, `build-kernel-uhid.sh` |
-| Sistemul AOSP experimental | `build-framework-diagnostic.sh` |
+| AOSP Email resources and keypad controls | `build-email-resources.sh` |
+| Android keypad in-call interface | `build-call-keypad.sh` |
+| ADB renewal during USB mode changes | `build-usb-adbd-renew.sh` |
+| Keypad backlight | `build-keylight.sh` |
+| Leo WMA decoder | `build-wma-decoder.sh` |
+| UHID kernel | `fetch-leo-kernel.sh`, `build-kernel-uhid.sh` |
+| Experimental AOSP system | `build-framework-diagnostic.sh` |
 
-`build-six-feature-tests.sh` compilează separat verificările pe dispozitiv,
-inclusiv UpgradeTests pentru reordonare, scurtături, T9 și notificări/blocare.
-APK-ul de producție nu include aceste date sau puncte de intrare de test.
-Instrumentarea pornește/oprește procesul Leo; după ea trebuie verificată
-reconectarea serviciilor de notificări și accesibilitate. Probele folosesc
-contacte/notificări sintetice și restaurează preferințele locale.
+`build-six-feature-tests.sh` separately builds device tests, including
+UpgradeTests for reordering, shortcuts, T9 and notification/lock behavior.
+Production APKs exclude test fixtures and entry points. Instrumentation starts
+and stops Leo; verify notification/accessibility reconnection afterwards.
+Tests use synthetic contacts/notifications and restore local preferences.
 
-FFmpeg 4.4.8 este descărcat de rețeta WMA și verificat cu SHA-256 fixat în script;
-opțiunile de configurare și notificarea LGPL sunt documentate în
-[MEDIA-RUNTIME.md](MEDIA-RUNTIME.md). Nu este necesar un pachet binar WMA ascuns.
+The WMA recipe fetches FFmpeg 4.4.8 and checks its pinned SHA-256. Configuration
+and LGPL notice are recorded in [the historical media report](MEDIA-RUNTIME.md)
+(Romanian). A hidden WMA binary package is not required.
 
-Build-ul complet necesită și configurarea serverului Jack vechi. Rețetele
-`environment.sh` și `configure-jack-framework.py` descriu heap-ul și concurența;
-certificatele locale Jack se generează pe noul host. Fișierul opțional de
-compatibilitate TLS locală nu este furnizat ca o modificare globală de securitate.
+Full builds also need the old Jack server. `environment.sh` and
+`configure-jack-framework.py` describe heap/concurrency; generate local Jack
+certificates on the new host. The optional local TLS compatibility file is not
+provided as a global security change.
 
-Rețeta de sistem rămâne parte a procesului experimental. Asamblarea runtime-ului
-hardware, verificarea ABI-urilor și instalarea sunt etape separate, documentate
-în auditurile dispozitivului. Nu rula scripturi de flash ca etapă implicită de
-recompilare. Notele istorice descriu și experimente abandonate; începe cu README-ul
-principal și tabelul actual al funcțiilor.
+System assembly, hardware ABI checks and installation remain separate steps.
+Flashing is not a default build step. Historical reports include abandoned
+experiments; start with the current [project overview](../README.md).

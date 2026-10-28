@@ -1,57 +1,56 @@
-# KaiOS → Leo · instalare curată și revenire
+# KaiOS → Leo · clean installation and stock return
 
-Procedură pentru **Nokia 6300 4G TA-1286 de dezvoltare, serial `695d`**, cu
-geometria verificată în acest proiect. Pachetele sunt private și conțin runtime
-proprietar din copia acestui telefon. **Instalarea curată prin meniul Leo Recovery
-a trecut pe hardware la 28 octombrie 2026:** system, userdata nouă și boot au fost
-scrise și verificate integral SHA-256. Revenirea completă KaiOS și scrierea prin
-instalatorul Python de mai jos rămân netestate.
+For the **Nokia 6300 4G TA-1286 development phone, serial `695d`**, using the
+geometry verified in this project. Private packages include proprietary runtime
+from this device's backups. **Native Leo Recovery clean installation passed on
+28 October 2026:** system, new userdata and boot were written and fully checked
+by SHA-256. Full KaiOS return and writes through the Python installer below
+remain untested.
 
-## Ce înseamnă „de la zero” aici
+## What “from scratch” means here
 
-Punctul de plecare este KaiOS funcțional **cu root și ADB deja obținute**.
-Procedura nu include obținerea root pe un telefon stock blocat, deblocarea
-bootloaderului sau recuperarea unui telefon care nu mai pornește în recovery.
-Fișierele sunt verificate pentru acest exemplar; instalatoarele refuză alt serial.
+The starting point is working KaiOS **with root and ADB already obtained**.
+This procedure does not obtain root on a locked stock phone, unlock a bootloader
+or repair a phone unable to enter recovery. Files are verified for this device;
+the installers refuse another serial.
 
-ZIP-ul Leo este un pachet pentru **instalare prin ADB din recovery root**, cu
-Python pe PC. Nu este semnat pentru „Apply update” din recovery-ul stock.
-Boot și system sunt suficiente împreună cu o partiție userdata nouă: aplicațiile
-și serviciile necesare sunt integrate în system, iar setările se generează la
-prima pornire. Datele personale nu sunt incluse.
+The Leo ZIP supports a PC Python installer through root recovery and the native
+approved-package menu in Leo Recovery. It is not signed for stock “Apply update”.
+Boot/system plus new userdata provide the apps/services integrated in system;
+initial settings are generated at first boot. Personal data is not included.
+The published ZIP needs the [post-install fix](#post-install-fix-found-during-testing).
 
-## Fișierele pregătite
+## Prepared files
 
-În `android81/output/`, ignorat de Git:
+Under Git-ignored `android81/output/`:
 
-| Fișier / director | Rol |
+| File / directory | Purpose |
 | --- | --- |
-| `recovery-bundles/final/leo-fresh-0.14.0-dev-20261027-232615.zip` | Boot, system adaptat și userdata ext4 nouă, goală |
-| `recovery-entry-kit/leo-root-recovery-695d.zip` | Recovery cu ADB root + instalator pentru intrarea din KaiOS |
-| `recovery-entry-kit/kaios-original-restore-695d.zip` | Boot/system KaiOS originale pentru revenire |
-| `recovery-entry-kit/stock-backups/` | Originalele boot/system/recovery, verificate SHA-256 |
-| `recovery-entry-kit/checksums.json` | Hash-urile pachetelor de intrare și revenire |
+| `recovery-bundles/final/leo-fresh-0.14.0-dev-20261027-232615.zip` | Boot, adapted system and new blank ext4 userdata |
+| `recovery-entry-kit/leo-root-recovery-695d.zip` | Root ADB recovery and entry installer from KaiOS |
+| `recovery-entry-kit/kaios-original-restore-695d.zip` | Original KaiOS boot/system for stock return |
+| `recovery-entry-kit/stock-backups/` | Original boot/system/recovery, SHA-256 verified |
+| `recovery-entry-kit/checksums.json` | Entry/restore package hashes |
 
-Recovery-ul din kit corespunde copiei `recovery-adbshell.img` păstrate în
+The entry kit's recovery matches `recovery-adbshell.img` saved under
 `Desktop/good 6300 files`, SHA-256
 `2e4dee03305c5b617d5b0d51c064af350c817f3dc93f669ec302bdd97adf6fdc`.
-Recovery-ul SD de diagnostic aflat ulterior pe telefon poate porni framework-ul
-Android; acesta nu satisface condițiile instalatorului. Este necesar un proces
-`recovery` real, root ADB și partițiile țintă demontate.
+An older SD diagnostic recovery image can start Android; that does not meet the
+installer's recovery requirements. A real `recovery` process, root ADB and
+unmounted targets are required.
 
-## 1. Copii și verificări pe PC
+## 1. PC backups and checks
 
-Păstrează fișierele originale și o copie a datelor personale **în afara telefonului**.
-Instalarea curată șterge contactele, mesajele, conturile, aplicațiile instalate și
-fișierele utilizatorului din memoria internă. Cardul extern este folosit pentru
-staging și trebuie să aibă **cel puțin 3,3 GiB liberi**, fără a-l formata.
-Directorul temporar de pe PC are nevoie de același spațiu.
+Keep originals and personal-data backups **off the phone**. Clean installation
+erases internal contacts, messages, accounts, installed user apps and files.
+External SD is staging storage: leave at least **3.3 GiB free** and do not format
+it. PC temporary storage needs equivalent space.
 
-Cu KaiOS încă stock și root, `backup-kaios-internal.py` poate citi boot/system
-prin ADB sync. Nu îl rula pe Leo pentru a produce o presupusă copie KaiOS.
-Kitul de mai sus păstrează originalele deja verificate ale acestui exemplar.
+`backup-kaios-internal.py` can read boot/system through ADB sync while the phone
+is still rooted stock KaiOS. Running it on Leo does not produce a KaiOS backup.
+The prepared kit retains this phone's already-verified originals.
 
-Comenzile următoare se rulează în PowerShell, din rădăcina proiectului:
+Run in PowerShell from the repository root:
 
 ```powershell
 $adbLeo = 'D:/ROMS/platform-tools/adb.exe'
@@ -60,92 +59,88 @@ $stockLeo = 'android81/output/recovery-entry-kit/stock-backups'
 python android81/install-recovery-bundle.py $freshLeo
 ```
 
-Această verificare este exclusiv locală: structură ZIP, SHA-256 pentru fiecare
-intrare, dimensiuni și antete boot/ext4. Instalarea cere suplimentar cele trei
-originale din `$stockLeo`, cu hash-urile exacte.
+This is local verification only: ZIP layout, entry hashes/sizes and boot/ext4
+headers. Installation additionally requires the three exact originals in
+`$stockLeo`.
 
-## 2. Intrarea în recovery root din KaiOS
+## 2. Enter root recovery from KaiOS
 
-Extrage `leo-root-recovery-695d.zip` într-un director de pe PC. Verifică imaginea:
+Extract `leo-root-recovery-695d.zip` on the PC. `CALE` in the examples means the
+path to that extracted image. Check it:
 
 ```powershell
 python android81/install-root-recovery.py CALE/recovery-adbshell.img
 python android81/install-root-recovery.py CALE/recovery-adbshell.img --preflight --serial 695d --adb $adbLeo
 ```
 
-Preflight-ul cere root, serialul și geometria corecte, apoi hash-urile stock ale
-boot/system. Dacă rulează deja Leo, refuză. După verificare, **următoarea comandă
-scrie numai recovery**, cu backup pe PC și verificare înainte/după scriere:
+Preflight checks root, serial/geometry and stock boot/system hashes. It refuses
+an already-running Leo port. After those checks, **the next command writes only
+recovery**, backing it up to the PC and verifying before/after writing:
 
 ```powershell
 python android81/install-root-recovery.py CALE/recovery-adbshell.img --install --serial 695d --confirm-target 695d --adb $adbLeo
 & $adbLeo -s 695d reboot recovery
 ```
 
-Instalatorul nu repornește singur și nu restaurează automat recovery-ul original.
-Dacă recovery-ul root potrivit este deja instalat, se folosește direct; nu se
-rescrie inutil. Confirmă `uid=0` în ADB și existența procesului `recovery`.
+The installer does not reboot or automatically restore original recovery.
+Reuse the correct installed root recovery rather than rewriting it unnecessarily.
+Confirm `uid=0` through ADB and a running `recovery` process.
 
-## 3. Pregătirea cardului în recovery
+## 3. Prepare SD in recovery
 
-Țintele `system` și `userdata` trebuie să fie demontate în namespace-ul recovery
-și al PID 1. Cardul trebuie montat separat, din `mmcblk1p1` (`179:65`). Folosește
-mai întâi comenzile de citire:
+System/userdata must be unmounted in both recovery and PID 1 namespaces. Mount
+the external card separately from `mmcblk1p1` (`179:65`). Inspect first:
 
 ```powershell
 & $adbLeo -s 695d shell '/system/bin/busybox cat /proc/1/mountinfo'
 & $adbLeo -s 695d shell '/system/bin/busybox cat /sys/class/block/mmcblk1p1/uevent'
 ```
 
-Dacă recovery le-a montat, demontează `/system` și `/data` din meniul lui sau
-prin `busybox umount`, verificând apoi ambele liste `mountinfo`. Nu demonta
-cardul folosit pentru staging. Pentru card FAT32 deja identificat, dacă nu este
-montat, se poate folosi `busybox mkdir -p /sdcard` și
-`busybox mount -t vfat /dev/block/mmcblk1p1 /sdcard`. Dacă nodul sau tipul
-filesystemului diferă, inspectează-l înainte; nu formata cardul pentru această probă.
+If recovery mounted system/data, unmount them through its menu or `busybox umount`
+and recheck both mountinfo lists. Keep the staging card mounted. For an already
+identified FAT32 card, `busybox mkdir -p /sdcard` and
+`busybox mount -t vfat /dev/block/mmcblk1p1 /sdcard` can mount it if needed.
+Inspect differing nodes/filesystems rather than formatting the card for the test.
 
-## 4. Preflight și instalare curată
+## 4. Preflight and clean installation
 
 ```powershell
 python android81/install-recovery-bundle.py $freshLeo --preflight --serial 695d --adb $adbLeo
 ```
 
-Acesta nu scrie partiții. Refuză Android activ, absența procesului recovery,
-geometrie diferită sau system/userdata montate. Poate crea numai helperul în
-`/tmp` și aliasurile de noduri din `/dev`.
+Preflight writes no partitions. It refuses active Android, missing recovery,
+wrong geometry or mounted system/userdata. It may create a temporary helper and
+block aliases under `/tmp` and `/dev`.
 
-**Comanda de mai jos șterge toate datele interne. Această variantă Python
-nu a fost executată pentru scriere; proba reală a folosit meniul nativ recovery:**
+**The following command erases all internal user data. This Python write path
+has not been executed; the hardware test used the native recovery menu:**
 
 ```powershell
 python android81/install-recovery-bundle.py $freshLeo --install --serial 695d --confirm-target 695d --wipe-data --stock-backups $stockLeo --staging-parent /sdcard --adb $adbLeo
 ```
 
-Ordinea este: verificarea originalelor → copierea tuturor imaginilor pe SD →
-verificarea SHA-256 a stagingului → reverificarea montărilor → system → userdata
-nouă → **boot ultimul**. Fiecare partiție scrisă este citită integral și verificată.
-La orice eroare se oprește; păstrează recovery și fișierele de staging pentru
-diagnostic. Nu există tranzacție atomică între partiții și nu se repornește automat.
+Order: check originals → stage all images on SD → verify staging SHA-256 →
+recheck mounts → system → blank userdata → **boot last**. Each target is read
+back completely and verified. Errors stop the process; retain recovery/staging
+for diagnosis. Multi-partition installation is not atomic and never auto-reboots.
 
-Modem, modemst/NV, persist, GPT și recovery nu sunt ținte ale acestui instalator.
-Calibrarea și identitatea radio rămân pe telefon.
-
-După mesajul de verificare completă:
+Modem, modemst/NV, persist, GPT and recovery are not targets. Radio identity and
+calibration remain on the phone. After complete verification:
 
 ```powershell
 & $adbLeo -s 695d reboot
 ```
 
-Prima pornire poate dura mai mult pentru compilarea ART. Proba nativă a confirmat
-boot complet, Home, IME și dialer Leo implicite, permisiuni și broker root cu UID
-nou, placa audio și ambele SIM-uri înregistrate. Audio efectiv, FM și LTE/IMS
-după această instalare nu au fost reverificate. Datele mobile necesită alegerea
-SIM-ului și configurarea rețelei după resetarea preferințelor.
+First boot may take longer for ART compilation. The native test confirmed boot
+completion, default Leo Home/IME/dialer, permissions/new-UID root authorization,
+audio card and both SIMs registered. Audio listening, FM and LTE/IMS were not
+repeated after this installation. Select the data SIM and configure network
+preferences after the wipe.
 
-## 5. Revenire la KaiOS
+## 5. Return to KaiOS
 
-Intră în același recovery root, fără Android activ și fără system montat.
-Verifică și instalează pachetul original:
+Enter root recovery with no active Android or mounted system, then verify and
+install the original package:
 
 ```powershell
 $restoreLeo = 'android81/output/recovery-entry-kit/kaios-original-restore-695d.zip'
@@ -154,17 +149,19 @@ python android81/install-recovery-bundle.py $restoreLeo --preflight --serial 695
 python android81/install-recovery-bundle.py $restoreLeo --install --serial 695d --confirm-target 695d --staging-parent /sdcard --adb $adbLeo
 ```
 
-Pachetul restaurează system și boot originale; recovery rămâne disponibil.
-**Execută „wipe data/factory reset” din recovery-ul KaiOS înaintea pornirii stock**:
-datele Android nu sunt o copie a datelor KaiOS. Datele personale se restaurează
-separat din copia utilizatorului. Originalul `recovery-device.img` rămâne pe PC;
-restaurarea lui este o etapă separată, după confirmarea pornirii KaiOS.
+This restores original system/boot while retaining recovery access.
+**Run “wipe data/factory reset” through stock KaiOS recovery tools before normal
+stock startup.** Android data is not KaiOS data. Restore personal content from
+its separate backup. Original `recovery-device.img` stays on the PC; restoring
+that partition is separate, after KaiOS boot has been confirmed.
+Full stock return through this kit remains untested.
 
-## Reconstruirea pe acest PC
+## Rebuild on the development PC
 
-Necesită snapshot-ul privat verificat, WSL `kaios`, AOSP/SDK/JDK și compilatoarele
-locale documentate în proiect, `debugfs`, `e2fsck`, `make_ext4fs` și BusyBox ARM
-static. Sursele Git singure nu înlocuiesc bloburile proprietare.
+Requires the verified private snapshot, WSL `kaios`, AOSP/SDK/JDK/compilers,
+`debugfs`, `e2fsck`, `make_ext4fs` and static ARM BusyBox. Git sources alone do
+not replace private blobs. `ALTA_CONSTRUCTIE` below means a different output/build
+folder.
 
 ```powershell
 wsl -d kaios -- bash /mnt/d/ROMS/nokia-6300-ta1286-dump/android81/build-terminal-root.sh
@@ -174,104 +171,98 @@ python android81/build-recovery-bundle.py android81/output/rom-snapshots/2026102
 python android81/build-recovery-entry-kit.py
 ```
 
-Constructorii refuză suprascrierea arhivelor existente. Ultima comandă cere un
-director de kit încă neîmpachetat sau mutarea arhivelor vechi într-o arhivă locală.
-Uneltele nu accesează telefonul. Constructorul repară offline numai paddingul
-bitmapului imaginii userdata goale produs de vechiul formatter Android, apoi cere
-`e2fsck -f -n` fără erori pentru ambele filesystemuri.
+Existing archives are not overwritten. The final command needs an unpackaged
+kit output or old archives preserved elsewhere. Builders do not access the phone.
+The builder repairs only bitmap padding in the blank userdata image generated
+by the old formatter, then requires clean `e2fsck -f -n` for both filesystems.
 
-## Audit `/data` → `system`
+## `/data` → `system` audit
 
-| Componentă necesară | Locație în ROM-ul pregătit |
+| Required component | Prepared ROM location |
 | --- | --- |
-| Leo Visual și actualizările aplicațiilor de sistem | Locațiile factory `system/app` și `system/priv-app` |
-| Tastatura Leo, anterior doar APK utilizator | `system/app/LeoKeypad/LeoKeypad.apk` |
-| FM: executabile, utilitar Qualcomm, bibliotecă QMI, trace și audio.jar | `system/vendor/leo-fm/` |
-| Broker root și client | `system/bin/leo-terminal-root`, `system/bin/leo-su` |
-| Inițializare Home, IME, permisiuni și autorizație root | `system/etc/leo-first-setup.sh` |
-| Armarea inițială audio, o singură dată | `system/etc/leo-clean-audio-seed.sh`, înainte de preload |
-| Proprietăți hardware necesare | Valori explicite în `system/build.prop`, cu override utilizator ulterior |
+| Leo Visual and updated system apps | Factory `system/app` and `system/priv-app` |
+| Leo keyboard, previously user-installed | `system/app/LeoKeypad/LeoKeypad.apk` |
+| FM tools, Qualcomm utility, QMI library, trace and audio.jar | `system/vendor/leo-fm/` |
+| Root broker / client | `system/bin/leo-terminal-root`, `system/bin/leo-su` |
+| Home, IME, permissions and root authorization bootstrap | `system/etc/leo-first-setup.sh` |
+| One-time initial audio arming | `system/etc/leo-clean-audio-seed.sh`, before preload |
+| Required hardware properties | Explicit `system/build.prop` defaults, later user overrides |
 
-În `/data` rămân UID-ul autorizat generat la boot, markerii primei porniri,
-loguri/lock-uri FM, compilarea ART, cache-urile și datele utilizatorului. Nu se
-mută conturi, parole, mesaje, baze de date sau calibrări în `system`. Aplicațiile
-de probă/instrumentare nu intră în ROM. Manifestul include auditul cu hash-ul
-fiecărui fișier adăugat; APK-ul Leo din candidatul curat este recompilat pentru
-noua locație FM și diferă de cel încă instalat pe telefon.
+Generated UID authorization, first-boot markers, FM locks/logs, ART/cache and user
+data stay under data. Accounts, passwords, messages, databases and calibration
+are not moved into system. Test/instrumentation APKs are excluded. The manifest
+audits every added file/hash. The clean ROM's Leo APK was rebuilt for the system
+FM location and differs from the earlier pre-clean runtime pair.
 
+## Package verification results
 
-## Rezultatul verificării acestui kit
-
-Pachetul curat are **351.257.972 octeți** (aproximativ 335 MiB), SHA-256:
+Clean archive: **351,257,972 bytes** (about 335 MiB), SHA-256:
 
 ```text
 5f65e7e7b0c8ce0ce8b24cf5ff9617e3d078a2a76172c4f4df7628063bdd9478
 ```
 
-- 29 de teste host trecute: arhive, ținte, confirmarea ștergerii, backup-uri,
-  ordinea boot-last și refuzul bootstrapului pe un sistem care nu este stock.
-- `e2fsck -f -n`: cod 0 pentru system și userdata; în userdata există doar
-  `lost+found`, fără date copiate din telefon.
-- 15 fișiere de runtime/configurație integrate în system, fiecare verificat
-  prin extragere și SHA-256, suplimentar APK-urilor active din snapshot.
-- Preflight-ul real cu Android pornit a refuzat: `Active Android detected`.
-  Telefonul și-a păstrat boot ID-ul; nu au fost scrise partiții și nu a fost repornit.
-- Flash-ul propriu-zis a trecut ulterior din meniul nativ Leo Recovery, în
-  ordinea system → userdata → boot, cu verificare după fiecare scriere.
-- Revenirea la KaiOS cu kitul nou rămâne de validat.
+- Initial preparation passed 29 host tests covering archives, targets, wipe
+  confirmation, backups, boot-last ordering and rejection of non-stock bootstrap.
+- `e2fsck -f -n` returned 0 for system/userdata; blank userdata contains only
+  `lost+found`, with no copied personal data.
+- Fifteen runtime/config files were integrated and checked by extraction/hash,
+  in addition to the active snapshot APKs.
+- Live preflight on running Android returned `Active Android detected`, retaining
+  boot ID without partition writes or reboot.
+- Native installation later wrote and verified system → userdata → boot.
+- Stock return still needs validation.
 
-Manifestul candidatului înregistrează commit-ul de bază și
-`working_tree_dirty=true`, împreună cu hash-urile uneltelor folosite. Nu este
-prezentat drept o reproducere bit cu bit dintr-un checkout curat.
+The candidate manifest records its base commit, `working_tree_dirty=true` and
+tool hashes. It is not represented as a bit-for-bit rebuild from a clean checkout.
 
-## Proba instalării din meniul Leo Recovery
+## Native recovery installation test
 
-Pe exemplarul 695d, am salvat userdata existentă pe SD și PC și am comparat
-hash-ul ambelor copii cu partiția demontată înainte de ștergere. Din meniul
-**Install Leo → Install package → Confirm installation**, recovery-ul a
-verificat originalele KaiOS și arhiva, a extras toate imaginile pe SD, apoi a
-scris și recitit system, userdata și boot. Jurnalul confirmă toate cele trei
-hash-uri. Recovery, radio/NV, persist și cardul nu sunt ținte ale instalării.
+Before erasing data on 695d, existing userdata was backed up to SD and PC; both
+copies matched the unmounted partition hash. **Install Leo → Install package →
+Confirm installation** checked stock originals/archive, extracted all images,
+then wrote and read back system/userdata/boot. The log confirms all three hashes.
+Recovery, radio/NV, persist and card content were not install targets.
 
-Prima încercare a refuzat instalarea înainte de orice scriere, deoarece domeniul
-SELinux stock recovery nu putea inspecta montările PID 1 și crea aliasuri block.
-Imaginea corectată păstrează SELinux global enforcing și relaxează numai domeniul
-recovery din politica exactă verificată; protecțiile țintelor nu au fost eliminate.
+An initial attempt refused writes because the stock recovery SELinux domain
+could not inspect PID 1 mounts/create block aliases. The corrected image keeps
+global SELinux enforcing and relaxes only recovery in the exact pinned policy;
+target checks were not bypassed.
 
-![Instalare completă, toate imaginile verificate](screenshots/leo-recovery-install-complete.png)
+![Native installation complete, all images verified](screenshots/leo-recovery-install-complete.png)
 
-Prima pornire curată a trecut: markerii `audio-v1` și `ui-v1`, Home, dialerul,
-IME și permisiunile s-au pregătit automat. Ambele SIM-uri sunt înregistrate
-pentru voce. SIM-ul implicit pentru date este încă neales (`-1`), cu modurile
-preferate 0/0: configurarea datelor/LTE și reverificarea IMS rămân separate.
-ADB a revenit după scoaterea cablului timp de 10 secunde și reconectare.
+First boot generated `audio-v1`/`ui-v1`, Home/dialer/IME and permission setup.
+Both SIMs voice-registered; default data subscription remained `-1`, preferred
+network modes `0/0`. Data/LTE setup and IMS validation remain separate. ADB
+returned after USB was disconnected for ten seconds and reconnected.
 
-## Corecție post-instalare identificată în probă
+<a id="corecție-post-instalare-identificată-în-probă"></a>
 
-ZIP-ul aprobat de mai sus conține bootstrap-ul inițial: după wipe nu activa
-serviciul de accesibilitate Leo, iar Launcher3 și Leo Shell vechi reapăreau din
-system. Am corectat telefonul și sursa `leo-first-setup.sh`: migrarea `access-v2`
-activează meniul global/mouse, accesul WRITE_SETTINGS și notificările/DND,
-păstrează celelalte servicii de accesibilitate și dezactivează cele două launchere
-vechi numai după selectarea Home Leo. APK-urile factory nu au fost șterse.
-Meniul global peste Setările Android și reluarea idempotentă au trecut.
+## Post-install fix found during testing
 
-**ZIP-ul fixat prin SHA-256 nu a fost înlocuit în tăcere.** După reinstalarea
-aceluiași ZIP vechi este necesară aplicarea bootstrap-ului corectat. Constructorul
-ROM va include sursa nouă în următorul pachet, care va necesita un nou catalog
-recovery; acel pachet nou nu este prezentat ca deja validat prin flash.
+The approved ZIP contains the original bootstrap: after wipe it did not enable
+Leo accessibility, and Launcher3/old Leo Shell reappeared from system.
+The phone and `leo-first-setup.sh` were corrected with `access-v2`: global
+menu/pointer, WRITE_SETTINGS, notifications/DND and preserved third-party
+accessibility services. Legacy launchers are disabled only after Home is set to
+Leo. Global menu over Android Settings and idempotent re-execution passed.
 
-Cu Leo intern pornit și ADB root, după păstrarea scriptului vechi pe PC:
+**The hash-pinned ZIP has not been silently replaced.** Reinstalling that exact
+old ZIP still requires the fixed bootstrap. The next ROM build will include it
+and need a rebuilt recovery catalog; it has not already passed a flash test.
+
+With internal Leo running and root ADB, preserve the old setup script on PC,
+then apply the corrected source:
 
 ```powershell
 & D:/ROMS/platform-tools/adb.exe -s 695d push android81/leo-first-setup.sh /tmp/leo-first-setup-v2.sh
 python android81/framework-command.py --timeout 20 /system/bin/sh -c 'set -e; mount -o remount,rw /system; trap "mount -o remount,ro /system" EXIT; cp /tmp/leo-first-setup-v2.sh /system/etc/leo-first-setup.sh.new; chown 0:0 /system/etc/leo-first-setup.sh.new; chmod 644 /system/etc/leo-first-setup.sh.new; restorecon /system/etc/leo-first-setup.sh.new; mv /system/etc/leo-first-setup.sh.new /system/etc/leo-first-setup.sh; restorecon /system/etc/leo-first-setup.sh; mount -o remount,ro /system; trap - EXIT; sh /system/etc/leo-first-setup.sh'
 ```
 
-La cererea utilizatorului, **Leo Shell vechi a fost apoi eliminat efectiv** din
-`/system/app/LeoShell` și dezinstalat pentru user 0, după backup APK pe PC și
-verificare SHA-256. Launcher3 rămâne în system, dezactivat. Constructorul curat
-elimină acum numai APK-ul Leo Shell exact cunoscut; un hash necunoscut oprește
-construcția. Această modificare nu rescrie ZIP-ul aprobat anterior.
+At the user's request, the old Leo Shell was subsequently **removed from
+`/system/app/LeoShell` and uninstalled for user 0**, after PC APK backup/hash
+verification. Launcher3 stays in system, disabled. The clean builder now removes
+only the exact known legacy APK; an unknown hash stops the build. This does not
+rewrite the already-published ZIP.
 
-![Meniu global Leo peste Setările Android după corecție](screenshots/leo-fresh-install-global-menu.png)
+![Global menu over Android Settings after the fix](screenshots/leo-fresh-install-global-menu.png)

@@ -1,104 +1,98 @@
-# Copie privată și ZIP pentru recovery
+# Private OS snapshots and recovery ZIPs
 
-**Nou: [procedură KaiOS → Leo, instalare curată și revenire](FLASH-FROM-STOCK.md).**
-Candidatul 0.14 poate include userdata nouă (schema 2, `--fresh`), cu aplicațiile
-și runtime-ul necesar integrate în system. Cere `--wipe-data` și originale stock
-verificate; boot este scris ultimul. Schema 1 de mai jos păstrează datele și rămâne
-un snapshot de actualizare, fără garanția unei porniri după formatare.
+For the current clean-install procedure, start with
+[Install Leo and return to stock](FLASH-FROM-STOCK.md). The prepared 0.14 clean
+package uses schema 2 (`--fresh`): blank userdata plus apps/runtime integrated
+into system. It requires `--wipe-data`, verified stock originals and boot-last
+ordering. Native Leo Recovery installation has since passed on hardware;
+Python-installer writes and full stock restoration remain untested.
 
-Instalatorul cere recovery root cu proces `recovery` real. Imaginea SD de diagnostic
-care pornește Android nu este potrivită, chiar dacă ocupă partiția recovery.
-Kitul separat include imaginea root ADB salvată anterior și un bootstrap din KaiOS
-root; nu a fost rescrisă pe telefon în această etapă.
+Schema 1 below preserves data and represents an update snapshot. It does not
+guarantee a boot after data formatting. The recorded 0.12 build and preflight
+results below are historical, not new flash validation.
 
+Installation requires root recovery with a real `recovery` process. An SD
+Android diagnostic image is unsuitable even when stored in the recovery
+partition. The separate entry kit provides root ADB recovery and a bootstrap
+from known rooted KaiOS; it is not a signed stock “Apply update” OTA.
 
-Constructorul împachetează starea portului Leo existent pe acest Nokia. Nu este
-un ROM universal, o migrare verificată din KaiOS nemodificat sau un ZIP semnat
-pentru meniul stock „Apply update”. Instalarea este prin **ADB în recovery-ul
-personalizat existent**, cu Python pe PC. Flash-ul pe hardware nu a fost validat
-în etapa 0.12; nu a fost executat pentru a testa constructorul.
+## Source snapshot
 
-## Copia sursă
-
-Cu Leo pornit complet, fără apel activ, serialul `695d` și `/system` read-only:
+With Leo fully booted, no active call, serial `695d` and read-only system:
 
 ```powershell
 python -X utf8 android81/snapshot-leo-rom.py
 ```
 
-Se salvează în directorul ignorat de Git `android81/output/rom-snapshots/`:
-boot (32 MiB), system (800 MiB), recovery (32 MiB, exclusiv backup), manifestul și
-APK-urile actualizate ale aplicațiilor de sistem. Nu se copiază userdata, conturi,
-SMS sau partiții radio. Fiecare imagine este verificată ca dimensiune și SHA-256
-față de telefon. Transferul folosește ADB sync pe aliasuri de noduri block;
-vechiul adbd nu suportă transportul binar `exec-out`.
+The Git-ignored `android81/output/rom-snapshots/` receives boot (32 MiB), system
+(800 MiB), recovery (32 MiB, backup only), manifest and updated system-app APKs.
+It excludes userdata, accounts, SMS and radio partitions. Sizes and SHA-256 are
+compared with the phone. Transfer uses ADB sync on block aliases because the
+old adbd does not support binary `exec-out` transport.
 
-Păstrează separat backup-ul KaiOS original. Snapshot-ul curent este o copie Leo,
-nu o copie nouă a firmware-ului stock.
+Keep the original KaiOS backup separately. A Leo snapshot is not a new stock
+firmware backup.
 
-## Construire offline pe PC
+## Offline build
 
-Necesită Python, WSL `kaios`, `debugfs`/`e2fsck` și helperul ARM static existent
-`output/recovery-shell-candidate`. Constructorul nu descarcă firmware.
+Requires Python, WSL `kaios`, `debugfs`/`e2fsck` and the existing static ARM helper
+`output/recovery-shell-candidate`. It does not download firmware.
 
 ```powershell
 python -X utf8 android81/build-recovery-bundle.py android81/output/rom-snapshots/20261027-164004
 ```
 
-Boot și system sunt copiate într-un director nou. Numai copia system este
-modificată: APK-urile active sunt integrate la locațiile lor de sistem, cu
-permisiuni și etichete SELinux; fiecare APK este extras din nou și verificat.
-`e2fsck -f -n` și verificatorul ZIP trebuie să treacă. Recovery nu intră în ZIP.
-Framework-ul și ART provin din aceeași imagine sursă; nu se schimbă izolat JAR-uri.
+Boot/system are copied into a new directory. Only the system copy is modified:
+active APKs are overlaid at factory locations with permissions/SELinux labels,
+then extracted and checked again. `e2fsck -f -n` and ZIP verification must pass.
+Recovery is excluded from the ROM ZIP. Framework and ART come from the same
+source image; JARs are not replaced independently.
 
-Manifestul înregistrează hash-urile, commit-ul, starea dirty a surselor, uneltele
-folosite și `hardware_flash_validated=false`. Un build reușit verifică arhiva,
-nu demonstrează pornirea unei imagini rescrise. Build-ul de pe o mașină curată
-și reproducerea bit cu bit nu sunt încă validate.
+The build manifest records hashes, commit/dirty state, tools and
+`hardware_flash_validated=false`. A successful build validates the archive,
+not a flashed phone. Clean-host and bit-for-bit reproducibility are unvalidated.
 
-## Verificare și instalare explicită
+## Verify and explicitly install a schema 1 update
 
-Extrage numai scriptul și README-ul pentru utilizarea pe PC; imaginile rămân în ZIP.
+Extract only the PC script/README; images stay in the ZIP. `CALE_PACHET.zip`
+is a placeholder for the bundle path.
 
 ```powershell
 python android81/install-recovery-bundle.py CALE_PACHET.zip
 python android81/install-recovery-bundle.py CALE_PACHET.zip --preflight --serial 695d --adb D:/ROMS/platform-tools/adb.exe
 ```
 
-Prima comandă este exclusiv offline. A doua cere recovery root, verifică absența
-Android și a partiției system montate, identitatea dispozitivului și geometria
-boot/system. Dacă rulează Android, trebuie să refuze fără scrieri de partiții.
+The first command is offline. The second requires root recovery, no running
+Android or mounted system, matching device identity and boot/system geometry.
+Running Android must be refused without partition writes.
 
-Pentru instalare, este necesar un card SD extern deja montat, cu minimum
-864 MiB liberi și același spațiu în directorul temporar de pe PC. Se poate preciza
-`--staging-parent /sdcard`; directorul trebuie să aparțină efectiv `mmcblk1p1`.
+Installation needs an already mounted external SD card, at least 864 MiB free
+and equivalent PC temporary space. `--staging-parent /sdcard` must resolve onto
+the real `mmcblk1p1` card.
 
 ```powershell
 python android81/install-recovery-bundle.py CALE_PACHET.zip --install --serial 695d --confirm-target 695d --adb D:/ROMS/platform-tools/adb.exe
 ```
 
-Această ultimă comandă este distructivă pentru conținutul boot/system. Copiază
-mai întâi ambele imagini pe SD și verifică hash-urile, recontrolează starea
-recovery, scrie system apoi boot și verifică imaginile scrise. Nu formatează
-userdata, nu scrie recovery/modem/NV și nu repornește automat. Fișierele de staging
-rămân pe SD. Nu întrerupe alimentarea; păstrează backup-urile în afara telefonului.
+This overwrites boot/system. It stages both images on SD, checks hashes and
+recovery state, writes system then boot and verifies each written image.
+Userdata is retained; recovery/modem/NV are not targets. There is no automatic
+reboot. Staging remains on SD. Maintain power and keep backups off the phone.
 
-Arhivele conțin runtime proprietar al dispozitivului și rămân locale/private.
-Pe GitHub sunt publicate sursele uneltelor și documentația, nu imaginile firmware.
+Archives contain proprietary device runtime and remain private; published
+release assets are listed in [the package guide](GITHUB-PACKAGES.md).
 
-## Snapshot construit în această etapă
+## Historical 0.12 snapshot
 
-`output/recovery-bundles/leo-recovery-0.12.0-dev-20261027-164004.zip`
-a trecut construcția și verificarea offline, inclusiv citirea APK-urilor din
-imaginea rezultată și `e2fsck -f -n`. SHA-256:
+`output/recovery-bundles/leo-recovery-0.12.0-dev-20261027-164004.zip` passed offline
+build, APK readback and `e2fsck -f -n`. SHA-256:
 
 ```text
 3c66dad2f2d1eba59903c053271b0d1366a74d0ebf3befe6cf1779cc0537c707
 ```
 
-Manifestul indică surse modificate față de commit-ul de bază (`working_tree_dirty=true`),
-cu hash-urile exacte ale uneltelor. Nu a fost prezentat drept build dintr-un commit curat.
-
-După reconectare, preflight-ul a fost executat pe telefonul cu Android pornit:
-a returnat `Active Android detected` și a refuzat fără scrieri de partiții.
-Calea de instalare efectivă în recovery rămâne nevalidată pe hardware.
+Its manifest records `working_tree_dirty=true` and exact tool hashes; it is not
+presented as a build from a clean commit. A later preflight on running Android
+returned `Active Android detected` and refused writes. That Python install path
+was not hardware-validated. The later native clean-install result is documented
+in [Leo Recovery](LEO-RECOVERY.md), not inferred from this older snapshot.
