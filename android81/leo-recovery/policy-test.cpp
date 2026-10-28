@@ -1,4 +1,5 @@
 #include "policy.h"
+#include "rgb565.h"
 #include <cassert>
 #include <iostream>
 int main() {
@@ -22,5 +23,11 @@ int main() {
     fresh.images=images+1;fresh.count=2;assert(!bootLast(fresh));
     assert(key(352)==Key::Accept && key(103)==Key::Up && key(108)==Key::Down);
     assert(key(107)==Key::Back && key(523)==Key::None);
+    assert(rgb565(255,0,0)==0xf800 && rgb565(0,255,0)==0x07e0 && rgb565(0,0,255)==0x001f);
+    assert(rgb565(255,255,255)==0xffff && rgb565(0,0,0)==0);
+    assert(framebufferPageFits(327680,512,320,320,240));
+    assert(!framebufferPageFits(327680,512,321,320,240));
+    assert(!framebufferPageFits(327680,479,0,320,240));
+    assert(!framebufferPageFits(327680,512,0xffffffffu,320,240));
     std::cout<<"Recovery policy checks passed\n";
 }

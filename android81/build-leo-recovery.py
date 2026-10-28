@@ -46,12 +46,13 @@ def main():
     generated='\n'.join(header)+'\n';path=out/'catalog_generated.h'
     if args.package_only and path.read_text()!=generated:raise ValueError('Catalog changed; recompile native recovery')
     path.write_text(generated,newline='\n')
-    inputs={name:sha(ROOT/'leo-recovery'/name) for name in ('Android.mk','recovery.cpp','policy.h')}
+    native_sources=('Android.mk','recovery.cpp','framebuffer.cpp','rgb565.h','policy.h')
+    inputs={name:sha(ROOT/'leo-recovery'/name) for name in native_sources}
     inputs['catalog_generated.h']=sha(path)
     stamp=out/'native-build.json'
     if not args.package_only:
         subprocess.run(['wsl','-d','kaios','--','bash',linux(ROOT/'build-leo-recovery.sh')],check=True)
-        if any(sha(ROOT/'leo-recovery'/name)!=inputs[name] for name in ('Android.mk','recovery.cpp','policy.h')):
+        if any(sha(ROOT/'leo-recovery'/name)!=inputs[name] for name in native_sources):
             raise ValueError('Native source changed during compilation')
         stamp.write_text(json.dumps({'inputs':inputs,'binary_sha256':sha(out/'recovery')},indent=2)+'\n')
     else:
@@ -92,6 +93,13 @@ def main():
     entry_spec=importlib.util.spec_from_file_location('entry',ROOT/'install-root-recovery.py')
     entry=importlib.util.module_from_spec(entry_spec);entry_spec.loader.exec_module(entry)
     if report['sha256']!=entry.LEO_SHA:raise ValueError('Review the new image and update the explicit LEO_SHA installer pin before packaging')
+    evidence_path=ROOT/'leo-recovery/hardware-validation.json'
+    evidence=json.loads(evidence_path.read_text()) if evidence_path.exists() else None
+    if evidence and evidence.get('image_sha256')==report['sha256']:
+        report['hardware_validation']=evidence
+        report['hardware_boot_validated']=evidence.get('direct_boot_validated') is True
+        report['phone_written']=evidence.get('recovery_partition_verified') is True
+    report['build_writes_phone']=False
     report['build_tool_sha256']={name:sha(ROOT/name) for name in ('build-leo-recovery.py','build-leo-recovery.sh','recovery_image.py','install-root-recovery.py','leo-recovery/policy.h')}
     (out/'manifest.json').write_text(json.dumps(report,indent=2)+'\n')
     shutil.copyfile(ROOT/'install-root-recovery.py',out/'install-root-recovery.py')
@@ -100,9 +108,10 @@ def main():
         package.write(image,image.name);package.write(out/'manifest.json','manifest.json');package.write(out/'OFL.txt','OFL.txt')
         package.write(ROOT/'install-root-recovery.py','install-root-recovery.py')
         package.write(ROOT/'LEO-RECOVERY.md','README.md');package.write(ROOT/'KAIOS-SD.md','KAIOS-SD.md')
+        package.write(ROOT/'screenshots/leo-recovery-rgb565-main.png','screenshots/leo-recovery-rgb565-main.png')
     with zipfile.ZipFile(archive) as package:
         with package.open(image.name) as stream:
             if bundle.digest_stream(stream)!=report['sha256']:raise ValueError('Recovery ZIP readback mismatch')
-    print(json.dumps({'image':str(image),'image_sha256':report['sha256'],'archive':str(archive),'archive_sha256':sha(archive),'hardware_boot_validated':False},indent=2),flush=True)
+    print(json.dumps({'image':str(image),'image_sha256':report['sha256'],'archive':str(archive),'archive_sha256':sha(archive),'hardware_boot_validated':report['hardware_boot_validated']},indent=2),flush=True)
 
 if __name__=='__main__':main()

@@ -322,10 +322,12 @@ void diagnostics() {
 }
 
 int main() {
+    setvbuf(stdout,nullptr,_IONBF,0);setvbuf(stderr,nullptr,_IONBF,0);
     // Do not process Android OTA/BCB/cache commands or auto-wipe on startup.
     mkdir("/tmp",0755);log("Leo Recovery 0.1 prototype; no automatic writes");
     if(gr_init()!=0){log("Framebuffer unavailable. Root ADB remains available.");for(;;)pause();}
     graphics=true;font=gr_sys_font();gr_font_size(font,&fw,&fh);width=gr_fb_width();height=gr_fb_height();
+    log("RGB565 framebuffer ready: "+std::to_string(width)+"x"+std::to_string(height));
     if(width<160||height<200){log("Unsupported display geometry");for(;;)pause();}
     gr_fb_blank(false);openInputs();
     if(inputs.empty())log("No input nodes; root ADB remains available");

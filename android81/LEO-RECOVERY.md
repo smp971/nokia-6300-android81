@@ -1,13 +1,23 @@
 # Leo Recovery · 0.1 prototype
 
 Un recovery separat de Android, scris pentru ecranul **240 × 320** și tastele
-Nokia 6300 4G TA-1286. Interfață nativă minui, fără framework Android, touchscreen
+Nokia 6300 4G TA-1286. Interfață nativă RGB565, fără framework Android, touchscreen
 sau aplicație Java. Culori Leo Night: fundal închis și selecție turcoaz.
 
-**Stare:** compilat ARM static și împachetat în imaginea de 32 MiB. Kernelul,
-init-ul și ADB-ul bazei root au fost păstrate. Verificările sunt offline;
-**afișarea, tastele, backup-ul și instalarea nu sunt încă validate pe telefon**.
-Nu s-au scris partiții și nu s-a repornit telefonul pentru această etapă.
+**Validat pe telefon la 28 octombrie 2026:** imaginea este instalată în recovery,
+pornește direct, afișează meniul și răspunde la tastele fizice. ADB root rămâne
+disponibil. Kernelul, init-ul și ADB-ul bazei root au fost păstrate.
+**Instalarea unui ROM, backup-ul și restaurarea din meniu rămân netestate.**
+Proba a scris numai partiția recovery; boot, system și userdata nu au fost modificate.
+
+![Leo Recovery pe telefon](screenshots/leo-recovery-rgb565-main.png)
+
+Prima probă a identificat un crash în rendererul minui de 32 biți: acest telefon
+folosește RGB565 de 16 biți și un pas de linie de 512 octeți. Rendererul dedicat
+respectă acest format, limitează scrierile la framebuffer și desenează fără GPU.
+Imaginea corectată a trecut verificarea integrală SHA-256 după scriere și o nouă
+pornire directă. Dovezile sunt legate de hash-ul exact în
+`leo-recovery/hardware-validation.json`; un build diferit nu moștenește validarea.
 
 ## Meniul implementat
 
@@ -90,7 +100,7 @@ output/leo-recovery/manifest.json
 SHA-256 al imaginii de **33.554.432 octeți**:
 
 ```text
-2c539d820f166f980408a5c49d800aab4d0548888fbc6539378fe71790c44d49
+e9407739db7d7f17a57a1da19e67612d1047c34c53fc9bf97631da7cfce9ff5e
 ```
 
 Verificarea exclusiv pe PC:
@@ -103,8 +113,10 @@ python android81/install-root-recovery.py android81/output/leo-recovery/leo-reco
 telefonul fără scrieri de partiții. Pentru această variantă de instalator este
 necesar portul Leo intern cunoscut, cu markerul `/leo-framework-internal`.
 Modul implicit al scriptului rămâne bootstrap-ul recovery root din KaiOS stock.
+Din recovery root cunoscut se folosește `--from-recovery` în loc de `--leo`;
+acest mod verifică markerul bazei, PID 1 și absența framework-ului Android.
 
-**Instalarea efectivă a prototipului nu a fost executată.** Comanda explicită ar fi:
+Comanda de instalare din portul Leo intern:
 
 ```powershell
 python android81/install-root-recovery.py android81/output/leo-recovery/leo-recovery-0.1.img --leo --install --serial 695d --confirm-target 695d --adb D:/ROMS/platform-tools/adb.exe
@@ -113,7 +125,14 @@ python android81/install-root-recovery.py android81/output/leo-recovery/leo-reco
 Aceasta salvează și verifică recovery-ul existent pe PC, apoi scrie **numai p33**,
 cu verificare completă. Nu formatează datele, nu schimbă boot/system și nu repornește
 singură. După instalarea verificată, pornirea recovery-ului se cere separat prin
-`adb -s 695d reboot recovery`. Nu se restaurează automat recovery-ul original.
+`adb -s 695d reboot recovery`. Dacă adbd din namespace-ul timpuriu Leo refuză
+comanda, folosește wrapperul framework din proiect:
+
+```powershell
+python android81/framework-command.py --timeout 15 /system/bin/setprop sys.powerctl reboot,recovery
+```
+
+Nu se restaurează automat recovery-ul original.
 
 ## Reconstruire și verificări
 

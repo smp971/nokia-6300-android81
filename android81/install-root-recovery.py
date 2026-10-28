@@ -5,10 +5,10 @@ Default is local verification only. --preflight reads stock identity/geometry.
 No reboot, userdata formatting, boot/system/radio writes or automatic restore.
 """
 from pathlib import Path
-import argparse, hashlib, json, re, shlex, subprocess, uuid
+import argparse, hashlib, json, re, shlex, subprocess, time, uuid
 
 RESCUE_SHA='2e4dee03305c5b617d5b0d51c064af350c817f3dc93f669ec302bdd97adf6fdc'
-LEO_SHA='2c539d820f166f980408a5c49d800aab4d0548888fbc6539378fe71790c44d49'
+LEO_SHA='e9407739db7d7f17a57a1da19e67612d1047c34c53fc9bf97631da7cfce9ff5e'
 SIZE=33554432
 STOCK={'boot':(29,'a23fcbcc993a0f5f1f03736eb59d7e431604d9c2d8900f100b927c06a1c81338'),
        'system':(30,'a16d027dba2702fc9114ef3269770c30595a8e9b595329e5b7527588345fbdd6')}
@@ -22,7 +22,9 @@ def digest(path):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('image',type=Path)
-    parser.add_argument('--leo',action='store_true',help='Explicit Leo Recovery 0.1 prototype; requires internal Leo Android instead of stock KaiOS')
+    source=parser.add_mutually_exclusive_group()
+    source.add_argument('--leo',action='store_true',help='Explicit Leo Recovery 0.1 prototype; requires internal Leo Android instead of stock KaiOS')
+    source.add_argument('--from-recovery',action='store_true',help='Explicit recovery UI update from the known root recovery, with Android absent')
     mode=parser.add_mutually_exclusive_group()
     mode.add_argument('--preflight',action='store_true')
     mode.add_argument('--install',action='store_true')
@@ -30,7 +32,7 @@ def main():
     parser.add_argument('--adb',default='adb')
     parser.add_argument('--backup-dir',type=Path,default=Path('android81/backup-live/root-recovery-entry'))
     args=parser.parse_args()
-    approved=LEO_SHA if args.leo else RESCUE_SHA
+    approved=LEO_SHA if args.leo or args.from_recovery else RESCUE_SHA
     if args.image.stat().st_size!=SIZE or digest(args.image)!=approved:
         raise ValueError('Unexpected root recovery image')
     print('Verified known Nokia root recovery image',flush=True)
@@ -40,7 +42,12 @@ def main():
     adb=[args.adb,'-s','695d'];bb='/system/bin/busybox'
     def shell(*command,timeout=60):
         script=shlex.join(list(command))+'; rc=$?; printf "\\nLEO_RESCUE_RC_%s\\n" "$rc"'
-        result=subprocess.run(adb+['shell',shlex.join(['/system/bin/sh','-c',script])],capture_output=True,timeout=timeout,check=True)
+        readonly=len(command)>1 and command[0]==bb and command[1] in ('id','cat','stat','sha256sum')
+        for attempt in range(3 if readonly else 1):
+            result=subprocess.run(adb+['shell',shlex.join(['/system/bin/sh','-c',script])],capture_output=True,timeout=timeout)
+            if result.returncode!=255 or not readonly or attempt==2:break
+            time.sleep(0.3)
+        result.check_returncode()
         text=result.stdout.decode(errors='replace').replace('\r','')
         match=re.search(r'\nLEO_RESCUE_RC_(\d+)\s*$',text)
         if not match or match[1]!='0':raise RuntimeError('Stock ADB command failed: '+text)
@@ -62,6 +69,11 @@ def main():
     if args.leo:
         if shell(bb,'cat','/leo-framework-internal')!='Validated internal Android partitions.':
             raise RuntimeError('Leo prototype installation requires the known internal Android boot')
+    elif args.from_recovery:
+        if shell(bb,'cat','/tmp/leo-debug-init')!='root-adb-v1':
+            raise RuntimeError('Known root recovery marker required')
+        if shell('/system/bin/sh','-c','if /system/bin/busybox pidof system_server >/dev/null; then exit 1; fi; /system/bin/busybox cat /proc/1/comm')!='init':
+            raise RuntimeError('Recovery init without Android required')
     else:
         for part,(_,expected) in STOCK.items():
             if shell(bb,'sha256sum',nodes[part],timeout=300).split()[0]!=expected:
@@ -78,7 +90,9 @@ def main():
         if incoming.stat().st_size!=SIZE or digest(incoming)!=before:raise RuntimeError('Recovery backup mismatch')
         incoming.rename(backup)
     if backup.stat().st_size!=SIZE or digest(backup)!=before:raise RuntimeError('Existing recovery backup mismatch')
-    remote='/data/local/tmp/leo-rescue-'+uuid.uuid4().hex
+    # Early adbd has a private mount namespace: Android's /data is not mounted
+    # there. Its /tmp is a verified writable tmpfs; stock KaiOS keeps its path.
+    remote=('/tmp/' if args.leo or args.from_recovery else '/data/local/tmp/')+'leo-rescue-'+uuid.uuid4().hex
     shell(bb,'mkdir','-m','700',remote)
     subprocess.run(adb+['push',str(args.image),remote+'/recovery.img'],check=True,timeout=180)
     if shell(bb,'sha256sum',remote+'/recovery.img').split()[0]!=approved:raise RuntimeError('Staging hash mismatch')
