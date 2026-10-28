@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse, hashlib, json, re, shlex, subprocess, time, uuid
 
 RESCUE_SHA='2e4dee03305c5b617d5b0d51c064af350c817f3dc93f669ec302bdd97adf6fdc'
-LEO_SHA='e9407739db7d7f17a57a1da19e67612d1047c34c53fc9bf97631da7cfce9ff5e'
+LEO_SHA='4644f9ae16f69f57a76c5491e1e488bf5ecba214d470e322b60f26d5191685e0'
 SIZE=33554432
 STOCK={'boot':(29,'a23fcbcc993a0f5f1f03736eb59d7e431604d9c2d8900f100b927c06a1c81338'),
        'system':(30,'a16d027dba2702fc9114ef3269770c30595a8e9b595329e5b7527588345fbdd6')}
@@ -23,7 +23,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('image',type=Path)
     source=parser.add_mutually_exclusive_group()
-    source.add_argument('--leo',action='store_true',help='Explicit Leo Recovery 0.1 prototype; requires internal Leo Android instead of stock KaiOS')
+    source.add_argument('--leo',action='store_true',help='Explicit reviewed Leo Recovery; requires internal Leo Android instead of stock KaiOS')
     source.add_argument('--from-recovery',action='store_true',help='Explicit recovery UI update from the known root recovery, with Android absent')
     mode=parser.add_mutually_exclusive_group()
     mode.add_argument('--preflight',action='store_true')

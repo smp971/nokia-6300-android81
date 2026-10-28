@@ -32,16 +32,21 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 ## Instalare și recuperare
 
-**Leo Recovery 0.1:** prototip nativ pentru D-pad/OK, cu instalare din SD,
+**Leo Recovery 0.2:** recovery nativ pentru D-pad/OK, cu instalare din SD,
 backup boot/system/recovery, revenire stock și diagnostic. Imaginea ARM este
 instalată și verificată pe telefon: **pornire directă, meniu, taste fizice și ADB
 root funcționale**. Renderer dedicat RGB565 pentru ecranul de 240 × 320.
-Instalarea ROM-ului, backup-ul și restaurarea din meniu rămân netestate.
+Backup-ul pe SD a trecut verificarea integrală; instalarea ROM-ului și restaurarea
+din meniu rămân netestate.
+Extragerea completă a pachetului ROM pe card a trecut și pentru userdata de peste
+2 GiB, după adaptarea antetului ZIP64. Ultimul candidat include și corecții de
+diagnostic ADB KaiOS, încă în așteptarea probei pe telefon.
 [Captură, kit și limite](android81/LEO-RECOVERY.md).
 
-Investigăm și [KaiOS pe SD, cu Android păstrat intern](android81/KAIOS-SD.md).
-Imaginile de stocare sunt pregătite pe PC; selectorul de boot nu este implementat,
-iar pregătirea **nu este încă bootabilă**.
+[KaiOS pe SD, cu Android păstrat intern](android81/KAIOS-SD.md) are acum imagini
+verificate pe card și un selector PID 1 implementat. Opțiunea „KaiOS from SD”
+este experimentală. Prima pornire a ajuns la meniul KaiOS, confirmat pe telefon;
+ADB din KaiOS și verificarea serviciilor lui rămân de rezolvat.
 
 
 Am pregătit un **candidat privat pentru instalare curată 0.14**, cu boot/system,

@@ -8,3 +8,13 @@ LOCAL_CPPFLAGS := -std=c++14
 LOCAL_STATIC_LIBRARIES := libminui libziparchive libutils libcrypto libbase libpng libz liblog libcutils libc libm
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
 include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := leo-boot-selector
+LOCAL_SRC_FILES := selector.cpp
+LOCAL_FORCE_STATIC_EXECUTABLE := true
+LOCAL_CFLAGS := -Wall -Wextra -Werror -D_FILE_OFFSET_BITS=64
+LOCAL_CPPFLAGS := -std=c++14
+LOCAL_STATIC_LIBRARIES := libcrypto libc libm
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+include $(BUILD_EXECUTABLE)

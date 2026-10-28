@@ -1,15 +1,17 @@
 {
   "date": "2026-10-28",
   "device": "Nokia 6300 4G TA-1286",
-  "image_sha256": "e9407739db7d7f17a57a1da19e67612d1047c34c53fc9bf97631da7cfce9ff5e",
+  "image_sha256": "612fff24c35de7fd2f1b8d0bf45518dd017696440b2875aac9ecc129ccdedc0f",
   "recovery_partition_verified": true,
   "direct_boot_validated": true,
   "root_adb_available": true,
   "framebuffer": "240x320 RGB565, 512-byte pitch",
-  "screen_and_physical_keys_user_confirmed": true,
-  "native_process_alive_after_seconds": 188,
+  "display_capture_collected": true,
+  "physical_key_confirmation_version": "0.1; raw key mapping unchanged in 0.2",
+  "no_sd_request_recovery_fallback_verified": true,
   "rom_install_validated": false,
-  "backup_restore_validated": false,
+  "backup_to_sd_readback_verified": true,
+  "restore_validated": false,
   "boot_system_userdata_written": false,
-  "screenshot": "android81/screenshots/leo-recovery-rgb565-main.png"
+  "screenshot": "android81/screenshots/leo-recovery-02-sd-menu.png"
 }

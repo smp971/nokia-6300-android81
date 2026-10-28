@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-28",
+  "image_sha256": "612fff24c35de7fd2f1b8d0bf45518dd017696440b2875aac9ecc129ccdedc0f",
+  "recovery_partition_sha256_verified": true,
+  "sd_images_verified_on_phone": true,
+  "all_three_loop_ext4_mounts_verified": true,
+  "sd_mount_move_verified": true,
+  "internal_block_ro_guards_verified_and_restored_in_probe": true,
+  "kaios_ui_boot_user_confirmed": true,
+  "live_kaios_mount_table_collected": false,
+  "kaios_usb_pid": "05c6:9092",
+  "kaios_adb_available": false,
+  "normal_leo_return_validated": true,
+  "normal_leo_internal_marker_verified": true,
+  "internal_boot_and_system_match_pre_sd_boot_hashes": true,
+  "internal_ro_flags_cleared_after_normal_reboot": true,
+  "full_rom_flash_validated": false,
+  "stock_restore_validated": false,
+  "backup_to_sd_readback_verified": true,
+  "baseline_boot_sha256": "bb8731b1b7f3dd506e3180c00bbaea67f096a305697c49f5dc070b6738408d2b",
+  "baseline_system_sha256": "9bd39ec81b2959399ec2b1ce6a77d70b541eb4358579f51cb581f028588c98e7"
+}

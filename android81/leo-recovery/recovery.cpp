@@ -13,6 +13,8 @@
 #include <sys/sysmacros.h>
 #include <sys/wait.h>
 #include <linux/input.h>
+#include <linux/reboot.h>
+#include <sys/syscall.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -35,6 +37,7 @@ const GRFont* font;
 int width,height,fh,fw;
 std::vector<int> inputs;
 bool graphics=false;
+bool backupCompleted=false;
 
 struct Fd {
     int fd;
@@ -118,6 +121,7 @@ int menu(const std::string& title,const std::vector<std::string>& items) {
     }
 }
 void message(const std::string& title,const std::string& body) {
+    if(!graphics){log(title+": "+body);return;}
     frame(title,"BACK / OK to return");gr_color(224,233,240,255);
     unsigned columns=std::max(1,(width-16)/fw);unsigned at=0;int y=70;
     while(at<body.size()&&y<height-fh-10){unsigned count=std::min(columns,(unsigned)body.size()-at);
@@ -204,6 +208,17 @@ bool mountCard() {
     }
     return sdMounted()&&directory(ROOT);
 }
+bool releaseCard() {
+    std::istringstream rows(readText("/proc/self/mountinfo"));std::string line;bool mounted=false;
+    while(std::getline(rows,line)){std::istringstream row(line);std::string id,parent,dev,root,path,options;
+        if(!(row>>id>>parent>>dev>>root>>path>>options))return fail("Cannot inspect mounts");
+        if(dev=="179:65"){
+            if(path!=CARD||root!="/")return fail("SD mounted elsewhere; close its operation");
+            mounted=true;
+        }
+    }
+    sync();return !mounted||!umount(CARD)||fail("SD busy; close its operation first");
+}
 bool freeSpace(uint64_t bytes) {
     struct statvfs st;if(statvfs(CARD,&st))return fail("Cannot read free SD space");
     return (uint64_t)st.f_bavail*st.f_frsize>=bytes||fail("Not enough free SD space");
@@ -245,9 +260,15 @@ bool openPackage(const Bundle& bundle,Archive* zip) {
 bool extract(const Bundle& bundle,Archive& zip,const std::string& stage) {
     if(!freeSpace(leo::stagingBytes(bundle)))return false;
     for(unsigned i=0;i<bundle.count;++i) {
-        const auto& image=bundle.images[i];std::string name="images/"+std::string(image.name)+".img";
-        ZipEntry entry;
-        if(FindEntry(zip.handle,ZipString(name.c_str()),&entry)||entry.uncompressed_length!=image.bytes)return fail("ZIP image size mismatch");
+        const auto& image=bundle.images[i];ZipEntry entry{};bool pinned=false;
+        // openPackage has verified the entire immutable archive SHA-256. Use
+        // metadata compiled from that exact archive, including ZIP64 LFHs.
+        for(const auto& pin:kZipImages)if(!strcmp(pin.archiveSha,bundle.sha)&&!strcmp(pin.name,image.name)){
+            if(pin.uncompressed!=image.bytes||pin.offset>bundle.archiveBytes||pin.compressed>bundle.archiveBytes-pin.offset)return fail("Pinned ZIP bounds mismatch");
+            entry.offset=pin.offset;entry.compressed_length=pin.compressed;entry.uncompressed_length=pin.uncompressed;
+            entry.crc32=pin.crc;entry.method=pin.method;entry.has_data_descriptor=0;pinned=true;break;
+        }
+        if(!pinned)return fail("ZIP image metadata not pinned");
         auto path=stage+"/"+image.name+".img";
         Fd output(open(path.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600));
         if(output.fd<0)return fail("Staging file already exists");
@@ -287,10 +308,10 @@ void installBundle(const Bundle& bundle) {
     sync();log("Install completed. No automatic reboot.");
     message("Installation complete",bundle.wipe?"All images verified. Select Reboot when ready.":"Stock boot/system verified. Factory reset is still required in Stock tools.");
 }
-void backup() {
+void backup(bool confirmed=false) {
     if(!mountCard()||getuid()!=0||!leo::correctPhone(readText("/proc/cmdline"))||!noAndroid()) {message("Backup unavailable",error);return;}
     if(!freeSpace(940u*1024u*1024u)){message("Backup unavailable",error);return;}
-    if(menu("BOOT/SYSTEM/RECOVERY",{"Cancel","Create backup on SD"})!=1)return;
+    if(!confirmed&&menu("BOOT/SYSTEM/RECOVERY",{"Cancel","Create backup on SD"})!=1)return;
     std::string dir=std::string(ROOT)+"/backup-"+std::to_string(time(nullptr))+"-"+std::to_string(getpid());
     if(mkdir(dir.c_str(),0700)){message("Backup failed","Existing directory retained");return;}
     Fd report(open((dir+"/SHA256SUMS").c_str(),O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC,0600));
@@ -307,7 +328,7 @@ void backup() {
         dprintf(report.fd,"%s  %s.img\n",digest.c_str(),image.name);
     }
     if(fsync(report.fd)){message("Backup incomplete","Checksum sync failed");return;}
-    sync();log("Backup complete: "+dir);message("Backup complete","Boot, system, recovery saved. User data and radio are NOT included.");
+    sync();backupCompleted=true;log("Backup complete: "+dir);message("Backup complete","Boot, system, recovery saved. User data and radio are NOT included.");
 }
 void diagnostics() {
     int choice=menu("Diagnostics",{"Back","Mount external SD","Save recovery log","Device information"});
@@ -319,12 +340,44 @@ void diagnostics() {
         message(ok?"Log saved":"Log failed",ok?"See LeoRecovery on SD":"Cannot write recovery log");}
     if(choice==3)message("Device information",std::string("Nokia 6300 TA-1286. Root ADB. No Android framework. ")+(leo::correctPhone(readText("/proc/cmdline"))?"Serial matches 695d.":"WRONG SERIAL - DO NOT FLASH."));
 }
+bool probeKaiOS() {
+    progress("KaiOS SD","Checking SD images...");
+    pid_t child=fork();if(child<0)return fail("Cannot start verifier");
+    if(child==0){execl("/sbin/leo-boot-selector","leo-boot-selector","--probe-sd",(char*)nullptr);_exit(127);}
+    int status=0;while(waitpid(child,&status,0)<0){if(errno!=EINTR)return fail("Verifier wait failed");}
+    return (WIFEXITED(status)&&WEXITSTATUS(status)==0)||fail("SD images missing/invalid. See root ADB log.");
+}
+void kaiosSD() {
+    int choice=menu("KaiOS from SD",{"Back","Verify SD images","Boot KaiOS once"});if(choice<1)return;
+    if(!mountCard()||!probeKaiOS()){message("KaiOS SD unavailable",error);return;}
+    if(choice==1){message("SD images verified","Stock system and blank data/cache found. Internal OS unchanged.");return;}
+    if(menu("Experimental SD boot",{"Cancel","Boot KaiOS once"})!=1)return;
+    auto path=std::string(CARD)+"/LeoKaiOS/boot-once";
+    Fd f(open(path.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600));
+    const char* flag="LEO_KAIOS_SD_ONCE_V1_695d\n";
+    if(f.fd<0||write(f.fd,flag,strlen(flag))!=(ssize_t)strlen(flag)||fsync(f.fd)){message("Boot not requested","Cannot create one-shot SD request");return;}
+    close(f.fd);f.fd=-1;
+    if(!releaseCard()){unlink(path.c_str());sync();message("Boot not requested",error);return;}
+    log("KaiOS SD one-shot reboot requested; SD unmounted");
+    syscall(__NR_reboot,LINUX_REBOOT_MAGIC1,LINUX_REBOOT_MAGIC2,LINUX_REBOOT_CMD_RESTART2,"recovery");
+    bool removed=mountCard()&&!unlink(path.c_str());sync();
+    message("Reboot failed",removed?"Boot request removed. Use root ADB.":"SD request may remain. Normal reboot still starts Leo.");
+}
 }
 
-int main() {
+int main(int argc,char** argv) {
     setvbuf(stdout,nullptr,_IONBF,0);setvbuf(stderr,nullptr,_IONBF,0);
     // Do not process Android OTA/BCB/cache commands or auto-wipe on startup.
-    mkdir("/tmp",0755);log("Leo Recovery 0.1 prototype; no automatic writes");
+    mkdir("/tmp",0755);log("Leo Recovery 0.2; no automatic writes");
+    if(argc==2&&!strcmp(argv[1],"--backup-sd")){backup(true);return backupCompleted?0:1;}
+    if(argc==2&&!strcmp(argv[1],"--verify-fresh")){
+        if(!mountCard()||!targetGuards(kFresh))return 1;
+        Archive zip;if(!openPackage(kFresh,&zip))return 1;
+        std::string stage=std::string(ROOT)+"/verify-"+std::to_string(time(nullptr))+"-"+std::to_string(getpid());
+        if(mkdir(stage.c_str(),0700)||!extract(kFresh,zip,stage))return 1;
+        log("Full package extracted and verified. NO partitions written.");return 0;
+    }
+    if(argc!=1){log("Unsupported arguments ignored; no automatic operation");}
     if(gr_init()!=0){log("Framebuffer unavailable. Root ADB remains available.");for(;;)pause();}
     graphics=true;font=gr_sys_font();gr_font_size(font,&fw,&fh);width=gr_fb_width();height=gr_fb_height();
     log("RGB565 framebuffer ready: "+std::to_string(width)+"x"+std::to_string(height));
@@ -332,17 +385,19 @@ int main() {
     gr_fb_blank(false);openInputs();
     if(inputs.empty())log("No input nodes; root ADB remains available");
     for(;;) {
-        error.clear();int choice=menu("0.1 / KEYPAD EDITION",{"Install Leo","Backup partitions","Restore KaiOS","Diagnostics","Stock tools","Reboot system","Power off"});
+        error.clear();int choice=menu("0.2 / SD BOOT",{"Install Leo","Backup partitions","Restore KaiOS","KaiOS from SD","Diagnostics","Stock tools","Reboot system","Power off"});
         if(choice==0)installBundle(kFresh);
         if(choice==1)backup();
         if(choice==2)installBundle(kStock);
-        if(choice==3)diagnostics();
-        if(choice==4&&menu("OPEN STOCK TOOLS?",{"Cancel","Open stock recovery"})==1) {
+        if(choice==3)kaiosSD();
+        if(choice==4)diagnostics();
+        if(choice==5&&menu("OPEN STOCK TOOLS?",{"Cancel","Open stock recovery"})==1) {
             gr_exit();execl("/sbin/recovery-stock","recovery","--show_text",(char*)nullptr);
             log("Cannot start stock tools");return 1;
         }
-        if((choice==5||choice==6)&&menu(choice==5?"REBOOT?":"POWER OFF?",{"Cancel","Confirm"})==1) {
-            sync();reboot(choice==5?RB_AUTOBOOT:RB_POWER_OFF);message("Power action failed","Use root ADB or the physical power key.");
+        if((choice==6||choice==7)&&menu(choice==6?"REBOOT?":"POWER OFF?",{"Cancel","Confirm"})==1) {
+            if(!releaseCard()){message("Cannot power off",error);continue;}
+            reboot(choice==6?RB_AUTOBOOT:RB_POWER_OFF);message("Power action failed","Use root ADB or the physical power key.");
         }
     }
 }

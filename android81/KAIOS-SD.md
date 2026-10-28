@@ -1,75 +1,97 @@
-# KaiOS pe card, Android intern
+# KaiOS de pe SD · Leo în memoria internă
 
-Ținta este o alegere între **Leo Android intern** și **KaiOS cu system/data/cache
-pe SD**. Pregătirea de stocare există pe PC; **KaiOS SD nu este încă bootabil**.
-Nu a fost schimbat boot, recovery sau cardul fizic pentru această pregătire.
+Leo Recovery 0.2 include un selector timpuriu și opțiunea **KaiOS from SD**.
+Imaginile au fost copiate și verificate pe cardul telefonului. **Prima pornire
+a ajuns la meniul KaiOS, confirmat de utilizator.** Integrarea rămâne experimentală:
+serviciile KaiOS nu au fost reverificate, iar ADB nu apare în configurația lui USB.
 
-## Ce am verificat
+## Cum este construit
 
-| Element | Rezultat |
+Pornirea normală folosește în continuare partiția boot Leo, nemodificată.
+Din recovery: **KaiOS from SD → Verify SD images / Boot KaiOS once**.
+Pornirea cere confirmare, creează o cerere pe SD și repornește în recovery.
+
+Înaintea init-ului recovery, selectorul rulează ca PID 1:
+
+1. Verifică exemplarul Nokia și montează cardul extern real `179:65`.
+2. Consumă cererea `LeoKaiOS/boot-once`, înaintea încercării de boot.
+3. Verifică markerul, dimensiunile și semnăturile ext4; calculează din nou
+   SHA-256 pentru întregul system KaiOS original.
+4. Atașează system/data/cache la loop0/1/2. System are loop read-only.
+5. Protejează la scriere blocurile interne boot/system/cache/userdata pentru
+   durata acestei porniri. Protecția dispare la următoarea repornire a kernelului.
+6. Mută montarea SD sub `/leo-sd` în rădăcina KaiOS inclusă în ramdisk și
+   execută init-ul stock, păstrând PID 1. Nu lansează un al doilea init ca aplicație.
+
+Țintele interne protejate sunt boot `179:29`, system `179:30`, cache `259:0`
+și userdata `259:7`; fiecare adresă este comparată cu sysfs înainte de ioctl.
+
+Fără cerere validă, fără card sau la eroare înaintea execuției init-ului KaiOS,
+selectorul revine la recovery. Init-ul recovery original este restaurat **în RAM**
+înaintea execuției; imaginea din partiție nu este modificată în acest proces.
+După ce init-ul KaiOS a preluat controlul, o eroare a serviciilor/UI nu mai poate
+fi tratată de acest selector ca o eroare de pregătire: poate fi necesară repornirea.
+
+Kernelul recovery este identic cu cel KaiOS original:
+`f860d012480be69e03bf57200cef9fbb5d5d2f1dd46e947e1989cd5dc44955fa`.
+Nu folosim kexec, care este dezactivat în acest kernel.
+
+## Fișierele de pe card
+
+| Fișier în `LeoKaiOS/` | Conținut |
 | --- | --- |
-| Kernelul recovery-ului root/Leo Recovery | Identic byte cu byte cu cel din boot KaiOS original |
-| SHA-256 kernel stock și recovery | `f860d012480be69e03bf57200cef9fbb5d5d2f1dd46e947e1989cd5dc44955fa` |
-| Kernelul Leo Android actual | Diferă de cel stock; nu presupunem compatibilitatea KaiOS cu el |
-| Loop devices, ext4 și VFAT | Activate în configurația kernelului stock |
-| kexec | Dezactivat; aplicația recovery nu poate înlocui direct kernelul/init-ul activ |
-| Montările KaiOS originale | Indică direct system/userdata/cache interne; trebuie redirecționate |
-| Volumul SD gestionat de vold | Trebuie adaptat: cardul care ține OS-ul nu trebuie oferit spre formatare |
+| `system.img` | System KaiOS original, 800 MiB, verificat și deschis read-only |
+| `data.img` | Ext4 de 512 MiB, inițial gol; datele KaiOS se păstrează aici |
+| `cache.img` | Ext4 de 64 MiB |
+| `owner` | Markerul exact pentru exemplarul de test |
+| `boot-once` | Cerere temporară, consumată înainte de pornire |
+| `selector-last.log` | Confirmarea pregătirii loop-urilor și protecțiilor |
 
-## Arhitectura propusă
+Sunt necesari **1.376 MiB** pentru imagini, plus spațiul normal de lucru al
+cardului. Nu scoate cardul cât timp KaiOS rulează. System rămâne nemodificat;
+data/cache sunt intenționat modificabile și nu mai au hash-ul inițial după utilizare.
 
-Pornirea obișnuită păstrează Android din memoria internă. O opțiune viitoare din
-Leo Recovery ar cere „KaiOS SD o singură dată”, ar salva cererea pe SD și ar
-reporni în recovery. Un **selector PID 1, înainte de init-ul recovery**, ar consuma
-cererea și ar porni ramdiskul/init-ul KaiOS cu kernelul stock al recovery-ului.
-Fără cerere sau fără card ar reveni în meniul Leo Recovery.
+`prepare-kaios-sd.py` pregătește imaginile pe PC. `deploy-kaios-sd.py --install
+--confirm-target 695d` le copiază comprimat în recovery, verifică fiecare fișier
+și refuză să înlocuiască un director `LeoKaiOS` existent. Nu formatează cardul
+și nu scrie partiții interne. Nu creează singur cererea de boot.
 
-Acest selector **nu este încă implementat** și în meniul 0.1 nu există un buton
-care să pretindă că pornește KaiOS SD. Pornirea unui al doilea `init` din aplicația
-recovery nu este suficientă: KaiOS are nevoie de init ca PID 1 și de mediul său
-de boot, proprietăți și SELinux.
+## Izolarea montărilor
 
-## Stocarea deja pregătită
+Rădăcina KaiOS este derivată din boot-ul stock verificat și inclusă în recovery.
+Constructorul redirecționează montările system/userdata/cache, inclusiv montările
+directe din init și din modul charger. Elimină formatarea automată și criptarea
+footer din fstab și scoate cardul din lista volumelor gestionate de vold.
+Daemonul OTA nu pornește automat. ADB este cerut în configurația inițială.
+Pentru diagnosticul ADB, candidatul nou păstrează domeniul serviciului `adbd` și
+adaugă numai `adbd` și `shell` în bitmap-ul permissive al politicii stock verificate.
+ID-urile au fost citite cu libsepol pentru acest dump; regulile AV și celelalte
+domenii nu sunt rescrise, iar SELinux global nu este dezactivat. Această corecție
+necesită încă proba pe telefon; prima eliminare a argumentului `su` nu a fost suficientă.
 
-`output/kaios-sd-preparation/LeoKaiOS/` conține:
+Modemul, SIM-urile, firmware-ul, persist și NV sunt comune telefonului;
+**aceasta nu este o izolare completă a serviciilor radio**. Stock KaiOS poate
+modifica starea/configurația acestor servicii. Nu copiem datele personale din Leo.
 
-| Fișier | Conținut |
-| --- | --- |
-| `system.img` | System KaiOS original, 800 MiB, nemodificat și verificat SHA-256 |
-| `data.img` | Ext4 nou, gol, 512 MiB; fără date personale copiate |
-| `cache.img` | Ext4 nou, gol, 64 MiB |
-| `owner` | Marker de identificare pentru acest exemplar |
+## Verificări și limite
 
-Dimensiunea totală a imaginilor este **1.376 MiB**. Sunt fișiere pe PC;
-constructorul nu partiționează și nu formatează un card. Fiecare imagine nouă
-a trecut `e2fsck -f -n`. Manifestul are explicit `bootable=false` și
-`selector_implemented=false`.
+- Imaginile au fost copiate pe card și verificate integral prin SHA-256.
+- Verificatorul nativ a acceptat imaginile pe telefon, fără atașarea loop-urilor.
+- Recovery 0.2 a pornit normal și a rămas accesibil prin ADB.
+- Backup-ul boot/system/recovery pe card a trecut recitirea și verificarea hash-urilor.
+- Prima cerere SD nu a fost executată din cauza argumentelor suplimentare pentru
+  init; selectorul a fost corectat pentru a decide după PID 1.
+- Proba loop-urilor, a celor trei montări ext4, a mutării SD și a protecțiilor RO
+  a trecut pe telefon, cu restaurarea protecțiilor după probă.
+- Meniul KaiOS a fost confirmat vizual după boot. PC-ul vede USB Qualcomm 9092,
+  fără interfață ADB; tabela montărilor din KaiOS nu a putut fi colectată încă.
+- Repornirea normală din KaiOS a revenit în Leo, confirmat vizual și prin ADB:
+  markerul Android intern este prezent, iar protecțiile RO ale partițiilor s-au resetat.
+- Serviciile KaiOS și ADB din această variantă rămân de verificat/corectat.
 
-`ramdisk-plan/` păstrează ramdiskul original comprimat și propunerile pentru:
-
-- system → loop0, read-only și fără replay de jurnal;
-- data → loop1, fără opțiuni de formatare sau criptare automată;
-- cache → loop2, inclusiv montările directe din init;
-- eliminarea volumului SD din configurația automată de formatare vold.
-
-Aceste fișiere sunt un **plan**, nu o imagine boot/recovery instalabilă. Nu le
-scrie peste partițiile Android. Comanda de pregătire offline este:
-
-```powershell
-python android81/prepare-kaios-sd.py --output android81/output/ALTA_PREGATIRE_KAIOS_SD
-```
-
-## Ce rămâne înaintea primei porniri
-
-1. Selectorul timpuriu și cererea de boot consumată o singură dată.
-2. Atașarea loop-urilor și păstrarea montării cardului când init-ul stock recreează `/dev`.
-3. Auditarea tuturor montărilor/scripturilor KaiOS pentru a elimina revenirea la
-   system/data/cache interne, inclusiv la eroare sau filesystem invalid.
-4. Tratarea modului de boot recovery, a proprietăților și a volumelor vold.
-5. Probă pe telefon, cu revenire în Leo Recovery dacă mediul SD nu este pregătit.
-
-System și datele aplicațiilor pot fi separate pe SD, dar modemul, SIM-urile,
-calibrarea, persist și NV aparțin aceluiași telefon; nu sunt două dispozitive
-radio izolate. La prima probă trebuie urmărit și ce schimbări persistente face
-KaiOS în aceste servicii comune. Performanța depinde de card și poate fi sub
-cea a KaiOS instalat în memoria internă.
+Jurnalul selectorului, dacă revine în recovery, este `/leo-selector.log`.
+Proba nativă `leo-boot-selector --probe-loops`, disponibilă doar în recovery root,
+verifică atașarea loop-urilor, montările ext4 și mutarea SD, apoi demontează și
+restaurează protecțiile. Montarea data/cache poate actualiza metadatele acestor
+două imagini SD; system și filesystem-urile interne nu sunt scrise.
+Pentru schema completă a recovery-ului vezi [Leo Recovery](LEO-RECOVERY.md).

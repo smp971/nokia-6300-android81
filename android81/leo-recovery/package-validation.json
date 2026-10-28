@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-28",
+  "native_extractor_build_image_sha256": "49c5991c7a0d953945704bcf2ece38a3feca03a682765ae38de841d36cdfd5bf",
+  "test_mode": "native recovery executable in RAM, --verify-fresh",
+  "whole_zip_sha256": "5f65e7e7b0c8ce0ce8b24cf5ff9617e3d078a2a76172c4f4df7628063bdd9478",
+  "complete_extraction_and_all_image_hashes_verified": true,
+  "userdata_bytes_verified": 2566897152,
+  "stock_backups_and_both_approved_zips_verified_on_sd": true,
+  "boot_system_userdata_partitions_written_by_test": false,
+  "full_rom_install_executed": false,
+  "stock_restore_executed": false
+}
