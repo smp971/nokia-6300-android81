@@ -161,5 +161,21 @@ class SystemMetadataGuards(unittest.TestCase):
     def test_wrong_context_rejected(self):
         with self.assertRaisesRegex(RuntimeError,'SELinux'):
             clean.verify_metadata(self.GOOD.replace('system_file','unlabeled'),0o755)
+    def test_unknown_legacy_apk_is_never_deleted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work=Path(directory);calls=[]
+            def run(*args):
+                calls.append(args)
+                if args[2].startswith('dump '):(work/'retired-leo-shell.apk').write_bytes(b'unknown APK')
+                return 'Inode: 12'
+            with self.assertRaisesRegex(RuntimeError,'Unknown legacy'):
+                clean.remove_retired_shell('system.img',work,str,run)
+            self.assertFalse(any('-w' in args for args in calls))
+    def test_absent_legacy_apk_requires_no_mutation(self):
+        calls=[]
+        def run(*args):calls.append(args);return ''
+        self.assertEqual(clean.remove_retired_shell('system.img',Path('.'),str,run),[])
+        self.assertEqual(len(calls),1)
+        self.assertNotIn('-w',calls[0])
 
 if __name__=='__main__':unittest.main()

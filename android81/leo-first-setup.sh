@@ -14,6 +14,30 @@ mv /data/system/leo-terminal-root.uid.new /data/system/leo-terminal-root.uid
 restorecon /data/system/leo-terminal-root.uid
 setprop ctl.start leo_terminal_root
 mkdir -p /data/system/leo-firstboot
+# Version this migration separately: ui-v1 predates the global menu/pointer
+# access and a wipe re-enables every factory launcher. Preserve other services.
+if [ ! -f /data/system/leo-firstboot/access-v2 ]; then
+    cmd package set-home-activity --user 0 ro.leo.visual/.MainActivity
+    cmd appops set ro.leo.visual WRITE_SETTINGS allow
+    cmd notification allow_dnd ro.leo.visual
+    cmd notification allow_listener ro.leo.visual/.LeoNotificationService
+    services=$(cmd settings get secure enabled_accessibility_services)
+    case "$services" in null) services=;; esac
+    component=ro.leo.visual/ro.leo.visual.LeoPointerService
+    case ":$services:" in
+        *":$component:"*|*":ro.leo.visual/.LeoPointerService:"*) ;;
+        *) services=${services:+$services:}$component;;
+    esac
+    cmd settings put secure enabled_accessibility_services "$services"
+    cmd settings put secure accessibility_enabled 1
+    for legacy in com.android.launcher3 ro.leo.shell; do
+        if cmd package list packages "$legacy" | grep -qx "package:$legacy"; then
+            /system/bin/sh /system/bin/pm disable-user --user 0 "$legacy"
+        fi
+    done
+    [ "$(cmd settings get secure accessibility_enabled)" = 1 ]
+    touch /data/system/leo-firstboot/access-v2
+fi
 [ ! -f /data/system/leo-firstboot/ui-v1 ] || exit 0
 cmd settings put global device_provisioned 1
 cmd settings put secure user_setup_complete 1

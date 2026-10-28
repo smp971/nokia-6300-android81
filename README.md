@@ -28,7 +28,8 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 > **Starea proiectului: prototip funcțional, utilizare experimentală.**
 > Sursele și uneltele sunt disponibile. Există un constructor de ZIP privat prin ADB
-> în recovery; flash-ul și restaurarea acestui pachet nu sunt încă validate pe hardware.
+> în recovery. Instalarea curată din Leo Recovery este verificată pe hardware;
+> restaurarea completă KaiOS rămâne netestată.
 
 ## Instalare și recuperare
 
@@ -36,8 +37,13 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 backup boot/system/recovery, revenire stock și diagnostic. Imaginea ARM este
 instalată și verificată pe telefon: **pornire directă, meniu, taste fizice și ADB
 root funcționale**. Renderer dedicat RGB565 pentru ecranul de 240 × 320.
-Backup-ul pe SD a trecut verificarea integrală; instalarea ROM-ului și restaurarea
-din meniu rămân netestate.
+Backup-ul pe SD și **instalarea curată din meniu** au trecut verificarea integrală:
+system → userdata goală → boot, cu SHA-256 după fiecare scriere.
+Prima pornire cu date goale a configurat automat Home, IME, dialerul și root-ul
+Leo; ambele SIM-uri sunt înregistrate. Datele/LTE cer configurare după wipe.
+Proba a cerut o corecție post-instalare pentru accesibilitate și launcherele
+vechi; este aplicată pe telefon și documentată pentru ZIP-ul aprobat.
+Restaurarea KaiOS din meniu rămâne netestată.
 Extragerea completă a pachetului ROM pe card a trecut și pentru userdata de peste
 2 GiB, după adaptarea antetului ZIP64. Imaginea curentă este instalată și
 confirmă ADB root în KaiOS, montările SD și protecțiile partițiilor interne.
@@ -57,9 +63,10 @@ runtime-ul FM nu mai depind de fișiere de dezvoltare din `/data`. Setările Hom
 IME, audio și accesul root al shell-ului se pregătesc la prima pornire.
 
 [Procedura din KaiOS root/ADB, kitul recovery și revenirea la stock](android81/FLASH-FROM-STOCK.md)
-explică pachetele și comenzile. Sunt verificate offline; **flash-ul curat și
-rollback-ul nu au fost încă probate pe hardware**. ZIP-ul se instalează prin ADB
-în recovery root, iar formatarea cere opțiuni explicite și backup-uri verificate.
+explică pachetele și comenzile. **Flash-ul curat din meniul Leo Recovery a trecut
+pe hardware; rollback-ul rămâne netestat.** Există și un instalator prin ADB
+în recovery root; scrierea prin acest instalator Python nu a fost probată.
+Formatarea cere confirmare explicită și backup-uri verificate.
 Imaginile firmware și datele utilizatorului nu sunt publicate în Git.
 
 ## Ce este nou

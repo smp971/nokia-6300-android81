@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse, hashlib, json, re, shlex, subprocess, time, uuid
 
 RESCUE_SHA='2e4dee03305c5b617d5b0d51c064af350c817f3dc93f669ec302bdd97adf6fdc'
-LEO_SHA='4644f9ae16f69f57a76c5491e1e488bf5ecba214d470e322b60f26d5191685e0'
+LEO_SHA='28f9eb399e9479e135328e795ca7dd6b3a5e6feb530bc3a795cd78dab157b612'
 SIZE=33554432
 STOCK={'boot':(29,'a23fcbcc993a0f5f1f03736eb59d7e431604d9c2d8900f100b927c06a1c81338'),
        'system':(30,'a16d027dba2702fc9114ef3269770c30595a8e9b595329e5b7527588345fbdd6')}

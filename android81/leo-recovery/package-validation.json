@@ -1,12 +1,55 @@
 {
   "date": "2026-10-28",
   "native_extractor_build_image_sha256": "49c5991c7a0d953945704bcf2ece38a3feca03a682765ae38de841d36cdfd5bf",
-  "test_mode": "native recovery executable in RAM, --verify-fresh",
+  "test_mode": "Earlier --verify-fresh probe, followed by native menu clean install and documented post-install fixes",
   "whole_zip_sha256": "5f65e7e7b0c8ce0ce8b24cf5ff9617e3d078a2a76172c4f4df7628063bdd9478",
   "complete_extraction_and_all_image_hashes_verified": true,
   "userdata_bytes_verified": 2566897152,
   "stock_backups_and_both_approved_zips_verified_on_sd": true,
-  "boot_system_userdata_partitions_written_by_test": false,
-  "full_rom_install_executed": false,
-  "stock_restore_executed": false
+  "boot_system_userdata_partitions_written_by_test": true,
+  "full_rom_install_executed": true,
+  "stock_restore_executed": false,
+  "native_install_image_sha256": "28f9eb399e9479e135328e795ca7dd6b3a5e6feb530bc3a795cd78dab157b612",
+  "native_install_mode": "Install Leo -> Install package -> Confirm installation",
+  "native_install_order": [
+    "system",
+    "userdata",
+    "boot"
+  ],
+  "all_written_images_sha256_verified": true,
+  "userdata_wiped": true,
+  "userdata_backup_sd_and_pc_verified": true,
+  "first_clean_boot_validated": true,
+  "boot_completed": true,
+  "visual_home_default": true,
+  "keypad_ime_default": true,
+  "leo_dialer_default": true,
+  "first_setup_markers_verified": true,
+  "terminal_root_new_uid_verified": true,
+  "audio_server_and_card_present": true,
+  "both_sims_voice_registered": true,
+  "menu_navigation_via_adb_verified": true,
+  "lte_ims_after_wipe_validated": false,
+  "fresh_radio_defaults": {
+    "default_data_subscription": -1,
+    "preferred_network_mode": 0,
+    "preferred_network_mode1": 0
+  },
+  "usb_replug_needed_after_boot": true,
+  "post_install_hotfix_required_for_pinned_zip": true,
+  "first_setup_hotfix_sha256": "ae19e944300b13d36ef9f52108028efe1c3eec83e50eba17cd12f712087de17e",
+  "post_install_hotfix_verified": {
+    "accessibility_service_bound": true,
+    "global_menu_over_android_settings": true,
+    "write_settings_appop_allowed": true,
+    "legacy_launchers_disabled": [
+      "com.android.launcher3",
+      "ro.leo.shell"
+    ],
+    "rerun_preserves_fixed_state": true
+  },
+  "legacy_leo_shell_removed_from_system_and_user": true,
+  "launcher3_still_present_but_disabled": true,
+  "retired_leo_shell_backup_sha256": "4e42f3256b93981e168023b636a4ad9539476e23416830c62632f77336c08736",
+  "verify_only_probe_partitions_written": false
 }

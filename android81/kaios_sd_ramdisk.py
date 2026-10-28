@@ -9,7 +9,7 @@ REPLACEMENTS={
     '/dev/block/bootdevice/by-name/cache':'/dev/block/loop2',
 }
 
-def diagnostic_domains(policy):
+def diagnostic_domains(policy,domain_ids=(174,862)):
     magic,length=struct.unpack_from('<II',policy)
     if magic!=0xf97cff8c or policy[8:8+length]!=b'SE Linux':raise ValueError('Unexpected SELinux policy')
     version,config,symbols,contexts=struct.unpack_from('<4I',policy,8+length)
@@ -25,7 +25,8 @@ def diagnostic_domains(policy):
         return nodes,at
     _,begin=bitmap(8+length+16);nodes,end=bitmap(begin)
     # IDs read with libsepol from the exact pinned KaiOS boot policy.
-    for value in (174,862):
+    for value in domain_ids:
+        if not isinstance(value,int) or not 0<value<65536:raise ValueError('Invalid domain ID')
         start=value//64*64;nodes[start]=nodes.get(start,0)|(1<<(value-start))
     encoded=struct.pack('<III',64,max(nodes)+64,len(nodes))
     encoded+=b''.join(struct.pack('<IQ',start,bits) for start,bits in sorted(nodes.items()))

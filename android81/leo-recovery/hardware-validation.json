@@ -1,7 +1,7 @@
 {
   "date": "2026-10-28",
   "device": "Nokia 6300 4G TA-1286",
-  "image_sha256": "4644f9ae16f69f57a76c5491e1e488bf5ecba214d470e322b60f26d5191685e0",
+  "image_sha256": "28f9eb399e9479e135328e795ca7dd6b3a5e6feb530bc3a795cd78dab157b612",
   "recovery_partition_verified": true,
   "direct_boot_validated": true,
   "root_adb_available": true,
@@ -9,11 +9,15 @@
   "display_capture_collected": true,
   "physical_key_confirmation_version": "0.1; raw key mapping unchanged in 0.2",
   "no_sd_request_recovery_fallback_verified": true,
-  "rom_install_validated": false,
+  "rom_install_validated": true,
   "backup_to_sd_readback_verified": true,
   "restore_validated": false,
-  "boot_system_userdata_written": false,
-  "screenshot": "android81/screenshots/leo-recovery-02-sd-menu.png",
-  "display_capture_image_sha256": "612fff24c35de7fd2f1b8d0bf45518dd017696440b2875aac9ecc129ccdedc0f",
-  "latest_boot_verified_by_root_adb": true
+  "boot_system_userdata_written": true,
+  "screenshot": "android81/screenshots/leo-recovery-install-complete.png",
+  "display_capture_image_sha256": "28f9eb399e9479e135328e795ca7dd6b3a5e6feb530bc3a795cd78dab157b612",
+  "latest_boot_verified_by_root_adb": true,
+  "userdata_backup_sd_and_pc_verified": true,
+  "recovery_global_selinux_enforcing": true,
+  "recovery_domain_permissive": true,
+  "rom_first_clean_boot_validated": true
 }

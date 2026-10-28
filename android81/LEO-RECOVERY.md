@@ -9,8 +9,10 @@ pornește direct, afișează meniul și răspunde la tastele fizice. ADB root r�
 disponibil. Kernelul și ADB-ul bazei root au fost păstrate; selectorul timpuriu
 restaurează init-ul recovery original în RAM înainte să îl execute.
 Backup-ul boot/system/recovery pe SD a trecut verificarea prin recitire.
-**Instalarea unui ROM și restaurarea din meniu rămân netestate.**
-Proba a scris numai partiția recovery; boot, system și userdata nu au fost modificate.
+**Instalarea curată din meniul recovery a trecut pe telefon:** system, userdata
+goală și boot au fost scrise în această ordine și verificate integral SHA-256.
+Userdata anterioară este salvată și verificată pe SD și PC. Restaurarea KaiOS
+din meniu rămâne netestată.
 
 ![Leo Recovery pe telefon](screenshots/leo-recovery-02-sd-menu.png)
 
@@ -125,7 +127,7 @@ output/leo-recovery/manifest.json
 SHA-256 al imaginii de **33.554.432 octeți**:
 
 ```text
-4644f9ae16f69f57a76c5491e1e488bf5ecba214d470e322b60f26d5191685e0
+28f9eb399e9479e135328e795ca7dd6b3a5e6feb530bc3a795cd78dab157b612
 ```
 
 Verificarea exclusiv pe PC:
@@ -186,6 +188,60 @@ automat. Ambele au trecut pe telefon, inclusiv extragerea și hash-ul imaginii
 userdata de 2.566.897.152 octeți. Pentru antetul local ZIP64 folosim metadatele
 de extragere compilate din ZIP-ul exact aprobat; hash-ul întregii arhive și
 hash-ul fiecărei imagini sunt în continuare obligatorii. Nu sunt acceptate ZIP-uri
-arbitrare și nu a fost executată instalarea cu ștergerea datelor.
+arbitrare. Ulterior, instalarea cu ștergerea datelor a trecut prin meniul nativ,
+cu verificare SHA-256 după fiecare scriere.
+
+Proba reală a identificat și o limită a politicii stock: domeniul recovery nu
+putea citi tabela montărilor PID 1 și crea aliasurile block. Constructorul verifică
+hash-ul exact al politicii de bază și adaugă numai domeniul recovery (ID 239,
+citit cu libsepol) în bitmap-ul permissive. Regulile vendor rămân intacte și
+SELinux global rămâne enforcing. Politica Android și rădăcina KaiOS de pe SD
+nu sunt modificate de această corecție.
 
 Pentru KaiOS de pe card vezi [planul separat și starea pregătirii](KAIOS-SD.md).
+
+## Prima pornire după instalarea curată
+
+Validată pe 28 octombrie: `sys.boot_completed=1`, Home și dialer Leo implicite,
+IME Leo activă, markerii audio/UI creați automat, brokerul root autorizat pentru
+UID-ul nou al aplicației și placa audio prezentă. Home și grila de aplicații
+au fost capturate, iar meniul răspunde la comenzi D-pad/OK prin ADB.
+
+Ambele SIM-uri sunt înregistrate pentru voce. Datele mobile cer alegerea unui
+SIM: după wipe, `multi_sim_data_call=-1`, modurile preferate sunt 0/0 și
+înregistrarea observată este GSM/EDGE. LTE/IMS nu au fost reverificate în această
+instalare. Nu au fost inițiate apeluri/SMS și nu au fost repetate probele audio.
+ADB a necesitat deconectarea cablului timp de 10 secunde și reconectarea după boot.
+
+![Home după instalare curată](screenshots/leo-fresh-install-home.png)
+![Meniu după instalare curată](screenshots/leo-fresh-install-menu.png)
+
+## Corecție post-instalare identificată în probă
+
+ZIP-ul aprobat de mai sus conține bootstrap-ul inițial: după wipe nu activa
+serviciul de accesibilitate Leo, iar Launcher3 și Leo Shell vechi reapăreau din
+system. Am corectat telefonul și sursa `leo-first-setup.sh`: migrarea `access-v2`
+activează meniul global/mouse, accesul WRITE_SETTINGS și notificările/DND,
+păstrează celelalte servicii de accesibilitate și dezactivează cele două launchere
+vechi numai după selectarea Home Leo. APK-urile factory nu au fost șterse.
+Meniul global peste Setările Android și reluarea idempotentă au trecut.
+
+**ZIP-ul fixat prin SHA-256 nu a fost înlocuit în tăcere.** După reinstalarea
+aceluiași ZIP vechi este necesară aplicarea bootstrap-ului corectat. Constructorul
+ROM va include sursa nouă în următorul pachet, care va necesita un nou catalog
+recovery; acel pachet nou nu este prezentat ca deja validat prin flash.
+
+Cu Leo intern pornit și ADB root, după păstrarea scriptului vechi pe PC:
+
+```powershell
+& D:/ROMS/platform-tools/adb.exe -s 695d push android81/leo-first-setup.sh /tmp/leo-first-setup-v2.sh
+python android81/framework-command.py --timeout 20 /system/bin/sh -c 'set -e; mount -o remount,rw /system; trap "mount -o remount,ro /system" EXIT; cp /tmp/leo-first-setup-v2.sh /system/etc/leo-first-setup.sh.new; chown 0:0 /system/etc/leo-first-setup.sh.new; chmod 644 /system/etc/leo-first-setup.sh.new; restorecon /system/etc/leo-first-setup.sh.new; mv /system/etc/leo-first-setup.sh.new /system/etc/leo-first-setup.sh; restorecon /system/etc/leo-first-setup.sh; mount -o remount,ro /system; trap - EXIT; sh /system/etc/leo-first-setup.sh'
+```
+
+La cererea utilizatorului, **Leo Shell vechi a fost apoi eliminat efectiv** din
+`/system/app/LeoShell` și dezinstalat pentru user 0, după backup APK pe PC și
+verificare SHA-256. Launcher3 rămâne în system, dezactivat. Constructorul curat
+elimină acum numai APK-ul Leo Shell exact cunoscut; un hash necunoscut oprește
+construcția. Această modificare nu rescrie ZIP-ul aprobat anterior.
+
+![Meniu global Leo peste Setările Android după corecție](screenshots/leo-fresh-install-global-menu.png)

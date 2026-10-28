@@ -19,6 +19,14 @@ def sha(path):
 def linux(path):
     path=path.resolve().as_posix();return '/mnt/'+path[0].lower()+path[2:]
 
+def recovery_policy(policy):
+    # The stock recovery domain cannot inspect PID 1 mounts or create our block
+    # aliases. Keep global enforcing and every vendor rule; permit only this
+    # offline recovery domain, whose ID was read with libsepol from this policy.
+    if hashlib.sha256(policy).hexdigest()!='a99d1deab34fb87a1d24406f6ab53e1fe8d5ff549ed371973820a0560c4828c4':
+        raise ValueError('Unrecognized recovery policy; do not guess domain IDs')
+    return kaios_sd_ramdisk.diagnostic_domains(policy,(239,))
+
 def zip_descriptor(path,name,expected_bytes):
     # The WHOLE ZIP is pinned before any native extraction. Pin its data offsets
     # too: Oreo FindEntry rejects Python's ZIP64 local header above 2 GiB, even
@@ -86,6 +94,8 @@ def main():
     base_path=ROOT/'output/recovery-debug.img'
     if sha(base_path)!=BASE_SHA:raise ValueError('Unrecognized root-recovery base')
     base=base_path.read_bytes();old=recovery_image.unpack(base);entries=old['entries'].copy()
+    fields,policy=entries['sepolicy'];fields=fields.copy();policy=recovery_policy(policy)
+    fields[6]=len(policy);entries['sepolicy']=(fields,policy)
     stock_path=ROOT/'backup-live/boot-device.img'
     if sha(stock_path)!=kaios_sd_ramdisk.STOCK_BOOT_SHA:raise ValueError('Unknown KaiOS boot')
     selector=(out/'selector').read_bytes();bundle.static_arm(selector)
@@ -113,7 +123,7 @@ def main():
         fields=fields.copy();fields[6]=len(data);entries[contexts]=(fields,data)
     result=recovery_image.repack(base,entries,Path('D:/ROMS/edl-tools/recovery-8110.img').read_bytes())
     image=out/'leo-recovery-0.2.img';image.write_bytes(result)
-    unchanged=[name for name,value in old['entries'].items() if name not in ('init','sbin/recovery',font,contexts)]
+    unchanged=[name for name,value in old['entries'].items() if name not in ('init','sbin/recovery','sepolicy',font,contexts)]
     verified=recovery_image.unpack(result)['entries']
     if any(verified[name]!=old['entries'][name] for name in unchanged):raise ValueError('Unrelated ramdisk entry changed')
     report={'version':'0.2-sd-boot','serial':'695d','bytes':len(result),'sha256':sha(image),
@@ -132,6 +142,7 @@ def main():
     if evidence and evidence.get('image_sha256')==report['sha256']:
         report['hardware_validation']=evidence
         report['hardware_boot_validated']=evidence.get('direct_boot_validated') is True
+        report['hardware_install_validated']=evidence.get('rom_install_validated') is True
         report['phone_written']=evidence.get('recovery_partition_verified') is True
     report['build_writes_phone']=False
     sd_evidence_path=ROOT/'leo-recovery/sd-boot-validation.json'

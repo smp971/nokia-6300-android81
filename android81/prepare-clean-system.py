@@ -28,6 +28,18 @@ def verify_metadata(stat,mode):
     if 'u:object_r:system_file:s0' not in stat:
         raise RuntimeError('Incorrect system SELinux label')
 
+def remove_retired_shell(image,work,linux,run):
+    retired='/app/LeoShell/LeoShell.apk'
+    if 'Inode:' not in run('debugfs','-R','stat '+retired,image):return []
+    old=work/'retired-leo-shell.apk'
+    run('debugfs','-R','dump '+retired+' "'+linux(old)+'"',image)
+    if not old.is_file() or digest(old)!='4e42f3256b93981e168023b636a4ad9539476e23416830c62632f77336c08736':
+        raise RuntimeError('Unknown legacy shell APK; review before removal')
+    run('debugfs','-w','-R','rm '+retired,image)
+    if 'Inode:' in run('debugfs','-R','stat '+retired,image):
+        raise RuntimeError('Legacy shell removal failed')
+    return ['/system'+retired]
+
 def prepare(system,dest,linux,run):
     image=linux(system);work=dest/'clean-system';work.mkdir()
     context=work/'file-context';context.write_bytes(b'u:object_r:system_file:s0\0')
@@ -57,6 +69,9 @@ def prepare(system,dest,linux,run):
         verify_metadata(run('debugfs','-R','stat '+target,image),mode)
         records.append({'destination':'/system'+target,'bytes':source.stat().st_size,
                         'sha256':digest(source),'mode':oct(mode)})
+    # The retired launcher must not return when userdata is wiped. Remove only
+    # the exact archived Leo Shell APK, never a similarly named unknown file.
+    removed=remove_retired_shell(image,work,linux,run)
     # Updated APKs become factory packages. The IME used to be a user-only app.
     write('/priv-app/LeoVisual/LeoVisual.apk',ROOT/'output/leo-visual.apk')
     ime=ROOT/'output/leo-keypad-ime.apk'
@@ -89,6 +104,6 @@ def prepare(system,dest,linux,run):
         'fm_qsoc_patches':ROOT.parent/'analysis/system/bin/fm_qsoc_patches',
         'lib/libqcci_legacy.so':ROOT.parent/'analysis/system/vendor/lib/libqcci_legacy.so'}
     for name,source in fm.items():write('/vendor/leo-fm/'+name,source,0o755 if name in ('trial','route','fm_qsoc_patches') else 0o644)
-    return {'runtime':records,'property_defaults':DEFAULTS,
+    return {'runtime':records,'property_defaults':DEFAULTS,'retired_apks_removed':removed,
             'userdata_contents':'new empty filesystem; no live userdata copied',
             'first_boot_hardware_validated':False}

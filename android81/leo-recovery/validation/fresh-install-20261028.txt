@@ -1,0 +1,9 @@
+Leo Recovery 0.2; no automatic writes
+RGB565 framebuffer ready: 240x320
+Writing system
+Verified system
+Writing userdata
+Verified userdata
+Writing boot
+Verified boot
+Install completed. No automatic reboot.

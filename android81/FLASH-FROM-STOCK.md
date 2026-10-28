@@ -2,8 +2,10 @@
 
 Procedură pentru **Nokia 6300 4G TA-1286 de dezvoltare, serial `695d`**, cu
 geometria verificată în acest proiect. Pachetele sunt private și conțin runtime
-proprietar din copia acestui telefon. Starea: **construite și verificate offline;
-instalarea curată și revenirea completă nu sunt încă probate pe hardware**.
+proprietar din copia acestui telefon. **Instalarea curată prin meniul Leo Recovery
+a trecut pe hardware la 28 octombrie 2026:** system, userdata nouă și boot au fost
+scrise și verificate integral SHA-256. Revenirea completă KaiOS și scrierea prin
+instalatorul Python de mai jos rămân netestate.
 
 ## Ce înseamnă „de la zero” aici
 
@@ -112,8 +114,8 @@ Acesta nu scrie partiții. Refuză Android activ, absența procesului recovery,
 geometrie diferită sau system/userdata montate. Poate crea numai helperul în
 `/tmp` și aliasurile de noduri din `/dev`.
 
-**Comanda de mai jos șterge toate datele interne. Nu a fost executată în etapa
-de pregătire a kitului:**
+**Comanda de mai jos șterge toate datele interne. Această variantă Python
+nu a fost executată pentru scriere; proba reală a folosit meniul nativ recovery:**
 
 ```powershell
 python android81/install-recovery-bundle.py $freshLeo --install --serial 695d --confirm-target 695d --wipe-data --stock-backups $stockLeo --staging-parent /sdcard --adb $adbLeo
@@ -134,9 +136,11 @@ După mesajul de verificare completă:
 & $adbLeo -s 695d reboot
 ```
 
-Prima pornire poate dura mai mult pentru compilarea ART. Validarea reală rămasă:
-Home Leo, tastatură, rețea/IMS, audio, FM și permisiuni după userdata complet goală.
-Nu considera această etapă validată doar pentru că ZIP-ul trece verificarea locală.
+Prima pornire poate dura mai mult pentru compilarea ART. Proba nativă a confirmat
+boot complet, Home, IME și dialer Leo implicite, permisiuni și broker root cu UID
+nou, placa audio și ambele SIM-uri înregistrate. Audio efectiv, FM și LTE/IMS
+după această instalare nu au fost reverificate. Datele mobile necesită alegerea
+SIM-ului și configurarea rețelei după resetarea preferințelor.
 
 ## 5. Revenire la KaiOS
 
@@ -212,9 +216,62 @@ Pachetul curat are **351.257.972 octeți** (aproximativ 335 MiB), SHA-256:
   prin extragere și SHA-256, suplimentar APK-urilor active din snapshot.
 - Preflight-ul real cu Android pornit a refuzat: `Active Android detected`.
   Telefonul și-a păstrat boot ID-ul; nu au fost scrise partiții și nu a fost repornit.
-- Rămân de validat: flash-ul propriu-zis, prima pornire după ștergerea datelor
-  și revenirea la KaiOS cu kitul nou.
+- Flash-ul propriu-zis a trecut ulterior din meniul nativ Leo Recovery, în
+  ordinea system → userdata → boot, cu verificare după fiecare scriere.
+- Revenirea la KaiOS cu kitul nou rămâne de validat.
 
 Manifestul candidatului înregistrează commit-ul de bază și
 `working_tree_dirty=true`, împreună cu hash-urile uneltelor folosite. Nu este
 prezentat drept o reproducere bit cu bit dintr-un checkout curat.
+
+## Proba instalării din meniul Leo Recovery
+
+Pe exemplarul 695d, am salvat userdata existentă pe SD și PC și am comparat
+hash-ul ambelor copii cu partiția demontată înainte de ștergere. Din meniul
+**Install Leo → Install package → Confirm installation**, recovery-ul a
+verificat originalele KaiOS și arhiva, a extras toate imaginile pe SD, apoi a
+scris și recitit system, userdata și boot. Jurnalul confirmă toate cele trei
+hash-uri. Recovery, radio/NV, persist și cardul nu sunt ținte ale instalării.
+
+Prima încercare a refuzat instalarea înainte de orice scriere, deoarece domeniul
+SELinux stock recovery nu putea inspecta montările PID 1 și crea aliasuri block.
+Imaginea corectată păstrează SELinux global enforcing și relaxează numai domeniul
+recovery din politica exactă verificată; protecțiile țintelor nu au fost eliminate.
+
+![Instalare completă, toate imaginile verificate](screenshots/leo-recovery-install-complete.png)
+
+Prima pornire curată a trecut: markerii `audio-v1` și `ui-v1`, Home, dialerul,
+IME și permisiunile s-au pregătit automat. Ambele SIM-uri sunt înregistrate
+pentru voce. SIM-ul implicit pentru date este încă neales (`-1`), cu modurile
+preferate 0/0: configurarea datelor/LTE și reverificarea IMS rămân separate.
+ADB a revenit după scoaterea cablului timp de 10 secunde și reconectare.
+
+## Corecție post-instalare identificată în probă
+
+ZIP-ul aprobat de mai sus conține bootstrap-ul inițial: după wipe nu activa
+serviciul de accesibilitate Leo, iar Launcher3 și Leo Shell vechi reapăreau din
+system. Am corectat telefonul și sursa `leo-first-setup.sh`: migrarea `access-v2`
+activează meniul global/mouse, accesul WRITE_SETTINGS și notificările/DND,
+păstrează celelalte servicii de accesibilitate și dezactivează cele două launchere
+vechi numai după selectarea Home Leo. APK-urile factory nu au fost șterse.
+Meniul global peste Setările Android și reluarea idempotentă au trecut.
+
+**ZIP-ul fixat prin SHA-256 nu a fost înlocuit în tăcere.** După reinstalarea
+aceluiași ZIP vechi este necesară aplicarea bootstrap-ului corectat. Constructorul
+ROM va include sursa nouă în următorul pachet, care va necesita un nou catalog
+recovery; acel pachet nou nu este prezentat ca deja validat prin flash.
+
+Cu Leo intern pornit și ADB root, după păstrarea scriptului vechi pe PC:
+
+```powershell
+& D:/ROMS/platform-tools/adb.exe -s 695d push android81/leo-first-setup.sh /tmp/leo-first-setup-v2.sh
+python android81/framework-command.py --timeout 20 /system/bin/sh -c 'set -e; mount -o remount,rw /system; trap "mount -o remount,ro /system" EXIT; cp /tmp/leo-first-setup-v2.sh /system/etc/leo-first-setup.sh.new; chown 0:0 /system/etc/leo-first-setup.sh.new; chmod 644 /system/etc/leo-first-setup.sh.new; restorecon /system/etc/leo-first-setup.sh.new; mv /system/etc/leo-first-setup.sh.new /system/etc/leo-first-setup.sh; restorecon /system/etc/leo-first-setup.sh; mount -o remount,ro /system; trap - EXIT; sh /system/etc/leo-first-setup.sh'
+```
+
+La cererea utilizatorului, **Leo Shell vechi a fost apoi eliminat efectiv** din
+`/system/app/LeoShell` și dezinstalat pentru user 0, după backup APK pe PC și
+verificare SHA-256. Launcher3 rămâne în system, dezactivat. Constructorul curat
+elimină acum numai APK-ul Leo Shell exact cunoscut; un hash necunoscut oprește
+construcția. Această modificare nu rescrie ZIP-ul aprobat anterior.
+
+![Meniu global Leo peste Setările Android după corecție](screenshots/leo-fresh-install-global-menu.png)

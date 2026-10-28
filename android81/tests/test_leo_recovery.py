@@ -41,6 +41,14 @@ build_spec=importlib.util.spec_from_file_location('build_recovery',ROOT/'build-l
 build_recovery=importlib.util.module_from_spec(build_spec);build_spec.loader.exec_module(build_recovery)
 
 class PinnedZipMetadata(unittest.TestCase):
+    def test_recovery_policy_adds_only_recovery_bit_and_rejects_unknown_policy(self):
+        header=struct.pack('<II',0xf97cff8c,8)+b'SE Linux'+struct.pack('<4I',30,0,8,8)
+        empty=struct.pack('<III',64,0,0);rules=b'UNCHANGED VENDOR RULES'
+        original=header+empty+empty+rules
+        expected=header+empty+struct.pack('<III',64,256,1)+struct.pack('<IQ',192,1<<47)+rules
+        self.assertEqual(kaios.diagnostic_domains(original,(239,)),expected)
+        with self.assertRaises(ValueError):build_recovery.recovery_policy(original)
+
     def test_zip64_local_header_points_to_actual_deflate_stream(self):
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp)/'zip64.zip';data=b'bounded ZIP64 recovery test'*400
