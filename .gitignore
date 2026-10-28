@@ -81,3 +81,6 @@
 !/android81/fm-runtime/*.c
 !/android81/web-app-sdk/
 !/android81/framework-keypad/
+
+!/android81/leo-recovery/
+!/android81/tests/test_leo_recovery.py

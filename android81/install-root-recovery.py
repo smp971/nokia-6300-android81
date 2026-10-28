@@ -8,6 +8,7 @@ from pathlib import Path
 import argparse, hashlib, json, re, shlex, subprocess, uuid
 
 RESCUE_SHA='2e4dee03305c5b617d5b0d51c064af350c817f3dc93f669ec302bdd97adf6fdc'
+LEO_SHA='2c539d820f166f980408a5c49d800aab4d0548888fbc6539378fe71790c44d49'
 SIZE=33554432
 STOCK={'boot':(29,'a23fcbcc993a0f5f1f03736eb59d7e431604d9c2d8900f100b927c06a1c81338'),
        'system':(30,'a16d027dba2702fc9114ef3269770c30595a8e9b595329e5b7527588345fbdd6')}
@@ -21,6 +22,7 @@ def digest(path):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('image',type=Path)
+    parser.add_argument('--leo',action='store_true',help='Explicit Leo Recovery 0.1 prototype; requires internal Leo Android instead of stock KaiOS')
     mode=parser.add_mutually_exclusive_group()
     mode.add_argument('--preflight',action='store_true')
     mode.add_argument('--install',action='store_true')
@@ -28,7 +30,8 @@ def main():
     parser.add_argument('--adb',default='adb')
     parser.add_argument('--backup-dir',type=Path,default=Path('android81/backup-live/root-recovery-entry'))
     args=parser.parse_args()
-    if args.image.stat().st_size!=SIZE or digest(args.image)!=RESCUE_SHA:
+    approved=LEO_SHA if args.leo else RESCUE_SHA
+    if args.image.stat().st_size!=SIZE or digest(args.image)!=approved:
         raise ValueError('Unexpected root recovery image')
     print('Verified known Nokia root recovery image',flush=True)
     if not(args.preflight or args.install):return
@@ -56,10 +59,14 @@ def main():
         shell('/system/bin/sh','-c','test -b '+node+' || '+shlex.join([bb,'mknod',node,'b',str(major),str(minor)]))
         if shell(bb,'stat','-c','%t:%T',node)!=f'{major:x}:{minor:x}':raise RuntimeError('Wrong block alias')
         nodes[part]=node
-    for part,(_,expected) in STOCK.items():
-        if shell(bb,'sha256sum',nodes[part],timeout=300).split()[0]!=expected:
-            raise RuntimeError('Stock boot/system required; this bootstrap must NOT run on Leo')
-    print('Stock identity/geometry verified; no partition written',flush=True)
+    if args.leo:
+        if shell(bb,'cat','/leo-framework-internal')!='Validated internal Android partitions.':
+            raise RuntimeError('Leo prototype installation requires the known internal Android boot')
+    else:
+        for part,(_,expected) in STOCK.items():
+            if shell(bb,'sha256sum',nodes[part],timeout=300).split()[0]!=expected:
+                raise RuntimeError('Stock boot/system required; this bootstrap must NOT run on Leo')
+    print('Identity/geometry and selected source mode verified; no partition written',flush=True)
     if not args.install:return
     args.backup_dir.mkdir(parents=True,exist_ok=True)
     before=shell(bb,'sha256sum',nodes['recovery'],timeout=120).split()[0]
@@ -74,12 +81,12 @@ def main():
     remote='/data/local/tmp/leo-rescue-'+uuid.uuid4().hex
     shell(bb,'mkdir','-m','700',remote)
     subprocess.run(adb+['push',str(args.image),remote+'/recovery.img'],check=True,timeout=180)
-    if shell(bb,'sha256sum',remote+'/recovery.img').split()[0]!=RESCUE_SHA:raise RuntimeError('Staging hash mismatch')
+    if shell(bb,'sha256sum',remote+'/recovery.img').split()[0]!=approved:raise RuntimeError('Staging hash mismatch')
     if shell(bb,'sha256sum',nodes['recovery']).split()[0]!=before:raise RuntimeError('Recovery changed during preparation')
     shell(bb,'dd','if='+remote+'/recovery.img','of='+nodes['recovery'],'bs=1048576',timeout=180)
     shell(bb,'sync')
-    if shell(bb,'sha256sum',nodes['recovery']).split()[0]!=RESCUE_SHA:raise RuntimeError('Recovery write verification failed')
-    (args.backup_dir/'entry-result.json').write_text(json.dumps({'serial':'695d','before':before,'after':RESCUE_SHA,'backup':str(backup),'only_partition_written':'recovery'},indent=2))
+    if shell(bb,'sha256sum',nodes['recovery']).split()[0]!=approved:raise RuntimeError('Recovery write verification failed')
+    (args.backup_dir/'entry-result.json').write_text(json.dumps({'serial':'695d','before':before,'after':approved,'backup':str(backup),'only_partition_written':'recovery'},indent=2))
     print('Root recovery written and verified. Original saved on PC. Reboot manually with adb -s 695d reboot recovery.')
 
 if __name__=='__main__':main()

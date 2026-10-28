@@ -32,6 +32,16 @@ documentată la `1e87b06`, iar fundația UI și derularea mouse-ului la `420d47d
 
 ## Instalare și recuperare
 
+**Leo Recovery 0.1:** prototip nativ pentru D-pad/OK, cu instalare din SD,
+backup boot/system/recovery, revenire stock și diagnostic. Imaginea ARM este
+compilată și verificată offline; **pornirea și operațiile pe telefon sunt încă
+nevalidate**. [Meniu, kit și limite](android81/LEO-RECOVERY.md).
+
+Investigăm și [KaiOS pe SD, cu Android păstrat intern](android81/KAIOS-SD.md).
+Imaginile de stocare sunt pregătite pe PC; selectorul de boot nu este implementat,
+iar pregătirea **nu este încă bootabilă**.
+
+
 Am pregătit un **candidat privat pentru instalare curată 0.14**, cu boot/system,
 userdata ext4 nouă și aplicațiile necesare integrate în system. Tastatura și
 runtime-ul FM nu mai depind de fișiere de dezvoltare din `/data`. Setările Home,

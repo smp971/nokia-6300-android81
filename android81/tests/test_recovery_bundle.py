@@ -97,11 +97,11 @@ entry_spec=importlib.util.spec_from_file_location('root_entry',Path(__file__).pa
 entry=importlib.util.module_from_spec(entry_spec);entry_spec.loader.exec_module(entry)
 
 class RecoveryEntryGuards(unittest.TestCase):
-    def run_entry(self,*flags):
+    def run_entry(self,*flags,image_sha=None):
         from types import SimpleNamespace
         with patch('sys.argv',['install-root-recovery.py','fixture.img',*flags]), \
              patch.object(entry.Path,'stat',return_value=SimpleNamespace(st_size=entry.SIZE)), \
-             patch.object(entry,'digest',return_value=entry.RESCUE_SHA):
+             patch.object(entry,'digest',return_value=image_sha or entry.RESCUE_SHA):
             entry.main()
 
     def test_default_verification_does_not_contact_phone(self):
@@ -113,6 +113,18 @@ class RecoveryEntryGuards(unittest.TestCase):
         with patch.object(entry.subprocess,'run') as adb:
             with self.assertRaisesRegex(ValueError,'serial'):
                 self.run_entry('--install','--serial','samsung','--confirm-target','samsung')
+            adb.assert_not_called()
+
+    def test_leo_image_requires_explicit_mode(self):
+        with patch.object(entry.subprocess,'run') as adb:
+            with self.assertRaisesRegex(ValueError,'Unexpected'):
+                self.run_entry(image_sha=entry.LEO_SHA)
+            adb.assert_not_called()
+
+    def test_stock_image_cannot_be_confused_with_leo_prototype(self):
+        with patch.object(entry.subprocess,'run') as adb:
+            with self.assertRaisesRegex(ValueError,'Unexpected'):
+                self.run_entry('--leo')
             adb.assert_not_called()
 
     def test_nonstock_phone_refused_before_push_or_dd(self):
