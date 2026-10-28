@@ -408,7 +408,7 @@ public final class MainActivity extends Activity {
                         output.save(); output.translate(32,y); output.scale(.65f,.65f); icon(output,order[i],0,0); output.restore();
                         text(output,names[order[i]],57,y+5,14,i==selected?palette.ink:0xffe8e1f1,Paint.Align.LEFT);
                     }
-                    text(output,(selected+1)+" / "+order.length,120,267,10,0xffd3bddf,Paint.Align.CENTER);
+                    text(output,(selected+1)+" / "+order.length,120,267,10,palette.accent,Paint.Align.CENTER);
                 } else {
                 int page=selected/9;
                 for(int i=page*9;i<Math.min(order.length,page*9+9);i++) {
@@ -420,7 +420,7 @@ public final class MainActivity extends Activity {
                     if(p.measureText(label)>70){while(label.length()>1&&p.measureText(label+"…")>70)label=label.substring(0,label.length()-1);label+="…";}
                     text(output,label,x,y+39,10,i==selected?palette.ink:0xffe8e1f1,Paint.Align.CENTER);
                 }
-                for(int i=0;i<(order.length+8)/9;i++) {p.setColor(i==page?0xffe0b8ff:0xff64536f); output.drawCircle(110+i*10,267,2,p);}
+                for(int i=0;i<(order.length+8)/9;i++) {p.setColor(i==page?palette.accent:palette.card); output.drawCircle(110+i*10,267,2,p);}
                 }
             }
             if(!message.isEmpty()) {
@@ -428,8 +428,10 @@ public final class MainActivity extends Activity {
                 text(output,message,120,261,12,Color.WHITE,Paint.Align.CENTER);
             }
             p.setColor(palette.bar); output.drawRect(0,276,240,302,p);
+            p.setColor(Appearance.mix(palette.card,palette.accent,.25f));output.drawRect(0,276,240,277,p);
+            round(output,82,280,158,299,5,Appearance.mix(palette.bar,palette.accent,.12f));
             text(output,grid?L.t("Opțiuni"):L.t("Notificări"),8,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(output,grid?L.t("Deschide"):shortcut>=0?L.t("Deschide"):L.t("Meniu"),120,293,12,palette.selection,Paint.Align.CENTER);
+            text(output,grid?L.t("Deschide"):shortcut>=0?L.t("Deschide"):L.t("Meniu"),120,293,12,palette.accent,Paint.Align.CENTER);
             text(output,grid||shortcut>=0?L.t("Înapoi"):L.t("Contacte"),232,293,11,Color.WHITE,Paint.Align.RIGHT);
             output.restore();UiMetrics.draw(android.os.SystemClock.elapsedRealtimeNanos()-drawStart);
         }

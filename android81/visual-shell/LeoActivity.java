@@ -46,16 +46,16 @@ abstract class LeoActivity extends Activity {
         activeList=null;listTitle=null;listRows=null;listAdapter=null;listPosition=null;
         palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
-        heading=text(title,18); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        heading=text(title,17); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
-        heading.setBackgroundColor(palette.card);
+        heading.setBackground(UiChrome.panel(palette,getResources().getDisplayMetrics().density,false));
         root.addView(heading,new LinearLayout.LayoutParams(-1,dp(UiChrome.HEADER_DP)));
-        View accent=new View(this);accent.setBackgroundColor(Appearance.mix(palette.card,palette.accent,.35f));root.addView(accent,new LinearLayout.LayoutParams(-1,dp(1)));
+        View accent=new View(this);accent.setBackgroundColor(palette.background);root.addView(accent,new LinearLayout.LayoutParams(-1,dp(1)));
     }
     void footer(String a,String b,String c) {
         // Updating labels must not detach the content (especially a camera SurfaceView).
         boolean attach=softkeyBar==null;
-        if(attach){softkeyBar=new LinearLayout(this);softkeyBar.setBackgroundColor(palette.bar);softkeyBar.setPadding(0,dp(1),0,0);}
+        if(attach){softkeyBar=new LinearLayout(this);softkeyBar.setBackground(UiChrome.panel(palette,getResources().getDisplayMetrics().density,true));softkeyBar.setPadding(0,dp(1),0,0);}
         LinearLayout bar=softkeyBar;
         String[] values={a,b,c};
         for(int i=0;i<3;i++) {
@@ -64,7 +64,7 @@ abstract class LeoActivity extends Activity {
             if(attach){label.setSingleLine(true);label.setEllipsize(TextUtils.TruncateAt.END);
             label.setPadding(dp(5),0,dp(5),0);
             label.setAutoSizeTextTypeUniformWithConfiguration(9,Math.round(12*Appearance.textScale(this)),1,android.util.TypedValue.COMPLEX_UNIT_SP);
-            if(i==1)label.setTextColor(palette.accent);
+            label.setTypeface(UiChrome.TITLE);if(i==1){label.setTextColor(palette.accent);label.setBackground(Appearance.surface(Appearance.mix(palette.bar,palette.accent,.12f),dp(5)));}
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
             if(attach)bar.addView(label,new LinearLayout.LayoutParams(0,dp(UiChrome.FOOTER_DP),1));
             }
@@ -94,11 +94,8 @@ abstract class LeoActivity extends Activity {
                 else {
                     label=text("",17); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
                     label.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_selected},new int[]{}},new int[]{palette.ink,Color.WHITE}));
-                    label.setPadding(dp(10),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);label.setCompoundDrawablePadding(dp(9));
-                    android.graphics.drawable.StateListDrawable surfaces=new android.graphics.drawable.StateListDrawable();
-                    android.graphics.drawable.GradientDrawable selectedSurface=Appearance.surface(palette.selection,dp(4));selectedSurface.setStroke(dp(1),palette.accent);
-                    surfaces.addState(new int[]{android.R.attr.state_selected},selectedSurface);
-                    surfaces.addState(new int[]{},Appearance.surface(palette.card,dp(4)));label.setBackground(surfaces);
+                    label.setPadding(dp(15),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);label.setCompoundDrawablePadding(dp(9));
+                    label.setBackground(UiChrome.row(palette,dp(7),dp(1)));
                 }
                 CharSequence styled=rowText(rows.get(i));if(!TextUtils.equals(label.getText(),styled))label.setText(styled);
                 if(!stableRowIcons()||!(label.getTag() instanceof Integer)||((Integer)label.getTag())!=i){label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setTag(i);}

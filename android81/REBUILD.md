@@ -14,6 +14,11 @@ arbitrary newly built images. The `repro/` commands do not use ADB or flash.
 
 ## Building just the Leo apps
 
+The [Leo Modern UI foundation](LEO-MODERN-UI.md) spans Leo Visual and Android
+SystemUI. Rebuilding only the shell APK will not change the actual status bar.
+The framework keypad build applies `patch-systemui-modern.py` before compiling
+SystemUI; existing theme indices and Android's status-bar controllers are retained.
+
 The [versioned app-bundle generator](RELEASE-APPS.md) provides preflight checks,
 two APKs, a SHA-256 manifest and an explicit installer. App build scripts accept
 `LEO_AOSP_ROOT` and `LEO_JAVA_HOME`. This does not replace AOSP tree preparation

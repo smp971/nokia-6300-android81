@@ -66,6 +66,15 @@ intermittent; KaiOS radio/media services need separate tests.
 
 ## Screenshots
 
+**Leo Modern UI foundation (28 October):** navy/teal shared chrome, clearer focus
+and softkeys, and native SystemUI with a left clock and physical SIM-slot labels.
+Installed on the development phone; the published ROM ZIP still predates it.
+[Design, build and validation](android81/LEO-MODERN-UI.md).
+
+| Leo Modern Home | Shared settings chrome | System bar over Android Settings |
+| :---: | :---: | :---: |
+| <img src="android81/screenshots/leo-modern-home.png" width="180" alt="Leo Modern Home with real dual SIM status bar"> | <img src="android81/screenshots/leo-modern-settings.png" width="180" alt="Navy and teal Leo settings, clear selection and softkeys"> | <img src="android81/screenshots/leo-modern-android.png" width="180" alt="Left clock and numbered SIM signals over Android Settings with dark icon tint"> |
+
 Real phone captures retain the language selected when taken. Leo supports
 English and Romanian. Older call screens below are **local demos**, not live calls.
 

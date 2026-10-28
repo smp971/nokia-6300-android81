@@ -6,6 +6,7 @@ SRC="${LEO_AOSP_ROOT:-/root/android81-leo/src}"
 PATCH_ARGS=()
 if [ "${1:-}" = "--apps-only" ]; then PATCH_ARGS+=(--apps-only); fi
 python3 "$TASK_DIR/patch-framework-keypad.py" --source "$SRC" "${PATCH_ARGS[@]}"
+python3 "$TASK_DIR/patch-systemui-modern.py" --source "$SRC"
 cd "$SRC"
 source build/envsetup.sh
 lunch aosp_leo_go-eng
