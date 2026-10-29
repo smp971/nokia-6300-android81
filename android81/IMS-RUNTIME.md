@@ -1,5 +1,10 @@
 # Selected-SIM IMS runtime — 24 October 2026
 
+**29 October:** a [capability-refresh fix and isolated dual-slot observation](IMS-DUAL-SLOT.md)
+now pass on the fresh installation. Selected-SIM IMS voice registration and LTE
+Internet were verified without a new call or cold reboot. The dual client is
+experimental and does not establish simultaneous dual VoLTE.
+
 **Installed and verified:** automatic IMS voice registration on Orange SIM 2
 after a complete reboot, with validated LTE Internet. Disable/re-enable and
 client-process recovery also passed. This integrates the earlier supervised

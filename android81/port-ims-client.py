@@ -6,9 +6,11 @@ multi-endpoint implementation is advertised. Vendor source stays in ignored file
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
-import hashlib,json
+import hashlib,json,argparse
 
-root=Path('/root/android81-leo/src/vendor/leo-ims-candidate/src')
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--root',type=Path,default=Path('/root/android81-leo/src/vendor/leo-ims-candidate/src'))
+root=parser.parse_args().root
 ims=root/'org/codeaurora/ims'
 framework=Path('/root/android81-leo/src/frameworks/base/telephony/java/com/android/ims/internal')
 runtime=Path(__file__).resolve().parent/'ims-runtime'
@@ -135,6 +137,12 @@ def service(s):
         if (intent != null && intent.getBooleanExtra("leoReconfigure", false)) {
             if (LeoImsSlot.get() != mImsPhoneId) throw new IllegalStateException("Stop IMS before changing slot");
             ImsManager.updateImsServiceConfig(this, mImsPhoneId, true);
+            // A config acknowledgement is not a capability indication. The
+            // constructor query may have failed before its socket connected.
+            mServiceSub[0].refreshForLeo();
+            new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                public void run() { mServiceSub[0].refreshForLeo(); }
+            }, 1500);
         }
         return START_NOT_STICKY;
     }
@@ -189,7 +197,7 @@ def subscription(s):
     s=s.replace('tracker.mRegListener = listener;','mLeoListeners.add(listener); tracker.mRegListener = mLeoListeners;')
     pattern=r'(ImsReasonInfo imsReasonInfo = new ImsReasonInfo\(.*?\);)(\s*for \(Map.Entry<Integer, ImsServiceClassTracker> e : mTrackerTable.entrySet\(\)\))'
     assert len(re.findall(pattern,s,re.S))==1
-    s=re.sub(pattern,r'\1\n            mLeoRegistrationState = regState;\n            android.os.SystemProperties.set("sys.leo.ims.registration", Integer.toString(regState));\n            Log.i(LOG_TAG, "LEO_IMS_REGISTRATION state=" + regState + " error=" + errorCode + " rat=" + imsRat);\n\2',s,flags=re.S)
+    s=re.sub(pattern,r'\1\n            mLeoRegistrationState = regState;\n            android.os.SystemProperties.set("sys.leo.ims.registration", Integer.toString(regState));\n            if (regState == ImsQmiIF.Registration.REGISTERED) mCi.queryServiceStatus(mHandler.obtainMessage(EVENT_GET_SRV_STATUS));\n            Log.i(LOG_TAG, "LEO_IMS_REGISTRATION state=" + regState + " error=" + errorCode + " rat=" + imsRat);\n\2',s,flags=re.S)
     at=s.index('private void handleSrvStatusUpdate(');end=body_end(s,s.index('{',at))
     s=s[:end-1]+'''
         boolean voice = false;
@@ -217,6 +225,11 @@ def subscription(s):
     public void addRegistrationListener(IImsRegistrationListener listener) {
         mLeoListeners.add(listener);
         mCi.getImsRegistrationState(mHandler.obtainMessage(EVENT_IMS_STATE_DONE));
+        mCi.queryServiceStatus(mHandler.obtainMessage(EVENT_GET_SRV_STATUS));
+    }
+    public void refreshForLeo() {
+        mCi.getImsRegistrationState(mHandler.obtainMessage(EVENT_IMS_STATE_DONE));
+        mCi.queryServiceStatus(mHandler.obtainMessage(EVENT_GET_SRV_STATUS));
     }
 ''')
 update(ims/'ImsServiceSub.java',subscription)

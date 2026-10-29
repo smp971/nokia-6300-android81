@@ -10,7 +10,7 @@ and Symbian.
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Updated: 28 October 2026** · **Installed version: 0.14.0-dev / code 14**
+**Updated: 29 October 2026** · **Installed version: 0.14.0-dev / code 14**
 
 [What works](#what-works) · [Screenshots](#screenshots) · [Controls](#keypad-controls) ·
 [Audit](#project-audit) · [Roadmap](#roadmap) · [Build](#building-leo) · [Docs](#documentation)
@@ -40,8 +40,10 @@ subsequently removed there; Launcher3 remains disabled. The tested ROM ZIP has
 not been silently replaced with an untested rebuild.
 
 After a wipe, choose the data SIM and configure network/Wi-Fi preferences again.
-LTE/IMS have not been revalidated on the fresh installation. USB/ADB still drops
-occasionally; disconnecting USB for ten seconds and reconnecting restored it.
+SIM 2 IMS voice registration and validated LTE data passed on the fresh installation
+on 29 October after a [capability-refresh fix](android81/IMS-DUAL-SLOT.md). Calls
+were not repeated. USB/ADB still drops occasionally; disconnecting USB for ten
+seconds and reconnecting restored it.
 
 The development system now includes [Romanian/European APN defaults](android81/APN-CATALOG.md):
 844 public profiles, including 18 for Romania, with Internet/MMS/IMS and MVNO

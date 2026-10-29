@@ -1,5 +1,10 @@
 # Romanian and European APN catalogue
 
+**29 October update:** the [dual-slot investigation](IMS-DUAL-SLOT.md) fixed stale
+voice-capability reporting. The fresh-install selected-SIM IMS/LTE verifier now
+passes on Orange SIM 2; simultaneous dual VoLTE remains unverified. The earlier
+failure recorded below describes the pre-fix state.
+
 Installed on the development Nokia on 28 October 2026. The system XML contains
 **844 public carrier profiles**, including **18 Romanian profiles**, covering
 all EU27 countries plus Iceland, Liechtenstein, Norway, Switzerland, the UK,
