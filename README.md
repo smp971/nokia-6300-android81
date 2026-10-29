@@ -49,6 +49,9 @@ The development system now includes [Romanian/European APN defaults](android81/A
 844 public profiles, including 18 for Romania, with Internet/MMS/IMS and MVNO
 matching retained. Both SIMs report LTE-preferred mode, but simultaneous dual LTE
 and dual VoLTE are not yet validated; the current IMS port manages one selected slot.
+The first [VoWiFi trial](android81/VOWIFI-BRINGUP.md) accepted the modem's WFC
+setting on SIM 2, but registration stayed on the mobile network. The setting was
+restored; Wi-Fi calling is not functional yet.
 
 | Package | Purpose and limits |
 | --- | --- |

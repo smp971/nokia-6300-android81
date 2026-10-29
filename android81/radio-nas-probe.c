@@ -79,5 +79,38 @@ int main(int argc,char **argv) {
         }
         i+=len;
     }
+    release(client);client=0;
+    /* IMS settings GET_CLIENT_PROVISIONING_CONFIG, read only. This old IDL has
+     * no subscription binding: label the default scope rather than assume SIM 2. */
+    get=dlsym(svc,"imss_get_service_object_internal_v01");obj=0;
+    if(get)for(int minor=0;minor<512&&!obj;minor++)obj=get(1,minor,6);
+    if(!obj||lookup(obj,0,info)||init(info,obj,0,0,os,&client))return 1;
+    size=0;rc=send(client,0x54,0,0,response,sizeof(response),&size,5000);
+    printf("ims-settings-default-scope transport=%d result=%d\n",rc,rc?-1:result(response,size));
+    if(!rc&&!result(response,size))for(unsigned i=0;i+3<=size;){
+        unsigned tag=response[i],len=response[i+1]|response[i+2]<<8;i+=3;
+        if(len>size-i)break;
+        if(tag>=0x15&&tag<=0x17&&len==4){
+            unsigned value=0;for(unsigned j=0;j<4;j++)value|=(unsigned)response[i+j]<<(8*j);
+            printf("ims-settings-field=0x%02x value=%u\n",tag,value);
+        }
+        i+=len;
+    }
+    for(unsigned binding=0;binding<2;binding++){
+        /* libqmi IMS Bind 0x98, uint32 TLV 1: this diagnostic client only. */
+        unsigned char bind[]={1,4,0,(unsigned char)binding,0,0,0};size=0;
+        rc=send(client,0x98,bind,sizeof(bind),response,sizeof(response),&size,5000);
+        printf("ims-settings binding=%u transport=%d result=%d\n",binding,rc,rc?-1:result(response,size));
+        if(rc||result(response,size))continue;
+        size=0;rc=send(client,0x90,0,0,response,sizeof(response),&size,5000);
+        printf("ims-services binding=%u transport=%d result=%d\n",binding,rc,rc?-1:result(response,size));
+        if(!rc&&!result(response,size))for(unsigned i=0;i+3<=size;){
+            unsigned tag=response[i],len=response[i+1]|response[i+2]<<8;i+=3;
+            if(len>size-i)break;
+            if((tag==0x11||tag==0x15||tag==0x19)&&len==1)
+                printf("ims-services-field=0x%02x value=%u\n",tag,response[i]);
+            i+=len;
+        }
+    }
     release(client);return 0;
 }
