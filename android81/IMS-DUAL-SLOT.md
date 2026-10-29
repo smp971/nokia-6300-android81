@@ -127,6 +127,46 @@ compiled successfully but was not installed for another dual observation.
 
 ## Remaining work
 
+### Read-only modem allocation follow-up, 29 October
+
+The NAS probe now also reads NAS GET_SYS_INFO (`0x4d`) and DMS GET_DEVICE_CAP
+(`0x20`). These queries distinguish allowed network preferences from current
+modem stack capabilities; they do not use Android's cached RAF fallback.
+
+Live observations, with SIM 2 still selected for data:
+
+| Modem report | First stack / SIM 1 observation | Second stack / SIM 2 observation |
+| --- | --- | --- |
+| Current DMS capability mask | `0x18`: GSM + WCDMA | `0x38`: GSM + WCDMA + LTE |
+| Client-bound NAS actual service | GSM, circuit-switched only | LTE, circuit- and packet-switched domains |
+| NAS system forbidden | false for the serving GSM system | false for the serving LTE system |
+
+DMS advertises two multi-SIM configurations: `[0x38, 0x18]` and
+`[0x18, 0x38]`. Neither advertised configuration gives both stacks LTE.
+Current multi-SIM capability is two subscriptions, maximum active count one;
+maximum active data subscriptions is one. These counts must not be confused
+with the number of subscriptions that can remain registered in standby.
+
+This establishes an allocation restriction in the currently running modem
+configuration, despite both NAS allowed-mode masks including LTE. It does not
+establish a permanent hardware limit or disprove the user's KaiOS observation.
+A live KaiOS snapshot of these same DMS/NAS fields is still required to locate
+the difference in firmware configuration, stack allocation or startup handling.
+No DDS switch, radio restart, APN/NV write, call or reboot was performed here.
+The original KaiOS init files inspected do not themselves establish dual LTE.
+
+The DMS wire schema was inspected from `qmi/services/` in the same pinned
+reference repository/revision used by the IMS reference fetcher. The ignored
+reference header SHA-256 is
+`31ba10ff8778820ddb1ea1781816333a519f05e64f525ff0e353d10b133e3727`;
+the reference C schema SHA-256 is
+`a8fd0969e2e24197e0b55988f3020a0e31fc8ba539737119603b270051dbe5d9`.
+Only whitelisted status/capability fields are printed, excluding cell and
+subscriber identities. The diagnostic binary was built and run on the Nokia;
+the original IMS/LTE verifier passed afterward.
+
+### Next steps
+
 1. Compare live per-subscription NAS/RIL allocation against a KaiOS baseline to
    explain why Digi remains GSM despite the allowed LTE mask.
 2. Validate a second real LTE/IMS registration before enabling dual IMS normally.

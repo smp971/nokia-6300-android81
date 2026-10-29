@@ -1,6 +1,7 @@
-/* Read-only NAS preference probe. Client-local subscription binding only.
+/* Read-only NAS/DMS probe. Client-local subscription binding only.
  * No system-selection, data-subscription, provisioning or NV writes.
- * Protocol: pinned Qualcomm network_access_service_v01.{h,c}, messages 0x34/0x45/0x5c.
+ * Protocol: pinned Qualcomm NAS IDL, messages 0x34/0x45/0x4d/0x5c;
+ * device_management_service_v01.{h,c}, GET_DEVICE_CAP 0x20.
  */
 extern void *dlopen(const char *, int);
 extern void *dlsym(void *, const char *);
@@ -40,6 +41,43 @@ int main(int argc,char **argv) {
         printf("slot=%u bind transport=%d result=%d\n",slot,rc,rc?-1:result(response,size));if(rc||result(response,size))continue;
         size=0;rc=send(client,0x34,0,0,response,sizeof(response),&size,5000);
         printf("slot=%u selection transport=%d result=%d\n",slot,rc,rc?-1:result(response,size));if(!rc&&!result(response,size))fields(response,size,0);
+        size=0;rc=send(client,0x4d,0,0,response,sizeof(response),&size,5000);
+        printf("slot=%u system-info transport=%d result=%d\n",slot,rc,rc?-1:result(response,size));
+        if(!rc&&!result(response,size))for(unsigned i=0;i+3<=size;){
+            unsigned tag=response[i],len=response[i+1]|response[i+2]<<8;i+=3;
+            if(len>size-i)break;
+            /* Whitelist status fields; never print cell IDs or subscriber data. */
+            if(tag>=0x12&&tag<=0x14&&len==3)
+                printf("rat=%s service=%u true_service=%u preferred_data=%u\n",
+                    tag==0x12?"GSM":tag==0x13?"UMTS":"LTE",response[i],response[i+1],response[i+2]);
+            if((tag==0x17||tag==0x18||tag==0x19)&&len>=8)
+                printf("rat=%s domain_valid=%u domain=%u capability_valid=%u capability=%u forbidden_valid=%u forbidden=%u\n",
+                    tag==0x17?"GSM":tag==0x18?"UMTS":"LTE",response[i],response[i+1],response[i+2],response[i+3],response[i+6],response[i+7]);
+            i+=len;
+        }
+    }
+    release(client);client=0;
+    /* DMS GET_DEVICE_CAP (0x20) reads current stack capabilities, not Android RAF caches.
+     * Whitelist only multi-SIM fields from the pinned DMS IDL. No identity query. */
+    get=dlsym(svc,"dms_get_service_object_internal_v01");obj=0;
+    if(get)for(int minor=0;minor<512&&!obj;minor++)obj=get(1,minor,6);
+    if(!obj||lookup(obj,0,info)||init(info,obj,0,0,os,&client))return 1;
+    size=0;rc=send(client,0x20,0,0,response,sizeof(response),&size,5000);
+    printf("device-capabilities transport=%d result=%d\n",rc,rc?-1:result(response,size));
+    if(!rc&&!result(response,size))for(unsigned i=0;i+3<=size;){
+        unsigned tag=response[i],len=response[i+1]|response[i+2]<<8;i+=3;
+        if(len>size-i)break;
+        if(tag>=0x13&&tag<=0x18&&len<=128){
+            printf("capability-field=0x%02x bytes=",tag);
+            for(unsigned j=0;j<len;j++)printf("%02x",response[i+j]);printf("\n");
+        }
+        if(tag==0x15&&len>=1&&len==1+8*response[i])for(unsigned k=0;k<response[i];k++){
+            unsigned long long mask=0;
+            for(unsigned j=0;j<8;j++)mask|=(unsigned long long)response[i+1+8*k+j]<<(8*j);
+            printf("current_stack=%u mask=0x%llx gsm=%u umts=%u lte=%u\n",k,mask,
+                !!(mask&8),!!(mask&16),!!(mask&32));
+        }
+        i+=len;
     }
     release(client);return 0;
 }
