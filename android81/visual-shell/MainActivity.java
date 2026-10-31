@@ -56,6 +56,7 @@ public final class MainActivity extends Activity {
             screen.selected = Math.max(0, Math.min(screen.order.length-1, state.getInt("selected")));
         }
         setContentView(screen);
+        if(getIntent().getBooleanExtra("edit_home",false)){getIntent().removeExtra("edit_home");screen.startEditor();}
         if(getIntent().hasExtra("open_app")){int id=getIntent().getIntExtra("open_app",-1);getIntent().removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length)screen.open(id);}
     }
     protected void onResume() {
@@ -113,10 +114,12 @@ public final class MainActivity extends Activity {
     }
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent); setIntent(intent);
+        if(intent.getBooleanExtra("edit_home",false)){intent.removeExtra("edit_home");screen.startEditor();return;}
         if(intent.hasExtra("open_app")){int id=intent.getIntExtra("open_app",-1);intent.removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length){screen.open(id);return;}}
         screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();screen.invalidate();
     }
     public void onBackPressed() {
+        if(screen.editing){screen.leaveEditor();return;}
         if (screen.grid || !screen.message.isEmpty()) {
             screen.grid = false; screen.message = ""; screen.invalidate();
         }
@@ -124,6 +127,7 @@ public final class MainActivity extends Activity {
     public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event)||navigationPace.consume(this,event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     public boolean onKeyUp(int key,KeyEvent event){if(key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9&&!screen.grid){boolean quick=key==KeyEvent.KEYCODE_5&&speedKey==key;handler.removeCallbacks(speed);speedKey=-1;if(quick)startActivity(new Intent(this,QuickHomeActivity.class));return true;}return super.onKeyUp(key,event);}
     public boolean onKeyDown(int key, KeyEvent event) {
+        if(screen.editing)return screen.editorKey(key,event.getRepeatCount());
         if(!screen.grid&&screen.shortcut>=4&&screen.cards.length>0){int type=screen.cards[screen.cardIndex].type;if((type==2||type==3)&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(event.getRepeatCount()==0){if(type==3){if(key==KeyEvent.KEYCODE_5)screen.openCard();else if(screen.favorites.length>0){screen.favoriteIndex=CircularNavigation.step(screen.favoriteIndex,key==KeyEvent.KEYCODE_4?-1:1,screen.favorites.length);screen.reloadCards();screen.invalidate();}}else{PlaybackService s=PlaybackService.instance;if(s!=null&&(s.playing()||!FmService.playing)){if(key==KeyEvent.KEYCODE_5)s.toggle();else s.next(key==KeyEvent.KEYCODE_6);}else if(FmService.playing){if(key==KeyEvent.KEYCODE_5)stopService(new Intent(this,FmService.class));else if(FmService.instance!=null)FmService.instance.seek(key==KeyEvent.KEYCODE_6);}screen.reloadCards();screen.invalidate();}}return true;}}
         if(!screen.grid&&key==KeyEvent.KEYCODE_1){if(event.getRepeatCount()==0)startActivity(new Intent(this,GlobalSearchActivity.class));return true;}
         if(!screen.grid&&key==KeyEvent.KEYCODE_0){if(event.getRepeatCount()==0)startActivity(new Intent(this,NowPlayingActivity.class));return true;}
@@ -137,9 +141,10 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         new KeypadDialog(this,L.t("Opțiuni"),new String[]{L.t("Schimbă fundalul"), L.t("Mouse din taste"), L.t("Notificări"), L.t("Despre"),
-                screen.list?L.t("Afișare grilă"):L.t("Afișare listă"),L.t("Configurări rapide"),L.t("Personalizare"),L.t("Reordonează aplicațiile"),L.t("Media curentă"),L.t("Caută în Leo"),L.t("Acces rapid Home"),L.t("Categorii aplicații")}, new KeypadDialog.Action() {
+                screen.list?L.t("Afișare grilă"):L.t("Afișare listă"),L.t("Configurări rapide"),L.t("Personalizare"),L.t("Reordonează aplicațiile"),L.t("Media curentă"),L.t("Caută în Leo"),L.t("Acces rapid Home"),L.t("Categorii aplicații"),L.t("Editor Home")}, new KeypadDialog.Action() {
               public void select(int which) {
-                if(which==11){new KeypadDialog(MainActivity.this,L.t("Categorii"),AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int at){screen.category(at);}}).show();}
+                if(which==12){screen.startEditor();}
+                else if(which==11){new KeypadDialog(MainActivity.this,L.t("Categorii"),AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int at){screen.category(at);}}).show();}
                 else if(which==10){startActivity(new Intent(MainActivity.this,QuickHomeActivity.class));}
                 else if(which==9){startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));}
                 else if(which==8){startActivity(new Intent(MainActivity.this,NowPlayingActivity.class));}
@@ -166,9 +171,24 @@ public final class MainActivity extends Activity {
             }).show();
     }
     private void notifications() {
-        startActivity(new Intent(this,NotificationsActivity.class));
+        if(!LeoPointerService.openAndroidPanel(false))startActivity(new Intent(this,NotificationsActivity.class));
     }
     private final class Screen extends View {
+        HomeCanvasLayout homeLayout=new HomeCanvasLayout(MainActivity.this);
+        boolean editing;int editItem;
+        void startEditor(){LeoPointerService.pauseForHomeEditor();homeLayout=new HomeCanvasLayout(MainActivity.this);editing=true;grid=false;shortcut=-1;editItem=2;invalidate();android.widget.Toast.makeText(MainActivity.this,L.t("Săgeți: mută · * / #: element · OK: aspect · stânga: salvează"),android.widget.Toast.LENGTH_LONG).show();}
+        void leaveEditor(){new KeypadDialog(MainActivity.this,L.t("Editor Home"),new String[]{L.t("Continuă editarea"),L.t("Salvează și închide"),L.t("Renunță la modificări")},new KeypadDialog.Action(){public void select(int i){if(i==1)homeLayout.save(MainActivity.this);if(i>0){editing=false;homeLayout=new HomeCanvasLayout(MainActivity.this);invalidate();}}}).show();}
+        boolean editorKey(int key,int repeat){
+            if(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){homeLayout.alignment[editItem]=0;homeLayout.x[editItem]+=key==KeyEvent.KEYCODE_DPAD_LEFT?-2:2;}
+            else if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_DOWN)homeLayout.y[editItem]+=key==KeyEvent.KEYCODE_DPAD_UP?-2:2;
+            else if(key==KeyEvent.KEYCODE_STAR||key==KeyEvent.KEYCODE_POUND){if(repeat==0)editItem=Math.floorMod(editItem+(key==KeyEvent.KEYCODE_STAR?-1:1),HomeCanvasLayout.COUNT);}
+            else if(key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER){if(repeat==0)editorOptions();}
+            else if(key==KeyEvent.KEYCODE_MENU||key==KeyEvent.KEYCODE_SOFT_LEFT){if(repeat==0){homeLayout.save(MainActivity.this);editing=false;}}
+            else if(key==KeyEvent.KEYCODE_BACK||key==KeyEvent.KEYCODE_SOFT_RIGHT){if(repeat==0)leaveEditor();}
+            invalidate();return true;
+        }
+        void editorOptions(){new KeypadDialog(MainActivity.this,L.t(HomeCanvasLayout.NAMES[editItem]),new String[]{L.t("Mărește")+" · "+homeLayout.size[editItem]+"%",L.t("Micșorează"),L.t("Rotește elementul")+" · "+homeLayout.rotation[editItem]*90+"°",L.t("Aliniere: liber / stânga / centru / dreapta"),L.t("Arată / ascunde"),L.t("Resetează elementul"),L.t("Resetează tot ecranul"),L.t("Salvează și închide")},new KeypadDialog.Action(){public void select(int i){if(i==0)homeLayout.size[editItem]=Math.min(150,homeLayout.size[editItem]+5);else if(i==1)homeLayout.size[editItem]=Math.max(50,homeLayout.size[editItem]-5);else if(i==2)homeLayout.rotation[editItem]=(homeLayout.rotation[editItem]+1)%4;else if(i==3)homeLayout.alignment[editItem]=(homeLayout.alignment[editItem]+1)%4;else if(i==4)homeLayout.visible[editItem]=!homeLayout.visible[editItem];else if(i==5)homeLayout.reset(editItem);else if(i==6){new KeypadDialog(MainActivity.this,L.t("Resetează tot ecranul"),new String[]{L.t("Anulează"),L.t("Resetează")},new KeypadDialog.Action(){public void select(int choice){if(choice==1)for(int item=0;item<HomeCanvasLayout.COUNT;item++)homeLayout.reset(item);invalidate();}}).show();}else if(i==7){homeLayout.save(MainActivity.this);editing=false;}invalidate();}}).show();}
+        boolean homePart(Canvas c,int id,float l,float t,float r,float b){return homeLayout.begin(c,id,l,t,r,b,editing);}
         final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         final RectF box = new RectF();
         final Path path = new Path();
@@ -181,6 +201,7 @@ public final class MainActivity extends Activity {
         long wallpaperStamp=-1,wallpaperSize=-1;boolean highContrast;
         int theme;
         void reloadAppearance() {
+            if(!editing)homeLayout=new HomeCanvasLayout(MainActivity.this);
             android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
             compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);showDbm=appearance.getBoolean("home-dbm",true);
             order=AppCatalog.menuOrder(MainActivity.this,category);selected=Math.max(0,Math.min(selected,order.length-1));shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
@@ -368,7 +389,7 @@ public final class MainActivity extends Activity {
         }
         void line(Canvas c,float x1,float y1,float x2,float y2) { c.drawLine(x1,y1,x2,y2,p); }
         final IconArt artwork=new IconArt();
-        void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);int count=index==0?UnreadState.calls:index==2?UnreadState.sms:0;if(count>0){round(c,x+5,y-28,x+29,y-8,8,0xffd93657);text(c,count>9?"9+":""+count,x+17,y-13,11,Color.WHITE,Paint.Align.CENTER);}}
+        void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);int count=index==0?UnreadState.calls:index==2?UnreadState.sms:0;if(showUnread&&count>0){p.setColor(palette.bar);c.drawCircle(x+20,y-20,7,p);p.setColor(0xffff577a);c.drawCircle(x+20,y-20,5,p);}}
         protected void onDraw(Canvas output) {
             long drawStart=android.os.SystemClock.elapsedRealtimeNanos();super.onDraw(output);
             output.drawColor(palette.background);
@@ -377,24 +398,26 @@ public final class MainActivity extends Activity {
             if (!grid) {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
                 boolean cardLayout=cards.length>0,small=compactClock||cardLayout;
-                round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);
-                text(output,networkBanner,120,27,10,0xffeee8fa,Paint.Align.CENTER);
-                text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);
-                text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);
+                if(homePart(output,0,10,10,230,showSims?(cardLayout?136:151):118)){round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);output.restore();}
+                if(homePart(output,1,10,15,230,30)){text(output,networkBanner,120,27,10,0xffeee8fa,Paint.Align.CENTER);output.restore();}
+                p.setTypeface(regular);p.setTextSize((small?36:54)*textScale);float clockWidth=Math.min(220,p.measureText(time)+8);
+                if(homePart(output,2,120-clockWidth/2,small?32:38,120+clockWidth/2,small?70:94)){text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);output.restore();}
+                if(homePart(output,3,12,small?73:94,228,small?91:112)){text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);output.restore();}
+                if(homePart(output,4,10,small?98:114,230,small?132:148)){
                 for(int slot=0;showSims&&slot<2;slot++) {
                     String label = simLabels[slot]+(showDbm&&inService[slot]&&signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":""); p.setTypeface(regular); p.setTextSize(11);
                     while(label.length()>1 && p.measureText(label)>220) label=label.substring(0,label.length()-2)+"…";
                     text(output,label,120,(small?112:128)+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
                 }
-                if(showUnread){if(!cardLayout)round(output,12,158,228,187,4,wallpaper==null?palette.card:0xcc111827);
-                text(output,UnreadState.label(),120,cardLayout?149:177,cardLayout?10:12,Color.WHITE,Paint.Align.CENTER);}
-                if(cardLayout){HomeCards.Card card=cards[cardIndex];round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(card.type==3?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,card.type==3?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(card.type==3?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,card.type==3?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);}
-                for(int i=0;i<shortcuts.length;i++){
+                output.restore();}
+                if(cardLayout&&homePart(output,5,10,156,230,211)){HomeCards.Card card=cards[cardIndex];round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(card.type==3?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,card.type==3?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(card.type==3?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,card.type==3?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);output.restore();}
+                if(homePart(output,6,7,cardLayout?215:195,233,269)){for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;
                     if(shortcut==i)round(output,x-26,cardLayout?216:196,x+26,cardLayout?256:251,4,palette.card);
                     output.save();output.translate(x,cardLayout?236:222);output.scale(cardLayout?.62f:.78f,cardLayout?.62f:.78f);icon(output,shortcuts[i],0,0);output.restore();
                     text(output,names[shortcuts[i]],x,263,10,Color.WHITE,Paint.Align.CENTER);
-                }
+                }output.restore();}
+                if(editing){RectF frame=homeLayout.frames[editItem];p.setColor(palette.accent);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);output.drawRect(frame,p);p.setStyle(Paint.Style.FILL);}
             } else {
                 p.setColor(palette.background); output.drawRect(0,0,240,276,p);
                 p.setColor(palette.bar);output.drawRect(0,0,240,34,p);
@@ -430,9 +453,9 @@ public final class MainActivity extends Activity {
             p.setColor(palette.bar); output.drawRect(0,276,240,302,p);
             p.setColor(Appearance.mix(palette.card,palette.accent,.25f));output.drawRect(0,276,240,277,p);
             round(output,82,280,158,299,5,Appearance.mix(palette.bar,palette.accent,.12f));
-            text(output,grid?L.t("Opțiuni"):L.t("Notificări"),8,293,11,Color.WHITE,Paint.Align.LEFT);
-            text(output,grid?L.t("Deschide"):shortcut>=0?L.t("Deschide"):L.t("Meniu"),120,293,12,palette.accent,Paint.Align.CENTER);
-            text(output,grid||shortcut>=0?L.t("Înapoi"):L.t("Contacte"),232,293,11,Color.WHITE,Paint.Align.RIGHT);
+            text(output,editing?L.t("Salvează"):grid?L.t("Opțiuni"):L.t("Notificări"),8,293,11,Color.WHITE,Paint.Align.LEFT);
+            text(output,editing?L.t(HomeCanvasLayout.NAMES[editItem]):grid?L.t("Deschide"):shortcut>=0?L.t("Deschide"):L.t("Meniu"),120,293,editing?9:12,palette.accent,Paint.Align.CENTER);
+            text(output,editing?L.t("Înapoi"):grid||shortcut>=0?L.t("Înapoi"):L.t("Contacte"),232,293,11,Color.WHITE,Paint.Align.RIGHT);
             output.restore();UiMetrics.draw(android.os.SystemClock.elapsedRealtimeNanos()-drawStart);
         }
     }

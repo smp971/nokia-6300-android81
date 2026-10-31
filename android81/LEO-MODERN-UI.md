@@ -30,10 +30,9 @@ Accessibility contrast/text size and the previous in-place footer updates remain
 `build-framework-keypad.sh` pipeline applies it after the keypad patches.
 
 - The real Android clock moves left, before notification icons.
-- Each active mobile signal group receives its **physical SIM slot number**.
-  Subscription IDs are not shown as slot numbers. Android still controls signal,
-  roaming, data type, airplane mode, Wi-Fi, Bluetooth and battery indicators.
-- Slot labels follow Android's dark/light icon tint over other applications.
+- Numeric slot labels are hidden as of 31 October to avoid collisions with 4G.
+  Android still controls both signal groups, roaming, data type, airplane mode,
+  Wi-Fi, Bluetooth and battery indicators.
 - System bar and notification panel base colours use the navy palette.
 - A diagnostic null guard handles the deliberately absent software navigation
   bar; stock Oreo's SystemUI dump otherwise crashes when accessing its controller.

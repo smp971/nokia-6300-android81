@@ -77,9 +77,15 @@ intermittent; KaiOS radio/media services need separate tests.
 ## Screenshots
 
 **Leo Modern UI foundation (28 October):** navy/teal shared chrome, clearer focus
-and softkeys, and native SystemUI with a left clock and physical SIM-slot labels.
+and softkeys, and native SystemUI with a left clock. The 31 October update hides
+numeric SIM-slot labels to avoid collisions with the LTE/4G indicators.
 Installed on the development phone; the published ROM ZIP still predates it.
 [Design, build and validation](android81/LEO-MODERN-UI.md).
+
+**Home customization (31 October):** an [on-device Home editor](android81/HOME-EDITOR.md)
+adds movement, sizing, item rotation, alignment, visibility and reset controls.
+Home and the global menu now open Android's notification shade. Phone/Messages
+use unread dots, replacing the permanent SMS/missed-call summary row.
 
 | Leo Modern Home | Shared settings chrome | System bar over Android Settings |
 | :---: | :---: | :---: |

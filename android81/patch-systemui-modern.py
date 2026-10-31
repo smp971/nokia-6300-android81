@@ -56,6 +56,10 @@ def patch(source):
             if (mLeoSlot != null) mLeoSlot.setTextColor(
                     DarkIconDispatcher.getTint(tintArea, mLeoSlot, tint));
 ''')
+    # Keep the existing controller/views, but give slot labels no pixels or width.
+    # LTE type icons already identify their own signal group on this 240px bar.
+    if 'mLeoSlot.setVisibility(View.GONE)' not in text:
+        text = text.replace('mLeoSlot.setTextSize(8);', 'mLeoSlot.setTextSize(8);\n                mLeoSlot.setVisibility(View.GONE);')
     changes[java] = text
 
     # This keypad device deliberately has no software navigation bar. Stock

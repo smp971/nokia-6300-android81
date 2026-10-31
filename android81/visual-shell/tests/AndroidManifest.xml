@@ -50,4 +50,5 @@
     <instrumentation android:name="ro.leo.visual.DailyCandidateTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.DailyToolsTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.DailyExperienceTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.HomeCanvasTests" android:targetPackage="ro.leo.visual" />
 </manifest>

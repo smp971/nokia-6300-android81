@@ -83,6 +83,7 @@ public final class LeoPointerService extends AccessibilityService {
         if(!screenWatching){android.content.IntentFilter f=new android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF);f.addAction(android.content.Intent.ACTION_SCREEN_ON);registerReceiver(screenReceiver,f);screenWatching=true;}
     }
     static boolean connected(){return instance!=null;}
+    static void pauseForHomeEditor(){if(instance!=null)instance.setActive(false);}
     public static boolean toggle() {
         if(instance==null) return false;
         instance.setActive(!instance.active); return true;
@@ -112,7 +113,7 @@ public final class LeoPointerService extends AccessibilityService {
                     if(which==9){closeForeground();return;}
                     if(which==8){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,RecentAppsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}
                     if(which==7) startActivity(new android.content.Intent(LeoPointerService.this,NowPlayingActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
-                    else if(which==0) startActivity(new android.content.Intent(LeoPointerService.this,NotificationsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                    else if(which==0) { if(!openAndroidPanel(false))startActivity(new android.content.Intent(LeoPointerService.this,NotificationsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)); }
                     else if(which==1) setActive(!active);
                     else if(which==2) performGlobalAction(GLOBAL_ACTION_HOME);
                     else if(which==3) startActivity(new android.content.Intent(LeoPointerService.this,SettingsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
