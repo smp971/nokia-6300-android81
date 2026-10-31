@@ -86,6 +86,9 @@ Installed on the development phone; the published ROM ZIP still predates it.
 adds movement, sizing, item rotation, alignment, visibility and reset controls.
 Home and the global menu now open Android's notification shade. Phone/Messages
 use unread dots, replacing the permanent SMS/missed-call summary row.
+The [dashboard follow-up](android81/DASHBOARD-WAKE.md) adds cached-condition
+weather symbols, separate editable SIM icon rows, removes Home dBm text, and
+enables display wake from built-in keypad keys.
 
 | Leo Modern Home | Shared settings chrome | System bar over Android Settings |
 | :---: | :---: | :---: |

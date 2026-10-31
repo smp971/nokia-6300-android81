@@ -38,6 +38,22 @@ public final class HomeCanvasTests extends Instrumentation {
                 loaded.begin(c,item,bounds.left,bounds.top,bounds.right,bounds.bottom,true);c.restore();
                 check(Math.abs(loaded.frames[item].centerX()-initial+20)<.01f,"text moves left through available empty space: "+index);checks++;
             }
+            SharedPreferences legacy=context.getSharedPreferences(name,0);legacy.edit().clear().putInt("4x",14).putInt("4y",-12).putInt("4size",120).putInt("4rotation",1).commit();
+            HomeCanvasLayout split=new HomeCanvasLayout(context);
+            RectF group=new RectF(60,90,180,126),first=new RectF(60,90,125,110),second=new RectF(60,105,180,125);
+            Matrix expected=new Matrix();expected.setTranslate(-120,-108);expected.postScale(1.2f,1.2f);expected.postRotate(90);expected.postTranslate(134,96);
+            float[] centers={first.centerX(),first.centerY(),second.centerX(),second.centerY()};expected.mapPoints(centers);
+            split.splitSims(group,first,second);
+            for(int row=0;row<2;row++){int id=row==0?4:7;RectF bounds=row==0?first:second;split.begin(c,id,bounds.left,bounds.top,bounds.right,bounds.bottom,true);c.restore();
+                check(Math.abs(split.frames[id].centerX()-centers[row*2])<1&&Math.abs(split.frames[id].centerY()-centers[row*2+1])<1,"legacy SIM placement retained: "+row);checks++;
+            }
+            int secondX=split.x[7];float firstX=split.frames[4].centerX();split.x[4]-=10;
+            split.begin(c,4,first.left,first.top,first.right,first.bottom,true);c.restore();
+            check(Math.abs(split.frames[4].centerX()-firstX+10)<1&&split.x[7]==secondX,"SIM rows move independently");checks++;
+            split.save(context);HomeCanvasLayout savedSplit=new HomeCanvasLayout(context);savedSplit.splitSims(group,first,second);
+            check(savedSplit.x[4]==split.x[4]&&savedSplit.x[7]==secondX,"split layout reload does not remigrate");checks++;
+            check(HomeCanvasLayout.nextItem(4,1)==7&&HomeCanvasLayout.nextItem(7,-1)==4&&HomeCanvasLayout.nextItem(6,1)==0,"SIM rows consecutive in editor navigation");checks++;
+            check(BackupEngine.allowed("home-canvas","7visible","boolean")&&BackupEngine.allowed("home-canvas","7x","int")&&!BackupEngine.allowed("home-canvas","8x","int"),"backup accepts the separate second SIM only");checks++;
             result.putString("result","PASS "+checks+" Home canvas persistence, bounds, orientation and visibility checks");
         }catch(Throwable error){result.putString("error",android.util.Log.getStackTraceString(error));}
         finally{context.getSharedPreferences(name,0).edit().clear().commit();image.recycle();}

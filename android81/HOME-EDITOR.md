@@ -31,8 +31,11 @@ Home canvas with a selection outline, using the current wallpaper and live data.
 - Left softkey: save and leave the editor.
 - Back / right softkey: continue editing, save or discard.
 
-Seven editable groups cover the information-panel background, network banner,
-clock, date, SIM rows, card carousel and shortcut row. Size ranges from 50–150%;
+Eight editable groups cover the information-panel background, network banner,
+clock, date, SIM 1, SIM 2, card carousel and shortcut row. The two SIM rows are
+consecutive in the editor selector and can move, rotate or hide independently.
+Legacy combined-row layouts are migrated without resetting their placement.
+Size ranges from 50–150%;
 each element can rotate in 90-degree steps and align freely, left, centre or
 right. Rotation applies to the selected Home element. The Android status bar,
 system orientation and the fixed softkey controls keep their normal behavior.
@@ -53,12 +56,13 @@ their system-base copies were synchronized with hash-verified local backups.
 SystemUI's timed installation rollback was acknowledged after the status bar
 rendered correctly. The standard Android notification shade opened through the
 Home shortcut. The editor responded to an injected D-pad move and its discard
-menu. Twenty-two isolated on-device checks passed for draft/save/reload, all four
-rotations at screen edges, hidden-element canvas state and reset behavior.
+menu. Twenty-eight isolated on-device checks passed for draft/save/reload, all four
+rotations at screen edges, hidden-element canvas state, reset behavior, separate
+SIM movement, legacy-placement migration and backup support for the second row.
 These checks did not modify user Home preferences or place calls/send messages.
 
 The text-movement follow-up uses measured glyph widths and font metrics for the
-network banner, clock and date, plus the union of the two SIM text lines. Their
+network banner, clock and date. The icon/text bounds of each SIM row are separate. Their
 selection bounds no longer reserve an almost full-width row. Regression checks
 verify movement through the available horizontal space in both directions.
 

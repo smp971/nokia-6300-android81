@@ -96,14 +96,12 @@ public final class MainActivity extends Activity {
             if (active != null) for (SubscriptionInfo info : active) {
                 TelephonyManager phone = ((TelephonyManager)getSystemService(TELEPHONY_SERVICE))
                     .createForSubscriptionId(info.getSubscriptionId());
-                final int slot=info.getSimSlotIndex();
                 PhoneStateListener listener = new PhoneStateListener() {
                     public void onServiceStateChanged(ServiceState state) { screen.refresh(); }
                     public void onDataConnectionStateChanged(int state, int type) { screen.refresh(); }
-                    public void onSignalStrengthsChanged(android.telephony.SignalStrength strength){if(slot>=0&&slot<2){int dbm=NetworkTelemetry.dbm(strength);if(screen.signalDbm[slot]!=dbm){screen.signalDbm[slot]=dbm;if(!screen.grid)screen.invalidate();}}}
                 };
                 phones.add(phone); phoneListeners.add(listener);
-                phone.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
+                phone.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE);
             }
         } catch (RuntimeException ignored) { }
         screen.refresh();
@@ -181,7 +179,7 @@ public final class MainActivity extends Activity {
         boolean editorKey(int key,int repeat){
             if(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT){homeLayout.alignment[editItem]=0;homeLayout.x[editItem]+=key==KeyEvent.KEYCODE_DPAD_LEFT?-2:2;}
             else if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_DOWN)homeLayout.y[editItem]+=key==KeyEvent.KEYCODE_DPAD_UP?-2:2;
-            else if(key==KeyEvent.KEYCODE_STAR||key==KeyEvent.KEYCODE_POUND){if(repeat==0)editItem=Math.floorMod(editItem+(key==KeyEvent.KEYCODE_STAR?-1:1),HomeCanvasLayout.COUNT);}
+            else if(key==KeyEvent.KEYCODE_STAR||key==KeyEvent.KEYCODE_POUND){if(repeat==0)editItem=HomeCanvasLayout.nextItem(editItem,key==KeyEvent.KEYCODE_STAR?-1:1);}
             else if(key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER){if(repeat==0)editorOptions();}
             else if(key==KeyEvent.KEYCODE_MENU||key==KeyEvent.KEYCODE_SOFT_LEFT){if(repeat==0){homeLayout.save(MainActivity.this);editing=false;}}
             else if(key==KeyEvent.KEYCODE_BACK||key==KeyEvent.KEYCODE_SOFT_RIGHT){if(repeat==0)leaveEditor();}
@@ -203,7 +201,7 @@ public final class MainActivity extends Activity {
         void reloadAppearance() {
             if(!editing)homeLayout=new HomeCanvasLayout(MainActivity.this);
             android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
-            compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);showDbm=appearance.getBoolean("home-dbm",true);
+            compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);
             order=AppCatalog.menuOrder(MainActivity.this,category);selected=Math.max(0,Math.min(selected,order.length-1));shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);getWindow().setStatusBarColor(palette.bar);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
@@ -229,12 +227,11 @@ public final class MainActivity extends Activity {
         int[] order=AppCatalog.menuOrder(MainActivity.this,0);
         float textScale=1f;
         Appearance.Palette palette=Appearance.palette(MainActivity.this);
-        boolean compactClock,showSims=true,showUnread=true,showDbm=true;
+        boolean compactClock,showSims=true,showUnread=true;
         final SimpleDateFormat timeFormat=new SimpleDateFormat("HH:mm",Locale.getDefault());
         final SimpleDateFormat dateFormat=new SimpleDateFormat("EEEE, d MMMM",L.locale());
         String time = "", date = "", message = "", networkBanner="L E O · ACTIVE STANDBY";
-        final String[] simLabels = {L.t("SIM 1: se verifică"), L.t("SIM 2: se verifică")};
-        final int[] signalDbm={Integer.MIN_VALUE,Integer.MIN_VALUE};
+        final String[] simLabels = {L.t("se verifică"), L.t("se verifică")};
         final boolean[] inService={false,false};
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
         public boolean isOpaque(){return true;}
@@ -254,14 +251,13 @@ public final class MainActivity extends Activity {
             TelephonyManager base = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
             for(int slot=0;slot<2;slot++) {
                 inService[slot]=false;
-                String prefix = "SIM " + (slot+1) + ": ";
                 try {
                     int sim = base.getSimState(slot);
                     String status = sim == TelephonyManager.SIM_STATE_ABSENT ? L.t("lipsă")
                         : sim == TelephonyManager.SIM_STATE_PIN_REQUIRED ? L.t("PIN necesar")
                         : sim == TelephonyManager.SIM_STATE_PUK_REQUIRED ? L.t("PUK necesar")
                         : sim == TelephonyManager.SIM_STATE_READY ? L.t("se conectează") : L.t("indisponibil");
-                    simLabels[slot] = prefix + status;
+                    simLabels[slot] = status;
                     if (sim != TelephonyManager.SIM_STATE_READY) continue;
                     List<SubscriptionInfo> active = ((SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE)).getActiveSubscriptionInfoList();
                     if(active == null) continue;
@@ -271,7 +267,7 @@ public final class MainActivity extends Activity {
                         if(carrier == null || carrier.isEmpty()) carrier = info.getCarrierName() == null ? "" : info.getCarrierName().toString();
                         ServiceState service = phone.getServiceState();
                         String name = carrier.isEmpty() ? "operator" : carrier;
-                        if(service == null) simLabels[slot] = prefix + L.t("se verifică");
+                        if(service == null) simLabels[slot] = L.t("se verifică");
                         else if(service.getState() == ServiceState.STATE_IN_SERVICE) {
                             inService[slot]=true;
                             int type = phone.getDataNetworkType();
@@ -279,14 +275,14 @@ public final class MainActivity extends Activity {
                                 : (type == TelephonyManager.NETWORK_TYPE_UMTS || type == TelephonyManager.NETWORK_TYPE_HSDPA
                                 || type == TelephonyManager.NETWORK_TYPE_HSUPA || type == TelephonyManager.NETWORK_TYPE_HSPA
                                 || type == TelephonyManager.NETWORK_TYPE_HSPAP) ? " · 3G" : L.t(" · conectat");
-                            simLabels[slot] = prefix + name + rat;
-                        } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = prefix + L.t("doar urgențe");
-                        else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = prefix + L.t("radio oprit");
-                        else simLabels[slot] = prefix + L.t("fără serviciu");
+                            simLabels[slot] = name + rat;
+                        } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = L.t("doar urgențe");
+                        else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = L.t("radio oprit");
+                        else simLabels[slot] = L.t("fără serviciu");
                         break;
                     }
-                } catch(SecurityException ignored) { simLabels[slot] = prefix + L.t("acces neacordat"); }
-                catch(RuntimeException ignored) { simLabels[slot] = prefix + L.t("indisponibil"); }
+                } catch(SecurityException ignored) { simLabels[slot] = L.t("acces neacordat"); }
+                catch(RuntimeException ignored) { simLabels[slot] = L.t("indisponibil"); }
             }
         }
         boolean key(int key, int repeat) {
@@ -396,6 +392,7 @@ public final class MainActivity extends Activity {
         }
         void line(Canvas c,float x1,float y1,float x2,float y2) { c.drawLine(x1,y1,x2,y2,p); }
         final IconArt artwork=new IconArt();
+        final DashboardArt dashboardArt=new DashboardArt();
         void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);int count=index==0?UnreadState.calls:index==2?UnreadState.sms:0;if(showUnread&&count>0){p.setColor(palette.bar);c.drawCircle(x+20,y-20,7,p);p.setColor(0xffff577a);c.drawCircle(x+20,y-20,5,p);}}
         protected void onDraw(Canvas output) {
             long drawStart=android.os.SystemClock.elapsedRealtimeNanos();super.onDraw(output);
@@ -410,21 +407,25 @@ public final class MainActivity extends Activity {
                 if(homeTextPart(output,2,time,small?64:86,small?36:54)){text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);output.restore();}
                 if(homeTextPart(output,3,date,small?87:108,13)){text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);output.restore();}
                 if(showSims){
-                    String[] labels=new String[2];RectF simBounds=new RectF();
+                    String[] labels=new String[2];float[] widths=new float[2];float width=0;
                     for(int slot=0;slot<2;slot++){
-                        labels[slot]=simLabels[slot]+(showDbm&&inService[slot]&&signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":"");
-                        prepareText(labels[slot],11);
-                        while(labels[slot].length()>1&&p.measureText(labels[slot])>220)labels[slot]=labels[slot].substring(0,labels[slot].length()-2)+"…";
-                        prepareText(labels[slot],11);
-                        RectF lineBounds=HomeCanvasLayout.textBounds(p,labels[slot],120,(small?112:128)+slot*15);
-                        if(slot==0)simBounds.set(lineBounds);else simBounds.union(lineBounds);
+                        labels[slot]=simLabels[slot];p.setTypeface(regular);p.setTextSize(11*textScale);
+                        while(labels[slot].length()>1&&p.measureText(labels[slot])>198)labels[slot]=labels[slot].substring(0,labels[slot].length()-2)+"\u2026";
+                        widths[slot]=p.measureText(labels[slot])+26;width=Math.max(width,widths[slot]);
                     }
-                    if(homePart(output,4,simBounds.left,simBounds.top,simBounds.right,simBounds.bottom)){
-                        for(int slot=0;slot<2;slot++)text(output,labels[slot],120,(small?112:128)+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
-                        output.restore();
+                    float left=120-width/2,baseline=small?112:128;
+                    RectF first=new RectF(left,baseline-16,left+widths[0],baseline+4),second=new RectF(left,baseline-1,left+widths[1],baseline+19);
+                    homeLayout.splitSims(new RectF(left,baseline-16,left+width,baseline+20),first,second);
+                    for(int slot=0;slot<2;slot++){
+                        RectF row=slot==0?first:second;
+                        if(homePart(output,slot==0?4:7,row.left,row.top,row.right,row.bottom)){
+                            dashboardArt.sim(output,left+9,baseline+slot*15,slot,inService[slot]);
+                            text(output,labels[slot],left+23,baseline+slot*15,11,0xffe4cdec,Paint.Align.LEFT);
+                            output.restore();
+                        }
                     }
                 }
-                if(cardLayout&&homePart(output,5,10,156,230,211)){HomeCards.Card card=cards[cardIndex];round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(card.type==3?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,card.type==3?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(card.type==3?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,card.type==3?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);output.restore();}
+                if(cardLayout&&homePart(output,5,10,156,230,211)){HomeCards.Card card=cards[cardIndex];boolean leading=card.type==0||card.type==3;round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}if(card.type==0)dashboardArt.weather(output,31,189,30,card.weatherCode);text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(leading?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,leading?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(leading?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,leading?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);output.restore();}
                 if(homePart(output,6,7,cardLayout?215:195,233,269)){for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;
                     if(shortcut==i)round(output,x-26,cardLayout?216:196,x+26,cardLayout?256:251,4,palette.card);
