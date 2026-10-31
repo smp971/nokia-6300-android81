@@ -380,9 +380,16 @@ public final class MainActivity extends Activity {
             try { startActivity(intent); }
             catch (RuntimeException ignored) { message = L.t("Nu se poate deschide"); invalidate(); }
         }
-        void text(Canvas c, String s, float x, float y, float size, int color, Paint.Align align) {
+        void prepareText(String s,float size){
             p.setShader(null); p.setStyle(Paint.Style.FILL); p.setTypeface(regular);
-            p.setTextSize(size*(size<26?textScale:1f));while(p.measureText(s)>220&&p.getTextSize()>9)p.setTextSize(p.getTextSize()-1); p.setColor(color); p.setTextAlign(align); c.drawText(s, x, y, p);
+            p.setTextSize(size*(size<26?textScale:1f));while(p.measureText(s)>220&&p.getTextSize()>9)p.setTextSize(p.getTextSize()-1);
+        }
+        boolean homeTextPart(Canvas c,int id,String s,float baseline,float size){
+            prepareText(s,size);RectF bounds=HomeCanvasLayout.textBounds(p,s,120,baseline);
+            return homePart(c,id,bounds.left,bounds.top,bounds.right,bounds.bottom);
+        }
+        void text(Canvas c, String s, float x, float y, float size, int color, Paint.Align align) {
+            prepareText(s,size);p.setColor(color); p.setTextAlign(align); c.drawText(s, x, y, p);
         }
         void round(Canvas c, float l, float t, float r, float b, float radius, int color) {
             p.setShader(null); p.setColor(color); p.setStyle(Paint.Style.FILL); box.set(l,t,r,b); c.drawRoundRect(box,Math.min(radius,4),Math.min(radius,4),p);
@@ -399,17 +406,24 @@ public final class MainActivity extends Activity {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
                 boolean cardLayout=cards.length>0,small=compactClock||cardLayout;
                 if(homePart(output,0,10,10,230,showSims?(cardLayout?136:151):118)){round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);output.restore();}
-                if(homePart(output,1,10,15,230,30)){text(output,networkBanner,120,27,10,0xffeee8fa,Paint.Align.CENTER);output.restore();}
-                p.setTypeface(regular);p.setTextSize((small?36:54)*textScale);float clockWidth=Math.min(220,p.measureText(time)+8);
-                if(homePart(output,2,120-clockWidth/2,small?32:38,120+clockWidth/2,small?70:94)){text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);output.restore();}
-                if(homePart(output,3,12,small?73:94,228,small?91:112)){text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);output.restore();}
-                if(homePart(output,4,10,small?98:114,230,small?132:148)){
-                for(int slot=0;showSims&&slot<2;slot++) {
-                    String label = simLabels[slot]+(showDbm&&inService[slot]&&signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":""); p.setTypeface(regular); p.setTextSize(11);
-                    while(label.length()>1 && p.measureText(label)>220) label=label.substring(0,label.length()-2)+"…";
-                    text(output,label,120,(small?112:128)+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
+                if(homeTextPart(output,1,networkBanner,27,10)){text(output,networkBanner,120,27,10,0xffeee8fa,Paint.Align.CENTER);output.restore();}
+                if(homeTextPart(output,2,time,small?64:86,small?36:54)){text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);output.restore();}
+                if(homeTextPart(output,3,date,small?87:108,13)){text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);output.restore();}
+                if(showSims){
+                    String[] labels=new String[2];RectF simBounds=new RectF();
+                    for(int slot=0;slot<2;slot++){
+                        labels[slot]=simLabels[slot]+(showDbm&&inService[slot]&&signalDbm[slot]!=Integer.MIN_VALUE?" · "+signalDbm[slot]+" dBm":"");
+                        prepareText(labels[slot],11);
+                        while(labels[slot].length()>1&&p.measureText(labels[slot])>220)labels[slot]=labels[slot].substring(0,labels[slot].length()-2)+"…";
+                        prepareText(labels[slot],11);
+                        RectF lineBounds=HomeCanvasLayout.textBounds(p,labels[slot],120,(small?112:128)+slot*15);
+                        if(slot==0)simBounds.set(lineBounds);else simBounds.union(lineBounds);
+                    }
+                    if(homePart(output,4,simBounds.left,simBounds.top,simBounds.right,simBounds.bottom)){
+                        for(int slot=0;slot<2;slot++)text(output,labels[slot],120,(small?112:128)+slot*15,11,0xffe4cdec,Paint.Align.CENTER);
+                        output.restore();
+                    }
                 }
-                output.restore();}
                 if(cardLayout&&homePart(output,5,10,156,230,211)){HomeCards.Card card=cards[cardIndex];round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(card.type==3?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,card.type==3?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(card.type==3?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,card.type==3?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);output.restore();}
                 if(homePart(output,6,7,cardLayout?215:195,233,269)){for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;

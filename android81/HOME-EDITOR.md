@@ -53,9 +53,14 @@ their system-base copies were synchronized with hash-verified local backups.
 SystemUI's timed installation rollback was acknowledged after the status bar
 rendered correctly. The standard Android notification shade opened through the
 Home shortcut. The editor responded to an injected D-pad move and its discard
-menu. Fourteen isolated on-device checks passed for draft/save/reload, all four
+menu. Twenty-two isolated on-device checks passed for draft/save/reload, all four
 rotations at screen edges, hidden-element canvas state and reset behavior.
 These checks did not modify user Home preferences or place calls/send messages.
+
+The text-movement follow-up uses measured glyph widths and font metrics for the
+network banner, clock and date, plus the union of the two SIM text lines. Their
+selection bounds no longer reserve an almost full-width row. Regression checks
+verify movement through the available horizontal space in both directions.
 
 ![Home without permanent unread counters](screenshots/leo-home-clean.png)
 ![Home editor with clock selected](screenshots/leo-home-editor.png)

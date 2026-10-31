@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.RectF;
 
 /** Draftable Home transforms in logical screen coordinates; never rotates Android. */
@@ -19,6 +20,12 @@ final class HomeCanvasLayout {
         alignment[i]=limit(p.getInt(i+"align",0),0,3);visible[i]=p.getBoolean(i+"visible",true);frames[i]=new RectF();
     }}
     private static int limit(int value,int low,int high){return Math.max(low,Math.min(high,value));}
+    static RectF textBounds(Paint paint,String text,float center,float baseline){
+        float width=paint.measureText(text)+8;
+        Paint.FontMetrics metrics=paint.getFontMetrics();
+        return new RectF(center-width/2,baseline+metrics.ascent-2,
+            center+width/2,baseline+metrics.descent+2);
+    }
     void reset(int i){x[i]=y[i]=rotation[i]=alignment[i]=0;size[i]=100;visible[i]=true;}
     void save(Context context){SharedPreferences.Editor p=context.getSharedPreferences("home-canvas",0).edit();for(int i=0;i<COUNT;i++)
         p.putInt(i+"x",x[i]).putInt(i+"y",y[i]).putInt(i+"size",size[i]).putInt(i+"rotation",rotation[i]).putInt(i+"align",alignment[i]).putBoolean(i+"visible",visible[i]);p.apply();}

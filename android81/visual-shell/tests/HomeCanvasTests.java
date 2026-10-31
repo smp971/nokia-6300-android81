@@ -24,6 +24,20 @@ public final class HomeCanvasTests extends Instrumentation {
             loaded.visible[2]=false;int depth=c.getSaveCount();check(!loaded.begin(c,2,50,30,190,80,false)&&c.getSaveCount()==depth,"hidden item preserves canvas stack");checks++;
             check(loaded.begin(c,2,50,30,190,80,true),"hidden item available in editor");c.restore();checks++;
             loaded.reset(2);check(loaded.visible[2]&&loaded.size[2]==100&&loaded.rotation[2]==0&&loaded.x[2]==0,"reset restores safe default");checks++;
+            Paint textPaint=new Paint(Paint.ANTI_ALIAS_FLAG);textPaint.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));
+            String[] texts={"LEO · CONNECTED","16:30","Saturday, 31 October","SIM 2: orange · 4G"};
+            int[] sizes={10,36,13,11};
+            for(int index=0;index<texts.length;index++){
+                int item=index+1;loaded.reset(item);textPaint.setTextSize(sizes[index]);
+                RectF bounds=HomeCanvasLayout.textBounds(textPaint,texts[index],120,100);
+                loaded.begin(c,item,bounds.left,bounds.top,bounds.right,bounds.bottom,true);c.restore();
+                float initial=loaded.frames[item].centerX();loaded.x[item]+=20;
+                loaded.begin(c,item,bounds.left,bounds.top,bounds.right,bounds.bottom,true);c.restore();
+                check(Math.abs(loaded.frames[item].centerX()-initial-20)<.01f,"text moves right through available empty space: "+index);checks++;
+                loaded.x[item]-=40;
+                loaded.begin(c,item,bounds.left,bounds.top,bounds.right,bounds.bottom,true);c.restore();
+                check(Math.abs(loaded.frames[item].centerX()-initial+20)<.01f,"text moves left through available empty space: "+index);checks++;
+            }
             result.putString("result","PASS "+checks+" Home canvas persistence, bounds, orientation and visibility checks");
         }catch(Throwable error){result.putString("error",android.util.Log.getStackTraceString(error));}
         finally{context.getSharedPreferences(name,0).edit().clear().commit();image.recycle();}
