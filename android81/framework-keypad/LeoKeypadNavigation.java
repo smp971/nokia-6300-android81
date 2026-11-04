@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.ScrollView;
+import android.widget.HorizontalScrollView;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.WeakHashMap;
@@ -29,6 +31,7 @@ public final class LeoKeypadNavigation {
         WeakReference<View> selected = new WeakReference<>(null);
         GradientDrawable outline;
         int consumed = -1;
+        int sliderKey = -1;
     }
 
     private LeoKeypadNavigation() {}
@@ -65,14 +68,9 @@ public final class LeoKeypadNavigation {
     public static boolean navigate(View root, KeyEvent event) {
         int code = event.getKeyCode();
         State state = STATES.get(root);
-        if (state != null && (code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT)) {
-            View target=state.selected.get();
-            if (target instanceof android.widget.SeekBar && target.isShown() && target.isEnabled()) {
-                return target.dispatchKeyEvent(event);
-            }
-        }
+        boolean horizontal = code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT;
         if (code != KeyEvent.KEYCODE_DPAD_DOWN && code != KeyEvent.KEYCODE_DPAD_UP
-                && code != KeyEvent.KEYCODE_DPAD_CENTER && code != KeyEvent.KEYCODE_ENTER) {
+                && code != KeyEvent.KEYCODE_DPAD_CENTER && code != KeyEvent.KEYCODE_ENTER && !horizontal) {
             return false;
         }
         if (state == null) {
@@ -80,21 +78,50 @@ public final class LeoKeypadNavigation {
             STATES.put(root, state);
         }
         if (event.getAction() == KeyEvent.ACTION_UP && state.consumed == code) {
+            View selected = state.selected.get();
+            if (state.sliderKey == code && selected instanceof android.widget.SeekBar)
+                selected.dispatchKeyEvent(event);
+            state.sliderKey = -1;
             state.consumed = -1;
             return true;
         }
         if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
         View focused = root.findFocus();
         if (nativeKeys(focused, root)) return false;
+        View slider = state.selected.get();
+        if (!(slider instanceof android.widget.SeekBar)) slider = focused;
+        if (horizontal && slider instanceof android.widget.SeekBar && slider.isShown()
+                && slider.isEnabled() && slider.getRootView() == root.getRootView()) {
+            if (slider.dispatchKeyEvent(event)) {
+                state.selected = new WeakReference<>(slider);
+                state.consumed = state.sliderKey = code;
+                return true;
+            }
+            return false;
+        }
         ArrayList<View> actions = new ArrayList<>();
         collect(root, actions, new int[]{0});
-        if (actions.isEmpty()) return false;
+        if (actions.isEmpty()) {
+            if (scroll(root, code, new int[]{0})) { state.consumed = code; return true; }
+            return false;
+        }
         View previous = state.selected.get();
         // The outline is the keypad selection. Native focus may move later in
         // a traversal even when requestFocus() was refused by a container.
         int at = actions.indexOf(previous);
         if (at < 0) at = actions.indexOf(focused);
         boolean activate = code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER;
+        if (horizontal) {
+            View current = at < 0 ? null : actions.get(at);
+            View next = horizontalTarget(current, actions, code == KeyEvent.KEYCODE_DPAD_RIGHT);
+            if (next == null) {
+                if (scroll(root, code, new int[]{0})) { state.consumed = code; return true; }
+                return false;
+            }
+            select(state, next);
+            state.consumed = code;
+            return true;
+        }
         if (activate && at >= 0) {
             state.consumed = code;
             if (event.getRepeatCount() == 0) actions.get(at).performClick();
@@ -109,6 +136,12 @@ public final class LeoKeypadNavigation {
             clear(state);
             return false;
         }
+        select(state, target);
+        state.consumed = code;
+        return true;
+    }
+
+    private static void select(State state, View target) {
         clear(state);
         target.setFocusableInTouchMode(true);
         target.requestFocus();
@@ -122,8 +155,43 @@ public final class LeoKeypadNavigation {
         target.getOverlay().add(border);
         state.outline = border;
         state.selected = new WeakReference<>(target);
-        state.consumed = code;
-        return true;
+    }
+
+    /** Move within a horizontal button/tab row, leaving custom app gestures alone. */
+    private static View horizontalTarget(View current, ArrayList<View> actions, boolean right) {
+        if (current == null) return null;
+        Rect from = new Rect();
+        if (!current.getGlobalVisibleRect(from)) return null;
+        View best = null; int distance = Integer.MAX_VALUE;
+        for (View candidate : actions) {
+            if (candidate == current || candidate instanceof EditText || candidate instanceof AdapterView) continue;
+            Rect to = new Rect();
+            if (!candidate.getGlobalVisibleRect(to) || Math.min(from.bottom,to.bottom)<=Math.max(from.top,to.top)) continue;
+            int delta = to.centerX()-from.centerX();
+            if ((right ? delta>0 : delta<0) && Math.abs(delta)<distance) {
+                best=candidate;distance=Math.abs(delta);
+            }
+        }
+        return best;
+    }
+
+    /** Read-only scrollable dialogs also need keypad access, even without buttons. */
+    private static boolean scroll(View view, int code, int[] visited) {
+        if (++visited[0]>MAX_VISITS || !view.isShown() || !view.isEnabled()) return false;
+        boolean vertical=code==KeyEvent.KEYCODE_DPAD_UP || code==KeyEvent.KEYCODE_DPAD_DOWN;
+        boolean horizontal=code==KeyEvent.KEYCODE_DPAD_LEFT || code==KeyEvent.KEYCODE_DPAD_RIGHT;
+        int direction=(code==KeyEvent.KEYCODE_DPAD_UP || code==KeyEvent.KEYCODE_DPAD_LEFT)?-1:1;
+        if (vertical && view instanceof ScrollView && view.canScrollVertically(direction)) {
+            view.scrollBy(0,direction*Math.max(1,view.getHeight()*2/3));return true;
+        }
+        if (horizontal && view instanceof HorizontalScrollView && view.canScrollHorizontally(direction)) {
+            view.scrollBy(direction*Math.max(1,view.getWidth()*2/3),0);return true;
+        }
+        if (view instanceof ViewGroup && !(view instanceof AdapterView)) {
+            ViewGroup group=(ViewGroup)view;
+            for (int n=0;n<group.getChildCount();n++) if(scroll(group.getChildAt(n),code,visited))return true;
+        }
+        return false;
     }
 
     private static boolean nativeKeys(View view, View root) {
@@ -151,7 +219,7 @@ public final class LeoKeypadNavigation {
             for (View action : actions) {
                 Rect other = new Rect();
                 action.getGlobalVisibleRect(other);
-                if (bounds.equals(other)) { duplicate = true; break; }
+                if (!bounds.isEmpty() && bounds.equals(other)) { duplicate = true; break; }
             }
             if (!duplicate) actions.add(view);
         }

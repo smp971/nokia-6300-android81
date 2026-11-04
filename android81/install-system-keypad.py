@@ -29,6 +29,8 @@ parser.add_argument('--rollback-seconds', type=int, default=240,
                     help='Bounded test window before restoring APKs (60..900 seconds)')
 parser.add_argument('--backup-dir',type=Path,default=BACKUP,
                     help='Separate verified baseline for a new development milestone')
+parser.add_argument('--aapt',type=Path,
+                    help='Optional native Windows aapt; otherwise use the AOSP WSL tool')
 args = parser.parse_args()
 BACKUP=args.backup_dir.resolve()
 assert 60 <= args.rollback_seconds <= 900, 'Rollback window must be 60..900 seconds'
@@ -145,8 +147,11 @@ else:
             assert candidate.is_file() and has_helper(candidate), 'App-local helper missing: ' + filename
             win = candidate.resolve().as_posix()
             linux = '/mnt/' + win[0].lower() + win[2:]
-            badging = subprocess.check_output(['wsl', '-d', 'kaios', '--',
-                      '/root/android81-leo/src/out/host/linux-x86/bin/aapt', 'dump', 'badging', linux])
+            if args.aapt:
+                badging = subprocess.check_output([str(args.aapt.resolve()), 'dump', 'badging', str(candidate)])
+            else:
+                badging = subprocess.check_output(['wsl', '-d', 'kaios', '--',
+                          '/root/android81-leo/src/out/host/linux-x86/bin/aapt', 'dump', 'badging', linux])
             assert ("package: name='" + package + "'").encode() in badging, 'Wrong APK identity'
     states = re.findall(r'mCallState=(\d+)', fw('/system/bin/sh', '-c',
                         'dumpsys telephony.registry').decode())

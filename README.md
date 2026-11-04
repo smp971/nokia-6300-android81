@@ -140,7 +140,7 @@ test, not every accessory, carrier or scenario.
 | 💾 **Leo backups** | Supported preferences, themes, app order, notes, dictionary, favorites, Calendar and templates. Selective restore with validation/rollback copy; separate contact/SMS archive with duplicate skipping. Accounts excluded; not a full userdata backup. |
 | 📚 **Reader / games** | TXT/EPUB, Markdown/PDF, resume/bookmarks, adjustable text, PDF keypad zoom, Snake, Sudoku and 15 Puzzle. Local parser/UI tests passed; long sessions/all game flows not exhaustively validated. |
 | ✉️ **Email / web** | Configurable IMAP/SMTP and keypad text browser. IMAP reception confirmed; SMTP unvalidated. Text browser does not execute JavaScript. Existing WebView ran local HTML/JS apps with GPU limitations. |
-| 🖥️ **Terminal / apps** | Physical-keyboard terminal; typing/executing `pwd` confirmed. Root broker authorized against the new Leo UID. Android app list, converter, downloads and diagnostics; external app keypad compatibility varies. |
+| 🖥️ **Terminal / apps** | Physical-keyboard terminal; typing/executing `pwd` confirmed. Root broker authorized against the new Leo UID. Android app list, converter, downloads and diagnostics; external app keypad compatibility varies. [Android keypad navigation](android81/ANDROID-KEYPAD-NAVIGATION.md) extends native Settings/SystemUI/permission controls (67 checks). |
 | 📦 **Local updates** | Metadata/integrity checks, Android sessions and previous-APK backup. Validation/rejection tested locally; complete phone-UI update/rollback unproven. |
 | 🛰️ **GPS / NFC** | Experimental GNSS HAL/provider/request lifecycle checked; 30-second test saw no satellites or fix. NFC checked and unavailable on this device. |
 

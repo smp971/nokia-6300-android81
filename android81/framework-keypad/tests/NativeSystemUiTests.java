@@ -102,6 +102,9 @@ public class NativeSystemUiTests extends Instrumentation {
         AccessibilityServiceInfo original = automation().getServiceInfo();
         int originalFlags = original.flags;
         try {
+            // Synthetic keyboard events do not wake this device by themselves.
+            // A black sleeping display must not count as a missing focus outline.
+            shell("input keyevent 224");
             original.flags |= AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
                     | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
             automation().setServiceInfo(original);
