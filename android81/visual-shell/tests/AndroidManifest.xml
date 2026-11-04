@@ -52,4 +52,5 @@
     <instrumentation android:name="ro.leo.visual.DailyExperienceTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.HomeCanvasTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.DashboardCardsTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.MusicLibraryAudit" android:targetPackage="ro.leo.visual" />
 </manifest>

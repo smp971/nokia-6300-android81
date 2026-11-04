@@ -2748,5 +2748,12 @@
   "Salvează și închide": "Save and close",
   "Scurtături": "Shortcuts",
   "Stare rețea": "Network status",
-  "Săgeți: mută · * / #: element · OK: aspect · stânga: salvează": "D-pad: move · * / #: item · OK: style · left: save"
+  "Săgeți: mută · * / #: element · OK: aspect · stânga: salvează": "D-pad: move · * / #: item · OK: style · left: save",
+  "Acces la muzica locală": "Local music access",
+  "Permite citirea fișierelor audio\nMemorie internă și card SD": "Allow audio file access\nInternal storage and SD card",
+  "Permisiunile aplicației": "App permissions",
+  "Setările permisiunilor nu sunt disponibile": "Permission settings are unavailable",
+  "Accesul la stocare nu a fost acordat": "Storage access was not granted",
+  "Reîncearcă citirea indexului media": "Retry reading the media index",
+  "Bibliotecă parțială · reîncarcă pentru a reîncerca": "Partial library · reload to retry"
 }
