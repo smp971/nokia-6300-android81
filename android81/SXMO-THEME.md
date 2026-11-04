@@ -13,6 +13,13 @@ Once installed, open Leo visual collections, select Sxmo · Pine and choose the 
 
 This is a first visual pass. Custom player, calculator and other bespoke canvases retain their own layouts. It does not replace Android SystemUI or run the Sxmo Linux shell.
 
-## Current validation
+## Validation on Nokia 6300
 
-Source review and whitespace checks completed. Compilation and phone installation are pending: the WSL build environment stopped responding (HCS connection timeout), including a simple command. No candidate APK has been installed or activated on the phone.
+The theme was installed and activated successfully. Sixteen isolated on-device checks passed for palette registration, selection colours, list mode, wallpaper decoding, eight visible glyphs and exact restoration of the preceding fixture settings and wallpaper. These checks used separate preferences and temporary files; activation then used the standard theme checkpoint.
+
+Home and the launcher menu were inspected from device screenshots. The active APK and system base match; the system partition was remounted read-only. Existing Home item positions were preserved, so the Home screenshot reflects the owner's arrangement rather than a reset to the reference screenshot.
+
+WSL remains unavailable with an HCS connection timeout. This candidate was compiled using portable Windows JDK 8 and Android SDK tools: the nine changed visual classes were recompiled against the existing project class archive, the remaining compiled project classes and 59 existing dependency classes were retained, and the APK was signed with the existing AOSP test certificate. All original non-code APK entries were checked byte-for-byte. This was an incremental build, not a full AOSP ROM rebuild. The normal source build remains `build-visual-shell.sh` when WSL is available again.
+
+![Sxmo launcher menu](screenshots/leo-sxmo-menu.png)
+![Home with preserved custom placement](screenshots/leo-sxmo-home.png)
