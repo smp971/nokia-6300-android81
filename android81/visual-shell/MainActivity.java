@@ -310,7 +310,7 @@ public final class MainActivity extends Activity {
                 : key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : key == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
             if (delta != 0) {
                 if (!grid) grid = true;
-                else if(list) {
+                else if(list||palette.sxmo()) {
                     if(key==KeyEvent.KEYCODE_DPAD_UP) selected=CircularNavigation.step(selected,-1,order.length);
                     if(key==KeyEvent.KEYCODE_DPAD_DOWN) selected=CircularNavigation.step(selected,1,order.length);
                 }
@@ -401,8 +401,8 @@ public final class MainActivity extends Activity {
             p.setStyle(Paint.Style.FILL); p.setShader(null);
             if (!grid) {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
-                boolean cardLayout=cards.length>0,small=compactClock||cardLayout;
-                if(homePart(output,0,10,10,230,showSims?(cardLayout?136:151):118)){round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);output.restore();}
+                boolean cardLayout=cards.length>0,small=!palette.sxmo()&&(compactClock||cardLayout);
+                if(!palette.sxmo()&&homePart(output,0,10,10,230,showSims?(cardLayout?136:151):118)){round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);output.restore();}
                 if(homeTextPart(output,1,networkBanner,27,10)){text(output,networkBanner,120,27,10,0xffeee8fa,Paint.Align.CENTER);output.restore();}
                 if(homeTextPart(output,2,time,small?64:86,small?36:54)){text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);output.restore();}
                 if(homeTextPart(output,3,date,small?87:108,13)){text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);output.restore();}
@@ -438,7 +438,11 @@ public final class MainActivity extends Activity {
                 p.setColor(palette.bar);output.drawRect(0,0,240,34,p);
                 text(output,AppCatalog.CATEGORIES[category]+" · * / #",120,12,10,palette.accent,Paint.Align.CENTER);
                 text(output,names[order[selected]],120,30,16,Color.WHITE,Paint.Align.CENTER);
-                if(list) {
+                if(palette.sxmo()){
+                    int first=Math.max(0,Math.min(Math.max(0,order.length-9),selected-4));
+                    for(int row=0;row<Math.min(9,order.length);row++){int i=first+row;float y=49+row*24;if(i==selected){p.setColor(palette.selection);output.drawRect(0,y-17,240,y+7,p);}SxmoIcon glyph=new SxmoIcon(order[i],18);glyph.setBounds(4,(int)y-14,22,(int)y+4);glyph.draw(output);text(output,names[order[i]],27,y+2,18,0xfff1f1df,Paint.Align.LEFT);}
+                    text(output,(selected+1)+" / "+order.length,232,270,10,palette.accent,Paint.Align.RIGHT);
+                } else if(list) {
                     int first=Math.max(0,Math.min(Math.max(0,order.length-5),selected-2));
                     for(int row=0;row<Math.min(5,order.length);row++) {
                         int i=first+row; float y=60+row*42;
@@ -467,7 +471,7 @@ public final class MainActivity extends Activity {
             }
             p.setColor(palette.bar); output.drawRect(0,276,240,302,p);
             p.setColor(Appearance.mix(palette.card,palette.accent,.25f));output.drawRect(0,276,240,277,p);
-            round(output,82,280,158,299,5,Appearance.mix(palette.bar,palette.accent,.12f));
+            if(!palette.sxmo())round(output,82,280,158,299,5,Appearance.mix(palette.bar,palette.accent,.12f));
             text(output,editing?L.t("Salvează"):grid?L.t("Opțiuni"):L.t("Notificări"),8,293,11,Color.WHITE,Paint.Align.LEFT);
             text(output,editing?L.t(HomeCanvasLayout.NAMES[editItem]):grid?L.t("Deschide"):shortcut>=0?L.t("Deschide"):L.t("Meniu"),120,293,editing?9:12,palette.accent,Paint.Align.CENTER);
             text(output,editing?L.t("Înapoi"):grid||shortcut>=0?L.t("Înapoi"):L.t("Contacte"),232,293,11,Color.WHITE,Paint.Align.RIGHT);

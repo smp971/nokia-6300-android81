@@ -6,9 +6,10 @@ import android.util.AtomicFile;
 import java.io.*;
 /** Four original, deterministic wallpapers. No downloaded artwork or animation. */
 final class StockWallpapers {
-    static final String[] NAMES=L.array(new String[]{"Aurora mov","Orbită albastră","Valuri de jad","Apus geometric"});
+    static final String[] NAMES=L.array(new String[]{"Aurora mov","Orbită albastră","Valuri de jad","Apus geometric","Pine · Sxmo"});
     static void draw(Canvas c,int kind,float width,float height){
         c.save();c.scale(width/240f,height/302f);Paint p=new Paint(3);Path path=new Path();
+        if(kind==4){c.drawColor(0xff101c18);p.setStrokeCap(Paint.Cap.ROUND);for(int branch=0;branch<13;branch++){float y=branch*29-20;for(int needle=0;needle<22;needle++){float x=needle*12-10,base=y+x*.28f;p.setStrokeWidth(1.3f);p.setColor(needle%3==0?0xff465b45:0xff293f30);c.drawLine(x,base,x-21,base-32,p);c.drawLine(x,base,x+9,base+32,p);}p.setColor(0xff65705a);p.setStrokeWidth(2);c.drawLine(0,y,240,y+67,p);}c.restore();return;}
         int[][] colors={{0xff120e35,0xff713b9c,0xffdf81b3},{0xff031529,0xff124887,0xff50afc4},{0xff082a2d,0xff257263,0xff93c5aa},{0xff321728,0xffa74d68,0xffffb77c}};
         p.setShader(new LinearGradient(0,0,240,302,colors[kind],null,Shader.TileMode.CLAMP));c.drawRect(0,0,240,302,p);p.setShader(null);
         if(kind==1){p.setColor(0x55b0efff);c.drawCircle(182,105,56,p);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);for(int i=0;i<6;i++){p.setColor(0x4488dfff);c.drawOval(-60+i*15,55+i*12,300-i*9,190+i*13,p);}p.setStyle(Paint.Style.FILL);}
