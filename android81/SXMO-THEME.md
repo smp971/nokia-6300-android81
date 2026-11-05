@@ -19,7 +19,11 @@ The theme was installed and activated successfully. Sixteen isolated on-device c
 
 Home and the launcher menu were inspected from device screenshots. The active APK and system base match; the system partition was remounted read-only. Existing Home item positions were preserved, so the Home screenshot reflects the owner's arrangement rather than a reset to the reference screenshot.
 
-WSL remains unavailable with an HCS connection timeout. This candidate was compiled using portable Windows JDK 8 and Android SDK tools: the nine changed visual classes were recompiled against the existing project class archive, the remaining compiled project classes and 59 existing dependency classes were retained, and the APK was signed with the existing AOSP test certificate. All original non-code APK entries were checked byte-for-byte. This was an incremental build, not a full AOSP ROM rebuild. The normal source build remains `build-visual-shell.sh` when WSL is available again.
+WSL remains unavailable with an HCS connection timeout. This candidate was compiled using portable Windows JDK 8 and Android SDK tools: the nine changed visual classes were recompiled against the existing project class archive, the remaining compiled project classes were reused, and the APK was signed with the existing AOSP test certificate. All original non-code APK entries were checked byte-for-byte. This was an incremental build, not a full AOSP ROM rebuild. The normal source build remains `build-visual-shell.sh` when WSL is available again.
 
 ![Sxmo launcher menu](screenshots/leo-sxmo-menu.png)
 ![Home with preserved custom placement](screenshots/leo-sxmo-home.png)
+
+## Follow-up packaging audit
+
+The initial incremental Windows package did not actually include its 59 external dependency classes. This was detected and repaired in the [Leo environment iteration](LEO-ENVIRONMENT.md#packaging-correction). The current installed package restores all 59, with an explicit DEX merge, class coverage audit and on-device vCard class-loading check. The earlier theme checks did not cover contact import/export dependency loading.

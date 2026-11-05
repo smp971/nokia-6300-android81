@@ -275,3 +275,5 @@ deserve the same visibility as working features.
 
 Contributions to code, tests, translations, documentation and a better keypad
 experience are welcome.
+
+The ongoing [Leo interface work](android81/LEO-ENVIRONMENT.md) focuses on making the phone easier to use, starting with a simpler seven-action global menu.

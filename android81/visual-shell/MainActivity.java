@@ -56,6 +56,7 @@ public final class MainActivity extends Activity {
             screen.selected = Math.max(0, Math.min(screen.order.length-1, state.getInt("selected")));
         }
         setContentView(screen);
+        if(getIntent().getBooleanExtra("open_menu",false)){getIntent().removeExtra("open_menu");screen.grid=true;}
         if(getIntent().getBooleanExtra("edit_home",false)){getIntent().removeExtra("edit_home");screen.startEditor();}
         if(getIntent().hasExtra("open_app")){int id=getIntent().getIntExtra("open_app",-1);getIntent().removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length)screen.open(id);}
     }
@@ -112,6 +113,7 @@ public final class MainActivity extends Activity {
     }
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent); setIntent(intent);
+        if(intent.getBooleanExtra("open_menu",false)){intent.removeExtra("open_menu");if(screen.editing){screen.leaveEditor();return;}screen.grid=true;screen.shortcut=-1;screen.message="";screen.invalidate();return;}
         if(intent.getBooleanExtra("edit_home",false)){intent.removeExtra("edit_home");screen.startEditor();return;}
         if(intent.hasExtra("open_app")){int id=intent.getIntExtra("open_app",-1);intent.removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length){screen.open(id);return;}}
         screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();screen.invalidate();

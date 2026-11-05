@@ -2755,5 +2755,6 @@
   "Setările permisiunilor nu sunt disponibile": "Permission settings are unavailable",
   "Accesul la stocare nu a fost acordat": "Storage access was not granted",
   "Reîncearcă citirea indexului media": "Retry reading the media index",
-  "Bibliotecă parțială · reîncarcă pentru a reîncerca": "Partial library · reload to retry"
+  "Bibliotecă parțială · reîncarcă pentru a reîncerca": "Partial library · reload to retry",
+  "Mai multe": "More"
 }

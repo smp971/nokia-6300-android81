@@ -20,11 +20,18 @@ final class KeypadDialog extends Dialog {
     private final Action action;
     private int selected;
     private boolean centerPressed,backPressed;
+    private final boolean numbered;
+    private int digitPressed=-1;
+    private Runnable backAction;
     private View content;
     private final Appearance.Palette palette;
 
     KeypadDialog(Context context, String title, String[] items, Action action) {
+        this(context,title,items,action,false);
+    }
+    KeypadDialog(Context context, String title, String[] items, Action action, boolean numbered) {
         super(context);
+        this.numbered=numbered;
         palette=Appearance.palette(context);
         this.title=title; this.items=items; this.action=action;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -33,7 +40,7 @@ final class KeypadDialog extends Dialog {
             public boolean isOpaque(){return true;}
             void text(Canvas c,String value,float x,float y,int size,int color,Paint.Align align) {
                 paint.setTextSize(size*Math.min(1.3f,Appearance.textScale(getContext()))); paint.setColor(color); paint.setTextAlign(align);
-                float max=align==Paint.Align.LEFT?218:220;
+                float max=align==Paint.Align.LEFT?233-x:220;
                 if(paint.measureText(value)>max){int count=paint.breakText(value,true,max-paint.measureText("…"),null);value=value.substring(0,count)+"…";}
                 c.drawText(value,x,y,paint);
             }
@@ -42,18 +49,24 @@ final class KeypadDialog extends Dialog {
                 c.drawColor(palette.background);
                 text(c,title,120,27,18,Color.WHITE,Paint.Align.CENTER);
                 paint.setColor(palette.accent);c.drawRect(12,35,228,37,paint);
-                int first=Math.max(0,Math.min(Math.max(0,items.length-5),selected-2));
-                for(int row=0;row<5 && first+row<items.length;row++) {
-                    int index=first+row; float top=42+row*39;
+                int visible=items.length<=7?Math.max(1,items.length):6;
+                float height=Math.min(39,196f/visible);
+                int first=Math.max(0,Math.min(Math.max(0,items.length-visible),selected-visible/2));
+                for(int row=0;row<visible && first+row<items.length;row++) {
+                    int index=first+row; float top=42+row*height;
                     if(index==selected) {
                         paint.setColor(palette.selection);
-                        c.drawRoundRect(new RectF(6,top,234,top+35),4,4,paint);
+                        if(palette.sxmo())c.drawRect(6,top,234,top+height-2,paint);
+                        else c.drawRoundRect(new RectF(6,top,234,top+height-2),4,4,paint);
                     }
-                    text(c,items[index],15,top+23,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
+                    float baseline=top+height/2+5;
+                    if(numbered)text(c,index<9?""+(index+1):"",15,baseline,11,index==selected?palette.ink:palette.accent,Paint.Align.LEFT);
+                    text(c,items[index],numbered?35:15,baseline,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
                 }
                 paint.setColor(palette.bar); c.drawRect(0,250,240,280,paint);
                 paint.setColor(palette.accent);c.drawRect(0,250,240,251,paint);
                 text(c,(items.length==0?0:selected+1)+" / "+items.length,12,245,10,palette.accent,Paint.Align.LEFT);
+                if(numbered)text(c,"1–"+Math.min(9,items.length),8,270,11,Color.WHITE,Paint.Align.LEFT);
                 text(c,items.length==0?"":L.t("Alege"),120,270,13,palette.accent,Paint.Align.CENTER);
                 text(c,L.t("Înapoi"),233,270,12,Color.WHITE,Paint.Align.RIGHT);
                 c.restore();
@@ -61,6 +74,7 @@ final class KeypadDialog extends Dialog {
         };
         setContentView(content);
     }
+    KeypadDialog onBack(Runnable action){backAction=action;return this;}
     public void show() {
         super.show();
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
@@ -75,6 +89,11 @@ final class KeypadDialog extends Dialog {
         return super.dispatchKeyEvent(event);
     }
     public boolean onKeyDown(int key,KeyEvent event) {
+        if(numbered&&key>=KeyEvent.KEYCODE_1&&key<=KeyEvent.KEYCODE_9){
+            int at=key-KeyEvent.KEYCODE_1;
+            if(event.getRepeatCount()==0&&at<items.length){digitPressed=key;selected=at;content.invalidate();}
+            return true;
+        }
         if(key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) {
             if(items.length>0)selected=CircularNavigation.step(selected,key==KeyEvent.KEYCODE_DPAD_UP?-1:1,items.length);
             content.invalidate(); return true;
@@ -88,6 +107,10 @@ final class KeypadDialog extends Dialog {
         return super.onKeyDown(key,event);
     }
     public boolean onKeyUp(int key,KeyEvent event) {
+        if(numbered&&key>=KeyEvent.KEYCODE_1&&key<=KeyEvent.KEYCODE_9){
+            boolean accept=digitPressed==key&&!event.isCanceled();digitPressed=-1;
+            if(accept){dismiss();action.select(key-KeyEvent.KEYCODE_1);}return true;
+        }
         if(key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {
             boolean accept=centerPressed && !event.isCanceled(); centerPressed=false;
             if(accept&&items.length>0) { dismiss(); action.select(selected); }
@@ -95,7 +118,7 @@ final class KeypadDialog extends Dialog {
         }
         if(key==KeyEvent.KEYCODE_BACK) {
             boolean close=backPressed && !event.isCanceled(); backPressed=false;
-            if(close) dismiss(); return true;
+            if(close){dismiss();if(backAction!=null)backAction.run();}return true;
         }
         if(key==KeyEvent.KEYCODE_MENU || key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) return true;
         return super.onKeyUp(key,event);

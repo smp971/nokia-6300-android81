@@ -106,24 +106,39 @@ public final class LeoPointerService extends AccessibilityService {
         menuGeneration++;
         stopMovement();
         if(menu!=null && menu.isShowing()) { menu.dismiss(); return; }
+        showGlobalMenu(false);
+    }
+    private void showGlobalMenu(final boolean tools) {
+        stopMovement();
+        final int[] actions=GlobalMenuModel.actions(tools);
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-            L.t("Meniu Leo"),new String[]{L.t("Notificări"),active?L.t("Oprește mouse-ul"):L.t("Mouse din taste"),L.t("Acasă"),L.t("Setări Leo"),L.t("Blochează tastele"),L.t("Configurări rapide"),L.t("Închide meniul"),L.t("Acum se redă"),L.t("Aplicații recente"),L.t("Închide aplicația curentă"),L.t("Pornire și oprire"),L.t("Transferuri Bluetooth"),L.t("Comenzile paginii"),L.t("Spațiu de lucru"),L.t("Leo Studio"),L.t("Android din taste")},new KeypadDialog.Action() {
-                public void select(int which) {if(which==15){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,AndroidControlsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==13||which==14){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,which==13?WorkspaceActivity.class:PremiumStudioActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==11){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,BluetoothTransfersActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}if(which==12){setActive(false);ContextHelp.open(LeoPointerService.this,foregroundClass);return;}
-                    if(which==10){openPowerMenu();return;}
-                    if(which==9){closeForeground();return;}
-                    if(which==8){setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,RecentAppsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}
-                    if(which==7) startActivity(new android.content.Intent(LeoPointerService.this,NowPlayingActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
-                    else if(which==0) { if(!openAndroidPanel(false))startActivity(new android.content.Intent(LeoPointerService.this,NotificationsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)); }
-                    else if(which==1) setActive(!active);
-                    else if(which==2) performGlobalAction(GLOBAL_ACTION_HOME);
-                    else if(which==3) startActivity(new android.content.Intent(LeoPointerService.this,SettingsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
-                    else if(which==5) startActivity(new android.content.Intent(LeoPointerService.this,QuickSettingsActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
-                    else if(which==4) {setActive(false);startActivity(new android.content.Intent(LeoPointerService.this,KeypadLockActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));}
-                }
-            });
+                tools?L.t("Mai multe"):L.t("Meniu Leo"),GlobalMenuModel.labels(tools,active),new KeypadDialog.Action(){
+            public void select(int row){globalAction(actions[row]);}
+        },true);
+        if(tools)menu.onBack(new Runnable(){public void run(){showGlobalMenu(false);}});
         menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
         menu.show();
         Log.i("LeoPointer","global menu opened");
+    }
+    private void openPage(Class<?> page){setActive(false);startActivity(new android.content.Intent(this,page).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));}
+    private void globalAction(int id){
+        if(id==GlobalMenuModel.MORE){showGlobalMenu(true);return;}
+        if(id==GlobalMenuModel.POINTER){setActive(!active);return;}
+        if(id==GlobalMenuModel.HOME){setActive(false);performGlobalAction(GLOBAL_ACTION_HOME);return;}
+        if(id==GlobalMenuModel.APPS){setActive(false);startActivity(new android.content.Intent(this,MainActivity.class).putExtra("open_menu",true).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK|android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP|android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP));return;}
+        if(id==GlobalMenuModel.NOTIFICATIONS){if(!openAndroidPanel(false))openPage(NotificationsActivity.class);return;}
+        if(id==GlobalMenuModel.QUICK){openPage(QuickSettingsActivity.class);return;}
+        if(id==GlobalMenuModel.SETTINGS){openPage(SettingsActivity.class);return;}
+        if(id==GlobalMenuModel.MEDIA){openPage(NowPlayingActivity.class);return;}
+        if(id==GlobalMenuModel.RECENT){openPage(RecentAppsActivity.class);return;}
+        if(id==GlobalMenuModel.LOCK){openPage(KeypadLockActivity.class);return;}
+        if(id==GlobalMenuModel.POWER){openPowerMenu();return;}
+        if(id==GlobalMenuModel.HELP){setActive(false);ContextHelp.open(this,foregroundClass);return;}
+        if(id==GlobalMenuModel.WORKSPACE){openPage(WorkspaceActivity.class);return;}
+        if(id==GlobalMenuModel.TRANSFERS){openPage(BluetoothTransfersActivity.class);return;}
+        if(id==GlobalMenuModel.STUDIO){openPage(PremiumStudioActivity.class);return;}
+        if(id==GlobalMenuModel.ANDROID){openPage(AndroidControlsActivity.class);return;}
+        if(id==GlobalMenuModel.CLOSE)closeForeground();
     }
     private void closeForeground(){
         setActive(false);
