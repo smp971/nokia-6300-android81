@@ -10,4 +10,5 @@
     <instrumentation android:name=".NativeSystemUiTests" android:targetPackage="ro.leo.systemtests" />
     <instrumentation android:name=".SystemDialogsTests" android:targetPackage="ro.leo.systemtests" />
     <instrumentation android:name=".KeypadNavigationV2Tests" android:targetPackage="ro.leo.systemtests" />
+    <instrumentation android:name=".LeoNotificationsIntegrationTests" android:targetPackage="ro.leo.systemtests" />
 </manifest>

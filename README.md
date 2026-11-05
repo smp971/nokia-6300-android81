@@ -10,7 +10,7 @@ and Symbian.
 
 `Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
 
-**Updated: 29 October 2026** · **Installed version: 0.14.0-dev / code 14**
+**Updated: 6 November 2026** · **Installed version: 0.14.0-dev / code 14**
 
 [What works](#what-works) · [Screenshots](#screenshots) · [Controls](#keypad-controls) ·
 [Audit](#project-audit) · [Roadmap](#roadmap) · [Build](#building-leo) · [Docs](#documentation)
@@ -278,4 +278,4 @@ experience are welcome.
 
 The ongoing [Leo interface work](android81/LEO-ENVIRONMENT.md) focuses on making the phone easier to use, starting with a simpler seven-action global menu.
 
-The [compact shell](android81/CLASSIC-COMPACT-SHELL.md) keeps a nine-app first page, shorter contextual menus and grouped personalization settings. The active [Leo Material](android81/MATERIAL-SHELL.md) style modernizes its surfaces, app bars and keypad selection.
+The [compact shell](android81/CLASSIC-COMPACT-SHELL.md) keeps a nine-app first page, shorter contextual menus and grouped personalization settings. The active [Leo Material](android81/MATERIAL-SHELL.md) style modernizes its surfaces, app bars and keypad selection. The [six everyday UI refinements](android81/SIX-UI-REFINEMENTS.md) add remembered list positions, shorter communication menus, direct keypad notification actions and an automatic contextual Home card.

@@ -24,27 +24,29 @@ abstract class LeoActivity extends Activity {
     boolean form;
     Appearance.Palette palette;
     private LinearLayout softkeyBar;
-    private ListView activeList;private final UiRowCache rowCache=new UiRowCache();
-    private String listTitle;private java.util.ArrayList<String> listRows;private BaseAdapter listAdapter;
+    private ListView activeList;private final UiRowCache rowCache=new UiRowCache();private final UiListMemory listMemory=new UiListMemory();
+    private String listTitle;private java.util.ArrayList<String> listRows,listMemoryKeys;private BaseAdapter listAdapter;
     private final NavigationPace navigationPace=new NavigationPace();
     private TextView heading;private ListPositionDrawable listPosition;
     protected void onCreate(Bundle state) {
-        super.onCreate(state); palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
+        super.onCreate(state); palette=Appearance.palette(this);SystemChrome.apply(this,palette);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
-    protected void onResume(){super.onResume();ContextHelp.current=new java.lang.ref.WeakReference<LeoActivity>(this);}
+    protected void onResume(){super.onResume();palette=Appearance.palette(this);SystemChrome.apply(this,palette);if(listPosition!=null&&activeList!=null&&listRows!=null)listPosition.position(activeList.getSelectedItemPosition(),listRows.size());ContextHelp.current=new java.lang.ref.WeakReference<LeoActivity>(this);}
     String helpControls(){if(softkeyBar==null)return "";StringBuilder out=new StringBuilder();for(int n=0;n<softkeyBar.getChildCount();n++){String value=((TextView)softkeyBar.getChildAt(n)).getText().toString();if(!value.isEmpty())out.append(n==0?L.t("Stânga · "):n==1?"OK · ":L.t("Dreapta · ")).append(value).append("\n");}return out.toString().trim();}
-    protected void onPause(){if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
+    protected void onPause(){rememberList();if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
     protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
     int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     TextView text(String value,int size) {
         TextView view=new TextView(this); view.setText(value); view.setTextSize(size*Appearance.textScale(this));
         view.setTextColor(Color.WHITE); view.setPadding(dp(8),dp(4),dp(8),dp(4)); return view;
     }
+    private void rememberList(){listMemory.remember(listTitle,listMemoryKeys,activeList);}
     void begin(String title) {
+        rememberList();
         form=false; left=null; back=null; softkeyBar=null;
-        activeList=null;listTitle=null;listRows=null;listAdapter=null;listPosition=null;
-        palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);
+        activeList=null;listTitle=null;listRows=null;listMemoryKeys=null;listAdapter=null;listPosition=null;
+        palette=Appearance.palette(this);SystemChrome.apply(this,palette);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
         heading=text(title,17); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
@@ -76,9 +78,11 @@ abstract class LeoActivity extends Activity {
         }});
     }
     void list(String title,final List<String> values,int selected,final Choice choice,String action,Runnable command) {
-        if(getIntent().getBooleanExtra("workspace_resume",false)){selected=WorkspaceSessions.selection(this,getClass().getSimpleName());getIntent().removeExtra("workspace_resume");}
+        final boolean workspace=getIntent().getBooleanExtra("workspace_resume",false);
+        if(workspace){selected=WorkspaceSessions.selection(this,getClass().getSimpleName());getIntent().removeExtra("workspace_resume");}
         begin(title); left=command;
-        listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
+        final java.util.ArrayList<String> memoryKeys=new java.util.ArrayList<String>();for(int i=0;i<values.size();i++)memoryKeys.add(rowMemoryKey(title,i,values.get(i)));UiListMemory.Entry remembered=workspace?null:listMemory.restore(title,memoryKeys);final UiListMemory.Entry bookmark=remembered!=null&&(selected==0||selected==remembered.index)?remembered:null;if(bookmark!=null)selected=bookmark.index;
+        listMemoryKeys=memoryKeys;listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
         final ListView list=new ListView(this);activeList=list;list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
         if(palette.sxmo()||palette.classic()||palette.material()){list.setPadding(0,0,0,0);list.setDividerHeight(0);}
         list.setSelector(android.R.color.transparent);
@@ -120,20 +124,24 @@ abstract class LeoActivity extends Activity {
             public void onItemClick(AdapterView<?> p,View v,int i,long id) { choice.pick(i); }
         });
         if(values.isEmpty()) {
-            TextView empty=text(L.t("Nicio intrare"),18); empty.setGravity(Gravity.CENTER);
+            TextView empty=text(emptyMessage(title),16); empty.setGravity(Gravity.CENTER);
             root.addView(empty,new LinearLayout.LayoutParams(-1,0,1));
         } else root.addView(list,new LinearLayout.LayoutParams(-1,0,1));
         footer(action,values.isEmpty()?"":L.t("Deschide"),L.t("Înapoi"));
-        list.requestFocus(); list.setSelection(focused[0]);
+        list.requestFocus(); if(bookmark!=null)list.setSelectionFromTop(focused[0],bookmark.top);else list.setSelection(focused[0]);
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }
-    boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;if(listRows.equals(rows))return true;listRows.clear();listRows.addAll(rows);listAdapter.notifyDataSetChanged();return true;}
+    String emptyMessage(String title){if(title.startsWith(L.t("Contacte")))return L.t("Niciun contact. Opțiuni pentru adăugare.");if(title.startsWith(L.t("Mesaje")))return L.t("Nicio conversație. Opțiuni pentru un SMS nou.");if(title.startsWith(L.t("Notificări")))return L.t("Nicio notificare.");if(title.equals(L.t("Istoric apeluri")))return L.t("Niciun apel în jurnal.");return L.t("Nicio intrare");}
+    void loading(String title){begin(title);LinearLayout line=new LinearLayout(this);line.setGravity(Gravity.CENTER_VERTICAL);line.setPadding(dp(12),dp(12),dp(12),dp(12));line.addView(new ProgressBar(this),new LinearLayout.LayoutParams(dp(22),dp(22)));line.addView(text(L.t("Se încarcă…"),16));root.addView(line,new LinearLayout.LayoutParams(-1,0,1));footer("","",L.t("Înapoi"));}
+    void errorPage(String title,String message,Runnable retry){begin(title);ScrollView body=new ScrollView(this);body.addView(text(message,16));root.addView(body,new LinearLayout.LayoutParams(-1,0,1));left=retry;footer(L.t("Reîncearcă"),"",L.t("Înapoi"));}
+    boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;if(listRows.equals(rows))return true;listRows.clear();listRows.addAll(rows);listMemoryKeys.clear();for(int i=0;i<rows.size();i++)listMemoryKeys.add(rowMemoryKey(title,i,rows.get(i)));listAdapter.notifyDataSetChanged();return true;}
     void refreshRows(){if(listAdapter!=null)listAdapter.notifyDataSetChanged();}
     private CharSequence rowText(String value){
         return rowCache.get(value);
     }
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
     boolean stableRowIcons(){return false;}
+    String rowMemoryKey(String title,int at,String label){return label;}
     void onListSelection(String title,int index){}
     private void paintSelection(View row,boolean selected) {
         if(!(row instanceof TextView)) return;

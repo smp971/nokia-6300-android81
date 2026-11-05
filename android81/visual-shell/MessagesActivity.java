@@ -23,7 +23,7 @@ import java.text.Normalizer;
 
 /** SMS reader/composer; no automatic transmission and no change of default SMS app. */
 public final class MessagesActivity extends LeoActivity {
-    private String current="",draftId;
+    private String current="",draftId;private String selectedThread="";private final ArrayList<String> threadAddresses=new ArrayList<String>();private ListView conversationList;private int messageTop;private long messageDate;private String messageAddress="";
     private int folder,organization;
     private boolean composing;
     private boolean preview;
@@ -61,7 +61,7 @@ public final class MessagesActivity extends LeoActivity {
     private void load(final String address) {
         if(preview) { demo(); return; }
         composing=false; viewingMessages=false; loadingMessages=true; current=address;
-        begin(L.t("Mesaje")); root.addView(text(L.t("Se încarcă…"),18),new LinearLayout.LayoutParams(-1,0,1)); footer("","",L.t("Înapoi"));
+        loading(L.t("Mesaje"));
         final LinearLayout loading=root;
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Message> messages=new ArrayList<Message>();final ArrayList<Message> systemMessages=new ArrayList<Message>();HashSet<String> seen=new HashSet<String>();
@@ -120,8 +120,9 @@ public final class MessagesActivity extends LeoActivity {
             if(!preview) { long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through); }
             return;
         }
-        list(folder==0?L.t("Mesaje"):L.t("Mesaje · ")+SmsFolders.LABELS[folder],labels,0,new Choice() { public void pick(int i) {
-            load(rows.get(i).address);
+        threadAddresses.clear();int threadSelection=0;for(int at=0;at<rows.size();at++){threadAddresses.add(rows.get(at).address);if(rows.get(at).address.equals(selectedThread))threadSelection=at;}
+        list(folder==0?L.t("Mesaje"):L.t("Mesaje · ")+SmsFolders.LABELS[folder],labels,threadSelection,new Choice() { public void pick(int i) {
+            selectedThread=rows.get(i).address;load(selectedThread);
         } },L.t("Opțiuni"),new Runnable() { public void run() {
             options(L.t("Mesaje"),new String[]{L.t("SMS nou"),L.t("Caută în toate mesajele"),L.t("Ciorne salvate"),L.t("Previzualizare notificări"),L.t("Șabloane SMS"),L.t("Dosare mesaje"),L.t("Primite / Arhivate / Filtrate")},new Choice() { public void pick(int i) {
                 if(i==6){options(L.t("Conversații"),new String[]{L.t("Principale"),L.t("Arhivate"),L.t("Expeditori filtrați")},new Choice(){public void pick(int n){organization=n;load("");}});}else if(i==5){options(L.t("Dosare"),SmsFolders.LABELS,new Choice(){public void pick(int at){folder=at;load("");}});}else if(i==4){replyAddress="";templates(false);}else if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)drafts();else {final SharedPreferences p=getSharedPreferences("sms-options",0);options(L.t("Text în notificări"),new String[]{L.t("Ascunde textul"),L.t("Arată o previzualizare")},new Choice(){public void pick(int mode){p.edit().putBoolean("preview",mode==1).apply();notice(L.t("Preferință salvată pentru mesajele noi"));}});}
@@ -132,6 +133,8 @@ public final class MessagesActivity extends LeoActivity {
         String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):L.t("SMS în așteptare · fără confirmare");
         if(!status.isEmpty()) root.addView(text(status,14),1);
     }
+    String rowMemoryKey(String title,int at,String label){return title.startsWith(L.t("Mesaje"))&&at>=0&&at<threadAddresses.size()?"thread:"+threadAddresses.get(at):label;}
+    void onListSelection(String title,int at){if(!viewingMessages&&!composing&&title.startsWith(L.t("Mesaje"))&&at>=0&&at<threadAddresses.size())selectedThread=threadAddresses.get(at);}
     private String state(Message m) {
         return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?L.t("Primit"):m.type==Telephony.Sms.MESSAGE_TYPE_SENT?(m.delivery==1?L.t("Livrat · raport operator"):m.delivery==2?L.t("Livrare eșuată"):m.delivery==3?L.t("Raport · livrare neconfirmată"):m.delivery==0?L.t("Trimis · așteaptă raport"):L.t("Trimis către rețea")):m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?L.t("Eșuat"):L.t("În așteptare");
     }
@@ -139,7 +142,7 @@ public final class MessagesActivity extends LeoActivity {
     static String statusMark(int type,int delivery){return type==Telephony.Sms.MESSAGE_TYPE_INBOX?"↓":type==Telephony.Sms.MESSAGE_TYPE_FAILED||delivery==2?"!":type==Telephony.Sms.MESSAGE_TYPE_SENT?(delivery==1?"✓✓":"✓"):"…";}
     private void detail(final String address,final ArrayList<Message> rows,final int index) {
         viewingMessages=false;loadingMessages=false;
-        Message m=rows.get(index);
+        Message m=rows.get(index);if(conversationList!=null&&conversationList.getSelectedView()!=null){messageTop=conversationList.getSelectedView().getTop();messageDate=m.date;messageAddress=address;}
         begin(L.t("Detalii SMS"));
         root.addView(text(state(m)+" · "+messageSim(m)+"\n"+new SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new Date(m.date)),14));
         ScrollView scroll=new ScrollView(this); scroll.addView(text(m.body,19));
@@ -151,13 +154,13 @@ public final class MessagesActivity extends LeoActivity {
     private void conversation(String address,ArrayList<Message> rows) { conversation(address,rows,rows.size()-1); }
     private void conversation(final String address,final ArrayList<Message> rows,int selected) {
         composing=false; viewingMessages=true; loadingMessages=false; current=address;
-        begin(preview?L.t("Conversație demo"):address);
+        String person=!rows.isEmpty()&&rows.get(0).identity!=null?rows.get(0).identity.name:address;begin(preview?L.t("Conversație demo"):person);
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
         if(!preview && address.equals(outgoing.getString("number",""))) {
             String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):L.t("SMS în așteptare · fără confirmare");
             if(!status.isEmpty())root.addView(text(status,14));
         }
-        final ListView thread=new ListView(this);thread.setFocusableInTouchMode(true);thread.setDivider(null);thread.setSelector(android.R.color.transparent);
+        final ListView thread=new ListView(this);conversationList=thread;thread.setFocusableInTouchMode(true);thread.setDivider(null);thread.setSelector(android.R.color.transparent);
         thread.setPadding(dp(5),0,dp(5),0);
         final int[] focus={Math.max(0,Math.min(selected,rows.size()-1))};
         final SimpleDateFormat day=new SimpleDateFormat("dd MMM yyyy",Locale.getDefault());
@@ -206,11 +209,11 @@ public final class MessagesActivity extends LeoActivity {
             messageOptions(address,rows,focus[0]);
         }};
         back=new Runnable() { public void run() { if(preview)finish();else load(""); } };
-        footer(L.t("Opțiuni"),L.t("5: răspunde"),L.t("Înapoi"));thread.requestFocus();replyAddress=address;thread.setSelection(focus[0]);
+        footer(L.t("Opțiuni"),L.t("5: răspunde"),L.t("Înapoi"));thread.requestFocus();replyAddress=address;if(!rows.isEmpty()&&address.equals(messageAddress)&&rows.get(focus[0]).date==messageDate)thread.setSelectionFromTop(focus[0],messageTop);else thread.setSelection(focus[0]);
     }
-    private void messageOptions(final String address,final ArrayList<Message> rows,final int index) {
-        final boolean hasMessage=index>=0 && index<rows.size();
-        options(L.t("Conversație"),new String[]{L.t("Răspunde","message"),L.t("Detalii mesaj"),L.t("Redirecționează"),L.t("Copiază textul"),L.t("Copiază numărul"),L.t("Caută în conversație"),L.t("Reîmprospătează"),L.t("Răspuns din șablon"),L.t("Selectează text"),ConversationPrefs.has(this,"pinned",address)?L.t("Desprinde conversația"):L.t("Fixează conversația"),ConversationPrefs.has(this,"archived",address)?L.t("Dezarhivează"):L.t("Arhivează"),ConversationPrefs.has(this,"blocked",address)?L.t("Deblochează în Leo"):L.t("Filtrează expeditorul în Leo"),L.t("Numere și linkuri")},new Choice() { public void pick(int i) {
+    private void messageOptions(final String address,final ArrayList<Message> rows,final int index){messageActions(address,rows,index,false);}
+    private void messageActions(final String address,final ArrayList<Message> rows,final int index,boolean advanced){final String[] labels=new String[]{L.t("Răspunde","message"),L.t("Detalii mesaj"),L.t("Redirecționează"),L.t("Copiază textul"),L.t("Copiază numărul"),L.t("Caută în conversație"),L.t("Reîmprospătează"),L.t("Răspuns din șablon"),L.t("Selectează text"),ConversationPrefs.has(this,"pinned",address)?L.t("Desprinde conversația"):L.t("Fixează conversația"),ConversationPrefs.has(this,"archived",address)?L.t("Dezarhivează"):L.t("Arhivează"),ConversationPrefs.has(this,"blocked",address)?L.t("Deblochează în Leo"):L.t("Filtrează expeditorul în Leo"),L.t("Numere și linkuri")};final int[] ids=advanced?new int[]{3,4,6,7,8,9,10,11,12}:new int[]{0,1,2,5,13};String[] shown=new String[ids.length];for(int n=0;n<ids.length;n++)shown[n]=ids[n]==13?L.t("Mai multe"):labels[ids[n]];options(advanced?L.t("Mai multe"):L.t("Conversație"),shown,new Choice(){public void pick(int at){if(ids[at]==13)messageActions(address,rows,index,true);else messageAction(address,rows,index,ids[at]);}});}
+    private void messageAction(final String address,final ArrayList<Message> rows,final int index,int i){final boolean hasMessage=index>=0&&index<rows.size();
             if(i>=9&&i<=11){final String group=i==9?"pinned":i==10?"archived":"blocked";if(i==11&&!ConversationPrefs.has(MessagesActivity.this,group,address))options(L.t("Păstrează SMS, ascunde notificările în Leo?"),new String[]{L.t("Anulează"),L.t("Filtrează")},new Choice(){public void pick(int yes){if(yes==1)organize(group,address);}});else organize(group,address);}else if(i==12){if(hasMessage)links(rows.get(index).body);}else if(i==7){replyAddress=address;templates(false);}else if(i==0)compose(address);
             else if(i==5)search(address,rows);
             else if(i==6)load(address);
@@ -224,7 +227,6 @@ public final class MessagesActivity extends LeoActivity {
                     notice(i==3?L.t("Text copiat"):L.t("Număr copiat"));
                 }
             } else notice(L.t("Niciun mesaj selectat"));
-        }});
     }
     private void organize(String group,String address){if(preview){notice(L.t("Demo · fără salvare"));return;}try{ConversationPrefs.toggle(this,group,address);UnreadState.refresh(this);if(group.equals("blocked"))((android.app.NotificationManager)getSystemService(NOTIFICATION_SERVICE)).cancel("leo-sms",address.hashCode());load("");}catch(RuntimeException e){notice(L.t("Preferința nu poate fi salvată"));}}
     private void links(String body){final ArrayList<String> links=MessageLinks.extract(body);if(links.isEmpty()){notice(L.t("Niciun număr sau link găsit"));return;}options(L.t("Numere și linkuri"),links.toArray(new String[0]),new Choice(){public void pick(int n){Uri uri=Uri.parse(links.get(n));try{if("tel".equals(uri.getScheme()))startActivity(new Intent(MessagesActivity.this,PhoneActivity.class).setAction(Intent.ACTION_DIAL).setData(uri));else if("mailto".equals(uri.getScheme()))startActivity(new Intent(MessagesActivity.this,EmailActivity.class).putExtra("compose_to",uri.getSchemeSpecificPart()));else startActivity(new Intent(MessagesActivity.this,BrowserActivity.class).setData(uri));}catch(RuntimeException e){notice(L.t("Nu există o aplicație compatibilă"));}}});}
@@ -280,7 +282,7 @@ public final class MessagesActivity extends LeoActivity {
         if(!(view instanceof LinearLayout))return;
         LinearLayout row=(LinearLayout)view;boolean received=Boolean.TRUE.equals(row.getTag());
         GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(10));
-        background.setColor(received?palette.card:Appearance.mix(palette.card,palette.accent,.22f));
+        background.setColor(received?palette.card:palette.material()?palette.selection:Appearance.mix(palette.card,palette.accent,.22f));
         background.setStroke(dp(2),selected?palette.accent:Color.TRANSPARENT);
         row.getChildAt(1).setBackground(background);
     }

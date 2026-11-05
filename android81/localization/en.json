@@ -2767,5 +2767,22 @@
   "Informații la blocare": "Lock screen information",
   "Fundaluri incluse": "Built-in wallpapers",
   "Teme avansate": "Advanced themes",
-  "Material · Orhidee": "Material · Orchid"
+  "Material · Orhidee": "Material · Orchid",
+  "Niciun contact. Opțiuni pentru adăugare.": "No contacts. Use Options to add one.",
+  "Nicio conversație. Opțiuni pentru un SMS nou.": "No conversations. Use Options for a new SMS.",
+  "Nicio notificare.": "No notifications.",
+  "Niciun apel în jurnal.": "No calls in the log.",
+  "* Detalii · 5 Elimină · # Mai multe": "* Details · 5 Dismiss · # More",
+  "Notificarea permanentă nu poate fi eliminată": "This ongoing notification cannot be dismissed",
+  "Elimini notificarea?": "Dismiss this notification?",
+  "Notificare eliminată": "Notification dismissed",
+  "Notificarea nu mai este disponibilă": "Notification is no longer available",
+  " SMS nou": " new SMS",
+  " SMS noi": " new SMS",
+  " notificări": " notifications",
+  "#: deschide notificările": "#: open notifications",
+  "Card Home · ": "Home card · ",
+  "Automat": "Automatic",
+  "Manual": "Manual",
+  "Notificările nu sunt disponibile. Reîncearcă sau verifică accesul Leo în Setări.": "Notifications are unavailable. Retry or check Leo notification access in Settings."
 }

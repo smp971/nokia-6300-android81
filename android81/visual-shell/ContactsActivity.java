@@ -22,7 +22,7 @@ public final class ContactsActivity extends LeoActivity {
     private void openContact(long id){try(Cursor c=getContentResolver().query(Phone.CONTENT_URI,new String[]{Phone._ID,Phone.RAW_CONTACT_ID,Phone.CONTACT_ID,Phone.DISPLAY_NAME,Phone.NUMBER,Phone.STARRED},Phone.CONTACT_ID+"=?",new String[]{""+id},null)){if(c!=null&&c.moveToFirst()){Entry e=new Entry();e.data=c.getLong(0);e.raw=c.getLong(1);e.contact=c.getLong(2);e.name=c.getString(3);e.number=c.getString(4);e.starred=c.getInt(5)!=0;detail(e);return;}}catch(RuntimeException ignored){}load();}
     private void load() {
         final int generation=++loadGeneration;
-        begin(L.t("Contacte")); root.addView(text(L.t("Se încarcă…"),18),new LinearLayout.LayoutParams(-1,0,1)); footer("","", L.t("Înapoi"));
+        loading(L.t("Contacte"));
         final String query=filter;final boolean numeric=query.matches("[0-9]+"),unfiltered=query.isEmpty()||numeric;
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Entry> found=new ArrayList<Entry>();
@@ -35,7 +35,7 @@ public final class ContactsActivity extends LeoActivity {
                     e.name=cursor.getString(3); e.number=cursor.getString(4); e.starred=cursor.getInt(5)!=0;if((!numeric||ContactKeys.matches(e.name,e.number,query))&&contacts.add(e.contact))found.add(e);
                 }
                 ui(new Runnable() { public void run() { if(generation!=loadGeneration)return; entries.clear(); entries.addAll(found); show(); } });
-            } catch(RuntimeException denied) { ui(new Runnable() { public void run() { if(generation!=loadGeneration)return; notice(L.t("Agenda nu poate fi citită; verifică permisiunile")); entries.clear(); show(); } }); }
+            } catch(RuntimeException denied) { ui(new Runnable() { public void run() { if(generation!=loadGeneration)return; errorPage(L.t("Contacte"),L.t("Agenda nu poate fi citită; verifică permisiunile"),new Runnable(){public void run(){load();}}); } }); }
         }});
     }
     private void show() {
@@ -48,6 +48,7 @@ public final class ContactsActivity extends LeoActivity {
             }); }
         });
     }
+    String rowMemoryKey(String title,int at,String label){return title.equals(contactsTitle)&&at>=0&&at<entries.size()?"contact:"+entries.get(at).contact:label;}
     android.graphics.drawable.Drawable rowIcon(String title,int at){if(!title.equals(contactsTitle)||at<0||at>=entries.size())return null;Entry e=entries.get(at);return avatars.get("contact:"+e.contact,ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,e.contact).buildUpon().appendPath("photo").build(),e.name);}
     private void search(boolean numeric) {
         LinearLayout fields=fields(numeric?L.t("Caută T9"):L.t("Caută contact")); final EditText term=field(fields,numeric?L.t("Cifre pentru literele numelui"):L.t("Nume sau număr"),numeric&&!filter.matches("[0-9]*")?"":filter,numeric?InputType.TYPE_CLASS_NUMBER:InputType.TYPE_CLASS_TEXT);
@@ -58,7 +59,14 @@ public final class ContactsActivity extends LeoActivity {
         ++loadGeneration;
         ArrayList<String> actions=new ArrayList<String>(); actions.add(L.t("Apelează\n")+entry.number); actions.add(L.t("Mesaj SMS")); actions.add(L.t("Editează")); actions.add(L.t("Șterge contactul"));
         actions.add(entry.starred?L.t("Elimină din favorite"):L.t("Adaugă la favorite"));actions.add(L.t("Exportă acest contact VCF"));actions.add(L.t("Toate numerele / adaugă număr"));actions.add(L.t("Fotografia contactului"));actions.add(L.t("Grupe, aniversare și legături"));actions.add(L.t("Istoric apeluri cu acest contact"));actions.add(L.t("Activitatea contactului · apeluri și SMS"));
-        list(entry.name==null?L.t("Contact"):entry.name,actions,0,new Choice() { public void pick(int i) {
+        java.util.ArrayList<String> primary=new java.util.ArrayList<String>(java.util.Arrays.asList(actions.get(0),actions.get(1),actions.get(6),actions.get(4),L.t("Mai multe")));
+        list(entry.name==null?L.t("Contact"):entry.name,primary,0,new Choice(){public void pick(int at){if(at==4)moreContact(entry);else contactAction(entry,new int[]{0,1,6,4}[at]);}},"",null);
+
+        back=new Runnable() { public void run() { load(); } };
+        final android.widget.LinearLayout page=root;worker.execute(new Runnable(){public void run(){android.graphics.Bitmap image=null;try(java.io.InputStream in=ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(),ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,entry.contact))){if(in!=null)image=android.graphics.BitmapFactory.decodeStream(in);}catch(Exception ignored){}final android.graphics.Bitmap bitmap=image;ui(new Runnable(){public void run(){if(root==page&&bitmap!=null){ImageView v=new ImageView(ContactsActivity.this);v.setImageBitmap(bitmap);v.setAdjustViewBounds(true);page.addView(v,1,new LinearLayout.LayoutParams(-1,dp(60)));}}});}});
+    }
+    private void moreContact(final Entry entry){final int[] ids={2,5,7,8,9,10,3};options(L.t("Mai multe"),new String[]{L.t("Editează"),L.t("Exportă acest contact VCF"),L.t("Fotografia contactului"),L.t("Grupe, aniversare și legături"),L.t("Istoric apeluri cu acest contact"),L.t("Activitatea contactului · apeluri și SMS"),L.t("Șterge contactul")},new Choice(){public void pick(int at){contactAction(entry,ids[at]);}});}
+    private void contactAction(final Entry entry,int i){
             if(i==10)startActivity(new Intent(ContactsActivity.this,ContactTimelineActivity.class).putExtra("contact",entry.contact));else if(i==9)startActivity(new Intent(ContactsActivity.this,PhoneActivity.class).putExtra("history",true).putExtra("history_number",entry.number));else if(i==8)startActivity(new Intent(ContactsActivity.this,ContactExtrasActivity.class).putExtra("contact",entry.contact).putExtra("raw",entry.raw).putExtra("name",entry.name));else if(i==0||i==1) chooseNumber(entry,i==0);
             else if(i==2) edit(entry);
             else if(i==5)startActivity(new Intent(ContactsActivity.this,VCardActivity.class).putExtra("contact",entry.contact));
@@ -68,9 +76,6 @@ public final class ContactsActivity extends LeoActivity {
                 if(c==1) { try { getContentResolver().delete(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,entry.contact),null,null); load(); }
                     catch(RuntimeException failure) { notice(L.t("Contactul nu poate fi șters")); } }
             }});
-        } },"",null);
-        back=new Runnable() { public void run() { load(); } };
-        final android.widget.LinearLayout page=root;worker.execute(new Runnable(){public void run(){android.graphics.Bitmap image=null;try(java.io.InputStream in=ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(),ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,entry.contact))){if(in!=null)image=android.graphics.BitmapFactory.decodeStream(in);}catch(Exception ignored){}final android.graphics.Bitmap bitmap=image;ui(new Runnable(){public void run(){if(root==page&&bitmap!=null){ImageView v=new ImageView(ContactsActivity.this);v.setImageBitmap(bitmap);v.setAdjustViewBounds(true);page.addView(v,1,new LinearLayout.LayoutParams(-1,dp(60)));}}});}});
     }
     private void chooseNumber(final Entry e,final boolean call){final ArrayList<ContactBook.Number> numbers=ContactBook.numbers(this,e.contact);if(numbers.isEmpty()){notice(L.t("Contact fără număr"));return;}if(numbers.size()==1){startActivity(new Intent(this,call?PhoneActivity.class:MessagesActivity.class).putExtra("number",numbers.get(0).value));return;}String[] labels=new String[numbers.size()];for(int i=0;i<labels.length;i++)labels[i]=numbers.get(i).label+" · "+numbers.get(i).value;options(L.t("Alege numărul"),labels,new Choice(){public void pick(int i){startActivity(new Intent(ContactsActivity.this,call?PhoneActivity.class:MessagesActivity.class).putExtra("number",numbers.get(i).value));}});}
     private void numbers(final Entry e){final ArrayList<ContactBook.Number> all=ContactBook.numbers(this,e.contact);ArrayList<String> labels=new ArrayList<String>();for(ContactBook.Number n:all)labels.add(n.label+"\n"+n.value);list(L.t("Numere · ")+e.name,labels,0,new Choice(){public void pick(final int i){final ContactBook.Number n=all.get(i);options(n.label,new String[]{L.t("Apelează"),"SMS",L.t("Editează numărul"),L.t("Șterge numărul")},new Choice(){public void pick(int action){if(action<2)startActivity(new Intent(ContactsActivity.this,action==0?PhoneActivity.class:MessagesActivity.class).putExtra("number",n.value));else if(action==2)numberForm(e,n);else if(all.size()<2)notice(L.t("Păstrează cel puțin un număr"));else options(L.t("Ștergi doar acest număr?"),new String[]{L.t("Păstrează"),L.t("Șterge")},new Choice(){public void pick(int yes){if(yes==1){getContentResolver().delete(ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI,n.id),ContactsContract.Data.MIMETYPE+"=?",new String[]{Phone.CONTENT_ITEM_TYPE});numbers(e);}}});}});}},L.t("Adaugă"),new Runnable(){public void run(){if(all.size()>=10)notice(L.t("Maximum 10 numere editabile aici"));else numberForm(e,null);}});back=new Runnable(){public void run(){detail(e);}};}

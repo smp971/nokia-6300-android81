@@ -15,6 +15,8 @@ import android.view.WindowManager;
 /** Shared keypad menu: explicit focus and softkey actions, no touch dependency. */
 final class KeypadDialog extends Dialog {
     interface Action { void select(int index); }
+    private static java.lang.ref.WeakReference<KeypadDialog> active=new java.lang.ref.WeakReference<KeypadDialog>(null);
+    static KeypadDialog current(){KeypadDialog d=active.get();return d!=null&&d.isShowing()?d:null;}
     private final String title;
     private final String[] items;
     private final Action action;
@@ -75,11 +77,11 @@ final class KeypadDialog extends Dialog {
     }
     KeypadDialog onBack(Runnable action){backAction=action;return this;}
     public void show() {
-        super.show();
+        super.show();active=new java.lang.ref.WeakReference<KeypadDialog>(this);
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        getWindow().setStatusBarColor(palette.bar);
+        getWindow().setStatusBarColor(palette.bar);getWindow().setNavigationBarColor(palette.bar);getWindow().getDecorView().setSystemUiVisibility(SystemChrome.darkFlags(getWindow().getDecorView().getSystemUiVisibility()));
         WindowManager.LayoutParams attributes=getWindow().getAttributes();attributes.windowAnimations=0;getWindow().setAttributes(attributes);
         getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.MATCH_PARENT);
     }
