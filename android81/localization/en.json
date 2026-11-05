@@ -2756,5 +2756,15 @@
   "Accesul la stocare nu a fost acordat": "Storage access was not granted",
   "Reîncearcă citirea indexului media": "Retry reading the media index",
   "Bibliotecă parțială · reîncarcă pentru a reîncerca": "Partial library · reload to retry",
-  "Mai multe": "More"
+  "Mai multe": "More",
+  "Opțiuni aplicații": "App options",
+  "Instrumente avansate": "Advanced tools",
+  "Aplicații și scurtături": "Apps and shortcuts",
+  "Ecranul principal": "Home screen",
+  "Aspect și teme": "Appearance and themes",
+  "Text și limbă": "Text and language",
+  "Ecranul blocat": "Lock screen",
+  "Informații la blocare": "Lock screen information",
+  "Fundaluri incluse": "Built-in wallpapers",
+  "Teme avansate": "Advanced themes"
 }

@@ -55,4 +55,5 @@
     <instrumentation android:name="ro.leo.visual.MusicLibraryAudit" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.SxmoThemeTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.EaseNavigationTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.CompactShellTests" android:targetPackage="ro.leo.visual" />
 </manifest>

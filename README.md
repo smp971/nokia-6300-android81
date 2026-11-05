@@ -136,7 +136,7 @@ test, not every accessory, carrier or scenario.
 | 📂 **Files / transfer** | Internal/SD browsing, multi-selection, search/sort, images, storage analysis and export location. Copy/move hashes and USB MTP confirmed. Bluetooth text-file transfer worked both ways with Samsung. |
 | 🧰 **Daily tools** | Calculator, pinned notes/checklists, TXT export, T9 search, local Calendar with recurrence/notifications. Clock: Time, Alarms, World, Timer and Stopwatch; weekday alarms, snooze, pause/resume and laps. Snooze scheduling checked; eventual sound needs confirmation. |
 | 🌤️ **Weather** | Configurable city, Bucharest default, Open-Meteo model forecast, seven days, sunrise/sunset and timestamped cache. Live forecast displayed on phone. |
-| 🎨 **Personalization** | Material Night, Leo Night/Nordic/Solar and [Sxmo · Pine](android81/SXMO-THEME.md) collections, accents/app themes, lock wallpaper, app reordering, shortcuts, dialer favorites and quick-settings volume. |
+| 🎨 **Personalization** | [Leo Classic](android81/CLASSIC-COMPACT-SHELL.md), Material Night, Leo Night/Nordic/Solar and [Sxmo · Pine](android81/SXMO-THEME.md) collections, accents/app themes, lock wallpaper, app reordering, shortcuts, dialer favorites and quick-settings volume. |
 | 💾 **Leo backups** | Supported preferences, themes, app order, notes, dictionary, favorites, Calendar and templates. Selective restore with validation/rollback copy; separate contact/SMS archive with duplicate skipping. Accounts excluded; not a full userdata backup. |
 | 📚 **Reader / games** | TXT/EPUB, Markdown/PDF, resume/bookmarks, adjustable text, PDF keypad zoom, Snake, Sudoku and 15 Puzzle. Local parser/UI tests passed; long sessions/all game flows not exhaustively validated. |
 | ✉️ **Email / web** | Configurable IMAP/SMTP and keypad text browser. IMAP reception confirmed; SMTP unvalidated. Text browser does not execute JavaScript. Existing WebView ran local HTML/JS apps with GPU limitations. |
@@ -277,3 +277,5 @@ Contributions to code, tests, translations, documentation and a better keypad
 experience are welcome.
 
 The ongoing [Leo interface work](android81/LEO-ENVIRONMENT.md) focuses on making the phone easier to use, starting with a simpler seven-action global menu.
+
+The active [classic compact shell](android81/CLASSIC-COMPACT-SHELL.md) uses a nine-app first page, shorter contextual menus and grouped personalization settings.

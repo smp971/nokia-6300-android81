@@ -140,35 +140,13 @@ public final class MainActivity extends Activity {
         return super.onKeyDown(key, event);
     }
     private void options() {
-        new KeypadDialog(this,L.t("Opțiuni"),new String[]{L.t("Schimbă fundalul"), L.t("Mouse din taste"), L.t("Notificări"), L.t("Despre"),
-                screen.list?L.t("Afișare grilă"):L.t("Afișare listă"),L.t("Configurări rapide"),L.t("Personalizare"),L.t("Reordonează aplicațiile"),L.t("Media curentă"),L.t("Caută în Leo"),L.t("Acces rapid Home"),L.t("Categorii aplicații"),L.t("Editor Home")}, new KeypadDialog.Action() {
-              public void select(int which) {
-                if(which==12){screen.startEditor();}
-                else if(which==11){new KeypadDialog(MainActivity.this,L.t("Categorii"),AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int at){screen.category(at);}}).show();}
-                else if(which==10){startActivity(new Intent(MainActivity.this,QuickHomeActivity.class));}
-                else if(which==9){startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));}
-                else if(which==8){startActivity(new Intent(MainActivity.this,NowPlayingActivity.class));}
-                else if (which == 0) {
-                    startActivity(new Intent(MainActivity.this,WallpaperActivity.class));
-                }
-                else if (which == 1) {
-                    if (!LeoPointerService.toggle()) new AlertDialog.Builder(MainActivity.this)
-                        .setMessage(L.t("Serviciul de cursor nu este activat.")).setPositiveButton("OK", null).show();
-                }
-                else if (which == 2) notifications();
-                else if (which == 3) new AlertDialog.Builder(MainActivity.this).setTitle("Leo Visual")
-                    .setMessage(L.t("OK: aplicații. Soft stânga: notificări. În modul mouse: săgeți, OK pentru clic, # pentru oprire, * pentru derulare."))
-                    .setPositiveButton("OK", null).show();
-                else if(which==7)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class).putExtra("order",true));
-                else if(which==6)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class));
-                else if(which==5)startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));
-                else if (which == 4) {
-                    screen.list=!screen.list;
-                    getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("list",screen.list).apply();
-                    screen.invalidate();
-                }
-              }
-            }).show();
+        if(!screen.grid){new KeypadDialog(this,L.t("Ecran principal"),new String[]{L.t("Editor Home"),L.t("Schimbă fundalul"),L.t("Acces rapid Home")},new KeypadDialog.Action(){public void select(int at){if(at==0)screen.startEditor();else startActivity(new Intent(MainActivity.this,at==1?WallpaperActivity.class:QuickHomeActivity.class));}}).show();return;}
+        new KeypadDialog(this,L.t("Opțiuni aplicații"),new String[]{L.t("Categorii aplicații"),L.t("Reordonează aplicațiile"),screen.list?L.t("Afișare grilă"):L.t("Afișare listă"),L.t("Caută în Leo")},new KeypadDialog.Action(){public void select(int at){
+            if(at==0)new KeypadDialog(MainActivity.this,L.t("Categorii"),AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int category){screen.category(category);}}).show();
+            else if(at==1)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class).putExtra("order",true));
+            else if(at==2){screen.list=!screen.list;getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("list",screen.list).apply();screen.invalidate();}
+            else startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));
+        }}).show();
     }
     private void notifications() {
         if(!LeoPointerService.openAndroidPanel(false))startActivity(new Intent(this,NotificationsActivity.class));
@@ -203,6 +181,7 @@ public final class MainActivity extends Activity {
         void reloadAppearance() {
             if(!editing)homeLayout=new HomeCanvasLayout(MainActivity.this);
             android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
+            list=appearance.getBoolean("list",false);
             compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);
             order=AppCatalog.menuOrder(MainActivity.this,category);selected=Math.max(0,Math.min(selected,order.length-1));shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
