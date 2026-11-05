@@ -369,7 +369,7 @@ public final class MainActivity extends Activity {
             prepareText(s,size);p.setColor(color); p.setTextAlign(align); c.drawText(s, x, y, p);
         }
         void round(Canvas c, float l, float t, float r, float b, float radius, int color) {
-            p.setShader(null); p.setColor(color); p.setStyle(Paint.Style.FILL); box.set(l,t,r,b); c.drawRoundRect(box,Math.min(radius,4),Math.min(radius,4),p);
+            p.setShader(null); p.setColor(color); p.setStyle(Paint.Style.FILL); box.set(l,t,r,b); float rounding=palette.material()?Math.max(10,Math.min(radius,14)):Math.min(radius,4);c.drawRoundRect(box,rounding,rounding,p);
         }
         void line(Canvas c,float x1,float y1,float x2,float y2) { c.drawLine(x1,y1,x2,y2,p); }
         final IconArt artwork=new IconArt();
@@ -383,7 +383,7 @@ public final class MainActivity extends Activity {
             if (!grid) {
                 if(wallpaper!=null) {p.setColor(Color.WHITE);output.drawBitmap(wallpaper,null,new RectF(0,0,240,302),p);p.setColor(0x55000000);output.drawRect(0,0,240,302,p);}
                 boolean cardLayout=cards.length>0,small=!palette.sxmo()&&(compactClock||cardLayout);
-                if(!palette.sxmo()&&homePart(output,0,10,10,230,showSims?(cardLayout?136:151):118)){round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:0xcc111827);output.restore();}
+                if(!palette.sxmo()&&homePart(output,0,10,10,230,showSims?(cardLayout?136:151):118)){round(output,10,10,230,showSims?(cardLayout?136:151):118,4,wallpaper==null?palette.card:palette.material()?0xe6211f26:0xcc111827);output.restore();}
                 if(homeTextPart(output,1,networkBanner,27,10)){text(output,networkBanner,120,27,10,0xffeee8fa,Paint.Align.CENTER);output.restore();}
                 if(homeTextPart(output,2,time,small?64:86,small?36:54)){text(output,time,120,small?64:86,small?36:54,Color.WHITE,Paint.Align.CENTER);output.restore();}
                 if(homeTextPart(output,3,date,small?87:108,13)){text(output,date,120,small?87:108,13,0xfff0e5f5,Paint.Align.CENTER);output.restore();}
@@ -406,7 +406,7 @@ public final class MainActivity extends Activity {
                         }
                     }
                 }
-                if(cardLayout&&homePart(output,5,10,156,230,211)){HomeCards.Card card=cards[cardIndex];boolean leading=card.type==0||card.type==3;round(output,10,156,230,211,4,wallpaper==null?palette.card:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}if(card.type==0)dashboardArt.weather(output,31,189,30,card.weatherCode);text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(leading?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,leading?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(leading?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,leading?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);output.restore();}
+                if(cardLayout&&homePart(output,5,10,156,230,211)){HomeCards.Card card=cards[cardIndex];boolean leading=card.type==0||card.type==3;round(output,10,156,230,211,4,wallpaper==null?palette.card:palette.material()?0xee211f26:0xdd111827);if(shortcut>=4){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);p.setColor(palette.accent);output.drawRoundRect(10,156,230,211,4,4,p);p.setStyle(Paint.Style.FILL);}if(card.type==3&&favorites.length>0&&favorites[favoriteIndex].photo!=null){output.save();output.clipRect(15,176,45,206);Bitmap avatar=favorites[favoriteIndex].photo;float scale=Math.max(30f/avatar.getWidth(),30f/avatar.getHeight()),w=avatar.getWidth()*scale,h=avatar.getHeight()*scale;output.drawBitmap(avatar,null,new RectF(30-w/2,191-h/2,30+w/2,191+h/2),p);output.restore();}if(card.type==0)dashboardArt.weather(output,31,189,30,card.weatherCode);text(output,card.title,18,169,10,palette.accent,Paint.Align.LEFT);text(output,(cardIndex+1)+"/"+cards.length+" · *",223,169,9,0xffe2dbea,Paint.Align.RIGHT);String main=card.main;p.setTextSize(16);while(main.length()>1&&p.measureText(main)>(leading?165:205))main=main.substring(0,main.length()-2)+"…";text(output,main,leading?137:120,189,16,Color.WHITE,Paint.Align.CENTER);String detail=card.detail;p.setTextSize(10);while(detail.length()>1&&p.measureText(detail)>(leading?165:205))detail=detail.substring(0,detail.length()-2)+"…";text(output,detail,leading?137:120,204,10,0xffe2dbea,Paint.Align.CENTER);output.restore();}
                 if(homePart(output,6,7,cardLayout?215:195,233,269)){for(int i=0;i<shortcuts.length;i++){
                     float x=33+i*58;
                     if(shortcut==i)round(output,x-26,cardLayout?216:196,x+26,cardLayout?256:251,4,palette.card);
@@ -416,9 +416,9 @@ public final class MainActivity extends Activity {
                 if(editing){RectF frame=homeLayout.frames[editItem];p.setColor(palette.accent);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1);output.drawRect(frame,p);p.setStyle(Paint.Style.FILL);}
             } else {
                 p.setColor(palette.background); output.drawRect(0,0,240,276,p);
-                p.setColor(palette.bar);output.drawRect(0,0,240,34,p);
-                text(output,AppCatalog.CATEGORIES[category]+" · * / #",120,12,10,palette.accent,Paint.Align.CENTER);
-                text(output,names[order[selected]],120,30,16,Color.WHITE,Paint.Align.CENTER);
+                p.setColor(palette.material()?palette.background:palette.bar);output.drawRect(0,0,240,34,p);
+                if(palette.material()){text(output,L.t("Aplicații"),12,19,18,Color.WHITE,Paint.Align.LEFT);text(output,AppCatalog.CATEGORIES[category]+" · * / #",12,32,9,palette.accent,Paint.Align.LEFT);text(output,(selected+1)+" / "+order.length,228,22,11,palette.accent,Paint.Align.RIGHT);}
+                else {text(output,AppCatalog.CATEGORIES[category]+" · * / #",120,12,10,palette.accent,Paint.Align.CENTER);text(output,names[order[selected]],120,30,16,Color.WHITE,Paint.Align.CENTER);}
                 if(palette.sxmo()){
                     int first=Math.max(0,Math.min(Math.max(0,order.length-9),selected-4));
                     for(int row=0;row<Math.min(9,order.length);row++){int i=first+row;float y=49+row*24;if(i==selected){p.setColor(palette.selection);output.drawRect(0,y-17,240,y+7,p);}SxmoIcon glyph=new SxmoIcon(order[i],18);glyph.setBounds(4,(int)y-14,22,(int)y+4);glyph.draw(output);text(output,names[order[i]],27,y+2,18,0xfff1f1df,Paint.Align.LEFT);}

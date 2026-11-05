@@ -49,8 +49,8 @@ abstract class LeoActivity extends Activity {
         heading=text(title,17); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
         heading.setBackground(UiChrome.panel(palette,getResources().getDisplayMetrics().density,false));
-        if(palette.sxmo()){heading.setTypeface(android.graphics.Typeface.DEFAULT);heading.setCompoundDrawables(null,null,null,null);}else if(palette.classic()){heading.setPadding(dp(6),0,dp(6),0);heading.setCompoundDrawables(new AppBadge(title,dp(22)),null,null,null);}
-        root.addView(heading,new LinearLayout.LayoutParams(-1,dp(palette.sxmo()?26:palette.classic()?30:UiChrome.HEADER_DP)));
+        if(palette.sxmo()){heading.setTypeface(android.graphics.Typeface.DEFAULT);heading.setCompoundDrawables(null,null,null,null);}else if(palette.classic()||palette.material()){heading.setPadding(dp(6),0,dp(6),0);heading.setCompoundDrawables(new AppBadge(title,dp(22)),null,null,null);}
+        root.addView(heading,new LinearLayout.LayoutParams(-1,dp(palette.sxmo()?26:palette.classic()?30:palette.material()?34:UiChrome.HEADER_DP)));
         View accent=new View(this);accent.setBackgroundColor(palette.background);root.addView(accent,new LinearLayout.LayoutParams(-1,dp(1)));
     }
     void footer(String a,String b,String c) {
@@ -80,7 +80,7 @@ abstract class LeoActivity extends Activity {
         begin(title); left=command;
         listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
         final ListView list=new ListView(this);activeList=list;list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
-        if(palette.sxmo()||palette.classic()){list.setPadding(0,0,0,0);list.setDividerHeight(0);}
+        if(palette.sxmo()||palette.classic()||palette.material()){list.setPadding(0,0,0,0);list.setDividerHeight(0);}
         list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
         listPosition=new ListPositionDrawable(palette,getResources().getDisplayMetrics().density);
@@ -98,7 +98,7 @@ abstract class LeoActivity extends Activity {
                     label.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_selected},new int[]{}},new int[]{palette.ink,Color.WHITE}));
                     label.setPadding(dp(15),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);label.setCompoundDrawablePadding(dp(9));
                     label.setBackground(UiChrome.row(palette,dp(7),dp(1)));
-                    if(palette.sxmo()){label.setPadding(dp(5),dp(2),dp(5),dp(2));label.setMinHeight(dp(28));}else if(palette.classic()){label.setPadding(dp(8),dp(4),dp(6),dp(4));label.setMinHeight(dp(36));}
+                    if(palette.sxmo()){label.setPadding(dp(5),dp(2),dp(5),dp(2));label.setMinHeight(dp(28));}else if(palette.classic()||palette.material()){label.setPadding(dp(8),dp(4),dp(6),dp(4));label.setMinHeight(dp(palette.material()?40:36));}
                 }
                 CharSequence styled=rowText(rows.get(i));if(!TextUtils.equals(label.getText(),styled))label.setText(styled);
                 if(!stableRowIcons()||!(label.getTag() instanceof Integer)||((Integer)label.getTag())!=i){label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setTag(i);}

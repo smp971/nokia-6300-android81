@@ -47,8 +47,7 @@ final class KeypadDialog extends Dialog {
             protected void onDraw(Canvas c) {
                 c.save(); c.scale(getWidth()/240f,getHeight()/280f);
                 c.drawColor(palette.background);
-                text(c,title,120,27,18,Color.WHITE,Paint.Align.CENTER);
-                paint.setColor(palette.accent);c.drawRect(12,35,228,37,paint);
+                if(palette.material())text(c,title,15,27,18,Color.WHITE,Paint.Align.LEFT);else {text(c,title,120,27,18,Color.WHITE,Paint.Align.CENTER);paint.setColor(palette.accent);c.drawRect(12,35,228,37,paint);}
                 int visible=items.length<=7?Math.max(1,items.length):6;
                 float height=Math.min(39,196f/visible);
                 int first=Math.max(0,Math.min(Math.max(0,items.length-visible),selected-visible/2));
@@ -57,14 +56,14 @@ final class KeypadDialog extends Dialog {
                     if(index==selected) {
                         paint.setColor(palette.selection);
                         if(palette.sxmo())c.drawRect(6,top,234,top+height-2,paint);
-                        else c.drawRoundRect(new RectF(6,top,234,top+height-2),4,4,paint);
+                        else {float radius=palette.material()?12:4;c.drawRoundRect(new RectF(6,top,234,top+height-2),radius,radius,paint);if(palette.material()){paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1);paint.setColor(palette.accent);c.drawRoundRect(new RectF(6,top,234,top+height-2),radius,radius,paint);paint.setStyle(Paint.Style.FILL);}}
                     }
                     float baseline=top+height/2+5;
                     if(numbered)text(c,index<9?""+(index+1):"",15,baseline,11,index==selected?palette.ink:palette.accent,Paint.Align.LEFT);
                     text(c,items[index],numbered?35:15,baseline,14,index==selected?palette.ink:Color.WHITE,Paint.Align.LEFT);
                 }
                 paint.setColor(palette.bar); c.drawRect(0,250,240,280,paint);
-                paint.setColor(palette.accent);c.drawRect(0,250,240,251,paint);
+                paint.setColor(palette.material()?0xff49454f:palette.accent);c.drawRect(0,250,240,251,paint);
                 text(c,(items.length==0?0:selected+1)+" / "+items.length,12,245,10,palette.accent,Paint.Align.LEFT);
                 if(numbered)text(c,"1–"+Math.min(9,items.length),8,270,11,Color.WHITE,Paint.Align.LEFT);
                 text(c,items.length==0?"":L.t("Alege"),120,270,13,palette.accent,Paint.Align.CENTER);
