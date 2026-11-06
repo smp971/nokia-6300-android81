@@ -18,7 +18,7 @@ public final class LeoPointerService extends AccessibilityService {
     private boolean active, scroll, gesturePending, consumePoundUp;
     private int x, y, width, height;
     private KeypadDialog menu;
-    private String foregroundPackage="",foregroundClass="";private boolean helpHeld,helpShown;private final android.os.Handler helpTimer=new android.os.Handler();private final Runnable holdHelp=new Runnable(){public void run(){if(helpHeld&&!KeypadLockActivity.locked(LeoPointerService.this)&&!InCallActivity.visible&&!AlarmRingService.ringing&&!PowerMenuActivity.visible){helpShown=true;setActive(false);if(menu!=null)menu.dismiss();ContextHelp.open(LeoPointerService.this,foregroundClass);}}};
+    private String foregroundPackage="",foregroundClass="";private boolean helpHeld,helpShown;private final android.os.Handler helpTimer=new android.os.Handler();private final Runnable holdHelp=new Runnable(){public void run(){if(helpHeld&&!KeypadLockActivity.locked(LeoPointerService.this)&&!InCallActivity.visible&&!AlarmRingService.ringing&&!PowerMenuActivity.visible){helpShown=true;setActive(false);if(menu!=null)menu.dismiss();if(getSharedPreferences("appearance",0).getBoolean("menu-hold-help",false))ContextHelp.open(LeoPointerService.this,foregroundClass);else openPage(RecentAppsActivity.class);}}};
     private int menuGeneration;
     private boolean screenWatching;
     private final android.content.BroadcastReceiver screenReceiver=new android.content.BroadcastReceiver(){
@@ -135,7 +135,7 @@ public final class LeoPointerService extends AccessibilityService {
         if(id==GlobalMenuModel.POWER){openPowerMenu();return;}
         if(id==GlobalMenuModel.HELP){setActive(false);ContextHelp.open(this,foregroundClass);return;}
         if(id==GlobalMenuModel.WORKSPACE){openPage(WorkspaceActivity.class);return;}
-        if(id==GlobalMenuModel.TRANSFERS){openPage(BluetoothTransfersActivity.class);return;}
+        if(id==GlobalMenuModel.TRANSFERS){setActive(false);startActivity(new android.content.Intent(this,DownloadsActivity.class).putExtra("center",true).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));return;}
         if(id==GlobalMenuModel.STUDIO){openPage(PremiumStudioActivity.class);return;}
         if(id==GlobalMenuModel.ANDROID){openPage(AndroidControlsActivity.class);return;}
         if(id==GlobalMenuModel.CLOSE)closeForeground();

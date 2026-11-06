@@ -11,7 +11,7 @@ final class AppCatalog {
     static boolean settingsOnly(int id){return id==36||id==7||id==15||id==16||id==17||id==18||id==20||id==21||id==24||id==27||id==28||id==29||id==32||id==33;}
     static int category(int id){if(id==0||id==1||id==2||id==22)return 1;if(id==5||id==6||id==12||id==13||id==25||id==34)return 2;if(id==3||id==4||id==10||id==11||id==14||id==19||id==26||id==35)return 3;if(id==30||id==31||id==37)return 4;return 5;}
     static boolean primary(int id){return id==0||id==1||id==2||id==3||id==5||id==6||id==8||id==9||id==34;}
-    static int[] menuOrder(Context c,int category){ArrayList<Integer> ids=new ArrayList<Integer>();for(int id:order(c))if(!settingsOnly(id)&&(category==0?primary(id):category==6||category(id)==category))ids.add(id);int[] result=new int[ids.size()];for(int n=0;n<result.length;n++)result[n]=ids.get(n);return result;}
+    static int[] menuOrder(Context c,int category){ArrayList<Integer> ids=new ArrayList<Integer>();for(int id:order(c))if(!settingsOnly(id)&&ShellMode.appVisible(id,ShellMode.simple(c))&&(ShellMode.simple(c)||category==0?primary(id):category==6||category(id)==category))ids.add(id);int[] result=new int[ids.size()];for(int n=0;n<result.length;n++)result[n]=ids.get(n);return result;}
     static void save(Context c,int[] order){StringBuilder out=new StringBuilder();for(int id:order){if(out.length()>0)out.append(',');out.append(id);}c.getSharedPreferences("appearance",0).edit().putString("app-order",out.toString()).apply();}
     static int[] shortcuts(Context c){int[] ids={0,2,6,22};for(int i=0;i<ids.length;i++){int n=c.getSharedPreferences("appearance",0).getInt("shortcut"+i,ids[i]);if(n>=0&&n<NAMES.length)ids[i]=n;}return ids;}
 }
