@@ -14,3 +14,7 @@ android81/device/nokia/leo/apns-conf.xml text eol=lf
 android81/repro/** text eol=lf
 android81/repro/patches/*.patch -whitespace
 *.ps1 text eol=crlf
+
+# Preserve exact bytes of hash-pinned upstream dependencies across platforms.
+android81/third-party/pocket/* -text -whitespace
+android81/visual-shell/assets/licenses/* -whitespace

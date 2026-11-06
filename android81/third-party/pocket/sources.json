@@ -1,0 +1,37 @@
+{
+  "QrCode.java": {
+    "source": "https://github.com/nayuki/QR-Code-generator/blob/bcfe1b018cec5f1f91b5705eca5bb4cdd34e9f8d/java/src/main/java/io/nayuki/qrcodegen/QrCode.java",
+    "sha256": "9b299cae899fe2ec25d7dcb847d7e5b5eb41276789154e05ec3990d32fb5cbd4"
+  },
+  "QrSegment.java": {
+    "source": "https://github.com/nayuki/QR-Code-generator/blob/bcfe1b018cec5f1f91b5705eca5bb4cdd34e9f8d/java/src/main/java/io/nayuki/qrcodegen/QrSegment.java",
+    "sha256": "b292946739e41ed45ef20b881f296a81af621af048b00549af72926910d2359c"
+  },
+  "BitBuffer.java": {
+    "source": "https://github.com/nayuki/QR-Code-generator/blob/bcfe1b018cec5f1f91b5705eca5bb4cdd34e9f8d/java/src/main/java/io/nayuki/qrcodegen/BitBuffer.java",
+    "sha256": "7a37d1bd2e1f2f1578dea076634bc0263a8f1fb526f58b92dd9930ee3f6cc3b8"
+  },
+  "DataTooLongException.java": {
+    "source": "https://github.com/nayuki/QR-Code-generator/blob/bcfe1b018cec5f1f91b5705eca5bb4cdd34e9f8d/java/src/main/java/io/nayuki/qrcodegen/DataTooLongException.java",
+    "sha256": "c000986e4400f0084e30358b22acdeffe1b2886d75d22d3d7217d685cae78319"
+  },
+  "jsch-2.28.0.jar": {
+    "source": "https://repo.maven.apache.org/maven2/com/github/mwiede/jsch/2.28.0/jsch-2.28.0.jar",
+    "sha256": "916f950708937fa1e7813f1e0b6879854e456c10770033dee54fa4df1de73974"
+  },
+  "JSCH-LICENSE.txt": {
+    "source": "https://repo.maven.apache.org/maven2/com/github/mwiede/jsch/2.28.0/jsch-2.28.0.jar",
+    "archive_entry": "META-INF/LICENSE.txt",
+    "sha256": "9c3537ab0b485b391b887b95fdff761de3dd3273a6931e8a1942dde4d2093cc5"
+  },
+  "JSCH-LICENSE.JZlib.txt": {
+    "source": "https://repo.maven.apache.org/maven2/com/github/mwiede/jsch/2.28.0/jsch-2.28.0.jar",
+    "archive_entry": "META-INF/LICENSE.JZlib.txt",
+    "sha256": "9aa93e9bc58ae423a9e6476f608ee8f46063f5679e3bac0bc55f2f4b10d243ee"
+  },
+  "JSCH-LICENSE.jBCrypt.txt": {
+    "source": "https://repo.maven.apache.org/maven2/com/github/mwiede/jsch/2.28.0/jsch-2.28.0.jar",
+    "archive_entry": "META-INF/LICENSE.jBCrypt.txt",
+    "sha256": "a85927641ed1c8b95a5cef79b127b2392d80e0aa9d8e2d6f3b7b7401c5396af9"
+  }
+}

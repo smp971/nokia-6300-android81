@@ -301,6 +301,7 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
+            if(index>=38&&index<=47){HomeAccess.record(MainActivity.this,index);Intent intent=new Intent(MainActivity.this,new Class<?>[]{FeedsActivity.class,FeedsActivity.class,StreamRadioActivity.class,SshActivity.class,LexiconActivity.class,StudyActivity.class,ZipActivity.class,ExpensesActivity.class,MetronomeActivity.class,QrActivity.class}[index-38]);if(index==39)intent.putExtra("podcast",true);startActivity(intent);return;}
             if(index==36||index==37){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,index==36?PremiumStudioActivity.class:WebAppsActivity.class));return;}
             if(index==35){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,GpsActivity.class));return;}
             if(index>=29&&index<=34){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,new Class<?>[]{ThemePacksActivity.class,ReaderActivity.class,GamesActivity.class,ConnectionDashboardActivity.class,UpdatesActivity.class,CameraActivity.class}[index-29]));return;}

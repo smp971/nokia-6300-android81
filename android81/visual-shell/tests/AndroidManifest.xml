@@ -59,4 +59,5 @@
     <instrumentation android:name="ro.leo.visual.MaterialShellTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.SixRefinementTests" android:targetPackage="ro.leo.visual" />
     <instrumentation android:name="ro.leo.visual.DailyEnvironmentTests" android:targetPackage="ro.leo.visual" />
+    <instrumentation android:name="ro.leo.visual.PocketApplicationsTests" android:targetPackage="ro.leo.visual" />
 </manifest>

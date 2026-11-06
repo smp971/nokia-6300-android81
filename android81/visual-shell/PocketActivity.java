@@ -1,0 +1,19 @@
+package ro.leo.visual;
+import ro.leo.i18n.L;import android.content.*;import android.os.Bundle;import android.text.*;import android.widget.*;import java.io.*;
+abstract class PocketActivity extends LeoActivity {
+ interface Saved{void save(String[] values)throws Exception;}interface Work{void run()throws Exception;}
+ private boolean busy;private int ticket;
+ protected void onCreate(Bundle b){super.onCreate(b);home();}
+ abstract void render()throws Exception;
+ final void home(){++ticket;try{render();}catch(Exception e){problem(e);}}
+ final void problem(Exception e){errorPage(L.t("Operație nereușită"),e.getMessage()==null?e.getClass().getSimpleName():UiText.preview(e.getMessage(),700),new Runnable(){public void run(){home();}});back=new Runnable(){public void run(){home();}};}
+ final void job(String title,final Work work,final Runnable done){if(busy){notice(L.t("Operație în curs"));return;}busy=true;final int id=++ticket;loading(title);worker.execute(new Runnable(){public void run(){Exception error=null;try{work.run();}catch(Exception e){error=e;}final Exception failure=error;ui(new Runnable(){public void run(){busy=false;if(id!=ticket)return;if(failure!=null)problem(failure);else if(done!=null)done.run();else home();}});}});}
+ final void edit(String title,String[] hints,String[] initial,final Saved save,final Runnable cancel){LinearLayout fields=fields(title);final EditText[] inputs=new EditText[hints.length];for(int n=0;n<inputs.length;n++){inputs[n]=field(fields,hints[n],initial[n],InputType.TYPE_CLASS_TEXT);if(hints[n].equals(L.t("Sumă")))inputs[n].setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);if(hints[n].equals("30–240"))inputs[n].setInputType(InputType.TYPE_CLASS_NUMBER);if(hints[n].startsWith(L.t("Parolă"))){inputs[n].setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);inputs[n].setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);}inputs[n].setFilters(new InputFilter[]{new InputFilter.LengthFilter(4096)});}left=new Runnable(){public void run(){String[] values=new String[inputs.length];for(int i=0;i<values.length;i++)values[i]=inputs[i].getText().toString();try{save.save(values);}catch(Exception e){notice(e.getMessage()==null?L.t("Valoare invalidă"):e.getMessage());}}};back=cancel;footer(L.t("Salvează"),"",L.t("Șterge"));if(inputs.length>0)inputs[0].requestFocus();}
+ final void page(String title,String body,Runnable previous,String action,Runnable command){begin(title);ScrollView scroll=new ScrollView(this);scroll.addView(text(body,17));root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));scroll.setFocusableInTouchMode(true);scroll.requestFocus();left=command;back=previous;footer(action,L.t("Derulează"),L.t("Înapoi"));}
+ final Runnable goHome(){return new Runnable(){public void run(){home();}};}
+ final void remove(String title,final Runnable action){options(title,new String[]{L.t("Păstrează"),L.t("Șterge")},new Choice(){public void pick(int at){if(at==1)action.run();}});}
+ final void chooseFile(String extensions,int request){startActivityForResult(new Intent(this,FilesActivity.class).putExtra("pocket_ext",extensions),request);}
+ protected void selectedFile(int request,File file)throws Exception{}
+ protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(result==RESULT_OK&&data!=null&&data.getStringExtra("file")!=null)try{File f=new File(data.getStringExtra("file"));if(!PocketStore.readable(this,f))throw new IOException("File is outside readable storage");selectedFile(request,f);}catch(Exception e){problem(e);}}
+ final void exported(File f){page(L.t("Fișier salvat"),f.getName()+"\n\n"+f.getParent(),goHome(),L.t("Fișiere"),new Runnable(){public void run(){startActivity(new Intent(PocketActivity.this,FilesActivity.class).putExtra("folder",f.getParent()).putExtra("select_file",f.getPath()));}});}
+}

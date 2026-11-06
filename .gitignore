@@ -84,3 +84,8 @@
 
 !/android81/leo-recovery/
 !/android81/tests/test_leo_recovery.py
+
+# Audited third-party source and the pinned Java SSH dependency.
+!/android81/third-party/
+/android81/third-party/*
+!/android81/third-party/pocket/

@@ -4,13 +4,23 @@ import android.graphics.*;
 final class IconArt {
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF box=new RectF();private final Path path=new Path();
-    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc,0xff288cda,0xff239a82,0xff548fe0,0xffa651d6,0xffb67a35,0xffd95183,0xff1aabb0,0xff478de0,0xff5b748b,0xff18a99d,0xff4269c7,0xff12ad99};
+    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc,0xff288cda,0xff239a82,0xff548fe0,0xffa651d6,0xffb67a35,0xffd95183,0xff1aabb0,0xff478de0,0xff5b748b,0xff18a99d,0xff4269c7,0xff12ad99,0xffed8b25,0xffa553cc,0xff189faa,0xff23855d,0xff3479d8,0xff9b68d7,0xffdca42a,0xff31a477,0xffdc6378,0xff5369bd};
     private void round(Canvas c,float l,float t,float r,float b,float radius,int color){p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(color);c.drawRoundRect(l,t,r,b,radius,radius,p);}
     private void line(Canvas c,float a,float b,float x,float y){c.drawLine(a,b,x,y,p);}
         void draw(Canvas c,int index,float x,float y) {
             round(c,x-25,y-25,x+25,y+25,8,COLORS[index]);
             c.save(); c.translate(x,y); p.setColor(Color.WHITE); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(2.8f); p.setStrokeCap(Paint.Cap.ROUND);
             switch(index) {
+                case 38:c.drawArc(-14,-14,14,14,270,90,false,p);c.drawArc(-8,-8,8,8,270,90,false,p);c.drawCircle(-10,10,2,p);break;
+                case 39:c.drawCircle(0,-5,6,p);c.drawArc(-13,-14,13,12,195,150,false,p);line(c,0,2,0,14);line(c,-7,14,7,14);break;
+                case 40:c.drawCircle(0,0,6,p);c.drawArc(-13,-13,13,13,210,120,false,p);c.drawArc(-13,-13,13,13,30,120,false,p);break;
+                case 41:c.drawRect(-15,-11,15,11,p);line(c,-10,-5,-4,0);line(c,-4,0,-10,5);line(c,1,6,10,6);break;
+                case 42:c.drawRect(-14,-13,14,13,p);line(c,0,-13,0,13);line(c,-10,-5,-4,-5);line(c,4,2,10,2);break;
+                case 43:c.drawRoundRect(-12,-10,14,13,2,2,p);line(c,-16,-14,10,-14);line(c,-16,-14,-16,8);line(c,-6,-2,7,-2);line(c,-6,5,3,5);break;
+                case 44:c.drawRoundRect(-14,-12,14,13,3,3,p);for(int z=-8;z<9;z+=5){line(c,-2,z,2,z);line(c,0,z,0,z+3);}break;
+                case 45:c.drawRoundRect(-15,-9,15,11,3,3,p);line(c,-14,-3,14,-3);c.drawCircle(7,5,2,p);break;
+                case 46:path.reset();path.moveTo(-14,14);path.lineTo(-7,-14);path.lineTo(7,-14);path.lineTo(14,14);path.close();c.drawPath(path,p);line(c,0,10,9,-9);break;
+                case 47:c.drawRect(-13,-13,-3,-3,p);c.drawRect(3,-13,13,-3,p);c.drawRect(-13,3,-3,13,p);line(c,4,4,10,4);line(c,10,4,10,13);line(c,4,10,6,10);break;
                 case 36: for(int row=0;row<2;row++)for(int col=0;col<2;col++)c.drawRoundRect(-13+col*15,-13+row*15,-3+col*15,-3+row*15,2,2,p);break;
                 case 37: c.drawCircle(0,0,13,p);c.drawOval(-6,-13,6,13,p);line(c,-13,0,13,0);line(c,-10,-7,10,-7);line(c,-10,7,10,7);break;
                 case 29: c.drawCircle(0,0,14,p);c.drawCircle(-6,-5,2,p);c.drawCircle(5,-7,2,p);c.drawCircle(8,3,2,p);line(c,-8,9,3,9);break;

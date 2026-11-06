@@ -201,5 +201,17 @@
         <service android:name=".CompanionService" android:exported="false" />
         <activity android:name=".AndroidControlsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".DailyReadinessActivity" android:exported="false" android:screenOrientation="portrait" />
-</application>
+        <activity android:name=".FeedsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".StreamRadioActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".SshActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".LexiconActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".StudyActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ZipActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ExpensesActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".MetronomeActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".QrActivity" android:exported="false" android:screenOrientation="portrait" />
+        <service android:name=".MetronomeService" android:exported="false" />
+        <service android:name=".PodcastTransferService" android:exported="false" />
+        <receiver android:name=".PodcastDownloadReceiver" android:exported="true"><intent-filter><action android:name="android.intent.action.DOWNLOAD_COMPLETE" /></intent-filter></receiver>
+    </application>
 </manifest>
