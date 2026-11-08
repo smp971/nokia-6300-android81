@@ -109,13 +109,18 @@ public final class LeoPointerService extends AccessibilityService {
         showGlobalMenu(false);
     }
     private void showGlobalMenu(final boolean tools) {
+        showGlobalMenu(tools, 0);
+    }
+    private void showGlobalMenu(final boolean tools, int selected) {
         stopMovement();
         final int[] actions=GlobalMenuModel.actions(tools);
         menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
                 tools?L.t("Mai multe"):L.t("Meniu Leo"),GlobalMenuModel.labels(tools,active),new KeypadDialog.Action(){
             public void select(int row){globalAction(actions[row]);}
-        },true);
-        if(tools)menu.onBack(new Runnable(){public void run(){showGlobalMenu(false);}});
+        },true).initialSelection(selected);
+        if (tools) menu.onBack(new Runnable() {
+            public void run() { showGlobalMenu(false, GlobalMenuModel.moreRow()); }
+        });
         menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
         menu.show();
         Log.i("LeoPointer","global menu opened");

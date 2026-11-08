@@ -54,6 +54,11 @@ public final class MainActivity extends Activity {
         if (state != null) {
             screen.category(state.getInt("category",0));screen.grid = state.getBoolean("grid");
             screen.selected = Math.max(0, Math.min(screen.order.length-1, state.getInt("selected")));
+            int[] savedFocus = state.getIntArray("category_app_focus");
+            if (savedFocus != null && savedFocus.length == screen.categoryAppFocus.length) {
+                System.arraycopy(savedFocus, 0, screen.categoryAppFocus, 0, savedFocus.length);
+                screen.restoreAppFocus(savedFocus[screen.category]);
+            }
         }
         setContentView(screen);
         if(getIntent().getBooleanExtra("open_menu",false)){getIntent().removeExtra("open_menu");screen.grid=true;}
@@ -109,6 +114,8 @@ public final class MainActivity extends Activity {
     }
     protected void onSaveInstanceState(Bundle state) {
         state.putInt("category",screen.category);state.putBoolean("grid", screen.grid); state.putInt("selected", screen.selected);
+        screen.categoryAppFocus[screen.category] = screen.focusedApp();
+        state.putIntArray("category_app_focus", screen.categoryAppFocus.clone());
         super.onSaveInstanceState(state);
     }
     protected void onNewIntent(Intent intent) {
@@ -141,12 +148,22 @@ public final class MainActivity extends Activity {
     }
     private void options() {
         if(!screen.grid){new KeypadDialog(this,L.t("Ecran principal"),new String[]{L.t("Editor Home"),L.t("Schimbă fundalul"),L.t("Acces rapid Home")},new KeypadDialog.Action(){public void select(int at){if(at==0)screen.startEditor();else startActivity(new Intent(MainActivity.this,at==1?WallpaperActivity.class:QuickHomeActivity.class));}}).show();return;}
+        appOptions();
+    }
+    private void appOptions() {
         new KeypadDialog(this,L.t("Opțiuni aplicații"),new String[]{L.t("Categorii aplicații"),L.t("Reordonează aplicațiile"),screen.list?L.t("Afișare grilă"):L.t("Afișare listă"),L.t("Caută în Leo")},new KeypadDialog.Action(){public void select(int at){
-            if(at==0)new KeypadDialog(MainActivity.this,L.t("Categorii"),AppCatalog.CATEGORIES,new KeypadDialog.Action(){public void select(int category){screen.category(category);}}).show();
+            if(at==0)showCategories();
             else if(at==1)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class).putExtra("order",true));
             else if(at==2){screen.list=!screen.list;getSharedPreferences("appearance",MODE_PRIVATE).edit().putBoolean("list",screen.list).apply();screen.invalidate();}
             else startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));
         }}).show();
+    }
+    private void showCategories() {
+        new KeypadDialog(this, L.t("Categorii"), AppCatalog.CATEGORIES, new KeypadDialog.Action() {
+            public void select(int category) { screen.category(category); }
+        }).initialSelection(screen.category).onBack(new Runnable() {
+            public void run() { appOptions(); }
+        }).show();
     }
     private void notifications() {
         if(!LeoPointerService.openAndroidPanel(false))startActivity(new Intent(this,NotificationsActivity.class));
@@ -183,7 +200,11 @@ public final class MainActivity extends Activity {
             android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
             list=appearance.getBoolean("list",false);
             compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);
-            order=AppCatalog.menuOrder(MainActivity.this,category);selected=Math.max(0,Math.min(selected,order.length-1));shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
+            int focused = focusedApp();
+            order = AppCatalog.menuOrder(MainActivity.this, category);
+            selected = Math.max(0, Math.min(selected, order.length - 1));
+            restoreAppFocus(focused);
+            shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
             theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
             palette=Appearance.palette(MainActivity.this);SystemChrome.apply(MainActivity.this,palette);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
             java.io.File file=Appearance.wallpaper(MainActivity.this);long stamp=file.lastModified(),size=file.length();
@@ -199,7 +220,27 @@ public final class MainActivity extends Activity {
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
         int category;
-        void category(int value){category=Math.floorMod(value,AppCatalog.CATEGORIES.length);order=AppCatalog.menuOrder(MainActivity.this,category);selected=0;invalidate();}
+        final int[] categoryAppFocus = new int[AppCatalog.CATEGORIES.length];
+        { java.util.Arrays.fill(categoryAppFocus, -1); }
+        int focusedApp() {
+            return selected >= 0 && selected < order.length ? order[selected] : -1;
+        }
+        void restoreAppFocus(int app) {
+            for (int i = 0; i < order.length; i++) {
+                if (order[i] == app) {
+                    selected = i;
+                    return;
+                }
+            }
+        }
+        void category(int value) {
+            categoryAppFocus[category] = focusedApp();
+            category = Math.floorMod(value, AppCatalog.CATEGORIES.length);
+            order = AppCatalog.menuOrder(MainActivity.this, category);
+            selected = 0;
+            restoreAppFocus(categoryAppFocus[category]);
+            invalidate();
+        }
         int shortcut=-1;
         HomeFavorites.Entry[] favorites=new HomeFavorites.Entry[0];int favoriteIndex;HomeCards.Card[] cards=new HomeCards.Card[0];int cardIndex;
         void reloadCards(){HomeCards.Card[] next=getSharedPreferences("appearance",0).getBoolean("home-contextual",true)?HomeContext.read(MainActivity.this,System.currentTimeMillis()):HomeCards.read(MainActivity.this,System.currentTimeMillis());for(int n=0;n<next.length;n++)if(next[n].type==3&&favorites.length>0){HomeFavorites.Entry f=favorites[Math.min(favoriteIndex,favorites.length-1)];next[n]=new HomeCards.Card(3,L.t("Favorit · ")+(favoriteIndex+1)+" / "+favorites.length,f.name,L.t("4 / 6 schimbă · OK deschide"));}boolean changed=!HomeCards.signature(cards).equals(HomeCards.signature(next));cards=next;cardIndex=Math.min(cardIndex,Math.max(0,cards.length-1));if(shortcut>=4+cards.length)shortcut=-1;if(changed&&!grid)invalidate();}

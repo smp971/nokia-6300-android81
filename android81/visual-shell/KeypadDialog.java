@@ -76,6 +76,10 @@ final class KeypadDialog extends Dialog {
         setContentView(content);
     }
     KeypadDialog onBack(Runnable action){backAction=action;return this;}
+    KeypadDialog initialSelection(int index) {
+        selected = Math.max(0, Math.min(index, items.length - 1));
+        return this;
+    }
     public void show() {
         super.show();active=new java.lang.ref.WeakReference<KeypadDialog>(this);
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
