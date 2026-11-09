@@ -114,6 +114,9 @@ English and Romanian. Older call screens below are **local demos**, not live cal
 
 ## What works
 
+See the [November 2026 Leo Shell audit](android81/LEO-SHELL-AUDIT.md) for
+catalog-wide coverage, current regression results and refactoring priorities.
+
 This table combines documented development tests. **Not every feature was
 retested after the latest wipe.** A confirmation covers the specific TA-1286
 test, not every accessory, carrier or scenario.

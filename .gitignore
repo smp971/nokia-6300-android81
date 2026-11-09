@@ -7,6 +7,16 @@
 !/android81/
 !/analysis/
 !/kaios31/
+!/.agents/
+/.agents/*
+!/.agents/skills/
+/.agents/skills/*
+!/.agents/skills/leo-shell-audit/
+!/.agents/skills/leo-shell-change/
+/.agents/skills/leo-shell-audit/*
+/.agents/skills/leo-shell-change/*
+!/.agents/skills/leo-shell-audit/SKILL.md
+!/.agents/skills/leo-shell-change/SKILL.md
 
 /android81/*
 !/android81/.gitignore
