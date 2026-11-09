@@ -4,7 +4,7 @@ Six additions extend existing Leo components rather than creating parallel apps.
 
 ## Finding and switching
 
-- From Home, a short press on **2–9** opens local search with the digit already entered. The field starts in numeric mode so following keypad presses remain digits. Names and app titles can match their numeric T9 representation; a number result opens Phone without placing a call.
+- From Home, short **2–4** and **6–9** fill the first digit in Phone. Personalization can route those presses to numeric T9 search instead. A short **5** opens quick access.
 - **1** still opens text search; **0** still opens current media. Long presses on 2–9 retain configured app/speed-dial shortcuts. A selected media/favorite card keeps its own 4/5/6 controls.
 - Search categories include an **abc / 123 input toggle**. App-only, contact-only and music-only searches avoid the unrelated expensive provider scans. Existing local SMS/calendar/file search remains under All/Other. Search is bounded and creates no persistent index.
 - Hold the **dedicated physical Menu key** for about 650 ms to open Recent apps. A short press retains the global menu. Context help remains in that menu and can be restored as the long-press action in Personalization.

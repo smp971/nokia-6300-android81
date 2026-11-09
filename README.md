@@ -160,7 +160,7 @@ Full earlier evidence and screenshots remain in the
 | D-pad + OK | Move/select; Leo lists wrap around |
 | Left / right softkey | Footer action; right usually goes back or deletes text |
 | Dedicated Menu | Global menu over other apps; hold for contextual help |
-| Home · `0` / `1` / short `5` | Now Playing / local global search / quick access |
+| Home · `0` / `1` / short `5` | Media Current / app search / quick access. [Nokia-style keypad and media controls](android81/LEO-NOKIA-UI.md) |
 | Home · `*` / `#` | Switch / open Home card |
 | Pointer · arrows / OK | Move / click |
 | Pointer · hold ↑/↓ at a vertical edge | Scroll until released, on views accepting swipe gestures |
