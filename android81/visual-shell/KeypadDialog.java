@@ -32,9 +32,13 @@ final class KeypadDialog extends Dialog {
         this(context,title,items,action,false);
     }
     KeypadDialog(Context context, String title, String[] items, Action action, boolean numbered) {
+        this(context,title,items,action,numbered,Appearance.palette(context));
+    }
+    KeypadDialog(Context context, String title, String[] items, Action action, boolean numbered,
+                 Appearance.Palette palette) {
         super(context);
         this.numbered=numbered;
-        palette=Appearance.palette(context);
+        this.palette=palette;
         this.title=title; this.items=items; this.action=action;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         content=new View(context) {

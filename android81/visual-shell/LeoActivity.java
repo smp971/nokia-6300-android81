@@ -85,6 +85,7 @@ abstract class LeoActivity extends Activity {
         listMemoryKeys=memoryKeys;listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
         final ListView list=new ListView(this);activeList=list;list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
         if(palette.sxmo()||palette.classic()||palette.material()){list.setPadding(0,0,0,0);list.setDividerHeight(0);}
+        styleList(heading,list);
         list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
         listPosition=new ListPositionDrawable(palette,getResources().getDisplayMetrics().density);
@@ -103,6 +104,7 @@ abstract class LeoActivity extends Activity {
                     label.setPadding(dp(15),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);label.setCompoundDrawablePadding(dp(9));
                     label.setBackground(UiChrome.row(palette,dp(7),dp(1)));
                     if(palette.sxmo()){label.setPadding(dp(5),dp(2),dp(5),dp(2));label.setMinHeight(dp(28));}else if(palette.classic()||palette.material()){label.setPadding(dp(8),dp(4),dp(6),dp(4));label.setMinHeight(dp(palette.material()?40:36));}
+                    styleListRow(label);
                 }
                 CharSequence styled=rowText(rows.get(i));if(!TextUtils.equals(label.getText(),styled))label.setText(styled);
                 if(!stableRowIcons()||!(label.getTag() instanceof Integer)||((Integer)label.getTag())!=i){label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setTag(i);}
@@ -139,6 +141,8 @@ abstract class LeoActivity extends Activity {
     private CharSequence rowText(String value){
         return rowCache.get(value);
     }
+    void styleList(TextView heading,ListView list){}
+    void styleListRow(TextView row){}
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
     boolean stableRowIcons(){return false;}
     String rowMemoryKey(String title,int at,String label){return label;}

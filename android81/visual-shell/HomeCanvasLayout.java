@@ -10,13 +10,21 @@ import android.graphics.RectF;
 /** Draftable Home transforms in logical screen coordinates; never rotates Android. */
 final class HomeCanvasLayout {
     static final String[] NAMES={"Fundal informații","Stare rețea","Ceas","Dată","SIM 1","Carduri","Scurtături","SIM 2"};
+    static final String PREFERENCES="leo-home-canvas";
     private static final int[] EDIT_ORDER={0,1,2,3,4,7,5,6};
     static final int COUNT=NAMES.length;
     final int[] x=new int[COUNT],y=new int[COUNT],size=new int[COUNT],rotation=new int[COUNT],alignment=new int[COUNT];
     final boolean[] visible=new boolean[COUNT];
     final RectF[] frames=new RectF[COUNT];
     private boolean needsSimSplit;
-    HomeCanvasLayout(Context context){SharedPreferences p=context.getSharedPreferences("home-canvas",0);needsSimSplit=!p.contains("7x");for(int i=0;i<COUNT;i++){
+    HomeCanvasLayout(Context context){
+        SharedPreferences p=context.getSharedPreferences(PREFERENCES,0);
+        if(p.getAll().isEmpty()){
+            boolean retiredActive=context.getSharedPreferences("appearance",0).getBoolean("n95-shell",false);
+            p=context.getSharedPreferences(retiredActive?"n95-home-canvas":"home-canvas",0);
+        }
+        needsSimSplit=!p.contains("7x");
+        for(int i=0;i<COUNT;i++){
         x[i]=limit(p.getInt(i+"x",0),-240,240);y[i]=limit(p.getInt(i+"y",0),-276,276);
         size[i]=limit(p.getInt(i+"size",100),50,150);rotation[i]=Math.floorMod(p.getInt(i+"rotation",0),4);
         alignment[i]=limit(p.getInt(i+"align",0),0,3);visible[i]=p.getBoolean(i+"visible",true);frames[i]=new RectF();
@@ -30,7 +38,7 @@ final class HomeCanvasLayout {
             center+width/2,baseline+metrics.descent+2);
     }
     void reset(int i){x[i]=y[i]=rotation[i]=alignment[i]=0;size[i]=100;visible[i]=true;}
-    void save(Context context){SharedPreferences.Editor p=context.getSharedPreferences("home-canvas",0).edit();for(int i=0;i<COUNT;i++)
+    void save(Context context){SharedPreferences.Editor p=context.getSharedPreferences(PREFERENCES,0).edit();for(int i=0;i<COUNT;i++)
         p.putInt(i+"x",x[i]).putInt(i+"y",y[i]).putInt(i+"size",size[i]).putInt(i+"rotation",rotation[i]).putInt(i+"align",alignment[i]).putBoolean(i+"visible",visible[i]);p.apply();}
     boolean begin(Canvas c,int i,float l,float t,float r,float b,boolean editing){
         RectF base=new RectF(l,t,r,b);Matrix transform=matrixFor(i,base,editing);

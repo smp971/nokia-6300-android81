@@ -11,14 +11,15 @@ if not saved.exists():shutil.copy2(base,saved);shutil.copy2(classes,cached)
 newclasses=build/'classes';assert newclasses.resolve().parent==build.resolve() and build.resolve().parent==out.resolve()
 if newclasses.exists():shutil.rmtree(newclasses)
 newclasses.mkdir(exist_ok=True);(build/'d8').mkdir(exist_ok=True)
-changed=['PodcastDownloads', 'PodcastDownloadReceiver', 'PodcastTransferService', 'PlaybackService', 'IcyMetadata', 'PocketStore', 'PocketActivity', 'PocketFeeds', 'FeedsActivity', 'StreamRadioActivity', 'PocketTable', 'LexiconActivity', 'StudyActivity', 'PocketZip', 'ZipActivity', 'ExpenseBook', 'ExpensesActivity', 'MetronomeService', 'MetronomeActivity', 'PocketQr', 'QrActivity', 'PocketSsh', 'SshActivity', 'AppCatalog', 'MainActivity', 'MediaPanel', 'MusicTransport', 'KeypadText', 'MusicFace', 'MediaActivity', 'NowPlayingActivity', 'GlobalSearchActivity', 'PersonalizationActivity', 'KeypadDialog', 'LeoPointerService', 'GlobalMenuModel', 'IconArt', 'AppBadge', 'FilesActivity', 'EnglishCatalog']
+changed=['PodcastDownloads', 'PodcastDownloadReceiver', 'PodcastTransferService', 'PlaybackService', 'IcyMetadata', 'PocketStore', 'PocketActivity', 'PocketFeeds', 'FeedsActivity', 'StreamRadioActivity', 'PocketTable', 'LexiconActivity', 'StudyActivity', 'PocketZip', 'ZipActivity', 'ExpenseBook', 'ExpensesActivity', 'MetronomeService', 'MetronomeActivity', 'PocketQr', 'QrActivity', 'PocketSsh', 'SshActivity', 'AppCatalog', 'LeoActivity', 'SettingsActivity', 'MainActivity', 'LeoHome', 'HomePersonalization', 'HomeCanvasLayout', 'BackupEngine', 'MediaPanel', 'MusicTransport', 'KeypadText', 'MusicFace', 'MediaActivity', 'NowPlayingActivity', 'GlobalSearchActivity', 'PersonalizationActivity', 'KeypadDialog', 'LeoPointerService', 'GlobalMenuModel', 'IconArt', 'AppBadge', 'FilesActivity', 'EnglishCatalog']
+removed=['N95Shell']
 run(javac,'-encoding','UTF-8','-source','1.8','-target','1.8','-bootclasspath',sdk,'-classpath',str(cached)+';'+str(out/'pocket-dependencies/jsch.jar'),'-d',newclasses,*[root/'visual-shell'/(x+'.java') for x in changed if x!='EnglishCatalog'],root/'localization/EnglishCatalog.java',*sorted((root/'third-party/pocket').glob('*.java')))
 merged=build/'leo-visual-classes.jar'
 with zipfile.ZipFile(cached) as src,zipfile.ZipFile(merged,'w',zipfile.ZIP_DEFLATED) as dst:
  for i in src.infolist():
   if i.filename.startswith(('com/jcraft/jsch/','io/nayuki/qrcodegen/')):continue
   short=i.filename.split('/')[-1]
-  if (i.filename.startswith('ro/leo/visual/') or i.filename.startswith('ro/leo/i18n/')) and any(short==n+'.class' or short.startswith(n+'$') for n in changed):continue
+  if (i.filename.startswith('ro/leo/visual/') or i.filename.startswith('ro/leo/i18n/')) and any(short==n+'.class' or short.startswith(n+'$') for n in changed+removed):continue
   dst.writestr(i,src.read(i.filename))
  for p in newclasses.rglob('*.class'):dst.write(p,p.relative_to(newclasses).as_posix())
  with zipfile.ZipFile(out/'pocket-dependencies/jsch.jar') as library:

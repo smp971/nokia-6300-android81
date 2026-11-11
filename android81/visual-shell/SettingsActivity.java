@@ -1,21 +1,99 @@
 package ro.leo.visual;
 import ro.leo.i18n.L;
-import android.content.*;import android.net.TrafficStats;import android.os.*;import android.provider.Settings;import android.view.*;import android.widget.*;import java.util.*;
+import android.content.*;import android.graphics.drawable.Drawable;import android.graphics.drawable.GradientDrawable;import android.graphics.drawable.StateListDrawable;import android.net.TrafficStats;import android.os.*;import android.view.*;import android.widget.*;import java.util.*;
 /** Six keypad categories, inspired by the local KaiOS settings reference. */
 public final class SettingsActivity extends LeoActivity {
     static final String[] TABS=L.array(new String[]{"Rețele","Aspect","Sunet","Siguranță","Stocare","Telefon"});
     private static final String[][] ROWS=L.array(new String[][]{{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă","Transfer USB","Mai multe"},{"Ecran și taste","Personalizare","Tastatură și text"},{"Sunete și tonuri","Volume separate","Profiluri sonore","Notificări","Program sonor"},{"Blocarea tastelor","Permisiuni și aplicații","Localizare","Accesibilitate Leo"},{"Spațiu telefon / card SD","Fișiere Leo","Descărcări Leo","Backup Leo"},{"Baterie","Dată și oră","Despre telefon","Ajutor Leo","Actualizări Leo","Instrumente avansate"}});
-    private int[] selections=new int[TABS.length];private int category;private boolean categories;
-    protected void onCreate(Bundle state){super.onCreate(state);category=Math.max(0,Math.min(TABS.length-1,state==null?getSharedPreferences("settings-ui",0).getInt("category",0):state.getInt("category",0)));if(state!=null&&state.getIntArray("selections")!=null&&state.getIntArray("selections").length==TABS.length)selections=state.getIntArray("selections");}
+    private static final String[] EVERYDAY=L.array(new String[]{"Wi-Fi","SIM-uri și rețea mobilă","Sunete și tonuri","Ecran și taste","Personalizare","Toate setările"});
+    private int[] selections=new int[TABS.length];
+    private int category;
+    private boolean categories,allSettings;
+    protected void onCreate(Bundle state){
+        super.onCreate(state);
+        int savedCategory=state==null?getSharedPreferences("settings-ui",0).getInt("category",0):state.getInt("category",0);
+        category=Math.max(0,Math.min(TABS.length-1,savedCategory));
+        if(state==null)return;
+        allSettings=state.getBoolean("all_settings");
+        int[] saved=state.getIntArray("selections");
+        if(saved!=null&&saved.length==TABS.length)selections=saved;
+    }
     protected void onResume(){super.onResume();show();}
     protected void onPause(){getSharedPreferences("settings-ui",0).edit().putInt("category",category).apply();super.onPause();}
-    protected void onSaveInstanceState(Bundle b){b.putInt("category",category);b.putIntArray("selections",selections);super.onSaveInstanceState(b);}
-    private void show(){if(ShellMode.simple(this)){simple();return;}showFull();}
-    private void simple(){categories=false;list(L.t("Setări uzuale"),Arrays.asList(L.t("Wi-Fi"),L.t("SIM-uri și rețea mobilă"),L.t("Sunete și tonuri"),L.t("Ecran și taste"),L.t("Personalizare"),L.t("Toate setările")),0,new Choice(){public void pick(int at){if(at==0)startActivity(new Intent(SettingsActivity.this,ConnectivityActivity.class).putExtra("kind","wifi"));else if(at==5)showFull();else start(new Class<?>[]{MobileSettingsActivity.class,SoundSettingsActivity.class,DisplaySettingsActivity.class,PersonalizationActivity.class}[at-1]);}},L.t("Mod interfață"),new Runnable(){public void run(){ShellMode.choose(SettingsActivity.this,new Runnable(){public void run(){show();}});}});}
-    private void showFull(){categories=true;final int current=category;list(L.t("Setări Leo · ")+(category+1)+" / "+TABS.length,Arrays.asList(ROWS[category]),selections[category],new Choice(){public void pick(int i){selections[current]=i;open(current,i);}},L.t("Categorii"),new Runnable(){public void run(){options(L.t("Categorii"),TABS,new Choice(){public void pick(int i){switchCategory(i);}});}});LinearLayout tabs=KeypadTabs.create(this,new String[]{TABS[KeypadTabs.next(category,-1,TABS.length)],TABS[category],TABS[KeypadTabs.next(category,1,TABS.length)]},1,new Choice(){public void pick(int offset){switchCategory(current+offset-1);}},new Runnable(){public void run(){KeypadTabs.focusList(SettingsActivity.this);}});root.addView(tabs,1);}
+    protected void onSaveInstanceState(Bundle b){b.putInt("category",category);b.putIntArray("selections",selections);b.putBoolean("all_settings",allSettings);super.onSaveInstanceState(b);}
+    private void show(){if(ShellMode.simple(this)&&!allSettings){simple();return;}showFull();}
+    private void simple(){
+        categories=false;
+        list(L.t("Setări uzuale"),Arrays.asList(EVERYDAY),0,new Choice(){
+            public void pick(int at){
+                if(at==0)startActivity(new Intent(SettingsActivity.this,ConnectivityActivity.class).putExtra("kind","wifi"));
+                else if(at==5){allSettings=true;showFull();}
+                else start(new Class<?>[]{MobileSettingsActivity.class,SoundSettingsActivity.class,DisplaySettingsActivity.class,PersonalizationActivity.class}[at-1]);
+            }
+        },L.t("Mod interfață"),new Runnable(){
+            public void run(){ShellMode.choose(SettingsActivity.this,new Runnable(){public void run(){show();}});}
+        });
+    }
+    private String categoryListKey(int value){return L.t("Setări Leo")+" · "+(value+1)+" / "+TABS.length;}
+    private void showFull(){
+        categories=true;
+        final int current=category;
+        list(categoryListKey(current),Arrays.asList(ROWS[current]),selections[current],new Choice(){
+            public void pick(int row){selections[current]=row;open(current,row);}
+        },L.t("Categorii"),new Runnable(){public void run(){chooseCategory();}});
+        LinearLayout tabs=KeypadTabs.create(this,new String[]{
+            "‹ "+TABS[KeypadTabs.next(current,-1,TABS.length)],
+            TABS[current],
+            TABS[KeypadTabs.next(current,1,TABS.length)]+" ›"
+        },1,new Choice(){public void pick(int offset){switchCategory(current+offset-1);}},
+            new Runnable(){public void run(){KeypadTabs.focusList(SettingsActivity.this);}});
+        tabs.setPadding(dp(6),0,dp(6),0);
+        for(int index=0;index<tabs.getChildCount();index++){
+            TextView tab=(TextView)tabs.getChildAt(index);
+            tab.setTextSize((index==1?12:10)*Appearance.textScale(this));
+            tab.getLayoutParams().height=dp(23);
+            if(index==1){
+                tab.setTypeface(UiChrome.TITLE);
+                tab.getLayoutParams().width=0;
+                ((LinearLayout.LayoutParams)tab.getLayoutParams()).weight=1.2f;
+            }
+        }
+        root.addView(tabs,1);
+        if(ShellMode.simple(this)&&allSettings)back=new Runnable(){public void run(){allSettings=false;show();}};
+    }
+    private void chooseCategory(){
+        new KeypadDialog(this,L.t("Categorii"),TABS,new KeypadDialog.Action(){
+            public void select(int index){switchCategory(index);}
+        },true,palette).initialSelection(category).show();
+    }
     private void switchCategory(int next){category=KeypadTabs.next(next,0,TABS.length);show();}
-    void onListSelection(String title,int index){if(categories&&title.startsWith(L.t("Setări Leo")))selections[category]=index;}
-    android.graphics.drawable.Drawable rowIcon(String title,int index){return title.startsWith(L.t("Setări Leo"))&&index<ROWS[category].length?new AppBadge(ROWS[category][index],dp(27)):null;}
+    void onListSelection(String title,int index){if(categories&&title.equals(categoryListKey(category)))selections[category]=index;}
+    @Override void styleList(TextView heading,ListView list){
+        if(categories)heading.setText(L.t("Setări Leo"));
+        list.setPadding(dp(6),dp(4),dp(6),dp(3));
+        list.setDividerHeight(dp(2));
+    }
+    @Override void styleListRow(TextView row){
+        row.setTextSize(14*Appearance.textScale(this));
+        row.setTypeface(UiChrome.TITLE);
+        row.setMinHeight(dp(32));
+        row.setCompoundDrawablePadding(dp(8));
+        int radius=dp(7);
+        GradientDrawable selected=Appearance.surface(palette.selection,radius);
+        selected.setStroke(dp(1),palette.accent);
+        StateListDrawable surfaces=new StateListDrawable();
+        surfaces.addState(new int[]{android.R.attr.state_selected},selected);
+        surfaces.addState(new int[]{},Appearance.surface(palette.card,radius));
+        row.setBackground(surfaces);
+        row.setPadding(dp(8),dp(3),dp(8),dp(3));
+    }
+    @Override Drawable rowIcon(String title,int index){
+        int size=dp(21);
+        if(!title.equals(categories?categoryListKey(category):L.t("Setări uzuale")))return null;
+        if((categories&&category==0&&index<3)||(!categories&&index==0))return new QuickIcon(index,size);
+        if((categories&&category==0&&index==3)||(!categories&&index==1))return new SimIcon(0,size,palette.accent);
+        return new AppBadge((categories?ROWS[category]:EVERYDAY)[index],size);
+    }
     boolean stableRowIcons(){return true;}
     private void start(Class<?> type){startActivity(new Intent(this,type));}
     private void advancedPhone(){options(L.t("Instrumente avansate"),new String[]{L.t("Diagnostic Leo"),L.t("Android din taste"),L.t("Configurare inițială"),"Leo Studio",L.t("Pregătit de utilizare")},new Choice(){public void pick(int at){start(new Class<?>[]{DiagnosticActivity.class,AndroidControlsActivity.class,SetupWizardActivity.class,PremiumStudioActivity.class,DailyReadinessActivity.class}[at]);}});}
