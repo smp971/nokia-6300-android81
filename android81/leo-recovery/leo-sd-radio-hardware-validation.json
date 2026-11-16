@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-16",
+  "device": "Nokia 6300 4G TA-1286",
+  "recovery_image_sha256": "3ae107420e0374e5462d43a8e5c5e5a699951bffed46046a7049c17f8b0b7709",
+  "recovery_partition_readback_verified": true,
+  "android_boot_completed_from_sd": true,
+  "startup_script_sha256": "2096b3a943a4fa3e016f60f50d10316654594119eda404c218420fd2e265a2cc",
+  "modem_firmware_mount": "179:25 /firmware ro,nosuid,nodev,noexec",
+  "baseband": "909_GEN_PACK-1.397603.1.412591.1",
+  "ril_services_running": [1, 2],
+  "sim_state": ["ABSENT", "READY"],
+  "network_type": ["Unknown", "Unknown"],
+  "calls_sms_mobile_data_validated": false
+}

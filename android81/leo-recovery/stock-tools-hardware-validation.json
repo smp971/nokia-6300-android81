@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-16",
+  "device": "Nokia 6300 4G TA-1286",
+  "image_sha256": "d23065ee3edcfc39f22054a93863f67341ea68fe96335d048b290e19df7772d0",
+  "recovery_partition_verified": true,
+  "previous_recovery_saved_and_verified": true,
+  "direct_boot_validated": true,
+  "root_adb_available": true,
+  "display_capture_collected": true,
+  "menu_navigation_via_adb_key_events": true,
+  "factory_reset_cancel_validated": true,
+  "wipe_cache_cancel_validated": true,
+  "recovery_log_viewer_validated": true,
+  "bootloader_confirmation_cancel_validated": true,
+  "userdata_wipe_performed": false,
+  "cache_wipe_performed": false,
+  "bootloader_restart_performed": false,
+  "stock_ota_validated": false,
+  "rom_install_validated": false
+}

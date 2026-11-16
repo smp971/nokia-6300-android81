@@ -38,7 +38,8 @@ final class MusicFace extends View {
         state.readMusic(audio);
         if (preview) {
             state.title = L.t("Lumini de seară");
-            state.detail = "Album · Leo Sessions";
+            state.artist = "Leo Sessions";
+            state.detail = L.t("Piesa ") + "1 / 1";
             state.status = L.t("DEMO · fără redare");
             state.cover = null;
             state.playing = false;

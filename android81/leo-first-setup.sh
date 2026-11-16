@@ -14,6 +14,17 @@ mv /data/system/leo-terminal-root.uid.new /data/system/leo-terminal-root.uid
 restorecon /data/system/leo-terminal-root.uid
 setprop ctl.start leo_terminal_root
 mkdir -p /data/system/leo-firstboot
+# Enable the optional ROM overlays once. Earlier ROMs omit these packages.
+if [ ! -f /data/system/leo-firstboot/android-dark-v1 ] &&
+        cmd overlay list --user 0 | grep -q 'ro.leo.systemdark.framework'; then
+    dark_ready=1
+    for overlay in framework installer settings systemui; do
+        cmd overlay enable --user 0 "ro.leo.systemdark.$overlay" || dark_ready=0
+    done
+    if [ "$dark_ready" = 1 ] && cmd uimode night yes; then
+        touch /data/system/leo-firstboot/android-dark-v1
+    fi
+fi
 # Version this migration separately: ui-v1 predates the global menu/pointer
 # access and a wipe re-enables every factory launcher. Preserve other services.
 if [ ! -f /data/system/leo-firstboot/access-v2 ]; then

@@ -14,7 +14,8 @@ DEFAULTS={
     'persist.leo.camera.enabled':'1','persist.leo.connectivity.auto':'1',
     'persist.leo.connectivity.validated':'1','persist.leo.data.enabled':'1',
     'persist.leo.gps.enabled':'1','persist.leo.home':'visual',
-    'persist.leo.ims.enabled':'1','persist.leo.keypad_ui':'1','persist.leo.radio.trace':'0'}
+    'persist.leo.ims.enabled':'1','persist.leo.keypad_ui':'1','persist.leo.radio.trace':'0',
+    'persist.radio.multisim.config':'dsds','ro.telephony.default_network':'9'}
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -40,10 +41,11 @@ def remove_retired_shell(image,work,linux,run):
         raise RuntimeError('Legacy shell removal failed')
     return ['/system'+retired]
 
-def prepare(system,dest,linux,run):
+def prepare(system,dest,linux,run,visual=None):
     image=linux(system);work=dest/'clean-system';work.mkdir()
     context=work/'file-context';context.write_bytes(b'u:object_r:system_file:s0\0')
     records=[]
+    prepared_directories=set()
     def dump(target,name):
         local=work/name
         run('debugfs','-R','dump '+target+' "'+linux(local)+'"',image)
@@ -54,8 +56,19 @@ def prepare(system,dest,linux,run):
         commands=[];parent=Path(target).parent.as_posix();directories=[]
         while parent!='/':directories.append(parent);parent=Path(parent).parent.as_posix()
         for directory in reversed(directories):
-            commands+=['mkdir '+directory,'set_inode_field '+directory+' mode 040755',
-                       'ea_set -f "'+linux(context)+'" '+directory+' security.selinux']
+            if directory in prepared_directories:continue
+            metadata=run('debugfs','-R','stat '+directory,image)
+            if 'Inode:' in metadata:
+                if not re.search(r'Type:\s+directory\b',metadata):
+                    raise RuntimeError('System runtime parent is not a directory: '+directory)
+            else:
+                run('debugfs','-w','-R','mkdir '+directory,image)
+                metadata=run('debugfs','-R','stat '+directory,image)
+                if not re.search(r'Type:\s+directory\b',metadata):
+                    raise RuntimeError('System runtime directory creation failed: '+directory)
+                commands+=['set_inode_field '+directory+' mode 040755',
+                           'ea_set -f "'+linux(context)+'" '+directory+' security.selinux']
+            prepared_directories.add(directory)
         commands+=['rm '+target,'write "'+linux(source)+'" '+target,
                    'set_inode_field '+target+' mode 0'+format(0o100000|mode,'o'),
                    'set_inode_field '+target+' uid 0','set_inode_field '+target+' gid 0',
@@ -73,7 +86,7 @@ def prepare(system,dest,linux,run):
     # the exact archived Leo Shell APK, never a similarly named unknown file.
     removed=remove_retired_shell(image,work,linux,run)
     # Updated APKs become factory packages. The IME used to be a user-only app.
-    write('/priv-app/LeoVisual/LeoVisual.apk',ROOT/'output/leo-visual.apk')
+    write('/priv-app/LeoVisual/LeoVisual.apk',visual or ROOT/'output/leo-visual.apk')
     ime=ROOT/'output/leo-keypad-ime.apk'
     if digest(ime)!='c1a064b02dd49e6201330ec43b328e439594a35135793ec2ce21c673f1f6c554':
         raise RuntimeError('Unexpected IME build; audit and update its pinned hash')
@@ -82,6 +95,11 @@ def prepare(system,dest,linux,run):
     write('/bin/leo-su',ROOT/'output/leo-terminal-root',0o755)
     write('/etc/leo-first-setup.sh',ROOT/'leo-first-setup.sh')
     write('/etc/leo-clean-audio-seed.sh',ROOT/'leo-clean-audio-seed.sh')
+    for source,target in (('usb-mtp.sh','/etc/leo-usb-mtp.sh'),
+                          ('radio-runtime/start.sh','/vendor/leo-radio/start.sh')):
+        normalized=work/Path(target).name
+        normalized.write_bytes((ROOT/source).read_bytes().replace(b'\r\n',b'\n'))
+        write(target,normalized,0o755)
     rc=dump('/etc/init/leo-terminal-root.rc','root.rc')
     text=rc.read_text();text=text.split('on property:sys.boot_completed=1')[0]
     rc.write_text(text,newline='\n');write('/etc/init/leo-terminal-root.rc',rc)
@@ -91,8 +109,14 @@ def prepare(system,dest,linux,run):
     text=audio.read_text()
     needle='    exec_start leo_audio_preload'
     if text.count(needle)!=1:raise RuntimeError('Unexpected audio init sequence')
-    text=text.replace(needle,'    exec_start leo_audio_seed\n'+needle)
-    text+='\nservice leo_audio_seed /system/bin/sh /system/etc/leo-clean-audio-seed.sh\n    user root\n    group root system audio\n    seclabel u:r:init:s0\n    disabled\n    oneshot\n'
+    seed_exec='    exec_start leo_audio_seed\n'
+    seed_service='\nservice leo_audio_seed /system/bin/sh /system/etc/leo-clean-audio-seed.sh\n'
+    seed_count=text.count(seed_exec)
+    if seed_count==0 and seed_service not in text:
+        text=text.replace(needle,seed_exec+needle)
+        text+=seed_service+'    user root\n    group root system audio\n    seclabel u:r:init:s0\n    disabled\n    oneshot\n'
+    elif seed_count!=1 or text.count(seed_service)!=1 or seed_exec+needle not in text:
+        raise RuntimeError('Unexpected existing audio seed configuration')
     audio.write_text(text,newline='\n');write('/etc/init/init.leo.audio.rc',audio)
     prop=dump('/build.prop','build.prop')
     lines=[line for line in prop.read_text().splitlines() if line.partition('=')[0] not in DEFAULTS]

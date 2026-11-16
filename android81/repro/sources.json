@@ -76,7 +76,7 @@
       "revision": "77016f3005c73412b5c0f244da01fb9a3151b1c5",
       "files": [],
       "patch": "patches/packages__apps__Settings.patch",
-      "sha256": "ad9ace2f12ea10f8b2c90244cefdca45aa248c4a801665374859f8e37810cdfd"
+      "sha256": "f40aebeb15480ebb7d23ed3aa2b15d6d9638295af1db502f578dac3ab695a6dc"
     },
     {
       "path": "packages/apps/UnifiedEmail",

@@ -6,19 +6,93 @@ import android.app.*;import android.content.*;import android.database.Cursor;imp
 public final class GlobalSearchActivity extends LeoActivity {
  static final class Hit {final String label;final Intent intent;Hit(String s,Intent i){label=s;intent=i;}}
  static final String[] SCOPES={"Toate","Aplicații","Contacte","Setări","Muzică","Altele"};
+ static final String SETTINGS_FIRST="settings_first";
+ private static final int SETTINGS_SCOPE=3;
+ private static final SettingPage[] SETTING_PAGES={
+  new SettingPage("Wi-Fi",ConnectivityActivity.class,"wifi|wireless|retea wireless","kind","wifi"),
+  new SettingPage("Bluetooth",ConnectivityActivity.class,"bt|casti|headset","kind","bluetooth"),
+  new SettingPage("Hotspot Wi-Fi",ConnectivityActivity.class,"hotspot|tethering|partajare internet","kind","hotspot"),
+  new SettingPage("SIM-uri și rețea mobilă",MobileSettingsActivity.class,"sim|date mobile|mobile data|apn|4g|lte"),
+  new SettingPage("Transfer USB",UsbTransferActivity.class,"usb|mtp|transfer fisiere"),
+  new SettingPage("Panou conexiuni Leo",ConnectionDashboardActivity.class,"conexiuni|connections|trafic date|data usage"),
+  new SettingPage("Ecran și taste",DisplaySettingsActivity.class,"ecran|display|luminozitate|brightness|timeout"),
+  new SettingPage("Personalizare",PersonalizationActivity.class,"home|scurtaturi|shortcuts|personalization"),
+  new SettingPage("Tastatură și text",InputSettingsActivity.class,"tastatura|keyboard|t9|dictionar|dictionary"),
+  new SettingPage("Fundaluri și teme",WallpaperActivity.class,"fundal|wallpaper|tema|theme"),
+  new SettingPage("Sunete și tonuri",SoundSettingsActivity.class,"sunet|sound|sonerie|ringtone|vibratie|vibration"),
+  new SettingPage("Volume separate",QuickSettingsActivity.class,"volum|volume|media volume","volumes",true),
+  new SettingPage("Program sonor",SoundScheduleActivity.class,"program sunet|silent|sound schedule"),
+  new SettingPage("Notificări",NotificationSettingsActivity.class,"notificari|notifications|alerte"),
+  new SettingPage("Blocarea tastelor",KeypadLockSettingsActivity.class,"blocare|keypad lock|lock screen"),
+  new SettingPage("Permisiuni și aplicații",AppControlActivity.class,"permisiuni|permissions|app control"),
+  new SettingPage("Localizare",PrivacySettingsActivity.class,"gps|locatie|location|privacy"),
+  new SettingPage("Accesibilitate Leo",AccessibilitySettingsActivity.class,"accesibilitate|accessibility|contrast|text mare"),
+  new SettingPage("Spațiu telefon / card SD",StorageSettingsActivity.class,"stocare|storage|memorie|sd"),
+  new SettingPage("Backup Leo",BackupActivity.class,"backup|copie|restaurare|restore"),
+  new SettingPage("Baterie",BatterySettingsActivity.class,"battery|acumulator|autonomie"),
+  new SettingPage("Dată și oră",DateTimeSettingsActivity.class,"data|ora|date|time|fus orar|time zone"),
+  new SettingPage("Limba interfeței",LanguageSettingsActivity.class,"limba|language|romana|english"),
+  new SettingPage("Actualizări Leo",UpdatesActivity.class,"actualizare|update|versiune"),
+  new SettingPage("Configurare inițială",SetupWizardActivity.class,"setup|wizard|configurare"),
+  new SettingPage("Setări Leo",SettingsActivity.class,"setari|settings"),
+ };
  private int scope;private boolean numericEntry;
+ private int settingsResult=-1;
  private TextView summary;private EditText query;private ListView results;private final Handler handler=new Handler();private volatile int generation;
  private final Runnable search=new Runnable(){public void run(){find();}};
  static boolean dialable(String value){return value!=null&&value.matches("[+0-9*#][0-9*#]{0,31}");}
  static boolean matches(String value,String query){return (query.matches("[0-9]+")&&ContactKeys.matches(value==null?"":value,"",query))||fold(value).contains(fold(query));}
  private static String fold(String s){return java.text.Normalizer.normalize(s==null?"":s,java.text.Normalizer.Form.NFD).replaceAll("\\p{M}","").toLowerCase(Locale.ROOT);}
+ private static final class SettingPage {
+  final String label;
+  final Class<?> activity;
+  final String[] aliases;
+  final String extra;
+  final Object value;
+  SettingPage(String label,Class<?> activity,String aliases){this(label,activity,aliases,null,null);}
+  SettingPage(String label,Class<?> activity,String aliases,String extra,Object value){
+   this.label=label;this.activity=activity;this.aliases=aliases.split("\\|");this.extra=extra;this.value=value;
+  }
+  int rank(String term,boolean numeric){
+   int best=Math.min(rank(label,term,numeric),rank(L.t(label),term,numeric));
+   for(String alias:aliases)best=Math.min(best,rank(alias,term,numeric));
+   return best;
+  }
+  private static int rank(String label,String term,boolean numeric){
+   String key=numeric?ContactKeys.t9(label):fold(label);
+   return key.equals(term)?0:key.startsWith(term)?1:key.contains(term)?2:3;
+  }
+  Hit hit(Context context){
+   Intent intent=new Intent(context,activity);
+   if(value instanceof String)intent.putExtra(extra,(String)value);
+   else if(value instanceof Boolean)intent.putExtra(extra,(boolean)(Boolean)value);
+   return new Hit(L.t("Setare · ")+L.t(label),intent);
+  }
+ }
+ private static void appendSettings(Context context,String query,ArrayList<Hit> found){
+  boolean numeric=query.matches("[0-9]+");
+  String term=numeric?query:fold(query);
+  if(term.isEmpty())return;
+  ArrayList<Hit> exact=new ArrayList<>(),prefix=new ArrayList<>(),partial=new ArrayList<>();
+  for(SettingPage page:SETTING_PAGES){
+   int rank=page.rank(term,numeric);
+   if(rank==0)exact.add(page.hit(context));
+   else if(rank==1)prefix.add(page.hit(context));
+   else if(rank==2)partial.add(page.hit(context));
+  }
+  found.addAll(exact);
+  found.addAll(prefix);
+  found.addAll(partial);
+ }
  protected void onCreate(Bundle saved) {
   super.onCreate(saved);
   begin(L.t("Caută în Leo"));
   form = true;
-  scope = saved == null ? (getIntent().getBooleanExtra("apps_first", false) ? 1 : 0)
+  boolean settingsFirst=getIntent().getBooleanExtra(SETTINGS_FIRST,false);
+  scope = saved == null ? (settingsFirst?SETTINGS_SCOPE:getIntent().getBooleanExtra("apps_first", false)?1:0)
       : Math.max(0, Math.min(SCOPES.length - 1, saved.getInt("scope", 0)));
-  numericEntry = saved == null ? getIntent().getBooleanExtra("home_digits", false) : saved.getBoolean("numeric");
+  numericEntry = saved == null ? settingsFirst||getIntent().getBooleanExtra("home_digits", false) : saved.getBoolean("numeric");
+  if(saved!=null)settingsResult=saved.getInt("settings_result",-1);
   query = new EditText(this) {
    @Override public boolean onKeyPreIme(int key, KeyEvent event) {
     if (key != KeyEvent.KEYCODE_BACK) return super.onKeyPreIme(key, event);
@@ -47,6 +121,7 @@ public final class GlobalSearchActivity extends LeoActivity {
   query.addTextChangedListener(new TextWatcher() {
    public void beforeTextChanged(CharSequence value, int start, int count, int after) {}
    public void onTextChanged(CharSequence value, int start, int before, int count) {
+    settingsResult=-1;
     ++generation;
     handler.removeCallbacks(search);
     handler.postDelayed(search, 220);
@@ -92,7 +167,7 @@ public final class GlobalSearchActivity extends LeoActivity {
   new KeypadDialog(this, L.t("Caută în Leo"), labels, new KeypadDialog.Action() {
    public void select(int index) {
     if (index == SCOPES.length) { numericEntry = !numericEntry; setInputMode(); }
-    else { scope = index; find(); }
+    else { if(scope!=index)settingsResult=-1; scope = index; find(); }
     query.requestFocus();
    }
   }).initialSelection(scope).show();
@@ -130,19 +205,25 @@ public final class GlobalSearchActivity extends LeoActivity {
   }
   super.onBackPressed();
  }
- protected void onSaveInstanceState(Bundle b){b.putBoolean("numeric",numericEntry);b.putInt("scope",scope);b.putString("query",query.getText().toString());super.onSaveInstanceState(b);}
+ protected void onSaveInstanceState(Bundle b){b.putBoolean("numeric",numericEntry);b.putInt("scope",scope);b.putString("query",query.getText().toString());b.putInt("settings_result",settingsResult);super.onSaveInstanceState(b);}
  protected void onResume(){super.onResume();if(query!=null)find();}
  protected void onPause(){handler.removeCallbacks(search);++generation;super.onPause();}protected void onDestroy(){handler.removeCallbacksAndMessages(null);super.onDestroy();}
- private void find(){summary.setText(L.t("Se caută…"));results.setEnabled(false);final String term=query.getText().toString().trim();final int token=++generation,chosen=scope;worker.execute(new Runnable(){public void run(){if(token!=generation)return;final ArrayList<Hit> hits=collect(GlobalSearchActivity.this,term,chosen);for(int i=hits.size()-1;i>=0;i--)if(!inScope(hits.get(i),chosen))hits.remove(i);ui(new Runnable(){public void run(){if(token!=generation||isFinishing())return;summary.setText(L.t(SCOPES[chosen])+" · "+hits.size());results.setEnabled(!hits.isEmpty());if(hits.isEmpty())query.requestFocus();ArrayList<String> labels=new ArrayList<String>();for(Hit h:hits)labels.add(h.label);if(labels.isEmpty())labels.add(term.isEmpty()?L.t("Scrie pentru a căuta local"):L.t("Niciun rezultat · limite locale"));results.setAdapter(new ArrayAdapter<String>(GlobalSearchActivity.this,android.R.layout.simple_list_item_1,labels){public View getView(int p,View v,android.view.ViewGroup parent){TextView t=(TextView)super.getView(p,v,parent);t.setTextColor(android.graphics.Color.WHITE);t.setTextSize(16*Appearance.textScale(GlobalSearchActivity.this));t.setMaxLines(2);t.setEllipsize(android.text.TextUtils.TruncateAt.END);t.setPadding(dp(8),dp(5),dp(8),dp(5));t.setBackground(UiChrome.row(palette,dp(6),dp(1)));t.setSelected(p==results.getSelectedItemPosition());return t;}});results.setOnItemClickListener(new AdapterView.OnItemClickListener(){public void onItemClick(AdapterView<?> a,View v,int i,long id){if(i<hits.size())try{startActivity(hits.get(i).intent);}catch(RuntimeException e){notice(L.t("Rezultat indisponibil"));}}});}});}});}
+ private void find(){summary.setText(L.t("Se caută…"));results.setEnabled(false);final String term=query.getText().toString().trim();final int token=++generation,chosen=scope;worker.execute(new Runnable(){public void run(){if(token!=generation)return;final ArrayList<Hit> hits=collect(GlobalSearchActivity.this,term,chosen);for(int i=hits.size()-1;i>=0;i--)if(!inScope(hits.get(i),chosen))hits.remove(i);ui(new Runnable(){public void run(){if(token!=generation||isFinishing())return;summary.setText(L.t(SCOPES[chosen])+" · "+hits.size());results.setEnabled(!hits.isEmpty());if(hits.isEmpty())query.requestFocus();ArrayList<String> labels=new ArrayList<String>();for(Hit h:hits)labels.add(h.label);if(labels.isEmpty())labels.add(term.isEmpty()?L.t("Scrie pentru a căuta local"):L.t("Niciun rezultat · limite locale"));results.setAdapter(new ArrayAdapter<String>(GlobalSearchActivity.this,android.R.layout.simple_list_item_1,labels){public View getView(int p,View v,android.view.ViewGroup parent){TextView t=(TextView)super.getView(p,v,parent);t.setTextColor(android.graphics.Color.WHITE);t.setTextSize(16*Appearance.textScale(GlobalSearchActivity.this));t.setMaxLines(2);t.setEllipsize(android.text.TextUtils.TruncateAt.END);t.setPadding(dp(8),dp(5),dp(8),dp(5));t.setBackground(UiChrome.row(palette,dp(6),dp(1)));t.setSelected(p==results.getSelectedItemPosition());return t;}});results.setOnItemClickListener(new AdapterView.OnItemClickListener(){public void onItemClick(AdapterView<?> a,View v,int i,long id){
+    if(i>=hits.size())return;
+    try{startActivity(hits.get(i).intent);if(chosen==SETTINGS_SCOPE)settingsResult=i;}
+    catch(RuntimeException e){notice(L.t("Rezultat indisponibil"));}
+   }});
+   if(chosen==SETTINGS_SCOPE&&settingsResult>=0&&!hits.isEmpty()){
+    focusResults();
+    results.setSelection(Math.min(settingsResult,hits.size()-1));
+   }}});}});}
  static boolean inScope(Hit hit,int scope){if(scope==0)return true;String name=hit.intent.getComponent()==null?"":hit.intent.getComponent().getClassName();int type=name.endsWith("MainActivity")?1:(name.endsWith("ContactsActivity")||name.endsWith("PhoneActivity"))?2:name.endsWith("MediaActivity")?4:(hit.label.startsWith(L.t("Setare · "))||name.contains("SettingsActivity")||name.endsWith("SoundScheduleActivity")||name.endsWith("SetupWizardActivity"))?3:5;return type==scope;}
  static ArrayList<Hit> collect(Context c,String term){return collect(c,term,0);}
  static ArrayList<Hit> collect(Context c,String term,int scope){ArrayList<Hit> found=new ArrayList<Hit>();if(term.isEmpty()){if(scope==0||scope==1)for(int id:HomeAccess.get(c,"recent"))if(!AppCatalog.settingsOnly(id))found.add(new Hit(L.t("Recent · ")+AppCatalog.NAMES[id],new Intent(c,MainActivity.class).putExtra("open_app",id)));return found;}if((scope==0||scope==2)&&dialable(term))found.add(new Hit(L.t("Deschide în Telefon · ")+term,new Intent(c,PhoneActivity.class).putExtra("number",term)));
   if(scope==0||scope==1)for(int i=0;i<AppCatalog.NAMES.length&&found.size()<20;i++)if(!AppCatalog.settingsOnly(i)&&matches(AppCatalog.NAMES[i],term))found.add(new Hit(L.t("Aplicație · ")+AppCatalog.NAMES[i],new Intent(c,MainActivity.class).putExtra("open_app",i).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)));
   if(scope==1)return found;
-  String[] settingNames=L.array(new String[]{"Wi-Fi","Bluetooth","Program sonor","Accesibilitate Leo","Configurare inițială","Setări Leo","Tastatură și text","Fundaluri și teme","SIM-uri și rețea mobilă"});
-  Class<?>[] settingPages={ConnectivityActivity.class,ConnectivityActivity.class,SoundScheduleActivity.class,AccessibilitySettingsActivity.class,SetupWizardActivity.class,SettingsActivity.class,InputSettingsActivity.class,WallpaperActivity.class,MobileSettingsActivity.class};
-  if(scope==0||scope==3)for(int i=0;i<settingNames.length;i++)if(matches(settingNames[i],term)){Intent intent=new Intent(c,settingPages[i]);if(i<2)intent.putExtra("kind",i==0?"wifi":"bluetooth");found.add(new Hit(L.t("Setare · ")+settingNames[i],intent));}
-  if(scope==3)return found;
+  if(scope==0||scope==SETTINGS_SCOPE)appendSettings(c,term,found);
+  if(scope==SETTINGS_SCOPE)return found;
   if(scope==0||scope==2)try(Cursor rows=c.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,new String[]{"contact_id","display_name","data1"},null,null,"display_name COLLATE LOCALIZED ASC")){HashSet<Long> ids=new HashSet<Long>();int scanned=0,n=0;while(rows!=null&&rows.moveToNext()&&scanned++<2000&&n<20)if((matches(rows.getString(1),term)||matches(rows.getString(2),term))&&ids.add(rows.getLong(0))){found.add(new Hit(L.t("Contact · ")+rows.getString(1),new Intent(c,ContactsActivity.class).putExtra("contact_id",rows.getLong(0))));n++;}}catch(RuntimeException ignored){}
   if(scope==2)return found;
   if(scope==0||scope==5)try{File f=new File(c.getFilesDir(),"notes.json");if(BackupEngine.atomicExists(f)){JSONArray notes=new JSONArray(new String(BackupEngine.atomicBytes(f,1024*1024),"UTF-8"));int n=0;for(int i=0;i<notes.length()&&n<20;i++){JSONObject note=notes.getJSONObject(i);String body=note.getString("body");if(matches(body,term)){found.add(new Hit(L.t("Notiță · ")+body.replace('\n',' ').substring(0,Math.min(body.length(),60)),new Intent(c,NotesActivity.class).putExtra("note_id",note.getString("id"))));n++;}}}}catch(Exception ignored){}

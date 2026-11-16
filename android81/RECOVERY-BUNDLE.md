@@ -5,7 +5,8 @@ For the current clean-install procedure, start with
 package uses schema 2 (`--fresh`): blank userdata plus apps/runtime integrated
 into system. It requires `--wipe-data`, verified stock originals and boot-last
 ordering. Native Leo Recovery installation has since passed on hardware;
-Python-installer writes and full stock restoration remain untested.
+the Python installer also wrote and verified all three November images on
+16 November using `--staged-images`. Full stock restoration remains open.
 
 Schema 1 below preserves data and represents an update snapshot. It does not
 guarantee a boot after data formatting. The recorded 0.12 build and preflight
@@ -78,6 +79,12 @@ This overwrites boot/system. It stages both images on SD, checks hashes and
 recovery state, writes system then boot and verifies each written image.
 Userdata is retained; recovery/modem/NV are not targets. There is no automatic
 reboot. Staging remains on SD. Maintain power and keep backups off the phone.
+
+Use `--staged-images /sdcard/STAGING_DIRECTORY` when the bundle's raw images
+are already on the external card. Pass the original ZIP to the installer
+as usual. Staged files are checked against its sizes and SHA-256 before any
+partition write. Extract ZIP64 bundles on the PC or with the native Recovery
+installer built for the package.
 
 Archives contain proprietary device runtime and remain private; published
 release assets are listed in [the package guide](GITHUB-PACKAGES.md).

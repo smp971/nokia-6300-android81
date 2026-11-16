@@ -58,6 +58,29 @@ index a6cb9be1e7f7a3b58fd74dc7453b3063fba0208a..c85405c8983eaa0e4f0e22382907dbca
          updataSummary(preference, mUsbBackend.getCurrentMode());
      }
  
+diff --git a/src/com/android/settings/development/DevelopmentSettings.java b/src/com/android/settings/development/DevelopmentSettings.java
+--- a/src/com/android/settings/development/DevelopmentSettings.java
++++ b/src/com/android/settings/development/DevelopmentSettings.java
+@@ -394,7 +394,8 @@
+         mBackupManager = IBackupManager.Stub.asInterface(
+                 ServiceManager.getService(Context.BACKUP_SERVICE));
+         mWebViewUpdateService = WebViewFactory.getUpdateService();
+-        mOemLockManager = (OemLockManager) getSystemService(Context.OEM_LOCK_SERVICE);
++        mOemLockManager = showEnableOemUnlockPreference(getActivity())
++                ? (OemLockManager) getSystemService(Context.OEM_LOCK_SERVICE) : null;
+         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+ 
+         mUm = (UserManager) getSystemService(Context.USER_SERVICE);
+@@ -1058,7 +1059,8 @@
+     }
+ 
+     private static boolean showEnableOemUnlockPreference(Context context) {
+-        return context.getSystemService(Context.OEM_LOCK_SERVICE) != null;
++        // Search indexing also checks this on devices without an OEM lock service.
++        return ServiceManager.checkService(Context.OEM_LOCK_SERVICE) != null;
+     }
+ 
+     /**
 diff --git a/src/com/android/settings/wfd/WifiDisplaySettings.java b/src/com/android/settings/wfd/WifiDisplaySettings.java
 index 0d6b4dc28b919cd1ce84a52d92162f327df41d1c..576d5210742e279df2ecf4dd0e759f89c9bdf7ee 100755
 --- a/src/com/android/settings/wfd/WifiDisplaySettings.java

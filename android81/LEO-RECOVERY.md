@@ -55,14 +55,122 @@ requires a regenerated catalog and rebuilt recovery. Sideload, update-binary
 execution and automatic updates are unimplemented. OTA/BCB/cache commands are
 not automatically executed at startup.
 
+## Updated menu and Linux compatibility
+
+The 16 November builds have five main sections. The Stock Tools edition ports
+the original recovery's reset, cache wipe, log viewer and bootloader restart
+into Leo's keypad menus.
+
+| Section | Actions |
+| --- | --- |
+| Install | Install from SD → Leo, KaiOS or postmarketOS status |
+| Backup / Restore | Back up or restore individual boot, system, recovery, data and cache partitions, with microSD present |
+| Mount partitions | Mount or unmount the external SD, System, Data and Cache |
+| Boot and power | Boot the internal OS, open the SD boot menu, restart to bootloader or power off |
+| Tools | File manager, factory reset, cache wipe, diagnostics, recovery logs, stock recovery and keypad help |
+
+The selected action shows a short explanation above the keypad footer. It keeps
+the selected main-menu row on return. Confirmation screens open with Cancel
+selected. The top-right microSD icon shows whether a usable card is detected.
+
+**Install → Install from SD** lets you pick the target OS first. **Leo** installs
+the approved clean ZIP and erases internal userdata. **KaiOS** uses the
+approved boot/system restore. After it completes, use
+Tools → Factory reset to reset userdata before starting KaiOS. Both menus show
+the exact ZIP filename under Package location and let you check the archive
+before flashing. **postmarketOS** shows why its installer is unavailable. A
+validated loader and SD image for this phone are required first.
+
+Mount partitions shows `RO` or `RW` for mounted volumes. System, Data
+and Cache mount read-only without journal replay under
+`/mnt/leo-mount/{system,data,cache}`. The external SD mounts read/write at
+`/sdcard`. The installer requires write targets to be unmounted. Stock
+recovery requires all three internal volumes to be unmounted.
+
+**Backup / Restore** shows up when recovery detects the microSD partition. It
+copies a selected internal partition as a raw image and checks its SHA-256
+before marking the backup complete. Restore checks the size and SHA-256 again
+and requires the target to be unmounted. It verifies a complete readback before
+reporting success. Only choose backups from a trusted card. These checks detect
+corruption. They do not authenticate the contents of a raw partition backup.
+
+The local **USB MTP** candidate exposes one mounted volume at a time through
+Tools. System, Data and internal shared storage (`/data/media/0`) are read-only.
+The microSD option allows file copies in either direction. Full Data can contain
+private app files. MTP is opt-in and pauses ADB until the session stops.
+The FunctionFS prototype transferred a test file to Windows and restored ADB.
+This kernel lacks SCSI support for USB mass storage in host mode. USB stick OTG
+requires kernel work and a hardware test with a suitable adapter.
+
+**Tools → File manager** browses folders and shows file sizes on mounted volumes.
+Mount the microSD, System, Data or Cache first in Mount partitions. The browser
+lists regular files and directories, skips symlinks and stays on the selected
+volume. It displays up to 4096 entries per folder and cannot change files.
+
+**Tools → Factory reset** erases internal userdata and cache after confirmation
+in Leo. **Tools → Wipe cache** targets only cache. Both use the original
+formatter through its command-line actions. Unmount System, Data and Cache
+first. Leo Recovery checks battery or USB power, verifies the stock block aliases
+and unmounts microSD before starting the formatter. Both confirmations default
+to Cancel. Reboot behavior and failure handling follow the stock engine.
+
+**Tools → Diagnostics → View recovery log** shows the current Leo log on the
+phone. The legacy recovery menu remains available under **Tools → Stock
+recovery**, including its original OTA entries. Leo's SD installer still accepts
+its two pinned ZIPs. Stock OTA modes have not been revalidated for this build.
+
+Boot and power → Boot from SD lists KaiOS and a postmarketOS boot-support
+check. Builds with the Leo SD bootstrap also include **Leo**. The upstream
+`nokia-leo` port targets ARMv7 and provides an Android
+boot image and an extlinux configuration. The installed Leo Recovery kernel
+reports `# CONFIG_KEXEC is not set`. The Linux entry reports the current
+handoff capability. Upstream lk2nd lists the Nokia 6300 4G under
+`lk2nd-msm8909`. Validate the loader and an SD boot path on this handset
+before enabling the postmarketOS action.
+[Upstream Nokia device configuration](https://gitlab.com/postmarketOS/pmaports/-/raw/master/device/testing/device-nokia-leo/deviceinfo) ·
+[lk2nd supported devices](https://github.com/msm8916-mainline/lk2nd/blob/main/Documentation/devices.md#lk2nd-msm8909) ·
+[lk2nd boot paths](https://github.com/msm8916-mainline/lk2nd/blob/main/Documentation/boot.md)
+
+### Leo one-shot boot from microSD
+
+Under **Boot and power → Boot from SD → Leo**, choose **Prepare card** once.
+Recovery verifies its pinned Leo ZIP from `LeoRecovery/packages` and extracts
+the System image. It creates empty Data and Cache images in `LeoAndroid/`.
+Preparation uses about 1.4 GiB on the card. The ordinary install path still
+writes to internal storage and is separate from this preparation step.
+
+**Boot Leo once** writes a one-time request on the card and reboots to the early
+selector. The selector consumes the request, verifies the System image, then
+attaches System read-only and Data and Cache writable via loop devices. It
+sets the internal Boot, System, Data, Cache and Recovery devices read-only
+before handing PID 1 to Android. A normal restart returns to the internal OS.
+This profile uses the stock recovery kernel, which differs from the UHID-enabled
+kernel in the November Leo boot image. Hardware features need separate testing.
+
+On the test handset, normal restart returned to the installed KaiOS. The pinned
+November launcher can open before Android finishes granting call-log access on
+a freshly prepared card. If Leo Visual shows an error during that first boot,
+let initial setup finish, then boot the same SD profile again. The Android
+setup and permissions are saved in the SD Data image. The second boot reached
+Leo Visual's keypad setup wizard. The Bluetooth HCI service crashed on the SD
+boot and was disabled in the test SD installation.
+
+The radio-enabled SD build binds its own radio startup script over the one in
+the pinned System image. The script validates the SD mounts and the five
+read-only internal OS blocks, then mounts the original modem firmware partition
+read-only and starts both Qualcomm RIL processes. Android radio preferences
+are stored in the separate SD Data image. The modem uses the handset's native
+radio storage through the original Qualcomm service.
+
 ## SD packages and files
 
-Keep the card's contents. Place this layout on FAT32 or ext4:
+Keep the card's contents. The 16 November build expects this layout on FAT32 or
+ext4. The 28 October build expects its earlier Leo ZIP in the same directory.
 
 ```text
 LeoRecovery/
   packages/
-    leo-fresh-0.14.0-dev-20261027-232615.zip
+    leo-fresh-0.14.0-dev-20261113-140016.zip
     kaios-original-restore-695d.zip
   stock-backups/
     boot-kaios.img
@@ -75,10 +183,15 @@ The recovery manifest pins accepted hashes. The real `mmcblk1p1` (`179:65`) must
 be mounted read/write at `/sdcard`; an internal folder with that name is not
 sufficient.
 
-After mounting through Diagnostics, verified ADB staging uses:
+[Recovery download, Stock Tools edition](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-recovery-stock-tools-20261116) ·
+[Approved Leo ROM ZIP](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-0.14.0-dev-20261113) ·
+[Approved KaiOS restore ZIP](https://github.com/smp971/nokia-6300-android81/releases/tag/leo-0.14.0-dev-20261028)
+
+After mounting the external card through Mount partitions in the updated menu,
+use its local build manifest for verified ADB staging:
 
 ```powershell
-python android81/stage-leo-recovery-sd.py --copy --confirm-target 695d
+python android81/stage-leo-recovery-sd.py --manifest android81/output/leo-recovery-stock-tools/manifest.json --copy --confirm-target 695d
 ```
 
 This copies approved ZIPs, extracts the required stock originals, checks hashes
@@ -105,11 +218,16 @@ on failure. Boot/system/recovery backup needs about 940 MiB separately and
 - No automatic reboot. A failure after writing starts requires retaining recovery
   for diagnosis/restore; this is not an atomic multi-partition transaction.
 
-After stock boot/system restoration, **data reset is a separate Stock tools
+After stock boot/system restoration, **data reset is a separate Factory reset
 step** before normal KaiOS startup. The kit does not restore personal contacts,
 accounts or messages.
 
 ## Built image and recovery entry
+
+The 16 November release uses the same image filename in its own archive. Its
+manifest specifies the current image hash and exact SD archives. Run the
+included installer from the extracted directory with `leo-recovery-0.2.img`
+as the image argument. The following paths and hash record the October build.
 
 Private local files:
 

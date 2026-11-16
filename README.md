@@ -1,43 +1,78 @@
-# 🦁 LEO · Android on the Nokia 6300 4G
+# Leo · Android 8.1 for Nokia 6300 4G
 
-**Small screen. Real keys. A second life for a Nokia.**
+Leo boots AOSP from the internal eMMC of the **Nokia 6300 4G TA-1286**.
+**Leo Visual** is the native Home, dialer and application shell. **Leo Keypad**
+provides physical multi-tap and Romanian T9. The project also adapts Android
+Settings, SystemUI and system dialogs for the 240 × 320 display and D-pad.
 
-Leo is an experimental **Android 8.1** port for the **Nokia 6300 4G TA-1286**.
-What started as a KaiOS dump now boots from internal storage, makes calls,
-plays music and tunes into FM radio. **Leo Visual** brings a native keypad
-interface with its own Home, apps, settings and softkey bars, inspired by KaiOS
-and Symbian.
+`0.14.0-dev` · `API 27` · `msm8909 / ARMv7` · `aosp_leo_go-eng` · `16 November 2026`
 
-`Android 8.1 / API 27` · `ARMv7 / 32-bit` · `240 × 320` · `Dual SIM` · `Leo Visual`
+[Architecture](#architecture) · [Screenshots](#screenshots) · [Hardware status](#what-works) ·
+[Installation](#installation-and-recovery) · [Build and verify](#building-leo) ·
+[Audit](#project-audit) · [Documentation](#documentation)
 
-**Updated: 6 November 2026** · **Installed version: 0.14.0-dev / code 14**
+## Build status
 
-[What works](#what-works) · [Screenshots](#screenshots) · [Controls](#keypad-controls) ·
-[Audit](#project-audit) · [Roadmap](#roadmap) · [Build](#building-leo) · [Docs](#documentation)
+| Artifact | Scope | Evidence |
+| --- | --- | --- |
+| Current development handset | Adaptive single-SIM Home, FM/Internet radio, dark Android UI and native Settings search fix | APK hash and device checks are recorded in the [technical audit](android81/PROJECT-AUDIT-2026-11-13.md) |
+| 16 November internal candidate | Rebuilt Leo Visual and current MTP and radio startup scripts | APK and clean ROM checks passed offline. Installation uses the PC recovery installer. |
+| 16 November Recovery and SD boot | One-shot Leo or KaiOS boot from microSD. Leo starts both Qualcomm RIL services against the original modem firmware. | Leo SD boot and automatic baseband detection verified on `695d`. Calls, SMS and mobile data in the SD profile remain unverified. |
+| 13 November ROM prerelease | Boot, system and empty userdata. Includes dark Android UI and the Settings fix. Predates the radio and single-SIM Home changes. | Clean flash and partition readback verified on 16 November. See the [first-boot notes](android81/FLASH-FROM-STOCK.md#16-november-hardware-test). [Private download](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-0.14.0-dev-20261113) |
+| 28 October ROM and Leo Recovery 0.2 | Hardware baseline for native clean installation | Recovery boot, key navigation, partition readback and first boot confirmed. The October ZIP requires its [post-install bootstrap fix](android81/FLASH-FROM-STOCK.md#post-install-fix-found-during-testing). |
 
-> **Working prototype for experimental use.** Clean installation through Leo
-> Recovery has been tested on the development phone. Full KaiOS restoration and
-> QFIL flashing remain untested. Offline checks do not establish hardware support.
+## Architecture
+
+| Layer | Entry points and responsibilities |
+| --- | --- |
+| Boot and device | Stock-derived Linux 4.9 kernel, Android init/bootstrap, device key layout, graphics/HWC integration and audio policy. [TA-1286 device tree](android81/device/nokia/leo) |
+| Shell and keypad | `MainActivity` renders Home and the catalog. `LeoActivity`, `KeypadDialog` and `CircularNavigation` share focus and softkey behavior. Leo accessibility owns the universal Menu and pointer. The separate IME handles text entry. [Visual sources](android81/visual-shell) · [IME sources](android81/keypad-ime) |
+| Native Android UI | Framework keypad patches and Android resource overlays cover SystemUI, framework themes, Settings and Package Installer. The Settings app has a separate compatibility fix for search indexing. [Keypad integration](android81/ANDROID-KEYPAD-NAVIGATION.md) · [Dark overlays](android81/system-dark) |
+| Calls and messaging | Leo's dialer and in-call UI use Android Telecom. Android providers store call/SMS data. The Qualcomm RIL and IMS components handle radio registration and voice. [Radio integration](android81/RADIO-RECOVERY.md) · [IMS slot management](android81/IMS-DUAL-SLOT.md) |
+| Audio and media | `PlaybackService` owns local and Internet playback. `FmService` controls the tuner and FM routing. The media library indexes Android media and removable storage. [Audio runtime](android81/audio-runtime) · [FM runtime](android81/fm-runtime) |
+| Recovery | The standalone RGB565 recovery handles keys, SD staging and pinned packages outside Android. The early selector supports one-shot Leo and KaiOS boot from SD. [Recovery implementation](android81/leo-recovery) · [SD boot design](android81/KAIOS-SD.md) |
 
 ## Installation and recovery
 
-[Download the private release](https://github.com/smp971/nokia-6300-android81/releases/tag/leo-0.14.0-dev-20261028)
+[Download the private complete kit](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-complete-20261116)
 · [Choose a package](android81/GITHUB-PACKAGES.md)
-· [Installation procedure](android81/FLASH-FROM-STOCK.md)
+· [Complete installation guide](android81/INSTALL-GUIDE.md)
+
+**The clean installer erases internal userdata.** The November ZIP requires the
+project TA-1286 (`695d`), root ADB in Leo Recovery, a mounted external SD card
+with at least 3.3 GiB of staging space, and the three verified stock backups
+for the write step. The host needs equivalent temporary storage. The current
+native recovery menu accepts the approved November and October archives.
+
+From the repository root, verify the November download, then run the recovery
+preflight after the handset has entered recovery. Neither command flashes an
+image.
+
+```powershell
+$rom = '.\leo-fresh-0.14.0-dev-20261113-140016.zip'
+Get-FileHash -Algorithm SHA256 $rom
+python android81/install-recovery-bundle.py $rom
+python android81/install-recovery-bundle.py $rom --preflight --serial 695d --adb adb
+```
+
+Expected ROM SHA-256
+
+```text
+465e80df8a02922d7f442e80fe520965a30f2adf1a39c0b0994c7be171e6fc68
+```
+
+The verified bundle stages all images before writing. It writes `system` →
+blank `userdata` → `boot` and hashes each partition after writing. Recovery,
+modem, calibration, GPT and the bootloader remain outside the write set.
+See the [bundle guide](android81/RECOVERY-BUNDLE.md) for the explicit write
+flags and the [stock return guide](android81/FLASH-FROM-STOCK.md) for backups
+and restoration.
 
 **Leo Recovery 0.2** is a standalone native recovery for D-pad, OK and softkeys,
 with a dedicated RGB565 renderer for the 240 × 320 display. Direct boot, physical
 keys, root ADB, SD backup and clean installation have passed on the phone.
-Installation writes **system → blank userdata → boot**, checking each complete
-partition's SHA-256 after writing. It erases internal Android user data. The
-previous userdata was backed up and verified on both SD and PC before the test.
-
-First boot configured Leo Home, keypad IME, dialer, audio bootstrap and root
-broker. Both SIMs registered for voice. **The published ROM needs the included
-post-install bootstrap fix** for accessibility, the global menu/mouse and legacy
-launchers. That fix is already applied on the phone. The old Leo Shell APK was
-subsequently removed there; Launcher3 remains disabled. The tested ROM ZIP has
-not been silently replaced with an untested rebuild.
+Before the October test, the previous userdata was backed up and verified on
+both SD and PC.
 
 After a wipe, choose the data SIM and configure network/Wi-Fi preferences again.
 SIM 2 IMS voice registration and validated LTE data passed on the fresh installation
@@ -55,7 +90,8 @@ restored; Wi-Fi calling is not functional yet.
 
 | Package | Purpose and limits |
 | --- | --- |
-| Clean Leo ROM | Tested system/boot installation with blank userdata; requires the documented post-install fix |
+| November clean Leo ROM | Boot, system and blank userdata flashed and read back using ADB in Leo Recovery |
+| October clean Leo ROM | Hardware-verified native recovery installation; apply the documented first-boot fix |
 | Leo Recovery | Native SD installer, boot/system/recovery backup, diagnostics and experimental KaiOS SD boot |
 | Root ADB recovery entry kit | Bootstrap from the known rooted KaiOS installation; not a signed stock OTA |
 | KaiOS restore ZIP | Verified original boot/system payloads; full restoration untested, data reset separate |
@@ -76,38 +112,70 @@ intermittent; KaiOS radio/media services need separate tests.
 
 ## Screenshots
 
-**Leo Modern UI foundation (28 October):** navy/teal shared chrome, clearer focus
-and softkeys, and native SystemUI with a left clock. The 31 October update hides
-numeric SIM-slot labels to avoid collisions with the LTE/4G indicators.
-Installed on the development phone; the published ROM ZIP still predates it.
-[Design, build and validation](android81/LEO-MODERN-UI.md).
+The [screen atlas](android81/screenshots/atlas-2026-11-13/README.md) has
+**159 on-device captures** across the seven launcher categories,
+six Leo Settings tabs, system controls, and application menus.
+The [detailed atlas](android81/screenshots/atlas-2026-11-13/extended/README.md) adds
+48 screens, including Home cards, call history filters, message and email composers,
+radio options, clock presets and system tools. The Nokia captures are 240 × 320.
+Select any thumbnail to open the full image.
 
-**Home customization (31 October):** an [on-device Home editor](android81/HOME-EDITOR.md)
-adds movement, sizing, item rotation, alignment, visibility and reset controls.
-Home and the global menu now open Android's notification shade. Phone/Messages
-use unread dots, replacing the permanent SMS/missed-call summary row.
-The [dashboard follow-up](android81/DASHBOARD-WAKE.md) adds cached-condition
-weather symbols, separate editable SIM icon rows, removes Home dBm text, and
-enables display wake from built-in keypad keys.
-
-| Leo Modern Home | Shared settings chrome | System bar over Android Settings |
+| Home · single SIM | Apps · primary category | Universal Menu |
 | :---: | :---: | :---: |
-| <img src="android81/screenshots/leo-modern-home.png" width="180" alt="Leo Modern Home with real dual SIM status bar"> | <img src="android81/screenshots/leo-modern-settings.png" width="180" alt="Navy and teal Leo settings, clear selection and softkeys"> | <img src="android81/screenshots/leo-modern-android.png" width="180" alt="Left clock and numbered SIM signals over Android Settings with dark icon tint"> |
+| <a href="android81/screenshots/readme-2026-11-13/home.png"><img src="android81/screenshots/readme-2026-11-13/home.png" width="160" alt="Home · single SIM"></a> | <a href="android81/screenshots/atlas-2026-11-13/apps-cycle-1.png"><img src="android81/screenshots/atlas-2026-11-13/apps-cycle-1.png" width="160" alt="Apps · primary category"></a> | <a href="android81/screenshots/atlas-2026-11-13/global-menu.png"><img src="android81/screenshots/atlas-2026-11-13/global-menu.png" width="160" alt="Universal Menu"></a> |
 
-Real phone captures retain the language selected when taken. Leo supports
-English and Romanian. Older call screens below are **local demos**, not live calls.
-
-| Clean-install Home | App menu | Global menu over Android Settings |
+| Leo Settings | App ordering | Home card editor |
 | :---: | :---: | :---: |
-| <img src="android81/screenshots/leo-fresh-install-home.png" width="180" alt="Home after clean installation"> | <img src="android81/screenshots/leo-fresh-install-menu.png" width="180" alt="Leo app grid"> | <img src="android81/screenshots/leo-fresh-install-global-menu.png" width="180" alt="Global menu over Android Settings"> |
+| <a href="android81/screenshots/atlas-2026-11-13/settings-networks.png"><img src="android81/screenshots/atlas-2026-11-13/settings-networks.png" width="160" alt="Leo Settings"></a> | <a href="android81/screenshots/readme-2026-11-13/reorder.png"><img src="android81/screenshots/readme-2026-11-13/reorder.png" width="160" alt="App ordering"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/home-card-list.png"><img src="android81/screenshots/atlas-2026-11-13/extended/home-card-list.png" width="160" alt="Home card editor"></a> |
 
-| Native recovery | Installation complete | Leo Night incoming-call demo |
+| Phone keypad | Call history filters | New SMS |
 | :---: | :---: | :---: |
-| <img src="android81/screenshots/leo-recovery-02-sd-menu.png" width="180" alt="Recovery menu from an earlier validated build"> | <img src="android81/screenshots/leo-recovery-install-complete.png" width="180" alt="All installed images verified"> | <img src="android81/screenshots/leo-night-incoming-demo.png" width="180" alt="Local incoming-call demo"> |
+| <a href="android81/screenshots/atlas-2026-11-13/phone.png"><img src="android81/screenshots/atlas-2026-11-13/phone.png" width="160" alt="Phone keypad"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/phone-history-options.png"><img src="android81/screenshots/atlas-2026-11-13/extended/phone-history-options.png" width="160" alt="Call history filters"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/sms-compose.png"><img src="android81/screenshots/atlas-2026-11-13/extended/sms-compose.png" width="160" alt="New SMS"></a> |
 
-| Music player preview | Clock | PDF reader |
+| Music player | Current Media · demo | FM tuner options |
 | :---: | :---: | :---: |
-| <img src="android81/screenshots/leo-material-player.png" width="180" alt="Music player preview without active playback"> | <img src="android81/screenshots/leo-clock-tabs.png" width="180" alt="Clock tabs"> | <img src="android81/screenshots/leo14-pdf.png" width="180" alt="PDF reader with keypad zoom"> |
+| <a href="android81/screenshots/atlas-2026-11-13/player.png"><img src="android81/screenshots/atlas-2026-11-13/player.png" width="160" alt="Music player"></a> | <a href="android81/screenshots/atlas-2026-11-13/now-playing.png"><img src="android81/screenshots/atlas-2026-11-13/now-playing.png" width="160" alt="Current Media · demo"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/fm-options.png"><img src="android81/screenshots/atlas-2026-11-13/extended/fm-options.png" width="160" alt="FM tuner options"></a> |
+
+| Internet station directory | Clock · timer presets | Calendar tools |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/readme-2026-11-13/internet-radio.png"><img src="android81/screenshots/readme-2026-11-13/internet-radio.png" width="160" alt="Internet station directory"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/timer-options.png"><img src="android81/screenshots/atlas-2026-11-13/extended/timer-options.png" width="160" alt="Clock · timer presets"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/calendar-tools.png"><img src="android81/screenshots/atlas-2026-11-13/extended/calendar-tools.png" width="160" alt="Calendar tools"></a> |
+
+| Quick Settings | Leo notifications · redacted | Keypad and T9 settings |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/atlas-2026-11-13/quick-settings.png"><img src="android81/screenshots/atlas-2026-11-13/quick-settings.png" width="160" alt="Quick Settings"></a> | <a href="android81/screenshots/atlas-2026-11-13/notifications.png"><img src="android81/screenshots/atlas-2026-11-13/notifications.png" width="160" alt="Leo notifications · redacted"></a> | <a href="android81/screenshots/readme-2026-11-13/input.png"><img src="android81/screenshots/readme-2026-11-13/input.png" width="160" alt="Keypad and T9 settings"></a> |
+
+| Leo Studio | Theme preview · Home | Recovery center in Leo |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/atlas-2026-11-13/studio.png"><img src="android81/screenshots/atlas-2026-11-13/studio.png" width="160" alt="Leo Studio"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/theme-home.png"><img src="android81/screenshots/atlas-2026-11-13/extended/theme-home.png" width="160" alt="Theme preview · Home"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/recovery-center.png"><img src="android81/screenshots/atlas-2026-11-13/extended/recovery-center.png" width="160" alt="Recovery center in Leo"></a> |
+
+| Android Settings search | Android permission dialog · demo | Leo controls in Android |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/readme-2026-11-13/settings-search.png"><img src="android81/screenshots/readme-2026-11-13/settings-search.png" width="160" alt="Android Settings search"></a> | <a href="android81/screenshots/readme-2026-11-13/permission.png"><img src="android81/screenshots/readme-2026-11-13/permission.png" width="160" alt="Android permission dialog · demo"></a> | <a href="android81/screenshots/atlas-2026-11-13/extended/global-in-android.png"><img src="android81/screenshots/atlas-2026-11-13/extended/global-in-android.png" width="160" alt="Leo controls in Android"></a> |
+
+[FM tuner](android81/screenshots/atlas-2026-11-13/radio-fm.png) ·
+[Earlier live radio capture](android81/screenshots/leo-20261113-radio-live.png) ·
+[Archived gallery](android81/screenshots/archive/2026-11-06/README.md)
+
+## Radio · FM and Internet
+
+Open **FM / Internet Radio** in Media and press **#** to switch sources.
+FM keeps left/right tuning and up/down volume. In Internet, choose a station
+with up/down and start or stop it with OK. The left softkey opens favorites,
+custom MP3/AAC streams and the on-demand ICY track title.
+
+The ten presets are România Actualități, România Cultural, România Muzical,
+Antena Satelor, București FM, Radio Cluj, Radio Brașov FM, Kiss FM, Magic FM
+and Rock FM. Streams use Wi-Fi or mobile data. Leo opens a connection when
+you select a station.
+
+[Radio România stream directory](https://api.srr.ro/stream/playlist.htm) ·
+[Kiss FM](https://www.kissfm.ro/live) · [Magic FM](https://www.magicfm.ro/live) ·
+[Rock FM](https://www.rockfm.ro/live)
+
+The radio update is part of the Leo Visual development build. The 13 November
+ROM ZIP was assembled before this radio update. All ten endpoints returned
+audio in a host check. The Nokia reached the playing state over LTE with
+România Actualități (MP3) and Kiss FM (AAC); these checks ran at zero volume.
 
 <a id="tabelul-funcțiilor"></a>
 <a id="ce-poți-face-deja"></a>
@@ -130,12 +198,12 @@ test, not every accessory, carrier or scenario.
 | 🗂️ **Tasks and recents** | Leo recents and Android tasks, switching and confirmed closing through the root service. Active calls and telephony windows protected. |
 | ⌨️ **Text input** | Multi-tap, extended Romanian T9, personal dictionary, optional learned choices, capitals, diacritics and symbols. English UI does not add English T9. |
 | 📞 **SIM 1 calls** | Incoming/outgoing calls with two-way audio and keypad answer/end. USB disconnected during outgoing-call tests. |
-| 📶 **SIM 2 / IMS** | Incoming/outgoing VoLTE with two-way audio and concurrent LTE data confirmed before the wipe. SMS send, delivery and reception confirmed. Fresh-install LTE/IMS, DTMF, handover and VoWiFi remain unvalidated. |
+| 📶 **SIM 2 / IMS** | Earlier incoming/outgoing VoLTE with two-way audio and concurrent LTE data, plus SMS send, delivery and reception. Registration and LTE data were verified again on the October clean install after capability refresh. Calls on that clean install, DTMF, handover and VoWiFi remain open. |
 | 👥 **Contacts / SMS** | Multiple numbers, photos, favorites, VCF preview, T9 lookup, bubble conversations, drafts, folder tabs, unread markers, SIM colors, GSM-7/Unicode counters, templates, search and pin/archive. Carrier tests are separate from UI fixtures. MMS unimplemented. |
 | 🌐 **Connectivity** | Earlier LTE data tests; Wi-Fi and hotspot Internet confirmed using another phone. Both SIMs voice-registered after clean installation; default data SIM initially unset. |
 | 🔊 **Audio / vibration** | Speaker, earpiece, wired stereo headphones, Bluetooth A2DP speaker and physical vibration confirmed. Bluetooth microphone/HFP, variable vibration amplitude and concurrent call/media cases need tests. Audio card/server present after wipe; listening tests not repeated. |
 | 🎵 **Music** | Artwork, progress, keypad transport, real visualizer, artists/albums, favorites, search, playlists, editable queue, shuffle/repeat, LRC lyrics and sleep timer. MP3/FLAC/AAC/OGG/WMA v2 samples played; not universal profile support. |
-| 📻 **FM radio** | Tuning, seek, scanned stations, favorites, headphones/speaker and RDS name confirmed. Headphones are the antenna; sessions limited to one hour. |
+| 📻 **FM / Internet radio** | FM tuning, seek, scanning, favorites, RDS and wired/speaker routes. Wired headphones are the FM antenna. Internet adds ten Romanian presets, custom streams and favorites. |
 | 🎙️ **Recorder** | AAC/M4A, pause, internal/SD save, voice-reactive meter and renaming confirmed earlier. New quality profiles need separate recording tests. |
 | 📷 **Camera** | BF20A1/HAL1, preview and OK-key JPEG at 480 × 640, including earlier post-reboot capture. Flashlight and capture LED pulse confirmed. Video unimplemented; Auto flash, exposure quality and long sessions unvalidated. |
 | 📂 **Files / transfer** | Internal/SD browsing, multi-selection, search/sort, images, storage analysis and export location. Copy/move hashes and USB MTP confirmed. Bluetooth text-file transfer worked both ways with Samsung. |
@@ -170,6 +238,7 @@ Full earlier evidence and screenshots remain in the
 | App menu · `*` / `#` | Previous / next category |
 | Messages · left / right | Switch folder |
 | Camera · OK in preview | Save under `Pictures/Leo` |
+| Radio · `#` | Switch FM / Internet. In Internet, ↑/↓ selects and OK starts or stops the highlighted station. |
 
 **Leo Visual accessibility** must be enabled. Keypad lock, calls and alarms take
 precedence. Choose UI language under **Settings → Appearance → Personalization →
@@ -179,15 +248,21 @@ Language / Limbă**. [Localization guide](android81/LOCALIZATION.md).
 
 ## Project audit
 
+The [13 November audit](android81/PROJECT-AUDIT-2026-11-13.md) maps the shell,
+Android services, device integration and release tools to the current evidence.
+The source inventory covers 48 app IDs and 133 manifest components. The
+Python host suite passed 60 tests. The atlas records what was opened on the
+phone, and the audit records the remaining functional checks.
+
 | Area | Evidence | Limit |
 | --- | --- | --- |
-| Clean install | All OS images written/verified; first boot, Home/IME/dialer/root checked | Published ZIP needs post-install fix; Python installer writes and stock restore untested |
-| Recovery | RGB565 display, keys, ADB, backup and native install confirmed | QFIL programmer/transport experimental; no GPT/bootchain repair |
-| Fresh setup | SIM voice registration, audio card/server and root broker; accessibility repaired | Data SIM `-1`, network modes `0/0`, observed GSM/EDGE; LTE/IMS need setup/retest |
-| UI / apps | Shared native components and keypad dialogs | Special screens need individual audits; not all external Android apps are adapted |
-| Build | 590 AOSP projects pinned, patches/device sources/recipes tracked | Clean-host full rebuild and bit-for-bit reproducibility unvalidated; private blobs required |
-| Tests | Latest host run: **54 passing tests**, including QFIL CRC/geometry/target guards | Historical Android runs overlap and are not summed as one coverage figure |
-| Security | Development build, stock-derived kernel and proprietary hardware components | Not a hardened production release; policy and licensing work remains |
+| Open area | Acceptance check |
+| --- | --- |
+| Release reproducibility | Rebuild from a clean host with the 590 pinned AOSP projects, private hardware inputs and documented tooling |
+| Clean-install validation | Flash the November ZIP, confirm first boot, Home and IME grants, and verify LTE/IMS after data-SIM setup |
+| Recovery and stock return | Build a recovery catalog for the new ZIP and verify an end-to-end return to KaiOS |
+| App and data integrity | Close the Home intent boundary, recover interrupted backups on startup, and include Internet radio favorites in backup |
+| Hardware and runtime | Measure USB/ADB recovery, camera stability, audio route changes and long-session power use |
 
 Raw personal data, credentials and device-unique partitions are outside the
 release asset list. Firmware archives are separate private Release assets.
@@ -197,8 +272,8 @@ release asset list. Firmware archives are separate private Release assets.
 
 ## Roadmap
 
-- **Install readiness:** integrate the fix into a new ROM/catalog, validate that
-  exact package and test full KaiOS restore.
+- **Install readiness:** flash the November prerelease, check first boot, update
+  the recovery catalog and test full KaiOS restore.
 - **UI maturity:** consistent spacing, icons, focus, empty/loading/error states,
   themes and large text across special screens.
 - **Telephony:** fresh-install LTE/IMS, DTMF, handover, VoWiFi and Bluetooth mic.
@@ -227,8 +302,18 @@ The project uses Go configuration; Android Go certification and Google services
 are not part of the port. **[Start with the build guide →](android81/REBUILD.md)**
 
 Development uses Windows + WSL/Linux, Java 8 and a separate AOSP checkout.
-Source files do not replace hardware blobs/local inputs. Build and flash are
-separate operations.
+The stock-derived kernel, firmware and proprietary userspace libraries are
+local inputs. The November ROM builder uses a verified device snapshot as its
+base. Its offline image checks and the AOSP source build are separate paths.
+
+| Goal | Command or guide |
+| --- | --- |
+| Check source wiring | `python -X utf8 android81/audit-leo-shell.py` |
+| Run host checks | `python -m unittest discover -s android81/tests` |
+| Build Leo Visual on Windows | `python -X utf8 android81/build-pocket-apps-windows.py` after setting up Java 8, Platform 27, the pinned vCard source and compatible signing inputs |
+| Build Leo Visual and Leo Keypad from AOSP | `bash android81/repro/build-apps.sh` after preparing the [pinned checkout and local inputs](android81/REBUILD.md) |
+| Rebuild ROM or native recovery | [ROM bundle builder](android81/RECOVERY-BUNDLE.md) · [Recovery build and catalog](android81/LEO-RECOVERY.md) |
+| Check keypad routes on the development handset | `python -X utf8 android81/smoke-leo-keypad.py --serial 695d` with the phone unlocked and idle |
 
 ```text
 android81/
@@ -255,6 +340,7 @@ separates current instructions from history.
 | Guide | Purpose |
 | --- | --- |
 | [Packages](android81/GITHUB-PACKAGES.md) | Downloads, required fix and validation status |
+| [Complete installation guide](android81/INSTALL-GUIDE.md) | Recovery, internal installation, one-shot SD boot and return to stock |
 | [Flash from stock](android81/FLASH-FROM-STOCK.md) | Rooted KaiOS entry, clean install and restore |
 | [Leo Recovery](android81/LEO-RECOVERY.md) | Native menu, guards and build |
 | [KaiOS on SD](android81/KAIOS-SD.md) | One-shot boot and isolation limits |
@@ -273,17 +359,7 @@ Historical reports (Romanian): [camera](android81/CAMERA-RUNTIME.md),
 Earlier milestones remain in the [28 October Romanian snapshot](README.archive-2026-10-28-ro.md)
 and the [20 October](README.archive-2026-10-20.md) / [23 October](README.archive-2026-10-23.md) archives.
 
-## Keep building
-
-Useful reports include **phone variant, tested version, steps and observed
-result**. Clear hardware tests help as much as code changes. Unresolved problems
-deserve the same visibility as working features.
-
-Contributions to code, tests, translations, documentation and a better keypad
-experience are welcome.
-
-The ongoing [Leo interface work](android81/LEO-ENVIRONMENT.md) focuses on making the phone easier to use, starting with a simpler seven-action global menu.
-
-The [compact shell](android81/CLASSIC-COMPACT-SHELL.md) keeps a nine-app first page, shorter contextual menus and grouped personalization settings. The active [Leo Material](android81/MATERIAL-SHELL.md) style modernizes its surfaces, app bars and keypad selection. The [six everyday UI refinements](android81/SIX-UI-REFINEMENTS.md) add remembered list positions, shorter communication menus, direct keypad notification actions and an automatic contextual Home card. The [daily tools](android81/DAILY-TOOLS.md) add Home numeric/T9 search, Menu-hold multitasking, simple/full modes, a transfer centre, guided setup and separated app/ROM update controls.
-
-The [Pocket app guide](android81/POCKET-APPS.md) documents controls, storage, tested paths and current limits, including the 48-pair starter dictionary and supported SSH modes.
+Bug reports should include the phone variant, installed APK or ROM hash,
+key sequence, and observed behavior. For radio or telephony, include the slot,
+carrier and connection type. Keep identifiers and personal data out of logs
+and screenshots.

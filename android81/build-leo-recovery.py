@@ -4,7 +4,7 @@ Native installation accepts only the exact verified ZIPs pinned into this build.
 No stock signature checks are disabled: this is a separate custom recovery UI.
 """
 from pathlib import Path
-import argparse, hashlib, importlib.util, json, shutil, stat, struct, subprocess, zipfile
+import argparse, gzip, hashlib, importlib.util, json, shutil, stat, struct, subprocess, zipfile
 import recovery_image
 import kaios_sd_ramdisk
 
@@ -45,12 +45,100 @@ def zip_descriptor(path,name,expected_bytes):
             raise ValueError('Image outside supported ZIP bounds')
         return (offset,info.compress_size,info.file_size,info.CRC,info.compress_type)
 
+
+def blank_image(raw_path, expected_size):
+    with gzip.open(raw_path, 'rb') as source:
+        header = source.read(1082)
+        if header[1080:1082] != b'\x53\xef':
+            raise ValueError(f'Invalid ext4 template: {raw_path.name}')
+        size = len(header)
+        digest = hashlib.sha256(header)
+        for chunk in iter(lambda: source.read(1048576), b''):
+            size += len(chunk)
+            if size > expected_size:
+                raise ValueError(f'Oversized SD template: {raw_path.name}')
+            digest.update(chunk)
+    if size != expected_size:
+        raise ValueError(f'Truncated SD template: {raw_path.name}')
+    return digest.hexdigest()
+
+
+def add_leo_sd(entries, archive_path, catalog, assets):
+    images = {item['name']: item for item in catalog['images']}
+    with zipfile.ZipFile(archive_path) as archive:
+        boot = archive.read('images/boot.img')
+    if hashlib.sha256(boot).hexdigest() != images['boot']['sha256']:
+        raise ValueError('Approved Leo boot image changed')
+    root = recovery_image.unpack(boot)['entries']
+    internal = b'Validated internal Android partitions.\n'
+    for name in ('init', 'init.android', 'sbin/leo-framework-mount', 'system/bin/sh',
+                 'leo-framework-internal', 'leo-autostart-android', 'leo-framework-enabled',
+                 'fstab.qcom', 'sbin/recovery'):
+        if name not in root:
+            raise ValueError(f'Missing Leo ramdisk entry: {name}')
+    if root['leo-framework-internal'][1] != internal or b'LEO_DIAG_HOLD_ON_FAILURE' not in root['init.android'][1]:
+        raise ValueError('Unexpected Leo ramdisk bootstrap')
+    del root['leo-framework-internal']
+    bootstrap = (assets / 'bootstrap').read_bytes()
+    bundle.static_arm(bootstrap)
+    if b'PID1 started for Leo SD; internal cache skipped' not in bootstrap:
+        raise ValueError('Leo SD bootstrap missing cache isolation')
+    mount_script = (ROOT / 'leo-recovery/leo-sd-mount.sh').read_bytes().replace(b'\r\n', b'\n')
+    busybox = root['system/bin/sh'][1]
+    bundle.static_arm(busybox)
+    for name, content in (
+        ('init', bootstrap), ('sbin/leo-framework-mount', mount_script),
+        ('fstab.qcom', b'/dev/leo-android-loop0 /system ext4 ro,nodev,noload wait\n'
+                       b'/dev/leo-android-loop1 /data ext4 nosuid,nodev wait\n'
+                       b'/dev/leo-android-loop2 /cache ext4 nosuid,nodev,noexec wait\n'),
+    ):
+        fields = root[name][0].copy()
+        fields[6] = len(content)
+        root[name] = (fields, content)
+    recovery_image.add(root,'sbin/busybox',busybox,stat.S_IFREG|0o755)
+    radio_start = (ROOT / 'radio-runtime/start.sh').read_bytes().replace(b'\r\n', b'\n')
+    recovery_image.add(root,'sbin/leo-sd-radio-start.sh',radio_start,stat.S_IFREG|0o644)
+    if 'firmware' not in root:
+        recovery_image.add(root,'firmware',b'',stat.S_IFDIR|0o755)
+    recovery_image.add(root,'leo-sd',b'',stat.S_IFDIR|0o700)
+    recovery_image.add(root,'leo-framework-sd-v1',b'Leo SD loop storage.\n',stat.S_IFREG|0o644)
+    recovery_image.add(root,'leo-system.sha256',images['system']['sha256'].encode(),stat.S_IFREG|0o644)
+    recovery_image.add(root,'leo-templates',b'',stat.S_IFDIR|0o700)
+    templates = {}
+    for name, size in (('data',512*1024**2), ('cache',64*1024**2)):
+        archive = assets / f'{name}.img.gz'
+        digest = blank_image(archive, size)
+        recovery_image.add(root,f'leo-templates/{name}.gz',archive.read_bytes(),stat.S_IFREG|0o644)
+        recovery_image.add(root,f'leo-templates/{name}.sha256',digest.encode(),stat.S_IFREG|0o644)
+        templates[name]={'bytes':size,'sha256':digest}
+    recovery_image.add(entries,'leo-android-root',b'',stat.S_IFDIR|0o755)
+    for name,(fields,body) in root.items():
+        path='leo-android-root/'+name
+        recovery_image.add(entries,path,body,fields[1])
+        entries[path][0][2:4]=fields[2:4]
+    return {'boot_source_sha256':images['boot']['sha256'],'system_sha256':images['system']['sha256'],
+            'bootstrap_sha256':hashlib.sha256(bootstrap).hexdigest(),
+            'radio_start_sha256':hashlib.sha256(radio_start).hexdigest(),'templates':templates}
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fresh',type=Path,default=ROOT/'output/recovery-bundles/final/leo-fresh-0.14.0-dev-20261027-232615.zip')
     parser.add_argument('--stock',type=Path,default=ROOT/'output/recovery-entry-kit/kaios-original-restore-695d.zip')
+    parser.add_argument('--output',type=Path,default=ROOT/'output/leo-recovery')
+    parser.add_argument('--candidate-only',action='store_true',help='Emit an offline candidate and report without packaging an installer')
     parser.add_argument('--package-only',action='store_true',help='Reuse an already compiled native binary')
-    args=parser.parse_args();out=ROOT/'output/leo-recovery';out.mkdir(exist_ok=True)
+    parser.add_argument('--hardware-evidence',type=Path,default=ROOT/'leo-recovery/hardware-validation.json',
+                        help='Hardware validation JSON for the exact image being packaged')
+    parser.add_argument('--mtp-responder',type=Path,
+                        help='Static ARM uMTP Responder binary for a local USB MTP candidate')
+    parser.add_argument('--leo-sd-assets',type=Path,
+                        help='Directory with the Leo SD bootstrap and empty data.img.gz and cache.img.gz')
+    args=parser.parse_args()
+    if args.candidate_only and args.output.resolve() == (ROOT/'output/leo-recovery').resolve():
+        parser.error('--candidate-only requires a separate --output directory')
+    if args.mtp_responder and not args.candidate_only:
+        parser.error('--mtp-responder currently requires --candidate-only')
+    out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     catalog={};packed=[];header=['#pragma once','#include "policy.h"','using leo::Image;using leo::Bundle;']
     for symbol,path,title,schema in [('Fresh',args.fresh,'Leo 0.14 / clean',2),('Stock',args.stock,'KaiOS original',1)]:
         meta=bundle.verify(path)
@@ -82,7 +170,7 @@ def main():
     inputs['catalog_generated.h']=sha(path)
     stamp=out/'native-build.json'
     if not args.package_only:
-        subprocess.run(['wsl','-d','kaios','--','bash',linux(ROOT/'build-leo-recovery.sh')],check=True)
+        subprocess.run(['wsl','-d','kaios','--','bash',linux(ROOT/'build-leo-recovery.sh'),linux(out)],check=True)
         if any(sha(ROOT/'leo-recovery'/name)!=inputs[name] for name in native_sources):
             raise ValueError('Native source changed during compilation')
         stamp.write_text(json.dumps({'inputs':inputs,'binary_sha256':sha(out/'recovery'),'selector_sha256':sha(out/'selector')},indent=2)+'\n')
@@ -106,6 +194,7 @@ def main():
     recovery_image.add(entries,'kaios-root',b'',stat.S_IFDIR|0o755)
     for name,(fields,body) in kaios_sd_ramdisk.embedded(stock_path.read_bytes()).items():
         recovery_image.add(entries,'kaios-root/'+name,body,fields[1]);entries['kaios-root/'+name][0][2:4]=fields[2:4]
+    leo_sd = add_leo_sd(entries,args.fresh,catalog['fresh'],args.leo_sd_assets) if args.leo_sd_assets else None
     if 'sbin/recovery-stock' in entries:raise ValueError('Unexpected recovery base')
     fields,original=entries['sbin/recovery']
     recovery_image.add(entries,'sbin/recovery-stock',original,stat.S_IFREG|0o755)
@@ -117,6 +206,15 @@ def main():
     else:recovery_image.add(entries,font,(out/'font.png').read_bytes(),stat.S_IFREG|0o644)
     recovery_image.add(entries,'leo-recovery-catalog.json',json.dumps(catalog,indent=2).encode(),stat.S_IFREG|0o644)
     recovery_image.add(entries,'leo-recovery-font-OFL.txt',(out/'OFL.txt').read_bytes(),stat.S_IFREG|0o644)
+    mtp={}
+    if args.mtp_responder:
+        responder=args.mtp_responder.read_bytes()
+        bundle.static_arm(responder)
+        session=(ROOT/'leo-recovery/mtp-session.sh').read_bytes().replace(b'\r\n',b'\n')
+        recovery_image.add(entries,'sbin/leo-mtp-responder',responder,stat.S_IFREG|0o755)
+        recovery_image.add(entries,'sbin/leo-mtp-session',session,stat.S_IFREG|0o755)
+        mtp={'responder_sha256':hashlib.sha256(responder).hexdigest(),
+             'session_sha256':hashlib.sha256(session).hexdigest()}
     contexts='file_contexts'
     if contexts in entries and b'\0' not in entries[contexts][1]:
         fields,data=entries[contexts];data+=b'\n/sbin/recovery-stock u:object_r:recovery_exec:s0\n'
@@ -134,10 +232,21 @@ def main():
             'native_sha256':sha(out/'recovery'),'base_sha256':BASE_SHA,'catalog':catalog,
             'auto_execute_ota_commands':False,'hardware_boot_validated':False,'hardware_install_validated':False,
             'phone_written':False,'native_source_sha256':sha(ROOT/'leo-recovery/recovery.cpp'),'native_build_inputs':inputs}
+    if mtp:
+        report['usb_mtp']=mtp
+    if leo_sd:
+        report['leo_sd']=leo_sd
     entry_spec=importlib.util.spec_from_file_location('entry',ROOT/'install-root-recovery.py')
     entry=importlib.util.module_from_spec(entry_spec);entry_spec.loader.exec_module(entry)
+    if args.candidate_only:
+        report['build_writes_phone']=False
+        report['installer_approved']=report['sha256'] in entry.LEO_SHAS
+        (out/'manifest.json').write_text(json.dumps(report,indent=2)+'\n')
+        print(json.dumps({'image':str(image),'image_sha256':report['sha256'],
+                          'installer_approved':report['installer_approved']},indent=2),flush=True)
+        return
     if report['sha256']!=entry.LEO_SHA:raise ValueError('Review the new image and update the explicit LEO_SHA installer pin before packaging')
-    evidence_path=ROOT/'leo-recovery/hardware-validation.json'
+    evidence_path=args.hardware_evidence
     evidence=json.loads(evidence_path.read_text()) if evidence_path.exists() else None
     if evidence and evidence.get('image_sha256')==report['sha256']:
         report['hardware_validation']=evidence

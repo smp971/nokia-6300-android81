@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-16",
+  "device": "Nokia 6300 4G TA-1286",
+  "image_sha256": "b6f47b84f8f02f8b67452a68b8e1e682b63be52659cf2c4ed49ef6f8cde46553",
+  "recovery_partition_verified": true,
+  "previous_recovery_saved_and_verified": true,
+  "direct_boot_validated": true,
+  "root_adb_available": true,
+  "framebuffer": "240x320 RGB565, 512-byte pitch",
+  "display_capture_collected": true,
+  "menu_navigation_via_adb_key_events": true,
+  "sd_mount_validated": true,
+  "sd_directory_browsing_validated": true,
+  "approved_packages_and_stock_backups_verified_on_sd": true,
+  "factory_reset_cancel_validated": true,
+  "factory_reset_stock_recovery_launch_validated": true,
+  "userdata_wipe_performed": false,
+  "rom_install_validated": false,
+  "kaios_restore_validated": false,
+  "postmarketos_install_available": false
+}

@@ -52,7 +52,8 @@ final class LeoHome {
     }
 
     private void drawHome(Canvas canvas, MainActivity.Screen screen) {
-        boolean showSims = screen.showSims || screen.editing;
+        int simSlots = screen.editing ? 3 : screen.showSims ? screen.simSlots : 0;
+        int visibleSims = (screen.homeLayout.visible[4] ? 1 : 0) | (screen.homeLayout.visible[7] ? 2 : 0);
         boolean showCard = screen.cardAvailable() || screen.editing;
         if (screen.wallpaper != null) {
             paint.setColor(Color.WHITE);
@@ -60,7 +61,7 @@ final class LeoHome {
             paint.setColor(0x66000000);
             canvas.drawRect(wallpaperBounds, paint);
         }
-        int heroBottom = showSims ? 142 : 113;
+        int heroBottom = screen.editing || (simSlots & visibleSims) != 0 ? 142 : 113;
         if (screen.homePart(canvas, 0, 9, 8, 231, heroBottom)) {
             paint.setColor(Color.WHITE);
             if (!screen.highContrast) paint.setShader(hero);
@@ -72,9 +73,8 @@ final class LeoHome {
         editableText(canvas, screen, 1, screen.networkBanner, 20, 29, 10, palette.accent, MEDIUM);
         editableText(canvas, screen, 2, screen.time, 17, 79, screen.compactClock ? 37 : 52, INK, CLOCK);
         editableText(canvas, screen, 3, screen.date, 20, 100, 13, MUTED, REGULAR);
-        if (showSims) drawSims(canvas, screen);
+        if (simSlots != 0) drawSims(canvas, screen, simSlots);
         if (screen.editing) drawEditorHelp(canvas, heroBottom + 8);
-        else drawActions(canvas, screen, heroBottom + 8);
         if (showCard) drawCard(canvas, screen, heroBottom + 42);
         drawShortcuts(canvas, screen, showCard ? heroBottom + 91 : heroBottom + 53);
 
@@ -100,32 +100,24 @@ final class LeoHome {
         }
     }
 
-    private void drawSims(Canvas canvas, MainActivity.Screen screen) {
+    private void drawSims(Canvas canvas, MainActivity.Screen screen, int slots) {
         RectF first = new RectF(17, 110, 117, 136);
         RectF second = new RectF(123, 110, 223, 136);
-        screen.homeLayout.splitSims(new RectF(17, 110, 223, 136), first, second);
+        RectF full = new RectF(17, 110, 223, 136);
+        screen.homeLayout.splitSims(full, first, second);
         for (int slot = 0; slot < 2; slot++) {
-            RectF bounds = slot == 0 ? first : second;
-            if (!screen.homePart(canvas, slot == 0 ? 4 : 7, bounds.left, bounds.top, bounds.right, bounds.bottom))
+            if ((slots & (1 << slot)) == 0) continue;
+            int item = slot == 0 ? 4 : 7;
+            RectF bounds = slots != 3 && screen.homeLayout.hasDefaultTransform(item)
+                    ? full : slot == 0 ? first : second;
+            if (!screen.homePart(canvas, item, bounds.left, bounds.top, bounds.right, bounds.bottom))
                 continue;
             surface(canvas, bounds.left, bounds.top, bounds.right, bounds.bottom, 10, palette.bar);
             float baseline = bounds.top + 17;
             screen.dashboardArt.sim(canvas, bounds.left + 12, baseline, slot, screen.inService[slot]);
-            text(canvas, screen.simLabels[slot], bounds.left + 23, baseline, 10, INK, Paint.Align.LEFT, 72, MEDIUM);
+            text(canvas, screen.simLabels[slot], bounds.left + 23, baseline, 10, INK, Paint.Align.LEFT,
+                    bounds.width() - 28, MEDIUM);
             canvas.restore();
-        }
-    }
-
-    private void drawActions(Canvas canvas, MainActivity.Screen screen, float top) {
-        surface(canvas, 9, top, 116, top + 28, 10, tile);
-        surface(canvas, 124, top, 231, top + 28, 10, tile);
-        text(canvas, "↑", 22, top + 18, 14, palette.accent, Paint.Align.CENTER, 16, MEDIUM);
-        text(canvas, "↓", 137, top + 18, 14, palette.accent, Paint.Align.CENTER, 16, MEDIUM);
-        text(canvas, L.t("Setări rapide"), 33, top + 18, 10, INK, Paint.Align.LEFT, 79, MEDIUM);
-        text(canvas, L.t("Notificări"), 148, top + 18, 11, INK, Paint.Align.LEFT, 78, MEDIUM);
-        if (screen.showUnread && (UnreadState.sms > 0 || UnreadState.calls > 0)) {
-            paint.setColor(palette.accent);
-            canvas.drawCircle(222, top + 8, 2.5f, paint);
         }
     }
 

@@ -38,6 +38,7 @@ final class HomeCanvasLayout {
             center+width/2,baseline+metrics.descent+2);
     }
     void reset(int i){x[i]=y[i]=rotation[i]=alignment[i]=0;size[i]=100;visible[i]=true;}
+    boolean hasDefaultTransform(int i){return x[i]==0&&y[i]==0&&size[i]==100&&rotation[i]==0&&alignment[i]==0;}
     void save(Context context){SharedPreferences.Editor p=context.getSharedPreferences(PREFERENCES,0).edit();for(int i=0;i<COUNT;i++)
         p.putInt(i+"x",x[i]).putInt(i+"y",y[i]).putInt(i+"size",size[i]).putInt(i+"rotation",rotation[i]).putInt(i+"align",alignment[i]).putBoolean(i+"visible",visible[i]);p.apply();}
     boolean begin(Canvas c,int i,float l,float t,float r,float b,boolean editing){

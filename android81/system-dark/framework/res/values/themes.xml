@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.DeviceDefault.System" parent="@android:style/Theme.DeviceDefault" />
+
+    <style name="Theme.DeviceDefault.Settings" parent="@android:style/Theme.Material">
+        <item name="android:colorPrimary">#191f2b</item>
+        <item name="android:colorPrimaryDark">#10151f</item>
+        <item name="android:colorAccent">#90e2d2</item>
+        <item name="android:colorBackground">#141923</item>
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+        <item name="android:navigationBarColor">#10151f</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <style name="Theme.DeviceDefault.Settings.Dialog.Alert" parent="@android:style/Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">#90e2d2</item>
+        <item name="android:colorBackgroundFloating">#242c3b</item>
+    </style>
+
+    <style name="Theme.DeviceDefault.Settings.Dialog" parent="@android:style/Theme.Material.Dialog">
+        <item name="android:colorAccent">#90e2d2</item>
+        <item name="android:colorBackgroundFloating">#242c3b</item>
+    </style>
+
+    <style name="Theme.DeviceDefault.Settings.DialogWhenLarge" parent="@android:style/Theme.Material.DialogWhenLarge">
+        <item name="android:colorAccent">#90e2d2</item>
+        <item name="android:colorBackground">#141923</item>
+        <item name="android:colorBackgroundFloating">#242c3b</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.DeviceDefault.Settings.Dialog.NoActionBar" parent="@android:style/Theme.Material.Dialog.NoActionBar">
+        <item name="android:colorAccent">#90e2d2</item>
+        <item name="android:colorBackgroundFloating">#242c3b</item>
+    </style>
+</resources>

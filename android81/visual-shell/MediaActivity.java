@@ -70,11 +70,16 @@ public final class MediaActivity extends LeoActivity {
                 else if (index == 3) startActivity(new Intent(MediaActivity.this, LyricsActivity.class));
                 else if (index == 4) playbackSettings();
                 else {
-                    stopService(new Intent(MediaActivity.this, PlaybackService.class));
-                    face.invalidate();
+                    stopPlayback();
                 }
             }
         }).initialSelection(selected).show();
+    }
+
+    private void stopPlayback() {
+        PlaybackService service = PlaybackService.instance;
+        if (service != null) service.stopPlayback();
+        face.tick();
     }
 
     private void trackDetails() {
@@ -92,6 +97,7 @@ public final class MediaActivity extends LeoActivity {
         title.setMaxLines(3);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         root.addView(title);
+        if (!service.artist().isEmpty()) root.addView(text(service.artist(), 15));
         root.addView(text(L.t("Durată · ") + format(service.duration()), 15));
         root.addView(text(L.t("Piesa ") + (index + 1) + " / " + service.queue.titles.size(), 15));
         back = new Runnable() { public void run() { now(); } };
@@ -154,19 +160,20 @@ public final class MediaActivity extends LeoActivity {
         if (!playerScreen) return super.onKeyDown(key, event);
         PlaybackService service = preview ? null : PlaybackService.instance;
         if (transport.arrow(event, service)) return true;
+        if (transport.seekKey(event, service)) { face.invalidate(); return true; }
         if (key == KeyEvent.KEYCODE_POUND) {
             if (!preview && event.getRepeatCount() == 0) openLibrary();
             return true;
         }
-        if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER || key == KeyEvent.KEYCODE_5) {
+        if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
             if (event.getRepeatCount() == 0 && !preview) {
                 if (service == null) openLibrary();
                 else { service.toggle(); face.tick(); }
             }
             return true;
         }
-        if (key == KeyEvent.KEYCODE_4 || key == KeyEvent.KEYCODE_6) {
-            if (event.getRepeatCount() == 0 && service != null) { service.next(key == KeyEvent.KEYCODE_6); face.tick(); }
+        if (key == KeyEvent.KEYCODE_5) {
+            if (event.getRepeatCount() == 0 && !preview) stopPlayback();
             return true;
         }
         if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN) {
@@ -182,7 +189,8 @@ public final class MediaActivity extends LeoActivity {
     }
 
     @Override public boolean onKeyUp(int key, KeyEvent event) {
-        if (playerScreen && transport.arrow(event, preview ? null : PlaybackService.instance)) {
+        if (playerScreen && (transport.arrow(event, preview ? null : PlaybackService.instance)
+                || transport.seekKey(event, null) || key == KeyEvent.KEYCODE_5)) {
             face.invalidate();
             return true;
         }

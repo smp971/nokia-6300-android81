@@ -32,13 +32,50 @@ public final class NowPlayingActivity extends LeoActivity {
   }
   face.invalidate();
  }
- private void menu(){options(L.t("Media curentă"),new String[]{L.t("Deschide playerul"),source==0?L.t("Sursă · Radio FM"):L.t("Sursă · Muzică"),L.t("Piesa / postul anterior"),L.t("Piesa / postul următor"),L.t("Oprește sursa"),L.t("Ajutor taste")},new Choice(){public void pick(int i){if(i==0)player();else if(i==1)changeSource();else if(i==2||i==3)previous(i==3);else if(i==4){if(preview){previewPlaying=false;face.invalidate();return;}stopService(new Intent(NowPlayingActivity.this,source==1?FmService.class:PlaybackService.class));face.invalidate();}else options(L.t("Taste media"),new String[]{L.t("OK / 5: pauză sau oprire FM"),L.t("← / → sau 4 / 6: anterior / următor"),L.t("Ține ← / →: derulează muzica"),"↑ / ↓: volum",L.t("*: schimbă sursa Muzică / FM"),L.t("#: deschide playerul sursei")},new Choice(){public void pick(int n){}});}});}
+ private void stopSource() {
+  if (preview) previewPlaying = false;
+  else if (source == 1) stopService(new Intent(this, FmService.class));
+  else if (PlaybackService.instance != null) PlaybackService.instance.stopPlayback();
+  face.invalidate();
+ }
+
+ private void menu() {
+  options(L.t("Media curentă"), new String[]{L.t("Deschide playerul"),
+      source == 0 ? L.t("Sursă · Radio FM") : L.t("Sursă · Muzică"),
+      L.t("Piesa / postul anterior"), L.t("Piesa / postul următor"),
+      L.t("Oprește sursa"), L.t("Ajutor taste")}, new Choice() {
+   public void pick(int index) {
+    if (index == 0) player();
+    else if (index == 1) changeSource();
+    else if (index == 2 || index == 3) previous(index == 3);
+    else if (index == 4) stopSource();
+    else showKeyHelp();
+   }
+  });
+ }
+
+ private void showKeyHelp() {
+  String[] rows = source == 0
+      ? new String[]{L.t("OK: redare / pauză"), L.t("4 / 6: derulează cu 10 s"),
+          L.t("5: oprește redarea"), L.t("← / →: piesa anterioară / următoare"),
+          "↑ / ↓: volum", L.t("*: schimbă sursa Muzică / FM"), L.t("#: deschide playerul sursei")}
+      : new String[]{L.t("OK / 5: pauză sau oprire FM"), L.t("← / → sau 4 / 6: anterior / următor"),
+          "↑ / ↓: volum", L.t("*: schimbă sursa Muzică / FM"), L.t("#: deschide playerul sursei")};
+  options(L.t("Taste media"), rows, new Choice(){public void pick(int index){}});
+ }
  public boolean onKeyUp(int key, KeyEvent event) {
-  if (source == 0 && transport.arrow(event, preview ? null : PlaybackService.instance)) { face.invalidate(); return true; }
+  if (source == 0 && (transport.arrow(event, preview ? null : PlaybackService.instance)
+          || transport.seekKey(event, null) || key == KeyEvent.KEYCODE_5)) {
+   face.invalidate(); return true;
+  }
   return super.onKeyUp(key, event);
  }
  @Override public boolean onKeyDown(int key, KeyEvent event) {
-  if (source == 0 && transport.arrow(event, preview ? null : PlaybackService.instance)) return true;
+  if (source == 0) {
+   PlaybackService music = preview ? null : PlaybackService.instance;
+   if (transport.arrow(event, music)) return true;
+   if (transport.seekKey(event, music)) { face.invalidate(); return true; }
+  }
   if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN) {
    volume(key == KeyEvent.KEYCODE_DPAD_UP ? 1 : -1);
    return true;
@@ -47,8 +84,8 @@ public final class NowPlayingActivity extends LeoActivity {
   switch (key) {
    case KeyEvent.KEYCODE_MENU: if (first) menu(); return true;
    case KeyEvent.KEYCODE_DPAD_CENTER:
-   case KeyEvent.KEYCODE_ENTER:
-   case KeyEvent.KEYCODE_5: if (first) toggle(); return true;
+   case KeyEvent.KEYCODE_ENTER: if (first) toggle(); return true;
+   case KeyEvent.KEYCODE_5: if (first) { if (source == 0) stopSource(); else toggle(); } return true;
    case KeyEvent.KEYCODE_DPAD_LEFT:
    case KeyEvent.KEYCODE_4: if (first) previous(false); return true;
    case KeyEvent.KEYCODE_DPAD_RIGHT:
@@ -87,7 +124,10 @@ public final class NowPlayingActivity extends LeoActivity {
     state.cover = null;
     state.playing = previewPlaying;
     state.title = state.radio ? "LEO FM" : L.t("Lumini de seară");
-    if (!state.radio) state.detail = "Album · Leo Sessions";
+    if (!state.radio) {
+     state.artist = "Leo Sessions";
+     state.detail = L.t("Piesa ") + "1 / 1";
+    }
     state.status = L.t("DEMO · fără redare");
     state.position = 85000;
     state.duration = 233000;

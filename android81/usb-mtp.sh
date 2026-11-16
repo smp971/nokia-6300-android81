@@ -26,6 +26,24 @@ renew_adbd() {
     [ "$ready" = 1 ]
     echo "diagnostic adbd renewed: $new"
 }
+current_mode() {
+    [ "$(cat "$g/UDC")" = msm_hsusb ] || return 1
+    first=$(readlink -f "$g/configs/b.1/f1")
+    second=$(readlink -f "$g/configs/b.1/f2")
+    case "$first:$second:$(cat "$g/idProduct")" in
+        "$g/functions/ffs.adb:"*:0xd001)
+            [ ! -L "$g/configs/b.1/f2" ] || return 1
+            printf adb
+            ;;
+        "$g/functions/mtp.gs0:$g/functions/ffs.adb:0x4ee2") printf mtp,adb ;;
+        *) return 1 ;;
+    esac
+}
+radio_idle() {
+    calls=$(timeout 5 dumpsys telephony.registry) || return 1
+    printf '%s\n' "$calls" | grep -q 'mCallState=0' || return 1
+    ! printf '%s\n' "$calls" | grep -Eq 'mCallState=[12]'
+}
 case "$mode" in
 request)
     exec >>/data/local/tmp/leo-usb-mtp.log 2>&1
@@ -33,12 +51,24 @@ request)
     requested=$(getprop sys.leo.usb.request)
     setprop sys.leo.usb.request idle
     case "$requested" in mtp|adb) ;; *) exit 2;; esac
-    if dumpsys telephony.registry | grep -Eq 'mCallState=[12]'; then
+    if ! radio_idle; then
         setprop sys.leo.usb.state failed
         exit 1
     fi
+    desired=$requested
+    [ "$requested" != mtp ] || desired=mtp,adb
+    if [ "$(current_mode)" = "$desired" ] && [ "$(getprop sys.leo.usb.state)" = "$desired" ]; then
+        echo "USB already in $desired mode"
+        exit 0
+    fi
     setprop sys.leo.usb.state switching
     if /system/bin/sh "$0" "$requested"; then exit 0;fi
+    # Independent of the PC connection. One attempt to restore the original
+    # diagnostic composition after a failed MTP switch.
+    if [ "$requested" = mtp ] && radio_idle; then
+        echo 'MTP switch failed; restoring diagnostic ADB'
+        if /system/bin/sh "$0" adb; then exit 0; fi
+    fi
     setprop sys.leo.usb.state failed
     exit 1
     ;;

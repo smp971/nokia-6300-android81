@@ -27,6 +27,9 @@ highlight an app and choose **Options → Assign to right softkey**.
 The dedicated Menu key opens the global Leo menu when the Leo accessibility
 service is running.
 
+Choose **Menu → More → Customize menu** to rearrange the first page. The
+remaining commands stay reachable under **More**.
+
 The modern layout saves to its own preferences. On first use it reads the
 layout associated with the previously active shell. Legacy layout data stays
 readable in backups.

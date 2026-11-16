@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shared by the search container on the Settings home page and search panel. -->
+    <color name="suggestion_condition_background">#202838</color>
+</resources>

@@ -8,7 +8,12 @@ from pathlib import Path
 import argparse, hashlib, json, re, shlex, subprocess, time, uuid
 
 RESCUE_SHA='2e4dee03305c5b617d5b0d51c064af350c817f3dc93f669ec302bdd97adf6fdc'
-LEO_SHA='28f9eb399e9479e135328e795ca7dd6b3a5e6feb530bc3a795cd78dab157b612'
+LEO_SHA='d23065ee3edcfc39f22054a93863f67341ea68fe96335d048b290e19df7772d0'
+KEYPAD_LEO_SHA='b6f47b84f8f02f8b67452a68b8e1e682b63be52659cf2c4ed49ef6f8cde46553'
+LEGACY_LEO_SHA='28f9eb399e9479e135328e795ca7dd6b3a5e6feb530bc3a795cd78dab157b612'
+LEO_SD_SHA='a89e326fafe32ae3912bb251b96bf2eb7de8a8d85f0763995db5ea5f22264a7f'
+LEO_SD_RADIO_SHA='3ae107420e0374e5462d43a8e5c5e5a699951bffed46046a7049c17f8b0b7709'
+LEO_SHAS=(LEO_SHA,KEYPAD_LEO_SHA,LEGACY_LEO_SHA,LEO_SD_SHA,LEO_SD_RADIO_SHA)
 SIZE=33554432
 STOCK={'boot':(29,'a23fcbcc993a0f5f1f03736eb59d7e431604d9c2d8900f100b927c06a1c81338'),
        'system':(30,'a16d027dba2702fc9114ef3269770c30595a8e9b595329e5b7527588345fbdd6')}
@@ -32,8 +37,11 @@ def main():
     parser.add_argument('--adb',default='adb')
     parser.add_argument('--backup-dir',type=Path,default=Path('android81/backup-live/root-recovery-entry'))
     args=parser.parse_args()
-    approved=LEO_SHA if args.leo or args.from_recovery else RESCUE_SHA
-    if args.image.stat().st_size!=SIZE or digest(args.image)!=approved:
+    known_shas=LEO_SHAS if args.leo or args.from_recovery else (RESCUE_SHA,)
+    if args.image.stat().st_size!=SIZE:
+        raise ValueError('Unexpected root recovery image')
+    approved=digest(args.image)
+    if approved not in known_shas:
         raise ValueError('Unexpected root recovery image')
     print('Verified known Nokia root recovery image',flush=True)
     if not(args.preflight or args.install):return

@@ -17,6 +17,7 @@ import ro.leo.i18n.L;
 final class MediaPanel {
     static final class State {
         String heading, title, detail, status, signal, footer;
+        String artist = "";
         String spectrumLabel;
         float[] spectrum;
         Bitmap cover;
@@ -28,6 +29,7 @@ final class MediaPanel {
             PlaybackService service = PlaybackService.instance;
             playing = service != null && service.playing();
             title = PlaybackService.title.isEmpty() ? L.t("Nicio piesă aleasă") : PlaybackService.title;
+            artist = service == null ? "" : service.artist();
             status = PlaybackService.state;
             cover = service == null ? null : service.cover();
             detail = service == null || service.queue.titles.isEmpty() ? L.t("Bibliotecă Leo")
@@ -87,13 +89,21 @@ final class MediaPanel {
         paint.setTypeface(FONT);
         paint.setTextSize(16);
         String[] lines = KeypadText.twoLines(paint, s.title, 118);
-        text(c, lines[0], 101, 101, 16, Color.WHITE, 118);
-        text(c, lines[1], 101, 122, 16, Color.WHITE, 118);
-        text(c, s.detail, 101, 143, 12, palette.accent, 118);
-        text(c, s.status, 14, 178, 13, palette.accent, 212);
         if (s.radio) {
+            text(c, lines[0], 101, 101, 16, Color.WHITE, 118);
+            text(c, lines[1], 101, 122, 16, Color.WHITE, 118);
+            text(c, s.detail, 101, 143, 12, palette.accent, 118);
+            text(c, s.status, 14, 178, 13, palette.accent, 212);
             text(c, s.signal, 14, 210, 12, Color.WHITE, 212);
         } else {
+            boolean twoLines = !lines[1].isEmpty();
+            text(c, lines[0], 101, twoLines ? 101 : 108, 16, Color.WHITE, 118);
+            if (twoLines) text(c, lines[1], 101, 121, 16, Color.WHITE, 118);
+            text(c, s.artist, 101, twoLines ? 143 : 130, 12, palette.accent, 118);
+            text(c, s.status, 14, 178, 13, palette.accent, 124);
+            paint.setTextSize(11);
+            String detail = KeypadText.fit(paint, s.detail, 82);
+            text(c, detail, 226 - paint.measureText(detail), 178, 11, Color.WHITE, 82);
             box(c, 14, 190, 226, 195, Appearance.mix(palette.card, palette.accent, .25f));
             float progress = s.duration > 0 ? Math.max(0, Math.min(1, s.position / (float) s.duration)) : 0;
             if (progress > 0) box(c, 14, 190, 14 + progress * 212, 195, palette.accent);
@@ -105,13 +115,7 @@ final class MediaPanel {
             box(c, 130 + i * 10, 224, 137 + i * 10, 231,
                 (i + 1) * s.volumeMax <= s.volume * 10 ? palette.accent : palette.selection);
         }
-        for (int i = 0; i < 3; i++) {
-            int left = 12 + i * 74;
-            box(c, left, 242, left + 68, 271, i == 1 ? palette.selection : palette.card);
-            String label = i == 0 ? "4  ◀◀" : i == 2 ? "6  ▶▶" : s.playing
-                ? (s.radio ? "5  Stop" : L.t("5  Pauză")) : L.t("5  Redă");
-            text(c, label, left + 7, 261, 12, i == 1 ? palette.ink : Color.WHITE, 56);
-        }
+        drawControls(c, palette, s);
         box(c, 0, 280, 240, 302, palette.bar);
         text(c, L.t("Opțiuni"), 7, 295, 11, Color.WHITE, 62);
         text(c, s.footer, 76, 295, 10, palette.accent, 108);
@@ -119,6 +123,25 @@ final class MediaPanel {
         String back = KeypadText.fit(paint, L.t("Înapoi"), 47);
         text(c, back, 233 - paint.measureText(back), 295, 11, Color.WHITE, 47);
         c.restore();
+    }
+
+    private void drawControls(Canvas c, Appearance.Palette palette, State s) {
+        if (s.radio) {
+            control(c, palette, "4  ◀◀", 12, 68, false, 12);
+            control(c, palette, s.playing ? "5  Stop" : L.t("5  Redă"), 86, 68, true, 12);
+            control(c, palette, "6  ▶▶", 160, 68, false, 12);
+            return;
+        }
+        control(c, palette, "4 −10 s", 12, 51, false, 11);
+        control(c, palette, s.playing ? "OK  ‖" : "OK  ▶", 67, 51, true, 11);
+        control(c, palette, "5 Stop", 122, 51, false, 11);
+        control(c, palette, "6 +10 s", 177, 51, false, 11);
+    }
+
+    private void control(Canvas c, Appearance.Palette palette, String label, int left, int width,
+                         boolean primary, int size) {
+        box(c, left, 242, left + width, 271, primary ? palette.selection : palette.card);
+        text(c, label, left + 5, 261, size, primary ? palette.ink : Color.WHITE, width - 10);
     }
 
     private void source(Canvas c, String label, int x, boolean selected, Appearance.Palette palette) {

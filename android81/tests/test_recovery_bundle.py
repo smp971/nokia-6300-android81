@@ -127,6 +127,12 @@ class RecoveryEntryGuards(unittest.TestCase):
                 self.run_entry('--leo')
             adb.assert_not_called()
 
+    def test_known_leo_recoveries_remain_accepted(self):
+        with patch.object(entry.subprocess,'run') as adb:
+            for checksum in (entry.LEGACY_LEO_SHA,entry.KEYPAD_LEO_SHA,entry.LEO_SD_SHA,entry.LEO_SD_RADIO_SHA):
+                self.run_entry('--leo',image_sha=checksum)
+            adb.assert_not_called()
+
     def test_nonstock_phone_refused_before_push_or_dd(self):
         def adb(args,**kwargs):
             command=' '.join(args);output=''

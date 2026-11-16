@@ -1,8 +1,48 @@
-# Private packages · 28 October 2026
+# Leo packages
+
+## 16 November 2026 · complete kit
+
+[Private firmware release](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-complete-20261116) ·
+[Complete installation guide](INSTALL-GUIDE.md)
+
+The kit includes a hardware-tested internal ROM, a source-built internal
+candidate, Leo and KaiOS SD storage sets, the radio-enabled Leo Recovery,
+stock restore and root-ADB entry images, the emergency QFIL p33 package,
+and the two standalone Leo APKs. Verify each download against `SHA256SUMS.txt`.
+
+The SD radio test confirmed automatic baseband detection and both Qualcomm
+RIL services. SIM 2 was `READY`. Network registration and voice, SMS and
+mobile data on the SD build remain unverified. The new internal candidate
+passed offline verification and uses the PC recovery installer.
+
+## 13 November 2026 · hardware-tested ROM prerelease
+
+[Download the private prerelease](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-0.14.0-dev-20261113).
+The ZIP targets the Nokia 6300 4G TA-1286 development device `695d` and
+includes Android dark mode and the native Settings search fix. The archive
+passed offline checks. A 16 November clean flash verified system, blank
+userdata and boot by SHA-256. The first boot exposed a setup timing issue
+described in the [hardware test notes](FLASH-FROM-STOCK.md#16-november-hardware-test).
+The ADB installer runs from a PC with root ADB in Leo Recovery and erases
+internal userdata during installation. The updated recovery menu also pins
+this November package.
+
+## 16 November 2026 · keypad recovery prerelease
+
+[Download the private Stock Tools edition](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-recovery-stock-tools-20261116).
+This follow-up adds native keypad controls for reset, cache wipe, viewing logs
+and rebooting to the bootloader. It retains the stock formatter for both wipes.
+
+[Download the private recovery package](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-recovery-keypad-20261116).
+The recovery image is for TA-1286 development device `695d`. Its tools include
+a read-only file browser and a factory-reset shortcut to the stock wipe menu.
+[Recovery instructions](LEO-RECOVERY.md#updated-menu-and-linux-compatibility)
+
+## 28 October 2026 · hardware-tested ROM and recovery
 
 [Download from GitHub Releases](https://github.com/smp971/nokia-6300-android81/releases/tag/leo-0.14.0-dev-20261028).
 This is an **experimental prerelease for Nokia 6300 4G TA-1286 / device 695d**.
-The repository and packages remain private. It is not a universal Nokia ROM.
+The November firmware is in the separate private release repository.
 
 | Asset | Purpose and validation |
 | --- | --- |
@@ -16,7 +56,7 @@ The repository and packages remain private. It is not a universal Nokia ROM.
 
 ## Installing Leo and the required fix
 
-The release ROM is **the exact ZIP that was tested**, SHA-256:
+The October ROM is **the exact ZIP that was tested**, SHA-256:
 
 ```text
 5f65e7e7b0c8ce0ce8b24cf5ff9617e3d078a2a76172c4f4df7628063bdd9478

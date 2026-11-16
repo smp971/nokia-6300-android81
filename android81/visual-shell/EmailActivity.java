@@ -25,9 +25,9 @@ public final class EmailActivity extends LeoActivity {
     protected void onDestroy(){generation++;super.onDestroy();}
     protected void onRestart(){super.onRestart();if(to==null)accounts();}
     private Uri uri(String path){return BASE.buildUpon().appendPath(path).appendQueryParameter("limit","100").build();}
-    private void loading(String title){begin(title);root.addView(text(L.t("Se încarcă…"),18),new LinearLayout.LayoutParams(-1,0,1));footer("","",L.t("Înapoi"));}
+    private void showLoading(String title){begin(title);root.addView(text(L.t("Se încarcă…"),18),new LinearLayout.LayoutParams(-1,0,1));footer("","",L.t("Înapoi"));}
     private void accounts(){
-        to=subject=message=null;final int token=++generation;loading(L.t("Email Leo"));
+        to=subject=message=null;final int token=++generation;showLoading(L.t("Email Leo"));
         worker.execute(new Runnable(){public void run(){
             final ArrayList<String> labels=new ArrayList<String>(),emails=new ArrayList<String>();final ArrayList<Long> ids=new ArrayList<Long>();
             try(Cursor c=getContentResolver().query(uri("account"),new String[]{"_id","displayName","emailAddress"},null,null,"_id ASC")){
@@ -52,7 +52,7 @@ public final class EmailActivity extends LeoActivity {
         begin(L.t("Despre Email Leo"));ScrollView scroll=new ScrollView(this);scroll.addView(text(L.t("Conturile și sincronizarea sunt gestionate de Email Android. Leo afișează folderele și mesajele deja descărcate.\n\nÎn configurarea Android: sus/jos schimbă câmpul, Meniu oferă Continuă și Configurare manuală. În editorul Android, Meniu oferă trimiterea cu confirmare și salvarea ciornei.\n\nCompatibilitatea autentificării depinde de furnizor. Primirea IMAP a fost confirmată; trimiterea SMTP se verifică separat pentru contul ales. Parolele se introduc doar în Email Android."),17));root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));back=new Runnable(){public void run(){accounts();}};footer("",L.t("Derulare"),L.t("Înapoi"));scroll.setFocusable(true);scroll.requestFocus();
     }
     private void folders(){
-        final int token=++generation;loading(L.t("Foldere email"));back=new Runnable(){public void run(){accounts();}};
+        final int token=++generation;showLoading(L.t("Foldere email"));back=new Runnable(){public void run(){accounts();}};
         worker.execute(new Runnable(){public void run(){
             final ArrayList<Long> ids=new ArrayList<Long>();final ArrayList<String> labels=new ArrayList<String>();
             try(Cursor c=getContentResolver().query(uri("mailbox"),new String[]{"_id","displayName","type"},"accountKey=?",new String[]{""+account},"type ASC, displayName ASC")){
@@ -62,7 +62,7 @@ public final class EmailActivity extends LeoActivity {
         }});
     }
     private void messages(){
-        final int token=++generation;loading(mailboxName);back=new Runnable(){public void run(){folders();}};
+        final int token=++generation;showLoading(mailboxName);back=new Runnable(){public void run(){folders();}};
         worker.execute(new Runnable(){public void run(){
             final ArrayList<Long> ids=new ArrayList<Long>();final ArrayList<String> labels=new ArrayList<String>();
             try(Cursor c=getContentResolver().query(uri("message"),new String[]{"_id","displayName","subject","flagRead"},"accountKey=? AND mailboxKey=?",new String[]{""+account,""+mailbox},"timeStamp DESC")){
@@ -78,7 +78,7 @@ public final class EmailActivity extends LeoActivity {
         }
     }
     private void read(final long id,final String title){
-        final int token=++generation;loading("Email");back=new Runnable(){public void run(){messages();}};
+        final int token=++generation;showLoading("Email");back=new Runnable(){public void run(){messages();}};
         worker.execute(new Runnable(){public void run(){String value=L.t("Mesajul nu este descărcat. Deschide Email Android pentru sincronizare.");
             try(Cursor c=getContentResolver().query(uri("body"),new String[]{"textContentUri","htmlContentUri"},"messageKey=?",new String[]{""+id},null)){
                 if(c!=null&&c.moveToFirst()){String plain=c.getString(0),html=c.getString(1);String loaded="";if(plain!=null&&!plain.isEmpty())loaded=body(plain);if(loaded.isEmpty()&&html!=null&&!html.isEmpty())loaded=Html.fromHtml(body(html),Html.FROM_HTML_MODE_LEGACY).toString();if(!loaded.isEmpty())value=loaded;}

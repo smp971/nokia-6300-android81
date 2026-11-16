@@ -124,8 +124,12 @@ int main(int argc,char **argv){
     dir("/sys",0755);mount("sysfs","/sys","sysfs",0,NULL);
     dir("/tmp",0755);mount("tmpfs","/tmp","tmpfs",0,"mode=0755");
     mount(NULL,"/",NULL,MS_REC|MS_PRIVATE,NULL);
-    cache_log_mount();
-    note("PID1 started; only diagnostic cache mounted persistently");
+    if(access("/leo-framework-sd-v1",F_OK)) {
+        cache_log_mount();
+        note("PID1 started; diagnostic cache available if validated");
+    } else {
+        note("PID1 started for Leo SD; internal cache skipped");
+    }
     for(int i=0;i<2;i++){
         put("/sys/class/leds/button-backlight/brightness","40");usleep(400000);
         put("/sys/class/leds/button-backlight/brightness","0");usleep(400000);

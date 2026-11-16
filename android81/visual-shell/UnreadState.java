@@ -13,7 +13,21 @@ final class UnreadState {
     private static final ExecutorService worker=Executors.newSingleThreadExecutor();
     private static boolean queued,dirty;
     private static boolean watching;
-    static synchronized void watch(final Context c){if(watching)return;watching=true;final Context app=c.getApplicationContext();app.getContentResolver().registerContentObserver(CallLog.Calls.CONTENT_URI,true,new ContentObserver(new Handler(android.os.Looper.getMainLooper())){public void onChange(boolean self){refresh(app);}});refresh(app);}
+    static synchronized void watch(Context c) {
+        if (watching) return;
+        final Context app = c.getApplicationContext();
+        try {
+            app.getContentResolver().registerContentObserver(CallLog.Calls.CONTENT_URI, true,
+                new ContentObserver(new Handler(android.os.Looper.getMainLooper())) {
+                    public void onChange(boolean self) { refresh(app); }
+                });
+            watching = true;
+        } catch (SecurityException permissionPending) {
+            // Home may start before the first-boot runtime permissions are granted.
+            return;
+        }
+        refresh(app);
+    }
     static synchronized void refresh(Context context){final Context c=context.getApplicationContext();dirty=true;if(queued)return;queued=true;worker.execute(new Runnable(){public void run(){for(;;){synchronized(UnreadState.class){dirty=false;}try{
         int s=0,n=0;try(SmsStore store=new SmsStore(c);Cursor row=store.getReadableDatabase().rawQuery("SELECT address FROM inbox WHERE unread=1",null)){while(row.moveToNext())if(!ConversationPrefs.has(c,"blocked",row.getString(0)))s++;}
         SharedPreferences p=c.getSharedPreferences("unread",0);boolean initialized=p.contains("calls_seen");long seen=p.getLong("calls_seen",0),latest=seen;

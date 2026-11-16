@@ -173,6 +173,7 @@ def main():
     parser.add_argument('--confirm-target')
     parser.add_argument('--adb',default='adb')
     parser.add_argument('--staging-parent',default='/sdcard',help='Existing mounted external SD directory')
+    parser.add_argument('--staged-images',help='Verify and use partition images already extracted on the external SD card')
     args=parser.parse_args()
     meta=verify(args.archive)
     print('Verified private Leo '+meta['version']+' recovery bundle (schema '+str(meta['schema'])+')',flush=True)
@@ -197,19 +198,37 @@ def main():
             card=[line.split() for line in mounts.splitlines() if line.split()[2]=='179:65'
                   and (resolved==line.split()[4] or resolved.startswith(line.split()[4].rstrip('/')+'/'))]
             if not card:raise RuntimeError('Staging directory must be on the mounted external SD card (mmcblk1p1)')
+            card_prefix=card[0][4].rstrip('/')+'/'
             _,space=shell(remote,'df','-Pk',parent)
             available=int(space.splitlines()[-1].split()[3])*1024
             required=sum(size for _,size in image_parts(meta).values())+33554432
-            if available<required or shutil.disk_usage(temporary).free<required:
+            if not args.staged_images and (available<required or shutil.disk_usage(temporary).free<required):
                 raise RuntimeError('Insufficient free staging space on SD card or PC temporary drive: '+str(required)+' bytes required')
-            staging=resolved.rstrip('/')+'/leo-rom-'+uuid.uuid4().hex
-            shell(remote,'mkdir',staging)
+            if args.staged_images:
+                _,staging=shell(remote,'readlink','-f',args.staged_images)
+                if not staging.startswith(card_prefix):
+                    raise RuntimeError('The extracted images must be on the mounted external SD card')
+            else:
+                staging=resolved.rstrip('/')+'/leo-rom-'+uuid.uuid4().hex
+                shell(remote,'mkdir',staging)
             for part in flash_order(meta):
-                local=Path(temporary)/(part+'.img')
-                with archive.open('images/'+part+'.img') as source,local.open('xb') as output:
-                    shutil.copyfileobj(source,output,1048576)
-                subprocess.run(adb+['push',str(local),staging+'/'+part+'.img'],check=True,capture_output=True,timeout=900)
-                _,actual=shell(remote,'sha256sum',staging+'/'+part+'.img',timeout=900)
+                entry='images/'+part+'.img'
+                destination=staging+'/'+part+'.img'
+                print('Staging and verifying '+part,flush=True)
+                if args.staged_images:
+                    _,image_path=shell(remote,'readlink','-f',destination)
+                    _,mode=shell(remote,'stat','-c','%F',destination)
+                    if image_path!=destination or mode!='regular file':
+                        raise RuntimeError('Unexpected staged image file: '+part)
+                else:
+                    local=Path(temporary)/(part+'.img')
+                    with archive.open(entry) as source,local.open('xb') as output:
+                        shutil.copyfileobj(source,output,1048576)
+                    subprocess.run(adb+['push',str(local),destination],check=True,capture_output=True,timeout=900)
+                _,size=shell(remote,'stat','-c','%s',destination)
+                if int(size)!=meta['files'][entry]['bytes']:
+                    raise RuntimeError('SD staging size mismatch: '+part)
+                _,actual=shell(remote,'sha256sum',destination,timeout=900)
                 if actual.split()[0]!=meta['files']['images/'+part+'.img']['sha256']:
                     raise RuntimeError('SD staging verification failed: '+part)
             # Recheck that Android/system did not start while copying to SD.

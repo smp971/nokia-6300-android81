@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-16",
+  "device": "Nokia 6300 4G TA-1286",
+  "image_sha256": "a89e326fafe32ae3912bb251b96bf2eb7de8a8d85f0763995db5ea5f22264a7f",
+  "recovery_partition_readback_verified": true,
+  "card_preparation_verified": true,
+  "one_shot_request_consumed": true,
+  "android_boot_completed_from_sd": true,
+  "system_mount": "loop0 read-only",
+  "data_mount": "loop1 read-write",
+  "cache_mount": "loop2 read-write",
+  "internal_partitions_read_only": [29, 30, 32, 33, 39],
+  "normal_reboot_returned_to_internal_kaios_user_confirmed": true,
+  "fresh_launcher_crash": "READ_CALL_LOG permission grant raced the first launcher resume",
+  "launcher_visible_after_sd_reboot": "ro.leo.visual/.SetupWizardActivity",
+  "bluetooth_hci_failed_on_sd_boot": true,
+  "bluetooth_disabled_in_sd_copy_only": true
+}

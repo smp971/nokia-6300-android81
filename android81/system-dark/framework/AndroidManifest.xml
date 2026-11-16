@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ro.leo.systemdark.framework">
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
+    <overlay android:targetPackage="android" android:priority="600" />
+    <application android:hasCode="false" android:label="Leo Dark Android" />
+</manifest>

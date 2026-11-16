@@ -8,6 +8,9 @@ import android.util.Log;
 import android.view.*;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /** Opt-in global keypad pointer. No window contents, screenshots or network access. */
 public final class LeoPointerService extends AccessibilityService {
@@ -112,22 +115,136 @@ public final class LeoPointerService extends AccessibilityService {
         showGlobalMenu(tools, 0);
     }
     private void showGlobalMenu(final boolean tools, int selected) {
-        stopMovement();
-        final int[] actions=GlobalMenuModel.actions(tools);
-        menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
-                tools?L.t("Mai multe"):L.t("Meniu Leo"),GlobalMenuModel.labels(tools,active),new KeypadDialog.Action(){
-            public void select(int row){globalAction(actions[row]);}
-        },true).initialSelection(selected);
-        if (tools) menu.onBack(new Runnable() {
-            public void run() { showGlobalMenu(false, GlobalMenuModel.moreRow()); }
-        });
-        menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
-        menu.show();
+        final int[] actions = GlobalMenuModel.actions(menuPins(), tools);
+        showMenuDialog(tools ? L.t("Mai multe") : L.t("Meniu Leo"),
+            GlobalMenuModel.labels(actions, active), selected, new KeypadDialog.Action() {
+                public void select(int row) { globalAction(actions[row]); }
+            }, tools ? new Runnable() {
+                public void run() { showGlobalMenu(false, menuPins().length); }
+            } : null);
         Log.i("LeoPointer","global menu opened");
     }
+
+    private void showMenuDialog(String title, String[] rows, int selected,
+                                KeypadDialog.Action action, Runnable back) {
+        stopMovement();
+        menu=new KeypadDialog(new ContextThemeWrapper(this,android.R.style.Theme_Material_NoActionBar),
+            title, rows, action, true).initialSelection(selected).onBack(back);
+        menu.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
+        menu.show();
+    }
+
+    private int[] menuPins() {
+        return GlobalMenuModel.primary(getSharedPreferences(GlobalMenuModel.PREFERENCES, MODE_PRIVATE)
+            .getString(GlobalMenuModel.ORDER_KEY, null));
+    }
+
+    private void showMenuEditor(int selected) {
+        final int[] pins = menuPins();
+        final boolean canAdd = pins.length < GlobalMenuModel.MAX_PRIMARY;
+        String[] rows = Arrays.copyOf(GlobalMenuModel.labels(pins, false), pins.length + (canAdd ? 2 : 1));
+        if (canAdd) rows[pins.length] = L.t("Adaugă");
+        rows[rows.length - 1] = L.t("Resetează");
+        showMenuDialog(L.t("Prima pagină a meniului"), rows, selected, new KeypadDialog.Action() {
+            public void select(int row) {
+                if (row < pins.length) editMenuPin(pins, row);
+                else if (canAdd && row == pins.length) pickMenuPin(pins, row);
+                else confirmMenuReset(row);
+            }
+        }, new Runnable() {
+            public void run() {
+                showGlobalMenu(true, GlobalMenuModel.available(menuPins()).length);
+            }
+        });
+    }
+
+    private void editMenuPin(final int[] pins, final int row) {
+        List<String> rows = new ArrayList<>();
+        List<Runnable> changes = new ArrayList<>();
+        if (row > 0) {
+            rows.add(L.t("Mută mai sus"));
+            changes.add(new Runnable() {
+                public void run() { moveMenuPin(pins, row, row - 1); }
+            });
+        }
+        if (row + 1 < pins.length) {
+            rows.add(L.t("Mută mai jos"));
+            changes.add(new Runnable() {
+                public void run() { moveMenuPin(pins, row, row + 1); }
+            });
+        }
+        rows.add(L.t("Înlocuiește comanda"));
+        changes.add(new Runnable() {
+            public void run() { pickMenuPin(pins, row); }
+        });
+        if (pins.length > 1) {
+            rows.add(L.t("Elimină"));
+            changes.add(new Runnable() {
+                public void run() {
+                    int[] updated = new int[pins.length - 1];
+                    System.arraycopy(pins, 0, updated, 0, row);
+                    System.arraycopy(pins, row + 1, updated, row, pins.length - row - 1);
+                    saveMenuPins(updated, Math.min(row, updated.length - 1));
+                }
+            });
+        }
+        showMenuDialog(GlobalMenuModel.label(pins[row], false), rows.toArray(new String[0]), 0,
+            new KeypadDialog.Action() {
+                public void select(int index) { changes.get(index).run(); }
+            }, new Runnable() {
+                public void run() { showMenuEditor(row); }
+            });
+    }
+
+    private void moveMenuPin(int[] pins, int source, int target) {
+        int[] updated = pins.clone();
+        updated[source] = pins[target];
+        updated[target] = pins[source];
+        saveMenuPins(updated, target);
+    }
+
+    private void pickMenuPin(final int[] pins, final int row) {
+        final int[] available = GlobalMenuModel.available(pins);
+        showMenuDialog(L.t("Alege comanda"), GlobalMenuModel.labels(available, false), 0,
+            new KeypadDialog.Action() {
+                public void select(int index) {
+                    int[] updated = Arrays.copyOf(pins, Math.max(pins.length, row + 1));
+                    updated[row] = available[index];
+                    saveMenuPins(updated, row);
+                }
+            }, new Runnable() {
+                public void run() {
+                    if (row == pins.length) showMenuEditor(row);
+                    else editMenuPin(pins, row);
+                }
+            });
+    }
+
+    private void confirmMenuReset(final int row) {
+        showMenuDialog(L.t("Resetezi prima pagină?"), new String[]{L.t("Anulează"), L.t("Resetează")},
+            0, new KeypadDialog.Action() {
+                public void select(int choice) {
+                    if (choice == 1) {
+                        getSharedPreferences(GlobalMenuModel.PREFERENCES, MODE_PRIVATE).edit()
+                            .remove(GlobalMenuModel.ORDER_KEY).apply();
+                    }
+                    showMenuEditor(choice == 1 ? 0 : row);
+                }
+            }, new Runnable() {
+                public void run() { showMenuEditor(row); }
+            });
+    }
+
+    private void saveMenuPins(int[] pins, int selected) {
+        getSharedPreferences(GlobalMenuModel.PREFERENCES, MODE_PRIVATE).edit()
+            .putString(GlobalMenuModel.ORDER_KEY, GlobalMenuModel.encode(pins)).apply();
+        showMenuEditor(selected);
+    }
+
     private void openPage(Class<?> page){setActive(false);startActivity(new android.content.Intent(this,page).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));}
     private void globalAction(int id){
         if(id==GlobalMenuModel.MORE){showGlobalMenu(true);return;}
+        if(id==GlobalMenuModel.CUSTOMIZE){showMenuEditor(0);return;}
         if(id==GlobalMenuModel.POINTER){setActive(!active);return;}
         if(id==GlobalMenuModel.HOME){setActive(false);performGlobalAction(GLOBAL_ACTION_HOME);return;}
         if(id==GlobalMenuModel.APPS){setActive(false);startActivity(new android.content.Intent(this,MainActivity.class).putExtra("open_menu",true).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK|android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP|android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP));return;}

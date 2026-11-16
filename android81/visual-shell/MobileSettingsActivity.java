@@ -44,11 +44,11 @@ public final class MobileSettingsActivity extends LeoActivity {
             String account;try{account=accountName(selectedAccount());}catch(Exception unavailable){account=L.t("Vezi Android");}
             boolean enabled=dataPhone().isDataEnabled();
             ArrayList<String> rows=new ArrayList<>(Arrays.asList(L.t("Apeluri · ")+account,"SMS · "+simName(SubscriptionManager.getDefaultSmsSubscriptionId()),L.t("Date · ")+simName(SubscriptionManager.getDefaultDataSubscriptionId()),L.t("Date mobile · ")+(enabled?L.t("Pornite"):L.t("Oprite")),L.t("Puncte de acces (APN)"),L.t("Rețea și operator Android"),L.t("SMS și MMS")));
-            for(SubscriptionInfo s:active) rows.add("SIM "+(s.getSimSlotIndex()+1)+" · "+s.getCarrierName());
+            for (int slot = 0; slot < 2; slot++) rows.add(slotSummary(slot, subscriptionAt(active, slot)));
             list(L.t("SIM-uri și date"),rows,0,new Choice(){public void pick(int i){
                 if(i==0) calls();else if(i==1||i==2) chooseSim(i==2);
                 else if(i==3) changeData();else if(i==4) androidPage(Settings.ACTION_APN_SETTINGS);else if(i==5) androidPage(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
-                else if(i==6)startActivity(new Intent(MobileSettingsActivity.this,MessageTransportActivity.class));else if(i-7<active.size()) details(active.get(i-7));
+                else if(i==6)startActivity(new Intent(MobileSettingsActivity.this,MessageTransportActivity.class));else details(i-7);
             }},L.t("Actualiz."),new Runnable(){public void run(){show();}});
         }catch(RuntimeException unavailable){begin(L.t("SIM-uri și date"));root.addView(text(L.t("Serviciul SIM nu este pregătit. Revino după inițializarea radio."),18));footer("","",L.t("Înapoi"));}
     }
@@ -97,11 +97,58 @@ public final class MobileSettingsActivity extends LeoActivity {
         }});
     }
     private String radio(int type){switch(type){case TelephonyManager.NETWORK_TYPE_LTE:return "4G LTE";case TelephonyManager.NETWORK_TYPE_EDGE:case TelephonyManager.NETWORK_TYPE_GPRS:case TelephonyManager.NETWORK_TYPE_GSM:return "2G";case TelephonyManager.NETWORK_TYPE_UMTS:case TelephonyManager.NETWORK_TYPE_HSDPA:case TelephonyManager.NETWORK_TYPE_HSUPA:case TelephonyManager.NETWORK_TYPE_HSPA:case TelephonyManager.NETWORK_TYPE_HSPAP:return "3G";default:return type==0?L.t("Neînregistrat"):L.t("Tip ")+type;}}
-    private void details(SubscriptionInfo sim) {
-        TelephonyManager phone=telephony.createForSubscriptionId(sim.getSubscriptionId());
-        String operator=phone.getNetworkOperatorName();if(operator==null||operator.isEmpty())operator=L.t("Indisponibil");
-        String value="Operator · "+operator+L.t("\nDate · ")+radio(phone.getDataNetworkType())+L.t("\nVoce · ")+radio(phone.getVoiceNetworkType())+"\nRoaming · "+(phone.isNetworkRoaming()?L.t("Da"):L.t("Nu"))+"\n"+ImsStatus.label(sim.getSimSlotIndex())+"\n"+L.t("VoWiFi · Neintegrat");
-        begin("SIM "+(sim.getSimSlotIndex()+1));android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(text(value,18));root.addView(scroll,new android.widget.LinearLayout.LayoutParams(-1,0,1));back=new Runnable(){public void run(){show();}};footer("","",L.t("Înapoi"));
+    private SubscriptionInfo subscriptionAt(List<SubscriptionInfo> active, int slot) {
+        for (SubscriptionInfo sim : active) if (sim.getSimSlotIndex() == slot) return sim;
+        return null;
+    }
+
+    private String inactiveSlot(int slot) {
+        switch (telephony.getSimState(slot)) {
+            case TelephonyManager.SIM_STATE_ABSENT: return L.t("lipsă");
+            case TelephonyManager.SIM_STATE_PIN_REQUIRED: return L.t("PIN necesar");
+            case TelephonyManager.SIM_STATE_PUK_REQUIRED: return L.t("PUK necesar");
+            default: return L.t("Niciun SIM activ");
+        }
+    }
+
+    private String slotSummary(int slot, SubscriptionInfo sim) {
+        String prefix = "SIM " + (slot + 1) + " · ";
+        if (sim == null) return prefix + inactiveSlot(slot);
+        TelephonyManager phone = telephony.createForSubscriptionId(sim.getSubscriptionId());
+        int data = phone.getDataNetworkType();
+        int voice = phone.getVoiceNetworkType();
+        return prefix + sim.getCarrierName() + "\n"
+            + radio(data == TelephonyManager.NETWORK_TYPE_UNKNOWN ? voice : data)
+            + (ImsStatus.registered(slot) ? " · VoLTE" : "");
+    }
+
+    private void details(final int slot) {
+        begin("SIM " + (slot + 1));
+        String value;
+        try {
+            SubscriptionInfo sim = subscriptionAt(sims(), slot);
+            if (sim == null) {
+                value = inactiveSlot(slot);
+            } else {
+                TelephonyManager phone = telephony.createForSubscriptionId(sim.getSubscriptionId());
+                String operator = phone.getNetworkOperatorName();
+                boolean dataSim = sim.getSubscriptionId() == SubscriptionManager.getDefaultDataSubscriptionId();
+                value = "Operator · " + (operator == null || operator.isEmpty() ? L.t("Indisponibil") : operator)
+                    + "\n" + L.t("Date mobile · ") + radio(phone.getDataNetworkType())
+                    + "\n" + L.t("Voce · ") + radio(phone.getVoiceNetworkType())
+                    + "\n" + L.t("SIM pentru date") + " · " + L.t(dataSim ? "Da" : "Nu")
+                    + "\nRoaming · " + L.t(phone.isNetworkRoaming() ? "Da" : "Nu")
+                    + "\n" + ImsStatus.label(slot) + "\n" + L.t("VoWiFi · Neintegrat");
+            }
+        } catch (RuntimeException unavailable) {
+            value = L.t("Indisponibil");
+        }
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(text(value, 18));
+        root.addView(scroll, new android.widget.LinearLayout.LayoutParams(-1, 0, 1));
+        left = new Runnable() { public void run() { details(slot); } };
+        back = new Runnable() { public void run() { show(); } };
+        footer(L.t("Actualiz."), "", L.t("Înapoi"));
     }
     private void androidPage(String action){try{Intent intent=new Intent(action);intent.putExtra("android.provider.extra.SUB_ID",SubscriptionManager.getDefaultDataSubscriptionId());startActivity(intent);}catch(RuntimeException missing){notice(L.t("Pagina Android este indisponibilă"));}}
 }

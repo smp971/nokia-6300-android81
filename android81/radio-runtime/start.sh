@@ -1,11 +1,22 @@
 #!/system/bin/sh
-# Mount the original firmware read-only and start the validated dual-RIL chain.
+# Mount the original firmware read-only and start the dual-RIL chain.
 set -eu
 export PATH=/system/bin
 base=/system/vendor/leo-radio
 export LD_LIBRARY_PATH=$base/lib:/system/vendor/lib:/system/lib
 exec >>/data/local/tmp/leo-radio-setup.log 2>&1
-test -f /leo-framework-internal
+sd_boot=0
+if [ -f /leo-framework-sd-v1 ]; then
+    sd_boot=1
+    grep -Eq '(^| )androidboot.serialno=695d( |$)' /proc/cmdline
+    grep -Eq '^[0-9]+ [0-9]+ 7:0 / /system ro(,| )' /proc/self/mountinfo
+    grep -Eq '^[0-9]+ [0-9]+ 7:1 / /data rw(,| )' /proc/self/mountinfo
+    for partition in 29 30 32 33 39; do
+        test "$(cat "/sys/class/block/mmcblk0p$partition/ro")" = 1
+    done
+else
+    test -f /leo-framework-internal
+fi
 test "$(getprop ro.boot.hwid)" = 0x0
 # /dev is recreated each boot. The fallback trigger must not run setup twice.
 mkdir /dev/leo-radio-started 2>/dev/null || exit 0
@@ -30,13 +41,21 @@ for entry in /sys/class/block/mmcblk0p*; do
     fi
 done
 grep -qx 'PARTNAME=modem' /sys/class/block/mmcblk0p25/uevent
+test "$(cat /sys/class/block/mmcblk0p25/dev)" = 179:25
 if [ ! -r /firmware/image/modem.mdt ]; then
-    mount -o remount,rw /
-    trap 'mount -o remount,ro / 2>/dev/null || true' EXIT
-    mkdir -p /firmware
-    mount -o remount,ro /
-    mount -t vfat -o ro /dev/block/bootdevice/by-name/modem /firmware
+    if [ ! -d /firmware ]; then
+        mount -o remount,rw /
+        trap 'mount -o remount,ro / 2>/dev/null || true; stage failed' EXIT
+        mkdir -p /firmware
+        mount -o remount,ro /
+        trap 'stage failed' EXIT
+    fi
+    mount -t vfat -o ro,nosuid,nodev,noexec /dev/block/bootdevice/by-name/modem /firmware
 fi
+if [ "$sd_boot" = 1 ]; then
+    grep -Eq '^[0-9]+ [0-9]+ 179:25 / /firmware ro(,| )' /proc/self/mountinfo
+fi
+test -r /firmware/image/modem.mdt
 printf '%s' /firmware/image > /sys/module/firmware_class/parameters/path
 "$base/bin/irsc_util" "$base/sec_config"
 mkdir -p /data/misc/radio /dev/socket/qmux_radio

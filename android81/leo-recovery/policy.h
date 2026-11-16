@@ -25,13 +25,50 @@ inline bool token(const std::string& text,const std::string& wanted) {
     while(stream>>word)if(word==wanted)return true;
     return false;
 }
-inline bool mountReadWrite(const std::string& options) {
+inline bool mountOption(const std::string& options,const char* wanted) {
     std::istringstream words(options);std::string word;
-    while(std::getline(words,word,','))if(word=="rw")return true;
+    while(std::getline(words,word,','))if(word==wanted)return true;
     return false;
+}
+inline bool mountReadWrite(const std::string& options) {
+    return mountOption(options,"rw");
+}
+enum class MountState { Unmounted, ReadOnly, ReadWrite, Other, Unknown };
+inline MountState mountState(const std::string& mounts,const std::string& device,
+                             const std::string& mountPoint) {
+    if(mounts.empty())return MountState::Unknown;
+    MountState found=MountState::Unmounted;
+    std::istringstream rows(mounts);
+    std::string line;
+    while(std::getline(rows,line)) {
+        std::istringstream row(line);
+        std::string id,parent,dev,root,path,options;
+        if(!(row>>id>>parent>>dev>>root>>path>>options))return MountState::Unknown;
+        if(dev!=device&&path!=mountPoint)continue;
+        if(dev!=device||path!=mountPoint||root!="/"||found!=MountState::Unmounted)
+            return MountState::Other;
+        const bool readOnly=mountOption(options,"ro");
+        const bool readWrite=mountReadWrite(options);
+        if(readOnly==readWrite)return MountState::Unknown;
+        found=readOnly?MountState::ReadOnly:MountState::ReadWrite;
+    }
+    return found;
 }
 inline bool correctPhone(const std::string& cmdline) {
     return token(cmdline,"androidboot.serialno=695d");
+}
+inline std::string backupChecksum(const std::string& report,const std::string& name) {
+    std::istringstream rows(report);
+    std::string line,checksum;
+    while(std::getline(rows,line)) {
+        if(!line.empty()&&line.back()=='\r')line.pop_back();
+        const auto divider=line.find("  ");
+        if(divider==std::string::npos||line.substr(divider+2)!=name+".img")continue;
+        if(divider!=64||!checksum.empty()||line.substr(0,64).find_first_not_of("0123456789abcdef")!=std::string::npos)
+            return {};
+        checksum=line.substr(0,64);
+    }
+    return checksum;
 }
 inline bool mountedTargets(const std::string& mounts,bool wipe) {
     if(mounts.empty())return true;

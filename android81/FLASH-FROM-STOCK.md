@@ -4,8 +4,8 @@ For the **Nokia 6300 4G TA-1286 development phone, serial `695d`**, using the
 geometry verified in this project. Private packages include proprietary runtime
 from this device's backups. **Native Leo Recovery clean installation passed on
 28 October 2026:** system, new userdata and boot were written and fully checked
-by SHA-256. Full KaiOS return and writes through the Python installer below
-remain untested.
+by SHA-256. The Python installer also passed the 16 November partition
+write and verification test. Full KaiOS return remains open.
 
 ## What “from scratch” means here
 
@@ -112,8 +112,10 @@ Preflight writes no partitions. It refuses active Android, missing recovery,
 wrong geometry or mounted system/userdata. It may create a temporary helper and
 block aliases under `/tmp` and `/dev`.
 
-**The following command erases all internal user data. This Python write path
-has not been executed; the hardware test used the native recovery menu:**
+**The following command erases all internal user data.** The 16 November
+hardware test used the Python installer with the November archive and the
+optional `--staged-images` directory on SD. All three partition readbacks
+matched the archive manifest.
 
 ```powershell
 python android81/install-recovery-bundle.py $freshLeo --install --serial 695d --confirm-target 695d --wipe-data --stock-backups $stockLeo --staging-parent /sdcard --adb $adbLeo
@@ -136,6 +138,31 @@ completion, default Leo Home/IME/dialer, permissions/new-UID root authorization,
 audio card and both SIMs registered. Audio listening, FM and LTE/IMS were not
 repeated after this installation. Select the data SIM and configure network
 preferences after the wipe.
+
+### 16 November hardware test
+
+The exact 13 November ZIP was flashed through root ADB in the existing
+Leo Recovery. The PC snapshot covered boot, system, recovery and userdata
+with separate SHA-256 readback. ADB staged the original images on the
+external SD and verified them before writing system, blank userdata and
+boot. All three partition readbacks matched the manifest.
+
+On the first boot, Android reported boot complete while setup was still
+finishing. The launcher initially attempted to observe the call log before
+its permission was granted. The phone process also failed in the SIM toolkit
+service while initializing the second slot. Setup then selected Leo Home,
+the Leo IME and the Leo dialer.
+
+A normal restart with DSDS already set reached the Leo setup guide. After
+selecting SIM 2 for data, Android connected over EDGE with preferred network
+mode 0. Switching the live modem preference to LTE/GSM/WCDMA automatic
+(mode 9) brought up validated LTE data and IMS voice registration on SIM 2.
+The keypad opened Home's application menu, notifications and Leo Settings.
+On-device captures showed Right switch from Networks to Appearance.
+
+The source now defaults to DSDS and mode 9 and lets Home start while the
+call-log permission is pending. The Windows APK build passed. A rebuilt
+clean ROM and another wipe test are needed to verify unattended first boot.
 
 ## 5. Return to KaiOS
 

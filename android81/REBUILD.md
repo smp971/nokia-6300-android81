@@ -109,6 +109,30 @@ replace validation on a clean host.
 Signing uses AOSP development keys from the checkout, not the user's private
 keys. Keep the signer when updating an installed app while retaining its data.
 
+### Leo Visual on Windows
+
+The Windows builder compiles all Java sources under `visual-shell/`, the
+localization catalog and the Pocket dependencies. Put one JDK 8 and one
+Android SDK Platform 27/Build Tools installation under
+`android81/output/windows-build-tools`, with the existing compatible
+`testkey.pk8` and `testkey.x509.pem`. Prepare the vCard revision pinned in
+the AOSP manifest on first use.
+
+```powershell
+git init android81/output/vcard-source
+git -C android81/output/vcard-source fetch --depth 1 https://android.googlesource.com/platform/frameworks/opt/vcard d90a30beaf9c1e3b7a9633bb32a49f26fdb3b1e2
+git -C android81/output/vcard-source checkout --detach FETCH_HEAD
+python -X utf8 android81/build-pocket-apps-windows.py
+python -X utf8 android81/audit-visual-apk.py android81/output/leo-visual.apk android81/output/pocket-apps-build/leo-visual.apk
+```
+
+The builder also accepts `--vcard` with a prebuilt AOSP vCard JAR.
+The signed candidate and test class JAR are written to
+`android81/output/pocket-apps-build/`. The existing installed APK stays
+available for comparison and rollback. After a test installation, run
+`python -X utf8 android81/smoke-leo-keypad.py --serial 695d` on the connected Nokia 6300
+to check the physical Home, Menu, Back and Settings routes.
+
 ## Other components
 
 | Component | Recipe |

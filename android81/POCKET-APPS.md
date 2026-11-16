@@ -10,7 +10,7 @@ Choose **Full** interface mode if needed. In the app menu, `*` / `#` change cate
 | --- | --- | --- |
 | Leo News | Communication | RSS/Atom subscriptions, explicit refresh, bounded offline cache, plain-text article view, saved articles and original-page opening in Leo Browser |
 | Leo Podcasts | Media | Audio enclosures from RSS/Atom, online playback, downloads, an episode journal, file access and verified SD promotion |
-| Internet radio | Media | User-added direct MP3/AAC stream URLs, saved station list, shared media controls and an on-demand ICY current-track sample |
+| Internet radio | Media | FM/Internet source switch, ten Romanian presets, favorites, custom MP3/AAC URLs and an on-demand ICY current-track sample |
 | SSH / SFTP | Communication | Password login, explicit SHA-256 host-key approval, changed-key refusal, a PTY shell with line entry/Ctrl+C, directory browsing and confirmed upload/download |
 | Dictionary | Tools | Both RO→EN and EN→RO search, accent folding, 48 original starter pairs, manual additions, UTF-8 CSV/TSV replacement import and CSV export |
 | Study | Tools | Question/answer cards, due counts, four review grades, simple scheduled repetition, stable-ID updates/deletion, CSV/TSV append import and export |
@@ -31,13 +31,13 @@ The QR capture contains only the example URL above. It does not contain account 
 
 ## Downloads and storage
 
-News refresh and podcast/radio playback happen only after a user action. No subscriptions or public stations are silently added. Add the provider's RSS/Atom URL or the station's direct audio URL; a website landing page is not a stream.
+News refresh and podcast/radio playback happen only after a user action. The radio directory includes ten offline presets. Add the provider's RSS/Atom URL or the station's direct audio URL. The radio expects an audio endpoint and does not open the station's website as a stream.
 
 Android DownloadManager was verified for internal app-external storage but **failed direct secondary-SD downloads on this port**. Podcasts therefore download to the app's primary external Podcasts folder first. If SD exports were selected, a short foreground finalizer copies to the chosen SD folder through the existing SHA-256-verifying file-transfer helper. The temporary source is removed only after the verified target and ready journal entry are committed.
 
 If the card is unavailable/full, the primary copy remains and the episode journal offers **Retry saving to SD**. A retry does not redownload the episode. A completed SD move removes the stale DownloadManager record; the episode remains accessible in Podcasts → Downloaded episodes. Primary-storage downloads retain their DownloadManager entry. Reopening Podcasts reconciles completed or interrupted finalization jobs without starting new downloads.
 
-Storage settings select the export location. Dictionary, cards, expenses, ZIP and QR exports use `LeoTools/<app>` under that location. Podcasts use the primary app-external Podcasts folder or `LeoTools/Podcasts` on the selected SD export volume. Existing files are not intentionally overwritten; generated output names are unique. The new app-private JSON files live under `files/pocket/`. They are **not included in the existing general Leo configuration backup**. Use the provided CSV exports for dictionary/cards/expenses; downloaded media and exported files remain separate files.
+Storage settings select the export location. Dictionary, cards, expenses, ZIP and QR exports use `LeoTools/<app>` under that location. Podcasts use the primary app-external Podcasts folder or `LeoTools/Podcasts` on the selected SD export volume. Existing files are not intentionally overwritten; generated output names are unique. The new app-private JSON files live under `files/pocket/`. Backup Leo v4 can restore playlists, feeds and podcast subscriptions, saved news, internet radio stations, dictionary entries, study cards and expenses through **Playlists and Pocket data**. Downloads, exported media and SSH profiles stay outside this backup. CSV exports remain available for dictionary entries, cards and expenses.
 
 The existing player supplies long-track resume bookmarks when duration is known and at least ten minutes, per source URI. Moving between online and downloaded URIs does not merge their progress automatically. Remote cover extraction is skipped to avoid a second potentially unbounded read of a live stream.
 
@@ -79,7 +79,10 @@ Pinned third-party code and notices are under [third-party/pocket](third-party/p
 
 The normal [rebuild guide](REBUILD.md) still applies. `build-visual-shell.sh` now compiles the extra source/dependency with **D8, min API 27**. Set `LEO_D8_JAR` to Android build-tools **28.0.3/lib/d8.jar** if that tool is absent from the AOSP checkout. This updated clean Linux recipe was not executed in this session.
 
-`build-pocket-apps-windows.py` is the tested **incremental Windows** path: it requires the existing verified APK/class checkpoint and local JDK/SDK tools under `output/windows-build-tools`. It compiles the enumerated changed classes, rebuilds the manifest/resources, desugars the Java 8 SSH dependency, explicitly preserves baseline external classes and signs a candidate under `output/pocket-apps-build`; it never installs. Changes outside its enumerated set need the full source build or an updated enumeration.
+`build-pocket-apps-windows.py` compiles all current Leo Visual sources with the
+Windows JDK/SDK, the pinned AOSP vCard dependency and the verified Pocket
+dependencies. It signs a candidate under `output/pocket-apps-build`. See
+[Rebuilding Leo Visual on Windows](REBUILD.md#leo-visual-on-windows).
 
 For local tests, start the fixture server on the PC, reverse only TCP 18774 and 2267 to the Nokia, build with `build-pocket-tests-windows.py`, install its test APK and run `ro.leo.visual.pocketapptests/ro.leo.visual.PocketApplicationsTests` in Android's framework namespace. Paramiko is a host-only test dependency; the builder downloads/hash-checks ZXing for tests. Neither is a phone service.
 

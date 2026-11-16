@@ -28,7 +28,12 @@ public final class MainActivity extends Activity {
     private Screen screen;
     private final NavigationPace navigationPace=new NavigationPace();
     private boolean offeredSetup;private boolean homeVisible;private int favoriteGeneration;private final java.util.concurrent.ExecutorService favoriteWorker=java.util.concurrent.Executors.newSingleThreadExecutor();
-    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){public void onReceive(android.content.Context c,Intent i){screen.reloadCards();screen.invalidate();}};
+    private final android.content.BroadcastReceiver badges=new android.content.BroadcastReceiver(){
+        public void onReceive(android.content.Context c,Intent i) {
+            if (UnreadState.CHANGED.equals(i.getAction())) screen.invalidate();
+            if (!screen.grid) queueRefresh();
+        }
+    };
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){screen.reloadAppearance();screen.reloadCards();}};
     private int speedKey=-1;
     private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;int app=HomeKeyActions.app(MainActivity.this,slot);if(app>=0){HomeAccess.open(MainActivity.this,app);return;}String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,L.t("Tasta ")+slot+L.t(" neatribuită · Contacte → Apelare rapidă"),1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
@@ -40,9 +45,17 @@ public final class MainActivity extends Activity {
             public void onSubscriptionsChanged() { listenToPhones(); }
         };
     private final Handler handler = new Handler();
+    private final Runnable refresh = new Runnable() {
+        public void run() { if (homeVisible && !screen.grid) screen.refresh(); }
+    };
+    private void queueRefresh() {
+        if (!homeVisible || screen.grid) return;
+        handler.removeCallbacks(refresh);
+        handler.post(refresh);
+    }
     private final Runnable clock = new Runnable() {
         public void run() {
-            screen.refresh();
+            if (!screen.grid) screen.refresh();
             handler.postDelayed(this,android.os.SystemClock.elapsedRealtime()<180000&&(!screen.inService[0]||!screen.inService[1])?2000:60000-System.currentTimeMillis()%60000);
         }
     };
@@ -51,6 +64,7 @@ public final class MainActivity extends Activity {
         if(ShellHealth.start(this))return;
         getWindow().setStatusBarColor(Color.rgb(26, 14, 58));
         screen = new Screen();
+        screen.loadMenuFocus();
         if (state != null) {
             screen.category(state.getInt("category",0));screen.grid = state.getBoolean("grid");
             screen.selected = Math.max(0, Math.min(screen.order.length-1, state.getInt("selected")));
@@ -71,7 +85,8 @@ public final class MainActivity extends Activity {
         for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
         if(!offeredSetup&&!KeypadLockActivity.locked(this)&&!getSharedPreferences("setup",0).getBoolean("complete",false)){offeredSetup=true;startActivity(new Intent(this,SetupWizardActivity.class));}
         screen.reloadAppearance();
-        screen.reloadCards();homeVisible=true;loadHomeFavorites();
+        if (!screen.grid) screen.reloadCards();
+        homeVisible=true;loadHomeFavorites();
         if(KeypadLockActivity.locked(this)) startActivity(new Intent(this,KeypadLockActivity.class));
         subscriptions = (SubscriptionManager)getSystemService(TELEPHONY_SUBSCRIPTION_SERVICE);
         try { subscriptions.addOnSubscriptionsChangedListener(subscriptionListener); }
@@ -80,7 +95,7 @@ public final class MainActivity extends Activity {
         handler.removeCallbacks(clock); handler.post(clock);
     }
     protected void onPause() {homeVisible=false;favoriteGeneration++;
-        handler.removeCallbacks(clock);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
+        handler.removeCallbacks(clock);handler.removeCallbacks(refresh);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
         for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();
@@ -103,14 +118,14 @@ public final class MainActivity extends Activity {
                 TelephonyManager phone = ((TelephonyManager)getSystemService(TELEPHONY_SERVICE))
                     .createForSubscriptionId(info.getSubscriptionId());
                 PhoneStateListener listener = new PhoneStateListener() {
-                    public void onServiceStateChanged(ServiceState state) { screen.refresh(); }
-                    public void onDataConnectionStateChanged(int state, int type) { screen.refresh(); }
+                    public void onServiceStateChanged(ServiceState state) { queueRefresh(); }
+                    public void onDataConnectionStateChanged(int state, int type) { queueRefresh(); }
                 };
                 phones.add(phone); phoneListeners.add(listener);
                 phone.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE);
             }
         } catch (RuntimeException ignored) { }
-        screen.refresh();
+        queueRefresh();
     }
     protected void onSaveInstanceState(Bundle state) {
         state.putInt("category",screen.category);state.putBoolean("grid", screen.grid); state.putInt("selected", screen.selected);
@@ -123,14 +138,17 @@ public final class MainActivity extends Activity {
         if(intent.getBooleanExtra("open_menu",false)){intent.removeExtra("open_menu");if(screen.editing){screen.leaveEditor();return;}screen.grid=true;screen.shortcut=-1;screen.message="";screen.invalidate();return;}
         if(intent.getBooleanExtra("edit_home",false)){intent.removeExtra("edit_home");screen.startEditor();return;}
         if(intent.hasExtra("open_app")){int id=intent.getIntExtra("open_app",-1);intent.removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length){screen.open(id);return;}}
+        if (screen.grid) screen.saveMenuFocus();
         screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();screen.invalidate();
     }
     public void onBackPressed() {
         if(screen.editing){screen.leaveEditor();return;}
         if (screen.grid || screen.shortcut >= 0 || !screen.message.isEmpty()) {
+            if (screen.grid) screen.saveMenuFocus();
             screen.grid = false;
             screen.shortcut = -1;
             screen.message = "";
+            screen.refresh();
             screen.invalidate();
         }
     }
@@ -155,7 +173,20 @@ public final class MainActivity extends Activity {
     }
     public boolean onKeyDown(int key, KeyEvent event) {
         if(screen.editing)return screen.editorKey(key,event.getRepeatCount());
-        if(!screen.grid&&screen.shortcut>=4&&screen.cardAvailable()){int type=screen.cards[screen.cardIndex].type;if((type==2||type==3)&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(event.getRepeatCount()==0){if(type==3){if(key==KeyEvent.KEYCODE_5)screen.openCard();else if(screen.favorites.length>0){screen.favoriteIndex=CircularNavigation.step(screen.favoriteIndex,key==KeyEvent.KEYCODE_4?-1:1,screen.favorites.length);screen.reloadCards();screen.invalidate();}}else{PlaybackService s=PlaybackService.instance;if(s!=null&&(s.playing()||!FmService.playing)){if(key==KeyEvent.KEYCODE_5)s.toggle();else s.next(key==KeyEvent.KEYCODE_6);}else if(FmService.playing){if(key==KeyEvent.KEYCODE_5)stopService(new Intent(this,FmService.class));else if(FmService.instance!=null)FmService.instance.seek(key==KeyEvent.KEYCODE_6);}screen.reloadCards();screen.invalidate();}}return true;}}
+        if (!screen.grid && screen.shortcut >= 4 && screen.cardAvailable()
+                && screen.cards[screen.cardIndex].type == 3
+                && (key == KeyEvent.KEYCODE_4 || key == KeyEvent.KEYCODE_5 || key == KeyEvent.KEYCODE_6)) {
+            if (event.getRepeatCount() == 0) {
+                if (key == KeyEvent.KEYCODE_5) screen.openCard();
+                else if (screen.favorites.length > 0) {
+                    screen.favoriteIndex = CircularNavigation.step(screen.favoriteIndex,
+                        key == KeyEvent.KEYCODE_4 ? -1 : 1, screen.favorites.length);
+                    screen.reloadCards();
+                    screen.invalidate();
+                }
+            }
+            return true;
+        }
         if(!screen.grid&&key==KeyEvent.KEYCODE_1){if(event.getRepeatCount()==0)startActivity(new Intent(this,GlobalSearchActivity.class).putExtra("apps_first",true));return true;}
         if(!screen.grid&&key==KeyEvent.KEYCODE_0){if(event.getRepeatCount()==0)startActivity(new Intent(this,NowPlayingActivity.class));return true;}
         if(!screen.grid&&key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9){if(event.getRepeatCount()==0){speedKey=key;handler.postDelayed(speed,650);}return true;}
@@ -267,6 +298,22 @@ public final class MainActivity extends Activity {
         int category;
         final int[] categoryAppFocus = new int[AppCatalog.CATEGORIES.length];
         { java.util.Arrays.fill(categoryAppFocus, -1); }
+        void loadMenuFocus() {
+            android.content.SharedPreferences saved = getSharedPreferences("launcher-focus", MODE_PRIVATE);
+            for (int i = 0; i < categoryAppFocus.length; i++) {
+                categoryAppFocus[i] = saved.getInt("app-" + i, -1);
+            }
+            category = Math.max(0, Math.min(saved.getInt("category", 0), categoryAppFocus.length - 1));
+            order = AppCatalog.menuOrder(MainActivity.this, category);
+            restoreAppFocus(categoryAppFocus[category]);
+        }
+        void saveMenuFocus() {
+            categoryAppFocus[category] = focusedApp();
+            android.content.SharedPreferences.Editor edit = getSharedPreferences("launcher-focus", MODE_PRIVATE)
+                .edit().putInt("category", category);
+            for (int i = 0; i < categoryAppFocus.length; i++) edit.putInt("app-" + i, categoryAppFocus[i]);
+            edit.apply();
+        }
         int focusedApp() {
             return selected >= 0 && selected < order.length ? order[selected] : -1;
         }
@@ -335,11 +382,14 @@ public final class MainActivity extends Activity {
         String time = "", date = "", message = "", networkBanner="L E O · ACTIVE STANDBY";
         final String[] simLabels = {L.t("se verifică"), L.t("se verifică")};
         final boolean[] inService={false,false};
+        int simSlots=3;
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
         public boolean isOpaque(){return true;}
         void refresh() {
             reloadCards();
             String previousTime=time,previousDate=date,first=simLabels[0],second=simLabels[1],previousBanner=networkBanner;
+            int previousSlots=simSlots;
+            boolean previousFirstService=inService[0],previousSecondService=inService[1];
             java.util.TimeZone zone=java.util.TimeZone.getDefault();timeFormat.setTimeZone(zone);dateFormat.setTimeZone(zone);
             Date now = new Date();
             time = timeFormat.format(now);
@@ -347,7 +397,7 @@ public final class MainActivity extends Activity {
             updateSims();
             networkBanner=NetworkStartup.label(NetworkStartup.stage(),inService[0]||inService[1],Settings.Global.getInt(getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0)!=0,android.os.SystemClock.elapsedRealtime());
             // Telemetry is cached while the grid is visible; it has no pixels there.
-            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)||!networkBanner.equals(previousBanner)))invalidate();
+            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)||!networkBanner.equals(previousBanner)||simSlots!=previousSlots||inService[0]!=previousFirstService||inService[1]!=previousSecondService))invalidate();
         }
         void updateSims() {
             TelephonyManager base = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
@@ -355,6 +405,9 @@ public final class MainActivity extends Activity {
                 inService[slot]=false;
                 try {
                     int sim = base.getSimState(slot);
+                    int bit = 1 << slot;
+                    if (sim == TelephonyManager.SIM_STATE_ABSENT) simSlots &= ~bit;
+                    else if (sim != TelephonyManager.SIM_STATE_UNKNOWN) simSlots |= bit;
                     String status = sim == TelephonyManager.SIM_STATE_ABSENT ? L.t("lipsă")
                         : sim == TelephonyManager.SIM_STATE_PIN_REQUIRED ? L.t("PIN necesar")
                         : sim == TelephonyManager.SIM_STATE_PUK_REQUIRED ? L.t("PUK necesar")
@@ -410,7 +463,13 @@ public final class MainActivity extends Activity {
             }
             if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
                 if (repeat == 0) {
-                    if (grid) { int app=focusedApp(); if(app>=0)open(app); }
+                    if (grid) {
+                        int app=focusedApp();
+                        if(app>=0) {
+                            saveMenuFocus();
+                            open(app);
+                        }
+                    }
                     else if(shortcut>=4)openCard();
                     else if(shortcut>=0)open(shortcuts[shortcut]);
                     else { grid = true; message = ""; invalidate(); }
@@ -470,7 +529,8 @@ public final class MainActivity extends Activity {
             if(index==20){startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return;}
             if(index==21){startActivity(new Intent(MainActivity.this,SetupWizardActivity.class));return;}
             if(index==5) {startActivity(new Intent(MainActivity.this,GalleryActivity.class));return;}
-            if(index==6 || index==12) {startActivity(new Intent(MainActivity.this,MediaActivity.class).putExtra("kind",index==12?"video":"audio"));return;}
+            if(index==6) {startActivity(new Intent(MainActivity.this,MusicLibraryActivity.class));return;}
+            if(index==12) {startActivity(new Intent(MainActivity.this,MediaActivity.class).putExtra("kind","video"));return;}
             if(index==8) {startActivity(new Intent(MainActivity.this,SettingsActivity.class));return;}
             if(index==13) {startActivity(new Intent(MainActivity.this,RecorderActivity.class));return;}
             if(index==14) {startActivity(new Intent(MainActivity.this,ConverterActivity.class));return;}

@@ -1,47 +1,122 @@
-"""Incremental Windows APK builder using the verified local APK/class checkpoint; never installs."""
+"""Build a signed Leo Visual APK from current sources with the Windows SDK."""
+
+import argparse
+import hashlib
+import os
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
-import subprocess,zipfile,hashlib,shutil,json
-root=Path(__file__).resolve().parent;out=root/'output';tools=out/'windows-build-tools';build=out/'pocket-apps-build';build.mkdir(exist_ok=True)
-subprocess.run(['python','-X','utf8',str(root/'prepare-pocket-dependencies.py'),'--output',str(out/'pocket-dependencies')],check=True)
-java=next((tools/'jdk').glob('*/bin/java.exe'));javac=java.with_name('javac.exe');jar=java.with_name('jar.exe');sdk=next((tools/'platform').glob('*/android.jar'));bt=next((tools/'build-tools').iterdir())
-def run(*args):subprocess.run([str(x) for x in args],check=True)
-# Keep the known built APK/class archive untouched until the candidate is verified.
-base=out/'leo-visual.apk';classes=out/'leo-visual-classes.jar';saved=build/'baseline.apk';cached=build/'baseline-classes.jar'
-if not saved.exists():shutil.copy2(base,saved);shutil.copy2(classes,cached)
-newclasses=build/'classes';assert newclasses.resolve().parent==build.resolve() and build.resolve().parent==out.resolve()
-if newclasses.exists():shutil.rmtree(newclasses)
-newclasses.mkdir(exist_ok=True);(build/'d8').mkdir(exist_ok=True)
-changed=['PodcastDownloads', 'PodcastDownloadReceiver', 'PodcastTransferService', 'PlaybackService', 'IcyMetadata', 'PocketStore', 'PocketActivity', 'PocketFeeds', 'FeedsActivity', 'StreamRadioActivity', 'PocketTable', 'LexiconActivity', 'StudyActivity', 'PocketZip', 'ZipActivity', 'ExpenseBook', 'ExpensesActivity', 'MetronomeService', 'MetronomeActivity', 'PocketQr', 'QrActivity', 'PocketSsh', 'SshActivity', 'AppCatalog', 'LeoActivity', 'SettingsActivity', 'MainActivity', 'LeoHome', 'HomePersonalization', 'HomeCanvasLayout', 'BackupEngine', 'MediaPanel', 'MusicTransport', 'KeypadText', 'MusicFace', 'MediaActivity', 'NowPlayingActivity', 'GlobalSearchActivity', 'PersonalizationActivity', 'KeypadDialog', 'LeoPointerService', 'GlobalMenuModel', 'IconArt', 'AppBadge', 'FilesActivity', 'EnglishCatalog']
-removed=['N95Shell']
-run(javac,'-encoding','UTF-8','-source','1.8','-target','1.8','-bootclasspath',sdk,'-classpath',str(cached)+';'+str(out/'pocket-dependencies/jsch.jar'),'-d',newclasses,*[root/'visual-shell'/(x+'.java') for x in changed if x!='EnglishCatalog'],root/'localization/EnglishCatalog.java',*sorted((root/'third-party/pocket').glob('*.java')))
-merged=build/'leo-visual-classes.jar'
-with zipfile.ZipFile(cached) as src,zipfile.ZipFile(merged,'w',zipfile.ZIP_DEFLATED) as dst:
- for i in src.infolist():
-  if i.filename.startswith(('com/jcraft/jsch/','io/nayuki/qrcodegen/')):continue
-  short=i.filename.split('/')[-1]
-  if (i.filename.startswith('ro/leo/visual/') or i.filename.startswith('ro/leo/i18n/')) and any(short==n+'.class' or short.startswith(n+'$') for n in changed+removed):continue
-  dst.writestr(i,src.read(i.filename))
- for p in newclasses.rglob('*.class'):dst.write(p,p.relative_to(newclasses).as_posix())
- with zipfile.ZipFile(out/'pocket-dependencies/jsch.jar') as library:
-  for i in library.infolist():
-   if i.filename.endswith('.class'):dst.writestr(i,library.read(i.filename))
-with zipfile.ZipFile(saved) as z:(build/'baseline.dex').write_bytes(z.read('classes.dex'))
-helper=build/'KeepDependencies.java';helper.write_text('''import java.io.*;import java.util.*;import org.jf.dexlib2.*;import org.jf.dexlib2.iface.*;import org.jf.dexlib2.immutable.*;
-public class KeepDependencies {public static void main(String[] a)throws Exception{DexFile d=DexFileFactory.loadDexFile(new File(a[0]),Opcodes.forApi(27));ArrayList<ClassDef> keep=new ArrayList<>();for(ClassDef c:d.getClasses())if(!c.getType().startsWith("Lro/leo/")&&!c.getType().startsWith("Lcom/jcraft/jsch/")&&!c.getType().startsWith("Lio/nayuki/qrcodegen/"))keep.add(c);if(keep.isEmpty())throw new IllegalStateException("No retained dependency classes");DexFileFactory.writeDexFile(a[1],new ImmutableDexFile(Opcodes.forApi(27),keep));System.out.println("Retained dependency classes: "+keep.size());}}
-''',encoding='utf-8')
-cp=';'.join(str(tools/n) for n in ['dexlib2.jar','guava.jar','jsr305.jar'])
-run(javac,'-cp',cp,'-d',build,helper);run(java,'-cp',str(build)+';'+cp,'KeepDependencies',build/'baseline.dex',build/'dependencies.dex')
-run(java,'-cp',bt/'lib/d8.jar','com.android.tools.r8.D8','--min-api','27','--lib',sdk,'--output',build/'d8',merged)
-assert len(list((build/'d8').glob('classes*.dex')))==1,'Unexpected multidex output'
-shutil.copy2(build/'d8/classes.dex',build/'project.dex')
-merge=build/'MergeDex.java';merge.write_text('''import java.io.*;import java.util.*;import org.jf.dexlib2.*;import org.jf.dexlib2.iface.*;import org.jf.dexlib2.immutable.*;
-public class MergeDex {public static void main(String[] a)throws Exception{ArrayList<ClassDef> all=new ArrayList<>();HashSet<String> names=new HashSet<>();int retained=0;for(int i=0;i<2;i++)for(ClassDef c:DexFileFactory.loadDexFile(new File(a[i]),Opcodes.forApi(27)).getClasses()){if(!names.add(c.getType()))throw new IllegalStateException("Duplicate "+c.getType());all.add(c);if(i==1)retained++;}if(retained!=59)throw new IllegalStateException("Expected 59 baseline dependency classes, got "+retained);DexFileFactory.writeDexFile(a[2],new ImmutableDexFile(Opcodes.forApi(27),all));Set<String> checked=new HashSet<>();for(ClassDef c:DexFileFactory.loadDexFile(new File(a[2]),Opcodes.forApi(27)).getClasses())checked.add(c.getType());if(!checked.equals(names))throw new IllegalStateException("DEX class coverage mismatch");System.out.println("Verified "+checked.size()+" classes including all "+retained+" dependency classes");}}
-''',encoding='utf-8')
-run(javac,'-cp',cp,'-d',build,merge);run(java,'-cp',str(build)+';'+cp,'MergeDex',build/'project.dex',build/'dependencies.dex',build/'classes.dex')
-unsigned=build/'unsigned.apk'
-run(bt/'aapt.exe','package','-f','-M',root/'visual-shell/AndroidManifest.xml','-S',root/'visual-shell/res','-A',root/'visual-shell/assets','-I',sdk,'-F',unsigned)
-with zipfile.ZipFile(unsigned,'a',zipfile.ZIP_DEFLATED) as dst:dst.write(build/'classes.dex','classes.dex')
-run(bt/'zipalign.exe','-f','4',unsigned,build/'aligned.apk')
-run(java,'-jar',bt/'lib/apksigner.jar','sign','--key',tools/'testkey.pk8','--cert',tools/'testkey.x509.pem','--out',build/'leo-visual.apk',build/'aligned.apk')
-run(java,'-jar',bt/'lib/apksigner.jar','verify','--verbose','--print-certs',build/'leo-visual.apk')
-print('Candidate SHA256:',hashlib.sha256((build/'leo-visual.apk').read_bytes()).hexdigest())
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
+
+
+ROOT = Path(__file__).resolve().parent
+OUTPUT = ROOT / "output"
+TOOLS = OUTPUT / "windows-build-tools"
+BUILD = OUTPUT / "pocket-apps-build"
+VCARD_REVISION = "d90a30beaf9c1e3b7a9633bb32a49f26fdb3b1e2"
+
+
+def run(*args):
+    subprocess.run([str(arg) for arg in args], check=True)
+
+
+def only_tool(pattern):
+    matches = sorted(TOOLS.glob(pattern))
+    if len(matches) != 1:
+        raise SystemExit(f"Expected exactly one {pattern} under {TOOLS}")
+    return matches[0]
+
+
+def zip_entry(archive, name, data):
+    entry = ZipInfo(name)
+    entry.compress_type = ZIP_DEFLATED
+    archive.writestr(entry, data)
+
+
+def source_args(path, sources):
+    path.write_text("".join(f'"{source.as_posix()}"\n' for source in sorted(sources)), encoding="utf-8")
+    return "@" + str(path)
+
+
+def vcard_library(javac, sdk, work, supplied, source):
+    if supplied is not None:
+        with ZipFile(supplied) as dependency:
+            if "com/android/vcard/VCardParser.class" not in dependency.namelist():
+                raise SystemExit("The supplied vCard JAR does not contain the AOSP vCard classes.")
+        return supplied
+    if not (source / "java").is_dir():
+        raise SystemExit(f"Missing pinned vCard checkout: {source}. See android81/REBUILD.md.")
+    git = ["git", "-C", str(source)]
+    revision = subprocess.check_output(git + ["rev-parse", "HEAD"], text=True).strip()
+    dirty = subprocess.check_output(git + ["status", "--porcelain", "--", "java"], text=True).strip()
+    if revision != VCARD_REVISION or dirty:
+        raise SystemExit(f"Expected unmodified vCard Java sources at {VCARD_REVISION}.")
+    classes = work / "vcard"
+    classes.mkdir()
+    run(javac, "-encoding", "UTF-8", "-source", "1.8", "-target", "1.8", "-bootclasspath", sdk,
+        "-d", classes, source_args(work / "vcard-sources.txt", (source / "java").rglob("*.java")))
+    jar = work / "vcard.jar"
+    with ZipFile(jar, "w") as archive:
+        for path in sorted(classes.rglob("*.class")):
+            zip_entry(archive, path.relative_to(classes).as_posix(), path.read_bytes())
+    return jar
+
+
+def build(vcard, vcard_source):
+    java = only_tool("jdk/*/bin/java.exe")
+    javac = java.with_name("javac.exe")
+    sdk = only_tool("platform/*/android.jar")
+    build_tools = only_tool("build-tools/*/aapt.exe").parent
+    BUILD.mkdir(parents=True, exist_ok=True)
+    run(sys.executable, ROOT / "localization/generate.py")
+    with tempfile.TemporaryDirectory(prefix="source-", dir=BUILD) as temporary:
+        work = Path(temporary)
+        classes = work / "classes"
+        dex = work / "dex"
+        classes.mkdir()
+        dex.mkdir()
+        vcard = vcard_library(javac, sdk, work, vcard, vcard_source)
+        run(sys.executable, ROOT / "prepare-pocket-dependencies.py", "--output", work / "dependencies")
+        ssh = work / "dependencies/jsch.jar"
+        sources = sorted(
+            list((ROOT / "visual-shell").glob("*.java"))
+            + list((ROOT / "third-party/pocket").glob("*.java"))
+            + [ROOT / "localization" / name for name in ("L.java", "Language.java", "EnglishCatalog.java")]
+        )
+        run(javac, "-encoding", "UTF-8", "-source", "1.8", "-target", "1.8",
+            "-bootclasspath", sdk, "-classpath", os.pathsep.join(map(str, (vcard, ssh))),
+            "-d", classes, source_args(work / "sources.txt", sources))
+        jar = work / "leo-visual-classes.jar"
+        with ZipFile(jar, "w") as archive, ZipFile(ssh) as dependency:
+            for path in sorted(classes.rglob("*.class")):
+                zip_entry(archive, path.relative_to(classes).as_posix(), path.read_bytes())
+            for name in sorted(dependency.namelist()):
+                if name.endswith(".class"):
+                    zip_entry(archive, name, dependency.read(name))
+        run(java, "-cp", build_tools / "lib/d8.jar", "com.android.tools.r8.D8", "--min-api", "27",
+            "--lib", sdk, "--output", dex, jar, vcard)
+        if sorted(p.name for p in dex.glob("classes*.dex")) != ["classes.dex"]:
+            raise RuntimeError("Unexpected multidex output")
+        unsigned, aligned, signed = (work / name for name in ("unsigned.apk", "aligned.apk", "leo-visual.apk"))
+        run(build_tools / "aapt.exe", "package", "-f", "-M", ROOT / "visual-shell/AndroidManifest.xml",
+            "-S", ROOT / "visual-shell/res", "-A", ROOT / "visual-shell/assets", "-I", sdk, "-F", unsigned)
+        with ZipFile(unsigned, "a") as archive:
+            zip_entry(archive, "classes.dex", (dex / "classes.dex").read_bytes())
+        run(build_tools / "zipalign.exe", "-f", "4", unsigned, aligned)
+        signer = build_tools / "lib/apksigner.jar"
+        run(java, "-jar", signer, "sign", "--key", TOOLS / "testkey.pk8",
+            "--cert", TOOLS / "testkey.x509.pem", "--out", signed, aligned)
+        run(java, "-jar", signer, "verify", "--verbose", "--print-certs", signed)
+        jar.replace(BUILD / jar.name)
+        signed.replace(BUILD / signed.name)
+    print(f"Compiled {len(sources)} Java sources")
+    print("Candidate SHA256:", hashlib.sha256((BUILD / "leo-visual.apk").read_bytes()).hexdigest())
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--vcard", type=Path, help="use a prebuilt AOSP vCard JAR")
+    parser.add_argument("--vcard-source", type=Path, default=OUTPUT / "vcard-source")
+    args = parser.parse_args()
+    build(args.vcard.resolve() if args.vcard else None, args.vcard_source.resolve())

@@ -71,7 +71,7 @@ settings entry. Core feature history is in the [project matrix](../README.md#wha
 | 37 | Web apps | **Prior** local HTML/JS fixture and isolation checks. WebView GPU limitations and larger apps need a dedicated pass. |
 | 38 | News | **Fresh** feed parser, redirect, sanitized text, local fixtures and native page. Real subscriptions not contacted. |
 | 39 | Podcasts | **Fresh** enclosure, silent fixture preparation, download and verified SD copy. Long real playback remains separate. |
-| 40 | Internet radio | **Fresh** ICY metadata fixture and native page. Real stations/codec combinations not contacted. |
+| 40 | Internet radio | **13 Nov** physical `#` switches FM/Internet. România Actualități (MP3) and Kiss FM (AAC) entered playback over LTE with volume muted. All ten preset endpoints returned audio on the host. Earlier ICY fixture passed. |
 | 41 | SSH/SFTP | **Fresh** loopback fingerprint checks, login, PTY echo and file transfers. External servers and full-screen terminal apps are separate. |
 | 42 | Dictionary | **Fresh** starter data, import and normalized search. This dictionary is separate from the keyboard prediction lexicon. |
 | 43 | Study | **Fresh** persistent cards, scheduling and stable IDs. Long-term data and restoration remain separate. |

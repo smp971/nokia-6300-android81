@@ -7,6 +7,16 @@ final class MusicTransport {
     private int held;
     private boolean sought;
 
+    boolean seekKey(KeyEvent event, PlaybackService service) {
+        int key = event.getKeyCode();
+        if (key != KeyEvent.KEYCODE_4 && key != KeyEvent.KEYCODE_6) return false;
+        if (event.getAction() == KeyEvent.ACTION_DOWN && service != null
+                && event.getRepeatCount() % 3 == 0) {
+            service.seek(key == KeyEvent.KEYCODE_4 ? -10000 : 10000);
+        }
+        return true;
+    }
+
     boolean arrow(KeyEvent event, PlaybackService service) {
         int key = event.getKeyCode();
         if (key != KeyEvent.KEYCODE_DPAD_LEFT && key != KeyEvent.KEYCODE_DPAD_RIGHT) return false;

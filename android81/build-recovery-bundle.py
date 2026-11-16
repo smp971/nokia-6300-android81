@@ -4,11 +4,12 @@ Updated system APKs are overlaid into a COPY of the read-only system image.
 Uses WSL debugfs/e2fsck; never connects to or writes the phone.
 """
 from pathlib import Path
-import argparse, hashlib, importlib.util, json, re, shutil, subprocess, zipfile
+import argparse, hashlib, importlib.util, json, os, re, shutil, subprocess, zipfile
 
 ROOT=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('recovery_bundle',ROOT/'install-recovery-bundle.py')
 bundle=importlib.util.module_from_spec(spec);spec.loader.exec_module(bundle)
+BLANK_USERDATA_SHA256='cd89c3d37616925b17de315b9373e5a0e95f38d95ee12b9b0d8eb37afc9b9b0d'
 
 def sha(path):
     with path.open('rb') as source:return bundle.digest_stream(source)
@@ -19,7 +20,8 @@ def linux(path):
     return '/mnt/'+path[0].lower()+path[2:]
 
 def run(*args):
-    result=subprocess.run(['wsl','-d','kaios','--',*args],capture_output=True,text=True,timeout=300)
+    result=subprocess.run(['wsl','-d',os.environ.get('LEO_RECOVERY_WSL','kaios'),'--',*args],
+                          capture_output=True,text=True,timeout=300)
     if result.returncode:raise RuntimeError(result.stdout+result.stderr)
     return result.stdout
 
@@ -27,8 +29,14 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('snapshot',type=Path)
     parser.add_argument('--fresh',action='store_true',help='Build an explicitly destructive clean-install candidate, with empty userdata')
+    parser.add_argument('--blank-userdata',type=Path,help='Reuse the verified empty image from the previous clean bundle')
     parser.add_argument('--output',type=Path,default=ROOT/'output/recovery-bundles')
     args=parser.parse_args();snapshot=args.snapshot.resolve()
+    if args.blank_userdata and not args.fresh:parser.error('--blank-userdata requires --fresh')
+    if args.blank_userdata and (not args.blank_userdata.is_file()
+            or args.blank_userdata.stat().st_size!=bundle.FRESH_IMAGES['userdata'][1]
+            or sha(args.blank_userdata)!=BLANK_USERDATA_SHA256):
+        parser.error('expected the previously verified empty userdata image')
     meta=json.loads((snapshot/'snapshot.json').read_text())
     assert meta['format']=='leo-private-snapshot' and meta.get('complete') and meta['serial']=='695d'
     assert meta['read_only_source'] and not meta['userdata_included'] and not meta['radio_included']
@@ -65,14 +73,20 @@ def main():
     if args.fresh:
         clean_spec=importlib.util.spec_from_file_location('clean_system',ROOT/'prepare-clean-system.py')
         clean_module=importlib.util.module_from_spec(clean_spec);clean_spec.loader.exec_module(clean_module)
-        clean=clean_module.prepare(system,dest,linux,run)
+        visual=next((snapshot/entry['file'] for entry in meta['overlays']
+                     if entry['package']=='ro.leo.visual'),None)
+        clean=clean_module.prepare(system,dest,linux,run,visual=visual)
         data=dest/'images/userdata.img'
-        run('/root/android81-leo/src/out/host/linux-x86/bin/make_ext4fs','-l','2566893568','-a','data',linux(data))
-        with data.open('r+b') as empty:empty.truncate(2566897152)
-        # Android's legacy formatter leaves unset inode-bitmap padding. Repair
-        # only this newly generated blank PC image, then require a clean check.
-        repair=subprocess.run(['wsl','-d','kaios','--','e2fsck','-f','-y',linux(data)],capture_output=True,text=True,timeout=300)
-        if repair.returncode not in (0,1):raise RuntimeError(repair.stdout+repair.stderr)
+        if args.blank_userdata:
+            shutil.copyfile(args.blank_userdata,data)
+            if sha(data)!=BLANK_USERDATA_SHA256:raise RuntimeError('Blank userdata readback mismatch')
+        else:
+            run('/root/android81-leo/src/out/host/linux-x86/bin/make_ext4fs','-l','2566893568','-a','data',linux(data))
+            with data.open('r+b') as empty:empty.truncate(2566897152)
+            # Android's legacy formatter can leave unset inode-bitmap padding.
+            repair=subprocess.run(['wsl','-d',os.environ.get('LEO_RECOVERY_WSL','kaios'),'--',
+                                   'e2fsck','-f','-y',linux(data)],capture_output=True,text=True,timeout=300)
+            if repair.returncode not in (0,1):raise RuntimeError(repair.stdout+repair.stderr)
         run('e2fsck','-f','-n',linux(data))
         (dest/'clean-system-audit.json').write_text(json.dumps(clean,indent=2)+'\n')
     run('e2fsck','-f','-n',system_linux)
@@ -94,6 +108,7 @@ def main():
             'Erases ALL internal user data. Boot/system plus newly generated empty userdata.\n'
             'No accounts, messages, passwords, logs or calibration copied from userdata.\n'
             'Root ADB recovery required; this ZIP is NOT signed for stock Apply update.\n'
+            'The Leo Recovery on-device menu only accepts its build-time pinned archives.\n'
             'Offline verification: python install-recovery-bundle.py PACKAGE.zip\n'
             'Preflight: add --preflight --serial 695d --adb PATH_TO_ADB\n'
             'Installation additionally requires --install --confirm-target 695d --wipe-data --stock-backups DIRECTORY\n'
@@ -104,7 +119,7 @@ def main():
             'serial':'695d','snapshot':snapshot.name,'source_commit':subprocess.check_output(
                 ['git','-C',str(ROOT.parent),'rev-parse','HEAD']).decode().strip(),
             'working_tree_dirty':bool(subprocess.check_output(['git','-C',str(ROOT.parent),'status','--porcelain'])),
-            'build_tool_sha256':{name:sha(ROOT/name) for name in ['snapshot-leo-rom.py','build-recovery-bundle.py','install-recovery-bundle.py']+(['prepare-clean-system.py','leo-first-setup.sh','leo-clean-audio-seed.sh'] if args.fresh else [])},
+            'build_tool_sha256':{name:sha(ROOT/name) for name in ['snapshot-leo-rom.py','build-recovery-bundle.py','install-recovery-bundle.py']+(['prepare-clean-system.py','leo-first-setup.sh','leo-clean-audio-seed.sh','usb-mtp.sh','radio-runtime/start.sh'] if args.fresh else [])},
             'source_system_sha256':meta['partitions']['system']['sha256'],
             'recovery_backup_sha256':meta['partitions']['recovery']['sha256'],
             'overlays':meta['overlays'],'hardware_flash_validated':False,
