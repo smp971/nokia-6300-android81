@@ -71,7 +71,7 @@ and app builds. See [the flash procedure](FLASH-FROM-STOCK.md) for recovery.
 | Backup | Archive v5 includes starred Internet radio stations. An isolated on-device fixture covered restore, v1 app-data compatibility and retention of a failed journal. The main Leo process attempts pending rollback at startup. |
 | SIM and calling | SIM settings show both physical slots and the active subscription's data, voice and IMS state. SIM 2 live IMS voice registration and validated LTE data passed. An offline call demo verified the DTMF UI while a key was held and after release. Carrier DTMF, handover, Bluetooth call audio and VoWiFi require separate trials. |
 | USB | The device has a scoped update to the MTP transition service with an idle-call guard and one ADB fallback after a failed MTP request. A simulated request passed the no-op, rollback and active-call cases. Fifteen idle ADB reads passed after installation. MTP transitions and the intermittent disconnect remain open on hardware. |
-| Recovery | Both November Leo and stock KaiOS archives passed offline verification. The new native recovery catalog was generated. The WSL build stopped at `HCS_E_CONNECTION_TIMEOUT`, so no updated recovery image was produced. November clean install and full stock return remain pending. |
+| Recovery | The November Leo and stock KaiOS archives passed offline verification. The November internal clean install passed complete partition readback and reached Leo. The updated recovery booted both SD profiles. An additional Leo SD boot verified automatic baseband detection and both RIL processes. Full stock return and SD radio service tests remain pending. See the [SD radio evidence](leo-recovery/leo-sd-radio-hardware-validation.json) and the [installation guide](INSTALL-GUIDE.md). |
 
-The updated APK running on the Nokia has SHA-256
+The Leo Visual APK in the internal app follow-up had SHA-256
 `f3278ef6db5fc573fac5a4f14ac62f6e9a708819c2dcdb43622e2950d73996b5`.
