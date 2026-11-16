@@ -572,8 +572,20 @@ public final class MainActivity extends Activity {
             catch (RuntimeException ignored) { message = L.t("Nu se poate deschide"); invalidate(); }
         }
         final IconArt artwork=new IconArt();
+        final CatalogIcons catalogIcons = new CatalogIcons(getContext());
         final DashboardArt dashboardArt=new DashboardArt();
-        void icon(Canvas c,int index,float x,float y){artwork.draw(c,index,x,y);int count=index==0?UnreadState.calls:index==2?UnreadState.sms:0;if(showUnread&&count>0){p.setColor(palette.bar);c.drawCircle(x+20,y-20,7,p);p.setColor(0xffff577a);c.drawCircle(x+20,y-20,5,p);}}
+        void icon(Canvas c, int index, float x, float y) {
+            if (!grid || !catalogIcons.draw(c, index, x, y)) {
+                artwork.draw(c, index, x, y);
+            }
+            int count = index == 0 ? UnreadState.calls : index == 2 ? UnreadState.sms : 0;
+            if (showUnread && count > 0) {
+                p.setColor(palette.bar);
+                c.drawCircle(x + 20, y - 20, 7, p);
+                p.setColor(0xffff577a);
+                c.drawCircle(x + 20, y - 20, 5, p);
+            }
+        }
         protected void onDraw(Canvas output) {
             long start = android.os.SystemClock.elapsedRealtimeNanos();
             super.onDraw(output);
