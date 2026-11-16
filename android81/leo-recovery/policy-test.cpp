@@ -23,6 +23,12 @@ int main() {
     assert(!correctPhone("androidboot.serialno=695devil"));
     assert(!correctPhone("xandroidboot.serialno=695d"));
     const std::string checksum(64,'a');
+    const std::string previous(64,'b');
+    assert(matchesSdSystem(checksum,checksum,previous));
+    assert(matchesSdSystem(previous,checksum,previous));
+    assert(!matchesSdSystem(previous,checksum,""));
+    assert(!matchesSdSystem(std::string(64,'c'),checksum,previous));
+    assert(!matchesSdSystem("","",""));
     const auto backup=checksum+"  boot.img\r\n"+checksum+"  system.img\n";
     assert(backupChecksum(backup,"boot")==checksum);
     assert(backupChecksum(backup,"cache").empty());

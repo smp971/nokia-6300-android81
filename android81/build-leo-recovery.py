@@ -63,8 +63,16 @@ def blank_image(raw_path, expected_size):
     return digest.hexdigest()
 
 
-def add_leo_sd(entries, archive_path, catalog, assets):
+def add_leo_sd(entries, archive_path, catalog, assets, legacy_archive=None):
     images = {item['name']: item for item in catalog['images']}
+    legacy_system = None
+    if legacy_archive:
+        legacy = bundle.verify(legacy_archive)
+        if legacy['schema'] != 2 or legacy['files']['images/boot.img']['sha256'] != images['boot']['sha256']:
+            raise ValueError('Previous Leo SD ROM must share the approved Leo boot image')
+        legacy_system = legacy['files']['images/system.img']['sha256']
+        if legacy_system == images['system']['sha256']:
+            raise ValueError('Previous Leo SD ROM must provide a different System image')
     with zipfile.ZipFile(archive_path) as archive:
         boot = archive.read('images/boot.img')
     if hashlib.sha256(boot).hexdigest() != images['boot']['sha256']:
@@ -103,6 +111,8 @@ def add_leo_sd(entries, archive_path, catalog, assets):
     recovery_image.add(root,'leo-sd',b'',stat.S_IFDIR|0o700)
     recovery_image.add(root,'leo-framework-sd-v1',b'Leo SD loop storage.\n',stat.S_IFREG|0o644)
     recovery_image.add(root,'leo-system.sha256',images['system']['sha256'].encode(),stat.S_IFREG|0o644)
+    if legacy_system:
+        recovery_image.add(root,'leo-system-legacy.sha256',legacy_system.encode(),stat.S_IFREG|0o644)
     recovery_image.add(root,'leo-templates',b'',stat.S_IFDIR|0o700)
     templates = {}
     for name, size in (('data',512*1024**2), ('cache',64*1024**2)):
@@ -117,6 +127,7 @@ def add_leo_sd(entries, archive_path, catalog, assets):
         recovery_image.add(entries,path,body,fields[1])
         entries[path][0][2:4]=fields[2:4]
     return {'boot_source_sha256':images['boot']['sha256'],'system_sha256':images['system']['sha256'],
+            'legacy_system_sha256':legacy_system,
             'bootstrap_sha256':hashlib.sha256(bootstrap).hexdigest(),
             'radio_start_sha256':hashlib.sha256(radio_start).hexdigest(),'templates':templates}
 
@@ -126,18 +137,24 @@ def main():
     parser.add_argument('--stock',type=Path,default=ROOT/'output/recovery-entry-kit/kaios-original-restore-695d.zip')
     parser.add_argument('--output',type=Path,default=ROOT/'output/leo-recovery')
     parser.add_argument('--candidate-only',action='store_true',help='Emit an offline candidate and report without packaging an installer')
-    parser.add_argument('--package-only',action='store_true',help='Reuse an already compiled native binary')
+    native_mode=parser.add_mutually_exclusive_group()
+    native_mode.add_argument('--package-only',action='store_true',help='Reuse an already compiled native binary')
+    native_mode.add_argument('--catalog-only',action='store_true',help='Generate the native header for a separate recovery build')
     parser.add_argument('--hardware-evidence',type=Path,default=ROOT/'leo-recovery/hardware-validation.json',
                         help='Hardware validation JSON for the exact image being packaged')
     parser.add_argument('--mtp-responder',type=Path,
                         help='Static ARM uMTP Responder binary for a local USB MTP candidate')
     parser.add_argument('--leo-sd-assets',type=Path,
                         help='Directory with the Leo SD bootstrap and empty data.img.gz and cache.img.gz')
+    parser.add_argument('--legacy-leo-sd',type=Path,
+                        help='Previously approved Leo clean ROM whose SD System stays bootable')
     args=parser.parse_args()
     if args.candidate_only and args.output.resolve() == (ROOT/'output/leo-recovery').resolve():
         parser.error('--candidate-only requires a separate --output directory')
     if args.mtp_responder and not args.candidate_only:
         parser.error('--mtp-responder currently requires --candidate-only')
+    if args.legacy_leo_sd and not args.leo_sd_assets:
+        parser.error('--legacy-leo-sd requires --leo-sd-assets')
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     catalog={};packed=[];header=['#pragma once','#include "policy.h"','using leo::Image;using leo::Bundle;']
     for symbol,path,title,schema in [('Fresh',args.fresh,'Leo 0.14 / clean',2),('Stock',args.stock,'KaiOS original',1)]:
@@ -165,6 +182,9 @@ def main():
     generated='\n'.join(header)+'\n';path=out/'catalog_generated.h'
     if args.package_only and path.read_text()!=generated:raise ValueError('Catalog changed; recompile native recovery')
     path.write_text(generated,newline='\n')
+    if args.catalog_only:
+        print(f'Generated native catalog: {path}',flush=True)
+        return
     native_sources=('Android.mk','recovery.cpp','framebuffer.cpp','rgb565.h','policy.h','selector.cpp')
     inputs={name:sha(ROOT/'leo-recovery'/name) for name in native_sources}
     inputs['catalog_generated.h']=sha(path)
@@ -194,7 +214,7 @@ def main():
     recovery_image.add(entries,'kaios-root',b'',stat.S_IFDIR|0o755)
     for name,(fields,body) in kaios_sd_ramdisk.embedded(stock_path.read_bytes()).items():
         recovery_image.add(entries,'kaios-root/'+name,body,fields[1]);entries['kaios-root/'+name][0][2:4]=fields[2:4]
-    leo_sd = add_leo_sd(entries,args.fresh,catalog['fresh'],args.leo_sd_assets) if args.leo_sd_assets else None
+    leo_sd = add_leo_sd(entries,args.fresh,catalog['fresh'],args.leo_sd_assets,args.legacy_leo_sd) if args.leo_sd_assets else None
     if 'sbin/recovery-stock' in entries:raise ValueError('Unexpected recovery base')
     fields,original=entries['sbin/recovery']
     recovery_image.add(entries,'sbin/recovery-stock',original,stat.S_IFREG|0o755)

@@ -695,15 +695,25 @@ void sdBoot() {
 }
 void bootOptions() {
     int choice=0;
+    std::vector<std::string> rows={"Back","Boot internal OS","Boot from SD","Power off","Reboot bootloader"};
+    std::vector<std::string> hints={"Return to main menu.","Restart from internal storage.",
+        "Prepare or choose an SD system.","Turn off the phone.","Enter bootloader mode."};
+    if(!access("/leo-android-root/init",X_OK)) {
+        rows.insert(rows.begin()+2,"Boot Leo from SD");
+        hints.insert(hints.begin()+2,"Verify and start the SD copy once.");
+    }
     for(;;) {
-        choice=menu("Boot and power",{"Back","Boot internal OS","Boot from SD","Power off","Reboot bootloader"},
-            {"Return to main menu.","Restart from internal storage.",
-             "Use an SD system.","Turn off the phone.","Enter bootloader mode."},choice);
+        choice=menu("Boot and power",rows,hints,choice);
         if(choice<1)return;
-        if(choice==1)powerAction(false);
-        if(choice==2)sdBoot();
-        if(choice==3)powerAction(true);
-        if(choice==4)rebootBootloader();
+        const auto& action=rows[choice];
+        if(action=="Boot internal OS")powerAction(false);
+        else if(action=="Boot Leo from SD") {
+            if(!mountCard()||!probeSd(true))message("Leo SD unavailable",error);
+            else requestSdBoot(true);
+        }
+        else if(action=="Boot from SD")sdBoot();
+        else if(action=="Power off")powerAction(true);
+        else if(action=="Reboot bootloader")rebootBootloader();
     }
 }
 struct FileEntry {

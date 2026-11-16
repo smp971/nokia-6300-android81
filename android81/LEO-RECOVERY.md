@@ -162,6 +162,44 @@ read-only and starts both Qualcomm RIL processes. Android radio preferences
 are stored in the separate SD Data image. The modem uses the handset's native
 radio storage through the original Qualcomm service.
 
+### Same Leo build internally and on microSD
+
+The unified candidate pins the rebuilt 16 November clean ROM in the native
+installer and uses its exact System image for `LeoAndroid/` on the card.
+The Recovery menu under **Boot and power** offers **Boot internal OS** and
+**Boot Leo from SD** directly. The latter verifies the profile and starts it
+for one boot. Creating a card copy remains under **Boot from SD → Leo →
+Prepare card**. The earlier 13 November SD System is still accepted with
+its existing Data and Cache. The native internal entry uses the new ROM.
+
+Both paths start Leo Visual and Leo Keypad from the same System image. The
+internal path uses the internal Data partition and Leo's boot image. The SD
+path uses its own Data and Cache files and the recovery kernel. Account and
+app changes live in the profile where they were made. Normal power-on uses
+the installed internal system. KaiOS can remain installed internally while
+Leo is tried from the card.
+
+On `695d` the new SD copy completed first boot and selected Leo Home and the
+Leo Keypad IME. Android reported LTE on SIM 2. The first boot recovered from
+one framework restart and showed the Android SIM prompt before Leo setup.
+The matched internal image passed offline checks. See the [hardware results](leo-recovery/leo-unified-hardware-validation.json).
+
+To rebuild the matching SD archive after building Recovery with `--fresh`
+and `--leo-sd-assets`, pass the same ROM to the storage builder. `--legacy-leo-sd`
+can pin one previous clean ROM when both packages have identical Boot images.
+The PC tools check the native catalog, embedded SD hash and payload size and
+hash before producing the archive.
+
+```powershell
+python android81/build-leo-release-assets.py --leo-sd-only `
+  --output android81/output/leo-unified `
+  --recovery-dir android81/output/leo-unified/recovery `
+  --leo-rom PATH_TO_APPROVED_INTERNAL_ROM.zip `
+  --sd-assets android81/output/leo-recovery-android-sd/leo-sd-assets
+```
+
+For usage, see the [installation guide](INSTALL-GUIDE.md#unified-leo-kit).
+
 ## SD packages and files
 
 Keep the card's contents. The 16 November build expects this layout on FAT32 or

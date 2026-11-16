@@ -16,6 +16,7 @@ Settings, SystemUI and system dialogs for the 240 × 320 display and D-pad.
 | Artifact | Scope | Evidence |
 | --- | --- | --- |
 | Current development handset | Adaptive single-SIM Home, FM/Internet radio, dark Android UI and native Settings search fix | APK hash and device checks are recorded in the [technical audit](android81/PROJECT-AUDIT-2026-11-13.md) |
+| Unified kit | One System image for internal installation and one-shot boot from microSD. Recovery offers both boot choices. | SD first boot reached the Leo setup wizard with Leo Keypad selected and LTE on SIM 2. The matching internal ROM has offline validation. [Hardware results](android81/leo-recovery/leo-unified-hardware-validation.json) |
 | 16 November internal candidate | Rebuilt Leo Visual and current MTP and radio startup scripts | APK and clean ROM checks passed offline. Installation uses the PC recovery installer. |
 | 16 November Recovery and SD boot | One-shot Leo or KaiOS boot from microSD. Leo starts both Qualcomm RIL services against the original modem firmware. | Leo SD boot and automatic baseband detection verified on `695d`. Calls, SMS and mobile data in the SD profile remain unverified. |
 | 13 November ROM prerelease | Boot, system and empty userdata. Includes dark Android UI and the Settings fix. Predates the radio and single-SIM Home changes. | Clean flash and partition readback verified on 16 November. See the [first-boot notes](android81/FLASH-FROM-STOCK.md#16-november-hardware-test). [Private download](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-0.14.0-dev-20261113) |
@@ -34,7 +35,7 @@ Settings, SystemUI and system dialogs for the 240 × 320 display and D-pad.
 
 ## Installation and recovery
 
-[Download the private complete kit](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-complete-20261116)
+[Download the private unified kit](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-unified-20261116)
 · [Choose a package](android81/GITHUB-PACKAGES.md)
 · [Complete installation guide](android81/INSTALL-GUIDE.md)
 
@@ -42,7 +43,8 @@ Settings, SystemUI and system dialogs for the 240 × 320 display and D-pad.
 project TA-1286 (`695d`), root ADB in Leo Recovery, a mounted external SD card
 with at least 3.3 GiB of staging space, and the three verified stock backups
 for the write step. The host needs equivalent temporary storage. The current
-native recovery menu accepts the approved November and October archives.
+unified recovery menu accepts the rebuilt 16 November ROM. The previous internal
+ZIP uses the older recovery or the PC installer.
 
 From the repository root, verify the November download, then run the recovery
 preflight after the handset has entered recovery. Neither command flashes an

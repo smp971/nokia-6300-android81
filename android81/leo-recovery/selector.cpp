@@ -36,8 +36,11 @@ void log(const std::string& s){int f=open("/leo-selector.log",O_WRONLY|O_CREAT|O
 std::string readText(const std::string& path){int f=open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if(f<0)return "";char b[8192];ssize_t n=read(f,b,sizeof(b));close(f);return n>0&&n<(ssize_t)sizeof(b)?std::string(b,n):"";}
 bool node(const std::string& p,unsigned ma,unsigned mi){dev_t d=makedev(ma,mi);if(mknod(p.c_str(),S_IFBLK|0600,d)&&errno!=EEXIST)return false;struct stat st;return !lstat(p.c_str(),&st)&&S_ISBLK(st.st_mode)&&st.st_rdev==d;}
 std::string sdPath(const Profile& profile){return std::string(card)+"/"+profile.folder;}
-std::string systemSha(const Profile& profile){
-    return &profile==&kaios?kaiosSystemSha:readText(std::string(profile.root)+"/leo-system.sha256");
+bool approvedSystem(const Profile& profile,const std::string& sha){
+    if(&profile==&kaios)return sha==kaiosSystemSha;
+    const auto root=std::string(profile.root);
+    return leo::matchesSdSystem(sha,readText(root+"/leo-system.sha256"),
+                                  readText(root+"/leo-system-legacy.sha256"));
 }
 bool image(const Profile& profile,int i,bool hash) {
     const char* names[]={"system","data","cache"};uint64_t sizes[]={838860800ULL,536870912ULL,67108864ULL};
@@ -47,7 +50,7 @@ bool image(const Profile& profile,int i,bool hash) {
         (uint64_t)st.st_size==sizes[i]&&pread(f,magic,2,1080)==2&&magic[0]==0x53&&magic[1]==0xef;
     if(ok&&hash&&i==0){SHA256_CTX ctx;SHA256_Init(&ctx);std::vector<unsigned char> b(262144);ssize_t n;
         while((n=read(f,b.data(),b.size()))>0)SHA256_Update(&ctx,b.data(),n);
-        unsigned char raw[32];char text[65];SHA256_Final(raw,&ctx);for(int j=0;j<32;++j)snprintf(text+j*2,3,"%02x",raw[j]);ok=n==0&&std::string(text)==systemSha(profile);
+        unsigned char raw[32];char text[65];SHA256_Final(raw,&ctx);for(int j=0;j<32;++j)snprintf(text+j*2,3,"%02x",raw[j]);ok=n==0&&approvedSystem(profile,text);
     }
     close(f);return ok;
 }

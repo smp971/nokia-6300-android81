@@ -57,6 +57,9 @@ inline MountState mountState(const std::string& mounts,const std::string& device
 inline bool correctPhone(const std::string& cmdline) {
     return token(cmdline,"androidboot.serialno=695d");
 }
+inline bool matchesSdSystem(const std::string& sha,const std::string& current,const std::string& legacy) {
+    return sha.size()==64 && (sha==current || sha==legacy);
+}
 inline std::string backupChecksum(const std::string& report,const std::string& name) {
     std::istringstream rows(report);
     std::string line,checksum;

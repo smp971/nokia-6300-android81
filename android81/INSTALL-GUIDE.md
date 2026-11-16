@@ -5,16 +5,19 @@ Start with root ADB in KaiOS, an existing rooted Leo installation, or a working
 root recovery. The firmware ZIPs are for Leo Recovery and its PC installer.
 The original recovery's signed OTA menu uses a different package format.
 
-[Private complete release](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-complete-20261116) ·
+[Private unified release](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-unified-20261116) ·
+[Previous complete release](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-complete-20261116) ·
 [Public source](https://github.com/smp971/nokia-6300-android81)
 
 ## Choose a package
 
 | Asset | Purpose |
 | --- | --- |
-| `leo-fresh-0.14.0-dev-20261113-140016.zip` | Hardware-tested internal ROM. This exact ZIP is approved in the native SD installer. |
-| `leo-fresh-0.14.0-dev-20261116-all-fixes.zip` | New internal candidate with the rebuilt Leo Visual APK and updated runtime scripts. Verified offline. Install through the PC recovery installer. |
-| `leo-sd-storage-20261116.zip` | `LeoAndroid/` with the tested November System and separate empty Data and Cache. |
+| `leo-recovery-unified-20261116.zip` | Recommended recovery for the matching internal and SD packages. Includes the PC recovery installer. |
+| `leo-fresh-0.14.0-dev-20261116-all-fixes.zip` | Matched internal ROM with the rebuilt Leo Visual APK and updated runtime scripts. Verified offline. Use the unified Recovery native installer or the PC recovery installer. |
+| `leo-fresh-0.14.0-dev-20261116-all-fixes-sd.zip` | Matched `LeoAndroid/` profile with separate empty Data and Cache. First boot verified on the phone. |
+| `leo-fresh-0.14.0-dev-20261113-140016.zip` | Hardware-tested previous internal ROM. Use the radio-enabled recovery native installer or the PC installer. |
+| `leo-sd-storage-20261116.zip` | Previous `LeoAndroid/` profile with the 13 November System and separate empty Data and Cache. |
 | `kaios-sd-storage-695d.zip` | `LeoKaiOS/` with original KaiOS System and separate empty Data and Cache. |
 | `leo-recovery-sd-radio-20261116.zip` | Recovery with the SD selector, SD radio startup, partition tools and experimental USB MTP. Includes the PC recovery installer. |
 | `leo-root-recovery-695d.zip` | Root ADB entry from rooted stock KaiOS. Needed only when the phone lacks root recovery. |
@@ -32,11 +35,11 @@ and Python 3. From PowerShell in your download directory:
 ```powershell
 $adb = 'C:/platform-tools/adb.exe'
 Get-Content .\SHA256SUMS.txt
-Get-FileHash -Algorithm SHA256 .\leo-recovery-sd-radio-20261116.zip
+Get-FileHash -Algorithm SHA256 .\leo-recovery-unified-20261116.zip
 & $adb devices -l
 ```
 
-Extract the recovery ZIP into `recovery/` and the originals ZIP so you have
+Extract the unified recovery ZIP into `recovery/` and the originals ZIP so you have
 `stock-backups/`. Keep a second copy of your own personal files, messages and
 other app data. The original partition kit excludes personal userdata. Charge
 the phone and use a stable USB connection. For native internal installation,
@@ -82,21 +85,51 @@ LeoAndroid/               # Or LeoKaiOS/ if you extracted the KaiOS set
   cache.img
 ```
 
-For Leo, you can also copy the approved November ROM ZIP into
+For Leo, you can also copy the ROM ZIP approved by your Recovery into
 `LeoRecovery/packages/` and choose **Boot and power → Boot from SD → Leo →
 Prepare card**. This creates the same three images on the handset.
 
-In Recovery choose **Boot and power → Boot from SD → Leo → Boot Leo once**.
-Choose **KaiOS → Boot KaiOS once** for the KaiOS set. Recovery validates the
+In the unified Recovery choose **Boot and power → Boot Leo from SD**.
+In the previous Recovery choose **Boot and power → Boot from SD → Leo →
+Boot Leo once**. In either build choose **Boot from SD → KaiOS → Boot KaiOS
+once** for the KaiOS set. Recovery validates the
 images and consumes the one-time request. Normal reboot starts the system
 already installed internally. Each SD system keeps its own Data and Cache.
 
-The tested Leo SD build reports baseband with both RIL services running. SIM 2
-initially showed `READY`. Calls, SMS, mobile data and Bluetooth need separate
-validation in this SD profile. The November launcher can show a call-log
+The tested unified Leo SD build reports baseband with both RIL services running
+and SIM 2 `READY` on LTE. Calls, SMS, mobile data and Bluetooth need separate
+validation in this SD profile. The older launcher can show a call-log
 permission error during the first boot of fresh Data. Allow setup to finish
 and repeat **Boot Leo once** using the same folder to retain the saved grants.
 The source-built APK includes a guard for that permission race.
+
+### Unified Leo kit
+
+Use the unified recovery image together with the 16 November internal ROM
+and the matching `leo-fresh-0.14.0-dev-20261116-all-fixes-sd.zip` storage set.
+The three artifacts share the same System image SHA-256. The release also
+includes the previous Recovery and SD storage set for compatibility.
+
+The System SHA-256 is
+`0b2da6e3046c5ed42d21d09767dca9f77a72800781db5d6cb08ab479203f5464`.
+The unified Recovery image SHA-256 is
+`4391ca0b0a3b520f9d9d8d5e7b3b02893289a5a77c5e6b9103a767b144b7599c`.
+The PC entry installer accepts this exact Recovery with `--from-recovery`.
+
+- **Use the microSD copy.** Extract the matching storage ZIP to the root of
+  the card. If `LeoAndroid/` already exists, move the whole folder to a
+  separate backup location first so its Data and Cache stay together. From
+  Recovery choose **Boot and power → Boot Leo from SD**, then confirm.
+- **Install internally.** Put `leo-fresh-0.14.0-dev-20261116-all-fixes.zip` in
+  `LeoRecovery/packages/` and keep the three verified originals in
+  `LeoRecovery/stock-backups/`. With the unified Recovery use the native
+  installer in step 4, selecting this ZIP. This erases internal userdata.
+- **Switch back.** Use **Boot and power → Boot internal OS**, or restart
+  normally from the SD session. This boots whichever OS is installed in eMMC.
+
+The previous SD folder can still boot with the unified Recovery when placed
+back at `LeoAndroid/`. The two installations store app data independently.
+The recovery kernel and device behaviour must be verified separately on SD.
 
 ## 4. Install Leo internally
 
@@ -107,13 +140,17 @@ staging. A card reader is the straightforward way to copy large assets.
 Recovery's **Tools → USB MTP → microSD** is an experimental transfer option.
 Select **Stop MTP** after Windows finishes copying to restore ADB.
 
-### Native installer for the tested November ROM
+### Native installer
 
 Put the original files on the card at `LeoRecovery/stock-backups/`. Copy the
-**unchanged** `leo-fresh-0.14.0-dev-20261113-140016.zip` to
-`LeoRecovery/packages/`. Choose **Install → Install from SD → Leo → Check
-archive**. When ready choose **Review install → Erase & install**. Wait for
-the three verified writes, then choose **Boot and power → Boot internal OS**.
+ZIP approved by your Recovery to `LeoRecovery/packages/`:
+
+- Unified Recovery accepts `leo-fresh-0.14.0-dev-20261116-all-fixes.zip`.
+- Previous SD radio Recovery accepts `leo-fresh-0.14.0-dev-20261113-140016.zip`.
+
+Choose **Install → Install from SD → Leo → Check archive**. When ready choose
+**Review install → Erase & install**. Wait for the three verified writes,
+then choose **Boot and power → Boot internal OS**.
 
 ### PC installer for the new candidate
 

@@ -64,12 +64,46 @@ def storage_zip(output, folder, rom, system, templates, assets):
             raise ValueError(f'{output.name} failed archive readback')
 
 
+def build_matched_leo_sd(output, recovery_dir, rom, assets, bundle):
+    report = json.loads((recovery_dir / 'manifest.json').read_text(encoding='utf-8'))
+    image = (recovery_dir / 'leo-recovery-0.2.img').read_bytes()
+    if len(image) != 33554432 or hashlib.sha256(image).hexdigest() != report['sha256']:
+        raise ValueError('Recovery does not match its manifest')
+    if sha(rom) != report['catalog']['fresh']['sha256']:
+        raise ValueError('ROM is not the internal package approved by this recovery')
+    metadata = bundle.verify(rom)
+    system = metadata['files']['images/system.img']
+    sd = report['leo_sd']
+    ramdisk = recovery_image.unpack(image)['entries']
+    if (metadata['schema'] != 2 or system['sha256'] != sd['system_sha256'] or
+        metadata['files']['images/boot.img']['sha256'] != sd['boot_source_sha256'] or
+        system['sha256'].encode() != ramdisk['leo-android-root/leo-system.sha256'][1]):
+        raise ValueError('Recovery approves a different SD System image')
+    if set(sd['templates']) != {'data', 'cache'}:
+        raise ValueError('SD storage requires exactly Data and Cache templates')
+    for name, template in sd['templates'].items():
+        if template['sha256'].encode() != ramdisk[f'leo-android-root/leo-templates/{name}.sha256'][1]:
+            raise ValueError(f'Recovery approves a different {name} template')
+    storage_zip(output, 'LeoAndroid', rom, system, sd['templates'], assets)
+    print(f'Internal and SD System SHA-256: {system["sha256"]}', flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('output', 'stock-kit', 'qfil', 'leo-rom', 'recovery-dir', 'sd-assets', 'umtpsrc'):
+    for name in ('output', 'leo-rom', 'recovery-dir', 'sd-assets'):
         parser.add_argument('--' + name, type=Path, required=True)
+    for name in ('stock-kit', 'qfil', 'umtpsrc'):
+        parser.add_argument('--' + name, type=Path)
+    parser.add_argument('--leo-sd-only', action='store_true', help='Build a storage ZIP matching the chosen recovery and internal ROM')
     args = parser.parse_args()
     bundle = load_script('bundle', 'install-recovery-bundle.py')
+    if args.leo_sd_only:
+        args.output.mkdir(parents=True, exist_ok=True)
+        build_matched_leo_sd(args.output / f'{args.leo_rom.stem}-sd.zip', args.recovery_dir,
+                             args.leo_rom, args.sd_assets, bundle)
+        return
+    if not all((args.stock_kit, args.qfil, args.umtpsrc)):
+        parser.error('complete release requires --stock-kit, --qfil and --umtpsrc')
     installer = load_script('root_installer', 'install-root-recovery.py')
     args.output.mkdir(parents=True, exist_ok=True)
     image = args.recovery_dir / 'leo-recovery-0.2.img'

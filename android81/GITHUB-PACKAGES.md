@@ -1,5 +1,16 @@
 # Leo packages
 
+## 16 November 2026 · unified kit
+
+[Private unified release](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-unified-20261116) ·
+[Complete installation guide](INSTALL-GUIDE.md#unified-leo-kit)
+
+Use `leo-recovery-unified-20261116.zip` with the rebuilt internal ROM or its
+matching microSD ZIP. Both carry the same System image. The new SD copy
+booted through Leo setup with LTE reported on SIM 2. The internal ROM passed
+offline checks. The kit also includes the earlier Leo and Recovery artifacts,
+KaiOS on microSD, stock return, root recovery entry, QFIL p33 and both APKs.
+
 ## 16 November 2026 · complete kit
 
 [Private firmware release](https://github.com/smp971/nokia-6300-leo-releases/releases/tag/leo-complete-20261116) ·

@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-16",
+  "device": "Nokia 6300 4G TA-1286",
+  "recovery_image_sha256": "4391ca0b0a3b520f9d9d8d5e7b3b02893289a5a77c5e6b9103a767b144b7599c",
+  "recovery_partition_readback_verified": true,
+  "previous_sd_profile_verified_and_preserved": true,
+  "new_sd_profile_prepared_by_recovery": true,
+  "sd_system_sha256": "0b2da6e3046c5ed42d21d09767dca9f77a72800781db5d6cb08ab479203f5464",
+  "android_boot_completed_from_sd": true,
+  "sd_system_data_cache_loops_verified": true,
+  "internal_os_partitions_read_only": [29, 30, 32, 33, 39],
+  "initial_system_server_restart_recovered": true,
+  "first_setup_complete": true,
+  "default_home": "ro.leo.visual/.MainActivity",
+  "default_ime": "ro.leo.keypad/.KeypadIme",
+  "foreground_after_dismissing_android_sim_prompt": "ro.leo.visual/.SetupWizardActivity",
+  "baseband": "909_GEN_PACK-1.397603.1.412591.1",
+  "both_qualcomm_ril_services_running": true,
+  "sim_state": ["ABSENT", "READY"],
+  "network_type": ["Unknown", "LTE"],
+  "calls_sms_mobile_data_validated": false,
+  "internal_rom_flash_validated": false
+}
