@@ -11,7 +11,7 @@ import android.util.SparseArray;
 import java.io.IOException;
 import java.io.InputStream;
 
-/** Gaia artwork for the app catalog, keyed by the stable IDs in AppCatalog. */
+/** Gaia artwork for the app catalog and Home shortcuts, keyed by the stable IDs in AppCatalog. */
 final class CatalogIcons {
     private final AssetManager assets;
     private final SparseArray<Bitmap> icons = new SparseArray<>();

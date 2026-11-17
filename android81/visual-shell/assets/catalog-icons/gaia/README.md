@@ -20,3 +20,4 @@ Source: https://github.com/mozilla-b2g/gaia/tree/975a35c0f5010df341e96d6c5ec6021
 | phone.png | apps/dialer/style/icons/dialer_84.png |
 | settings.png | apps/settings/style/icons/settings_84.png |
 | video.png | disabled_apps/video/style/icons/video_84.png |
+| simcards.png | apps/settings/style/images/simcards.png |

@@ -546,9 +546,9 @@ public final class MainActivity extends Activity {
         }
         final IconArt artwork=new IconArt();
         final CatalogIcons catalogIcons = new CatalogIcons(getContext());
-        final DashboardArt dashboardArt=new DashboardArt();
+        final DashboardArt dashboardArt = new DashboardArt(getContext());
         void icon(Canvas c, int index, float x, float y) {
-            if (!grid || !catalogIcons.draw(c, index, x, y)) {
+            if (!catalogIcons.draw(c, index, x, y)) {
                 artwork.draw(c, index, x, y);
             }
             int count = index == 0 ? UnreadState.calls : index == 2 ? UnreadState.sms : 0;
