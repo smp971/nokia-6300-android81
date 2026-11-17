@@ -4,9 +4,51 @@ import android.content.Context;
 import android.graphics.*;
 import android.util.AtomicFile;
 import java.io.*;
-/** Original deterministic wallpapers drawn once when selected. */
+/** Preset Leo and Gaia wallpapers. */
 final class StockWallpapers {
-    static final String[] NAMES=L.array(new String[]{"Aurora mov","Orbită albastră","Valuri de jad","Apus geometric","Pine · Sxmo","Material · Orhidee"});
+    static final String[] NAMES=L.array(new String[]{"Aurora mov","Orbită albastră","Valuri de jad","Apus geometric","Pine · Sxmo","Material · Orhidee",
+        "Gaia · Portocaliu", "Gaia · Safir", "Gaia · Bujor acvatic"});
+    private static final String[] GAIA_FILES = {
+        "Illus_Flow2_Orange.jpg", "Illus_Flow2_Sapphire.jpg", "Illus_Peony_Aqua.jpg"
+    };
+    private static final int GAIA_START = NAMES.length - GAIA_FILES.length;
+
+    static boolean isGaia(int kind) {
+        return kind >= GAIA_START && kind < NAMES.length;
+    }
+
+    private static Bitmap loadGaia(Context context, int kind) throws IOException {
+        try (InputStream image = context.getAssets().open("wallpapers/gaia/" + GAIA_FILES[kind - GAIA_START])) {
+            Bitmap bitmap = BitmapFactory.decodeStream(image);
+            if (bitmap == null) throw new IOException("Invalid Gaia wallpaper");
+            return bitmap;
+        }
+    }
+
+    static Bitmap render(Context context, int kind) throws IOException {
+        if (!isGaia(kind)) {
+            Bitmap bitmap = Bitmap.createBitmap(240, 302, Bitmap.Config.RGB_565);
+            draw(new Canvas(bitmap), kind, 240, 302);
+            return bitmap;
+        }
+        Bitmap original = loadGaia(context, kind);
+        try {
+            Bitmap wallpaper = Bitmap.createBitmap(240, 302, Bitmap.Config.RGB_565);
+            int width = original.getWidth();
+            int height = original.getHeight();
+            int cropWidth = Math.min(width, height * 240 / 302);
+            int cropHeight = Math.min(height, width * 302 / 240);
+            int left = (width - cropWidth) / 2;
+            int top = (height - cropHeight) / 2;
+            new Canvas(wallpaper).drawBitmap(original,
+                new Rect(left, top, left + cropWidth, top + cropHeight),
+                new Rect(0, 0, 240, 302), new Paint(Paint.FILTER_BITMAP_FLAG));
+            return wallpaper;
+        } finally {
+            original.recycle();
+        }
+    }
+
     static void draw(Canvas c,int kind,float width,float height){
         c.save();c.scale(width/240f,height/302f);Paint p=new Paint(3);Path path=new Path();
         if(kind==5){p.setShader(new LinearGradient(0,0,240,302,0xff141218,0xff292137,Shader.TileMode.CLAMP));c.drawRect(0,0,240,302,p);p.setShader(null);p.setColor(0xff352b47);c.drawCircle(240,30,148,p);p.setColor(0xff44365b);c.drawCircle(-35,285,160,p);p.setColor(0xff55446e);c.drawCircle(-40,312,115,p);c.restore();return;}
@@ -18,5 +60,5 @@ final class StockWallpapers {
         else for(int i=0;i<8;i++){path.reset();path.moveTo(-30,156+i*23);path.cubicTo(45,66+i*29,125,301-i*9,270,114+i*25);path.lineTo(270,330);path.lineTo(-30,330);path.close();p.setColor(i%2==0?0x152effdc:0x18200060);c.drawPath(path,p);}
         p.setColor(0x15ffffff);for(int i=0;i<22;i++)c.drawCircle((i*71+19)%240,(i*43+16)%174,i%3==0?1.3f:.6f,p);c.restore();
     }
-    static void apply(Context c,int kind)throws IOException{Bitmap b=Bitmap.createBitmap(240,302,Bitmap.Config.RGB_565);draw(new Canvas(b),kind,240,302);AtomicFile file=new AtomicFile(Appearance.wallpaper(c));FileOutputStream out=null;try{out=file.startWrite();if(!b.compress(Bitmap.CompressFormat.PNG,100,out))throw new IOException();file.finishWrite(out);}catch(IOException e){if(out!=null)file.failWrite(out);throw e;}finally{b.recycle();}}
+    static void apply(Context c,int kind)throws IOException{Bitmap b=render(c,kind);AtomicFile file=new AtomicFile(Appearance.wallpaper(c));FileOutputStream out=null;try{out=file.startWrite();if(!b.compress(Bitmap.CompressFormat.PNG,100,out))throw new IOException();file.finishWrite(out);}catch(IOException e){if(out!=null)file.failWrite(out);throw e;}finally{b.recycle();}}
 }
