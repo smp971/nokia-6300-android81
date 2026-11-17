@@ -1,13 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ro.leo.keypad" android:versionCode="14" android:versionName="0.14.0-dev">
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
     <permission android:name="ro.leo.keypad.MANAGE_BACKUP" android:protectionLevel="signature" />
-    <application android:label="Leo Keypad" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar">
+    <application android:label="Tastatură" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar">
         <provider android:name=".BackupProvider" android:authorities="ro.leo.keypad.backup" android:exported="true" android:permission="ro.leo.keypad.MANAGE_BACKUP" />
-        <service android:name=".KeypadIme" android:label="Leo Keypad · abc / T9" android:exported="true" android:permission="android.permission.BIND_INPUT_METHOD">
+        <service android:name=".KeypadIme" android:label="Tastatură · abc / T9" android:exported="true" android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter><action android:name="android.view.InputMethod" /></intent-filter>
             <meta-data android:name="android.view.im" android:resource="@xml/method" />
         </service>
-        <activity android:name=".DictionaryActivity" android:exported="true" android:label="Dicționar Leo" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".DictionaryActivity" android:exported="true" android:label="Dicționar" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".EditorTestActivity" android:exported="false" android:launchMode="singleTask" android:label="Test tastatură" android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
     </application>
 </manifest>

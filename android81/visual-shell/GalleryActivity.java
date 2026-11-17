@@ -61,14 +61,14 @@ public final class GalleryActivity extends LeoActivity {
 
     private void imageOptions() {
         stopSlides();
-        options(L.t("Imagine"),new String[]{L.t("Deschide"),L.t("Fundal Leo"),L.t("Reîncarcă galeria"),L.t("Informații imagine"),L.t("Imaginea anterioară"),L.t("Imaginea următoare"),"Slideshow",L.t("Interval slideshow"),L.t("Rotește 90°"),L.t("Partajează imaginea"),L.t("★ Adaugă / elimină favorit"),L.t("Marchează / demarchează · 5"),L.t("Selecție multiplă")},new Choice() { public void pick(int i) {
+        options(L.t("Imagine"),new String[]{L.t("Deschide"),L.t("Fundal"),L.t("Reîncarcă galeria"),L.t("Informații imagine"),L.t("Imaginea anterioară"),L.t("Imaginea următoare"),"Slideshow",L.t("Interval slideshow"),L.t("Rotește 90°"),L.t("Partajează imaginea"),L.t("★ Adaugă / elimină favorit"),L.t("Marchează / demarchează · 5"),L.t("Selecție multiplă")},new Choice() { public void pick(int i) {
             if(i==10){Set<String> ids=favorites();String uri=images.get(selected).toString();if(!ids.remove(uri))ids.add(uri);getSharedPreferences("gallery",0).edit().putStringSet("favorites",ids).apply();notice(L.t("Favorite actualizate"));if(face!=null)face.invalidate();}
             else if(i==11)mark();else if(i==12)selection();else if(i==6){if(images.isEmpty())return;slideshow=true;open();}
             else if(i==7)options(L.t("Interval slideshow"),new String[]{L.t("3 secunde"),L.t("5 secunde"),L.t("10 secunde")},new Choice(){public void pick(int n){getSharedPreferences("gallery",0).edit().putInt("interval",new int[]{3,5,10}[n]).apply();}});
             else if(i==8){if(!viewer)open();rotation=(rotation+90)%360;if(face!=null)face.invalidate();}
             else if(i==9)share();
-            else if(i>=4){selected=CircularNavigation.step(selected,i==4?-1:1,images.size());open();}else if(i==3){info();}else if(i==0) open(); else if(i==2) load(); else options(L.t("Aplici ca fundal Leo?"),new String[]{L.t("Anulează"),L.t("Aplică")},new Choice() { public void pick(int yes) {
-                if(yes==1) { final Uri uri=images.get(selected); worker.execute(new Runnable() { public void run() { try { Appearance.saveWallpaper(GalleryActivity.this,uri); ui(new Runnable() { public void run() { notice(L.t("Fundal Leo salvat")); } }); } catch(Exception|OutOfMemoryError error) { ui(new Runnable() { public void run() { notice(L.t("Fundalul nu poate fi salvat")); } }); } } }); }
+            else if(i>=4){selected=CircularNavigation.step(selected,i==4?-1:1,images.size());open();}else if(i==3){info();}else if(i==0) open(); else if(i==2) load(); else options(L.t("Aplici ca fundal?"),new String[]{L.t("Anulează"),L.t("Aplică")},new Choice() { public void pick(int yes) {
+                if(yes==1) { final Uri uri=images.get(selected); worker.execute(new Runnable() { public void run() { try { Appearance.saveWallpaper(GalleryActivity.this,uri); ui(new Runnable() { public void run() { notice(L.t("Fundal salvat")); } }); } catch(Exception|OutOfMemoryError error) { ui(new Runnable() { public void run() { notice(L.t("Fundalul nu poate fi salvat")); } }); } } }); }
             }});
         }});
     }

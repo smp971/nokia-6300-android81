@@ -3,6 +3,7 @@ import ro.leo.i18n.L;
 
 import android.content.*;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.telecom.*;
 import android.telephony.*;
@@ -13,21 +14,47 @@ public final class MobileSettingsActivity extends LeoActivity {
     private SubscriptionManager subscriptions;
     private TelephonyManager telephony;
     private TelecomManager telecom;
-    private final BroadcastReceiver updates=new BroadcastReceiver(){public void onReceive(Context c,Intent i){show();}};
+    private final Handler handler = new Handler();
+    private int detailSlot = -1;
+    private boolean overviewShown;
+    private final Runnable refresh = new Runnable() {
+        public void run() {
+            if (detailSlot < 0) show();
+        }
+    };
+    private final BroadcastReceiver updates = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            handler.removeCallbacks(refresh);
+            handler.postDelayed(refresh, 200);
+        }
+    };
     protected void onCreate(Bundle state) {
         super.onCreate(state);subscriptions=SubscriptionManager.from(this);
         telephony=(TelephonyManager)getSystemService(TELEPHONY_SERVICE);
         telecom=(TelecomManager)getSystemService(TELECOM_SERVICE);
     }
-    protected void onResume(){super.onResume();IntentFilter f=new IntentFilter();f.addAction("android.intent.action.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED");f.addAction("android.intent.action.ACTION_DEFAULT_SMS_SUBSCRIPTION_CHANGED");f.addAction("android.intent.action.ACTION_SUBINFO_RECORD_UPDATED");registerReceiver(updates,f);show();}
-    protected void onPause(){unregisterReceiver(updates);super.onPause();}
+    protected void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter("android.intent.action.ACTION_SUBINFO_RECORD_UPDATED");
+        filter.addAction("android.intent.action.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED");
+        filter.addAction("android.intent.action.ACTION_DEFAULT_SMS_SUBSCRIPTION_CHANGED");
+        filter.addAction("android.intent.action.SERVICE_STATE");
+        filter.addAction("android.intent.action.SIM_STATE_CHANGED");
+        registerReceiver(updates, filter);
+        if (detailSlot < 0) show();
+    }
+    protected void onPause() {
+        unregisterReceiver(updates);
+        handler.removeCallbacks(refresh);
+        super.onPause();
+    }
     private List<SubscriptionInfo> sims() {
         List<SubscriptionInfo> result=subscriptions.getActiveSubscriptionInfoList();
         if(result==null) return new ArrayList<>();
         result=new ArrayList<>(result);Collections.sort(result,new Comparator<SubscriptionInfo>(){public int compare(SubscriptionInfo a,SubscriptionInfo b){return Integer.compare(a.getSimSlotIndex(),b.getSimSlotIndex());}});return result;
     }
-    private String simName(int id) {
-        for(SubscriptionInfo s:sims()) if(s.getSubscriptionId()==id) return "SIM "+(s.getSimSlotIndex()+1);
+    private String simName(List<SubscriptionInfo> active, int id) {
+        for(SubscriptionInfo s:active) if(s.getSubscriptionId()==id) return "SIM "+(s.getSimSlotIndex()+1);
         return id>=0?L.t("Se inițializează"):L.t("Neales");
     }
     private TelephonyManager dataPhone(){return telephony.createForSubscriptionId(SubscriptionManager.getDefaultDataSubscriptionId());}
@@ -39,18 +66,34 @@ public final class MobileSettingsActivity extends LeoActivity {
         return (PhoneAccountHandle)telecom.getClass().getMethod("getUserSelectedOutgoingPhoneAccount").invoke(telecom);
     }
     private void show() {
+        detailSlot = -1;
+        String title = L.t("SIM-uri și date");
         try {
             final List<SubscriptionInfo> active=sims();
             String account;try{account=accountName(selectedAccount());}catch(Exception unavailable){account=L.t("Vezi Android");}
-            boolean enabled=dataPhone().isDataEnabled();
-            ArrayList<String> rows=new ArrayList<>(Arrays.asList(L.t("Apeluri · ")+account,"SMS · "+simName(SubscriptionManager.getDefaultSmsSubscriptionId()),L.t("Date · ")+simName(SubscriptionManager.getDefaultDataSubscriptionId()),L.t("Date mobile · ")+(enabled?L.t("Pornite"):L.t("Oprite")),L.t("Puncte de acces (APN)"),L.t("Rețea și operator Android"),L.t("SMS și MMS")));
+            String dataStatus;
+            try { dataStatus = L.t(dataPhone().isDataEnabled() ? "Pornite" : "Oprite"); }
+            catch (RuntimeException unavailable) { dataStatus = L.t("Indisponibil"); }
+            ArrayList<String> rows=new ArrayList<>(Arrays.asList(L.t("Apeluri · ")+account,"SMS · "+simName(active, SubscriptionManager.getDefaultSmsSubscriptionId()),L.t("Date · ")+simName(active, SubscriptionManager.getDefaultDataSubscriptionId()),L.t("Date mobile · ")+dataStatus,L.t("Puncte de acces (APN)"),L.t("Rețea și operator Android"),L.t("SMS și MMS")));
             for (int slot = 0; slot < 2; slot++) rows.add(slotSummary(slot, subscriptionAt(active, slot)));
-            list(L.t("SIM-uri și date"),rows,0,new Choice(){public void pick(int i){
+            if (replaceRows(title, rows)) return;
+            list(title,rows,0,new Choice(){public void pick(int i){
                 if(i==0) calls();else if(i==1||i==2) chooseSim(i==2);
                 else if(i==3) changeData();else if(i==4) androidPage(Settings.ACTION_APN_SETTINGS);else if(i==5) androidPage(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
                 else if(i==6)startActivity(new Intent(MobileSettingsActivity.this,MessageTransportActivity.class));else details(i-7);
             }},L.t("Actualiz."),new Runnable(){public void run(){show();}});
-        }catch(RuntimeException unavailable){begin(L.t("SIM-uri și date"));root.addView(text(L.t("Serviciul SIM nu este pregătit. Revino după inițializarea radio."),18));footer("","",L.t("Înapoi"));}
+            overviewShown = true;
+        } catch (RuntimeException unavailable) {
+            if (!overviewShown) {
+                errorPage(title, L.t("Serviciul SIM nu este pregătit. Revino după inițializarea radio."), new Runnable() {
+                    public void run() { show(); }
+                });
+                overviewShown = true;
+            }
+        }
+    }
+    @Override String rowMemoryKey(String title, int index, String label) {
+        return Integer.toString(index);
     }
     private boolean idle() {
         if(telecom.isInCall()){notice(L.t("Încheie apelul înainte de schimbarea SIM-ului"));return false;}return true;
@@ -96,7 +139,12 @@ public final class MobileSettingsActivity extends LeoActivity {
             catch(Exception failure){notice(L.t("Datele nu pot fi schimbate"));}
         }});
     }
-    private String radio(int type){switch(type){case TelephonyManager.NETWORK_TYPE_LTE:return "4G LTE";case TelephonyManager.NETWORK_TYPE_EDGE:case TelephonyManager.NETWORK_TYPE_GPRS:case TelephonyManager.NETWORK_TYPE_GSM:return "2G";case TelephonyManager.NETWORK_TYPE_UMTS:case TelephonyManager.NETWORK_TYPE_HSDPA:case TelephonyManager.NETWORK_TYPE_HSUPA:case TelephonyManager.NETWORK_TYPE_HSPA:case TelephonyManager.NETWORK_TYPE_HSPAP:return "3G";default:return type==0?L.t("Neînregistrat"):L.t("Tip ")+type;}}
+    private String radio(int type) {
+        if (type == TelephonyManager.NETWORK_TYPE_UNKNOWN) return L.t("Neînregistrat");
+        if (type == TelephonyManager.NETWORK_TYPE_IWLAN) return "IWLAN";
+        String technology = NetworkTelemetry.rat(type);
+        return technology.isEmpty() ? L.t("Tip necunoscut") : technology;
+    }
     private SubscriptionInfo subscriptionAt(List<SubscriptionInfo> active, int slot) {
         for (SubscriptionInfo sim : active) if (sim.getSimSlotIndex() == slot) return sim;
         return null;
@@ -115,14 +163,16 @@ public final class MobileSettingsActivity extends LeoActivity {
         String prefix = "SIM " + (slot + 1) + " · ";
         if (sim == null) return prefix + inactiveSlot(slot);
         TelephonyManager phone = telephony.createForSubscriptionId(sim.getSubscriptionId());
-        int data = phone.getDataNetworkType();
-        int voice = phone.getVoiceNetworkType();
-        return prefix + sim.getCarrierName() + "\n"
-            + radio(data == TelephonyManager.NETWORK_TYPE_UNKNOWN ? voice : data)
+        String operator = phone.getNetworkOperatorName();
+        CharSequence carrier = operator == null || operator.isEmpty() ? sim.getCarrierName() : operator;
+        return prefix + (carrier == null || carrier.length() == 0 ? L.t("Operator") : carrier) + "\n"
+            + radio(NetworkTelemetry.servingType(phone))
             + (ImsStatus.registered(slot) ? " · VoLTE" : "");
     }
 
     private void details(final int slot) {
+        detailSlot = slot;
+        overviewShown = false;
         begin("SIM " + (slot + 1));
         String value;
         try {

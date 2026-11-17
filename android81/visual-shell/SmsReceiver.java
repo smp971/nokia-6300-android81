@@ -27,10 +27,10 @@ public final class SmsReceiver extends BroadcastReceiver {
             notifyReceived(context,address,body.toString());
         } catch(Exception failed) { notify(context,L.t("SMS primit: stocare indisponibilă"),address); }
     }
-    static void notifyReceived(Context c,String number,String body){if(ConversationPrefs.has(c,"blocked",number))return;AccessibilityPrefs.alert(c,"sms");NotificationManager m=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);m.createNotificationChannel(new NotificationChannel("leo-sms",L.t("Mesaje Leo"),NotificationManager.IMPORTANCE_DEFAULT));m.notify("leo-sms",number.hashCode(),build(c,L.t("Mesaj SMS nou"),number,c.getSharedPreferences("sms-options",0).getBoolean("preview",false)?body:null));}
+    static void notifyReceived(Context c,String number,String body){if(ConversationPrefs.has(c,"blocked",number))return;AccessibilityPrefs.alert(c,"sms");NotificationManager m=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);m.createNotificationChannel(new NotificationChannel("leo-sms",L.t("Mesaje"),NotificationManager.IMPORTANCE_DEFAULT));m.notify("leo-sms",number.hashCode(),build(c,L.t("Mesaj SMS nou"),number,c.getSharedPreferences("sms-options",0).getBoolean("preview",false)?body:null));}
     static void notify(Context context,String title,String number) {
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.createNotificationChannel(new NotificationChannel("leo-sms",L.t("Mesaje Leo"),NotificationManager.IMPORTANCE_DEFAULT));
+        manager.createNotificationChannel(new NotificationChannel("leo-sms",L.t("Mesaje"),NotificationManager.IMPORTANCE_DEFAULT));
         manager.notify("leo-sms",number.hashCode(),build(context,title,number));
     }
     static Notification build(Context context,String title,String number){return build(context,title,number,null);}
@@ -41,7 +41,7 @@ public final class SmsReceiver extends BroadcastReceiver {
         PendingIntent mark=PendingIntent.getBroadcast(context,number.hashCode(),read,PendingIntent.FLAG_UPDATE_CURRENT);
         Intent answer=new Intent(context,MessagesActivity.class).setData(new android.net.Uri.Builder().scheme("leo-reply").authority("local").appendPath(number).build()).putExtra("number",number);PendingIntent reply=PendingIntent.getActivity(context,number.hashCode(),answer,PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(context,"leo-sms").setSmallIcon(android.R.drawable.stat_notify_chat)
-            .setVisibility(Notification.VISIBILITY_PRIVATE).setCategory(Notification.CATEGORY_MESSAGE).setContentTitle(title).setContentText(preview==null?L.t("Deschide Mesaje Leo"):preview.substring(0,Math.min(160,preview.length()))).setContentIntent(click).setAutoCancel(true)
-            .addAction(new Notification.Action.Builder(null,L.t("Răspunde în Leo"),reply).build()).addAction(new Notification.Action.Builder(null,L.t("Marchează ca citit"),mark).build()).build();
+            .setVisibility(Notification.VISIBILITY_PRIVATE).setCategory(Notification.CATEGORY_MESSAGE).setContentTitle(title).setContentText(preview==null?L.t("Deschide Mesaje"):preview.substring(0,Math.min(160,preview.length()))).setContentIntent(click).setAutoCancel(true)
+            .addAction(new Notification.Action.Builder(null,L.t("Răspunde"),reply).build()).addAction(new Notification.Action.Builder(null,L.t("Marchează ca citit"),mark).build()).build();
     }
 }

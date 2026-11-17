@@ -30,7 +30,7 @@ public final class UiFoundationTests extends Instrumentation {
         display=power.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,"Leo:ui-fixture");display.acquire(45000);
         check(NetworkStartup.label("preparing",false,false,24000).equals(L.t("REȚEA · PORNEȘTE MODEMUL")),"pre-registration modem stage");
         check(NetworkStartup.label("started",false,false,40000).equals(L.t("REȚEA · CAUTĂ OPERATORUL")),"started RIL does not imply registered service");
-        check(NetworkStartup.label("started",true,false,40000).equals(L.t("L E O · CONECTAT")),"registration supersedes boot stage");
+        check(NetworkStartup.label("started",true,false,40000).isEmpty(),"registered SIMs replace the boot banner");
         check(NetworkStartup.label("started",true,true,40000).equals(L.t("MOD AVION")),"airplane mode supersedes cached registration");
         check(NetworkStartup.label("failed",false,false,40000).equals(L.t("REȚEA · PORNIRE NEREUȘITĂ")),"startup failure is explicit");
         check(!NetworkStartup.label("started",false,false,200000).equals(L.t("REȚEA · CAUTĂ OPERATORUL")),"startup banner is bounded");

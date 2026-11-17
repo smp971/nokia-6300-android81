@@ -14,7 +14,7 @@ public final class GlobalSearchActivity extends LeoActivity {
   new SettingPage("Hotspot Wi-Fi",ConnectivityActivity.class,"hotspot|tethering|partajare internet","kind","hotspot"),
   new SettingPage("SIM-uri și rețea mobilă",MobileSettingsActivity.class,"sim|date mobile|mobile data|apn|4g|lte"),
   new SettingPage("Transfer USB",UsbTransferActivity.class,"usb|mtp|transfer fisiere"),
-  new SettingPage("Panou conexiuni Leo",ConnectionDashboardActivity.class,"conexiuni|connections|trafic date|data usage"),
+  new SettingPage("Panou conexiuni",ConnectionDashboardActivity.class,"conexiuni|connections|trafic date|data usage"),
   new SettingPage("Ecran și taste",DisplaySettingsActivity.class,"ecran|display|luminozitate|brightness|timeout"),
   new SettingPage("Personalizare",PersonalizationActivity.class,"home|scurtaturi|shortcuts|personalization"),
   new SettingPage("Tastatură și text",InputSettingsActivity.class,"tastatura|keyboard|t9|dictionar|dictionary"),
@@ -26,15 +26,15 @@ public final class GlobalSearchActivity extends LeoActivity {
   new SettingPage("Blocarea tastelor",KeypadLockSettingsActivity.class,"blocare|keypad lock|lock screen"),
   new SettingPage("Permisiuni și aplicații",AppControlActivity.class,"permisiuni|permissions|app control"),
   new SettingPage("Localizare",PrivacySettingsActivity.class,"gps|locatie|location|privacy"),
-  new SettingPage("Accesibilitate Leo",AccessibilitySettingsActivity.class,"accesibilitate|accessibility|contrast|text mare"),
+  new SettingPage("Accesibilitate",AccessibilitySettingsActivity.class,"accesibilitate|accessibility|contrast|text mare"),
   new SettingPage("Spațiu telefon / card SD",StorageSettingsActivity.class,"stocare|storage|memorie|sd"),
-  new SettingPage("Backup Leo",BackupActivity.class,"backup|copie|restaurare|restore"),
+  new SettingPage("Backup",BackupActivity.class,"backup|copie|restaurare|restore"),
   new SettingPage("Baterie",BatterySettingsActivity.class,"battery|acumulator|autonomie"),
   new SettingPage("Dată și oră",DateTimeSettingsActivity.class,"data|ora|date|time|fus orar|time zone"),
   new SettingPage("Limba interfeței",LanguageSettingsActivity.class,"limba|language|romana|english"),
-  new SettingPage("Actualizări Leo",UpdatesActivity.class,"actualizare|update|versiune"),
+  new SettingPage("Actualizări",UpdatesActivity.class,"actualizare|update|versiune"),
   new SettingPage("Configurare inițială",SetupWizardActivity.class,"setup|wizard|configurare"),
-  new SettingPage("Setări Leo",SettingsActivity.class,"setari|settings"),
+  new SettingPage("Setări",SettingsActivity.class,"setari|settings"),
  };
  private int scope;private boolean numericEntry;
  private int settingsResult=-1;
@@ -86,7 +86,7 @@ public final class GlobalSearchActivity extends LeoActivity {
  }
  protected void onCreate(Bundle saved) {
   super.onCreate(saved);
-  begin(L.t("Caută în Leo"));
+  begin(L.t("Căutare locală"));
   form = true;
   boolean settingsFirst=getIntent().getBooleanExtra(SETTINGS_FIRST,false);
   scope = saved == null ? (settingsFirst?SETTINGS_SCOPE:getIntent().getBooleanExtra("apps_first", false)?1:0)
@@ -164,7 +164,7 @@ public final class GlobalSearchActivity extends LeoActivity {
  private void showScopes() {
   String[] labels = Arrays.copyOf(L.array(SCOPES), SCOPES.length + 1);
   labels[SCOPES.length] = L.t("Schimbă scrierea abc / 123");
-  new KeypadDialog(this, L.t("Caută în Leo"), labels, new KeypadDialog.Action() {
+  new KeypadDialog(this, L.t("Căutare locală"), labels, new KeypadDialog.Action() {
    public void select(int index) {
     if (index == SCOPES.length) { numericEntry = !numericEntry; setInputMode(); }
     else { if(scope!=index)settingsResult=-1; scope = index; find(); }

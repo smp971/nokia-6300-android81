@@ -16,12 +16,12 @@ public final class DailyReadinessActivity extends LeoActivity {
         final ArrayList<String> rows=new ArrayList<>();
         ResolveInfo home=getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_HOME),android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
-        rows.add(L.t("Home Leo")+"\n"+state(home!=null&&home.activityInfo!=null&&getPackageName().equals(home.activityInfo.packageName)));
+        rows.add(L.t("Acasă")+"\n"+state(home!=null&&home.activityInfo!=null&&getPackageName().equals(home.activityInfo.packageName)));
         String ime=Settings.Secure.getString(getContentResolver(),Settings.Secure.DEFAULT_INPUT_METHOD);
         rows.add(L.t("Tastatură T9")+"\n"+state(ime!=null&&ime.startsWith("ro.leo.keypad/")));
         rows.add(L.t("Meniu global și mouse")+"\n"+state(LeoPointerService.connected()));
         String listeners=Settings.Secure.getString(getContentResolver(),"enabled_notification_listeners");
-        rows.add(L.t("Acces notificări Leo")+"\n"+state(listeners!=null&&listeners.contains(getPackageName()+"/")));
+        rows.add(L.t("Acces notificări")+"\n"+state(listeners!=null&&listeners.contains(getPackageName()+"/")));
         ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();
         ((ActivityManager)getSystemService(ACTIVITY_SERVICE)).getMemoryInfo(memory);
         rows.add(L.t("Memorie disponibilă")+"\n"+(memory.availMem/1048576)+" MiB · "+state(!memory.lowMemory));

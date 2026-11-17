@@ -35,7 +35,7 @@ public final class MediaActivity extends LeoActivity {
         }});
     }
     private void library(){
-        playerScreen=false;handler.removeCallbacks(refresh);if(face!=null)face.release();list(video?"Video Leo":L.t("Muzică Leo"),titles,selected,new Choice(){public void pick(int i){selected=i;play();}},L.t("Opțiuni"),new Runnable(){public void run(){options(L.t("Bibliotecă"),new String[]{L.t("Reîncarcă"), L.t("Redare curentă"), L.t("Oprește muzica")},new Choice(){public void pick(int i){if(i==0)load();else if(i==1)now();else stopService(new Intent(MediaActivity.this,PlaybackService.class));}});}});
+        playerScreen=false;handler.removeCallbacks(refresh);if(face!=null)face.release();list(video?L.t("Video"):L.t("Muzică"),titles,selected,new Choice(){public void pick(int i){selected=i;play();}},L.t("Opțiuni"),new Runnable(){public void run(){options(L.t("Bibliotecă"),new String[]{L.t("Reîncarcă"), L.t("Redare curentă"), L.t("Oprește muzica")},new Choice(){public void pick(int i){if(i==0)load();else if(i==1)now();else stopService(new Intent(MediaActivity.this,PlaybackService.class));}});}});
     }
     private void play() {
         startActivity(new Intent(this, VideoActivity.class).setData(uris.get(selected))
@@ -61,8 +61,9 @@ public final class MediaActivity extends LeoActivity {
 
     private void playerOptions(int selected) {
         new KeypadDialog(this, L.t("Redare"), new String[]{L.t("Bibliotecă"), L.t("Coada de redare"),
-            L.t("Detalii piesă"), L.t("Versuri locale · LRC"), L.t("Setări redare"), L.t("Oprește")}, new KeypadDialog.Action() {
+            L.t("Detalii piesă"), L.t("Versuri locale · LRC"), L.t("Setări redare"), L.t("Oprește"), ContextHelp.label()}, new KeypadDialog.Action() {
             public void select(int index) {
+                if (index == 6) { ContextHelp.open(MediaActivity.this, "MediaActivity"); return; }
                 if (preview) return;
                 if (index == 0) openLibrary();
                 else if (index == 1) queue();

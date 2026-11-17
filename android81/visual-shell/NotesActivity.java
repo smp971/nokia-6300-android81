@@ -89,10 +89,10 @@ public final class NotesActivity extends Activity {
     private void showList() {
         editing=false; editor=null;shown.clear();for(Note n:notes)if(query.isEmpty()||GlobalSearchActivity.matches(n.body,query))shown.add(n);java.util.Collections.sort(shown,new java.util.Comparator<Note>(){public int compare(Note a,Note b){return Boolean.compare(b.pinned,a.pinned);}});
         LinearLayout root=base();
-        TextView help=label(L.t("# opțiuni · ")+shown.size()+" / "+notes.size()+(query.isEmpty()?"":" · "+query),14); help.setGravity(Gravity.CENTER);
-        root.addView(help,new LinearLayout.LayoutParams(-1,height(24)));
+        TextView count=label(shown.size()+" / "+notes.size()+(query.isEmpty()?"":" · "+query),14); count.setGravity(Gravity.CENTER);
+        root.addView(count,new LinearLayout.LayoutParams(-1,height(24)));
         if(readFailed || shown.isEmpty()) {
-            TextView empty=label(readFailed?L.t("Nu pot citi notițele salvate"):query.isEmpty()?L.t("Nicio notiță\nSoft stânga: notiță nouă"):L.t("Niciun rezultat · # căutare"),18);
+            TextView empty=label(readFailed?L.t("Nu pot citi notițele salvate"):query.isEmpty()?L.t("Nicio notiță"):L.t("Niciun rezultat"),18);
             empty.setGravity(Gravity.CENTER); root.addView(empty,new LinearLayout.LayoutParams(-1,0,1));
             list=null;
         } else {
@@ -185,9 +185,10 @@ public final class NotesActivity extends Activity {
         if(readFailed)return;
         if(shown.isEmpty()){search();return;}
         final Note target=shown.get(selected);
-        new KeypadDialog(this,L.t("Notiță"),new String[]{L.t("Deschide"), L.t("Șterge"),target.pinned?L.t("Desprinde"):L.t("Fixează sus"),L.t("Caută text / T9"),L.t("Exportă text"),L.t("Arată toate"),L.t("Partajează notița")},new KeypadDialog.Action() {
+        new KeypadDialog(this,L.t("Notiță"),new String[]{L.t("Deschide"), L.t("Șterge"),target.pinned?L.t("Desprinde"):L.t("Fixează sus"),L.t("Caută text / T9"),L.t("Exportă text"),L.t("Arată toate"),L.t("Partajează notița"),ContextHelp.label()},new KeypadDialog.Action() {
             public void select(int choice) {
-                if(choice==6){try{ShareHubActivity.send(NotesActivity.this,ShareHubActivity.textFile(NotesActivity.this,target.body),"text/plain",title(target.body));}catch(Exception e){toast(L.t("Partajarea nu a putut fi pregătită"));}}else if(choice==0) open(selected);
+                if(choice==7) ContextHelp.open(NotesActivity.this,"NotesActivity");
+                else if(choice==6){try{ShareHubActivity.send(NotesActivity.this,ShareHubActivity.textFile(NotesActivity.this,target.body),"text/plain",title(target.body));}catch(Exception e){toast(L.t("Partajarea nu a putut fi pregătită"));}}else if(choice==0) open(selected);
                 else if(choice==2){target.pinned=!target.pinned;if(!write(notes))target.pinned=!target.pinned;showList();}
                 else if(choice==3)search();
                 else if(choice==4)exportNote(target);
@@ -204,7 +205,7 @@ public final class NotesActivity extends Activity {
         }).show();
     }
     private void search(){final EditText input=new EditText(this);input.setTextColor(Color.WHITE);input.setText(query);input.setSingleLine(true);input.setHint(L.t("Text sau cifre T9"));final android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this).setTitle(L.t("Caută notițe")).setView(input).setPositiveButton(L.t("Caută"),new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){query=input.getText().toString().trim();selected=0;showList();}}).setNegativeButton(L.t("Înapoi"),null).create();dialog.setOnKeyListener(new android.content.DialogInterface.OnKeyListener(){public boolean onKey(android.content.DialogInterface d,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_MENU){if(e.getAction()==KeyEvent.ACTION_DOWN&&e.getRepeatCount()==0){query=input.getText().toString().trim();selected=0;dialog.dismiss();showList();}return true;}return false;}});dialog.show();input.requestFocus();((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(input,InputMethodManager.SHOW_IMPLICIT);}
-    private void exportNote(Note n){try{File dir=new File(SaveLocations.selected(this),"Notes");if(!dir.isDirectory()&&!dir.mkdirs())throw new java.io.IOException();File f=new File(dir,"nota-"+System.currentTimeMillis()+"-"+UUID.randomUUID().toString().substring(0,8)+".txt");BackupEngine.write(f,n.body.getBytes(StandardCharsets.UTF_8));toast(L.t("Exportată în ")+(SaveLocations.key(this).equals("leo")?L.t("Documente Leo"):L.t("Card SD / Exports"))+" / Notes");}catch(Exception e){toast(L.t("Exportul a eșuat"));}}
+    private void exportNote(Note n){try{File dir=new File(SaveLocations.selected(this),"Notes");if(!dir.isDirectory()&&!dir.mkdirs())throw new java.io.IOException();File f=new File(dir,"nota-"+System.currentTimeMillis()+"-"+UUID.randomUUID().toString().substring(0,8)+".txt");BackupEngine.write(f,n.body.getBytes(StandardCharsets.UTF_8));toast(L.t("Exportată în ")+(SaveLocations.key(this).equals("leo")?L.t("Documente"):L.t("Card SD / Exports"))+" / Notes");}catch(Exception e){toast(L.t("Exportul a eșuat"));}}
     static String checklist(String body){StringBuilder out=new StringBuilder();for(String line:body.split("\n",-1)){if(out.length()>0)out.append('\n');out.append(line.startsWith("[ ] ")||line.startsWith("[x] ")?line:"[ ] "+line);}return out.toString();}
     static String toggleLine(String body,int cursor){int start=body.lastIndexOf('\n',Math.max(-1,cursor-1))+1;String tail=body.substring(start);if(tail.startsWith("[ ] "))tail="[x] "+tail.substring(4);else if(tail.startsWith("[x] "))tail="[ ] "+tail.substring(4);else tail="[ ] "+tail;return body.substring(0,start)+tail;}
     private void editOptions(){new KeypadDialog(this,L.t("Editor notiță"),new String[]{L.t("Salvează"),L.t("Transformă în listă de bifat"),L.t("Bifează / debifează rândul curent")},new KeypadDialog.Action(){public void select(int n){if(n==0)saveNote();else{int pos=editor.getSelectionStart();String body=editor.getText().toString();String next=n==1?checklist(body):toggleLine(body,Math.max(0,pos));if(next.length()>8192){toast(L.t("Maximum 8192 de caractere"));return;}editor.setText(next);editor.setSelection(Math.min(next.length(),Math.max(0,pos)));saveDraft();}}}).show();}

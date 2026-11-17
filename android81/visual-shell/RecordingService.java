@@ -18,10 +18,10 @@ public final class RecordingService extends Service implements AudioManager.OnAu
         if(recorder!=null)return START_NOT_STICKY;
         if(!PlaybackService.hardwareReady()){state=L.t("Driverul audio este inactiv");stopSelf();return START_NOT_STICKY;}
         if(PlaybackService.instance!=null)stopService(new Intent(this,PlaybackService.class));
-        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);NotificationChannel c=new NotificationChannel("leo-recorder",L.t("Reportofon Leo"),NotificationManager.IMPORTANCE_LOW);c.setSound(null,null);nm.createNotificationChannel(c);
+        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);NotificationChannel c=new NotificationChannel("leo-recorder",L.t("Reportofon"),NotificationManager.IMPORTANCE_LOW);c.setSound(null,null);nm.createNotificationChannel(c);
         PendingIntent open=PendingIntent.getActivity(this,411,new Intent(this,RecorderActivity.class),PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent stop=PendingIntent.getService(this,412,new Intent(this,RecordingService.class).setAction("stop"),PendingIntent.FLAG_UPDATE_CURRENT);
-        startForeground(411,new Notification.Builder(this,"leo-recorder").setSmallIcon(android.R.drawable.ic_btn_speak_now).setContentTitle(L.t("Înregistrare Leo")).setContentText(L.t("Microfon activ · maximum 10 minute")).setOngoing(true).setContentIntent(open).addAction(new Notification.Action.Builder(null,L.t("Oprește și salvează"),stop).build()).build());
+        startForeground(411,new Notification.Builder(this,"leo-recorder").setSmallIcon(android.R.drawable.ic_btn_speak_now).setContentTitle(L.t("Înregistrare")).setContentText(L.t("Microfon activ · maximum 10 minute")).setOngoing(true).setContentIntent(open).addAction(new Notification.Action.Builder(null,L.t("Oprește și salvează"),stop).build()).build());
         if(audio.requestAudioFocus(this,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){state=L.t("Microfon/sunet ocupat");stopSelf();return START_NOT_STICKY;}
         boolean folderReady=false;final int profile=RecorderProfile.selected(this);try{
             File dir=RecordingLocations.selected(this);folderReady=true;

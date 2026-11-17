@@ -28,8 +28,8 @@ public final class CalendarActivity extends LeoActivity {
     private void showMonth() {
         ++pageGeneration;month=true;loadDots(); begin("Calendar"); face=new MonthFace(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable() { public void run() {
-            options("Calendar",new String[]{L.t("Eveniment nou"),L.t("Azi"),L.t("Agenda Leo"),L.t("Instrumente · săptămână, căutare, ICS")},new Choice() { public void pick(int i) {
-                if(i==3) startActivity(new Intent(CalendarActivity.this,CalendarToolsActivity.class)); else if(i==0) edit(null); else if(i==1) { day.setTimeInMillis(System.currentTimeMillis()); showMonth(); } else events(true);
+            options("Calendar",new String[]{L.t("Eveniment nou"),L.t("Azi"),L.t("Agenda"),L.t("Instrumente · săptămână, căutare, ICS"),ContextHelp.label()},new Choice() { public void pick(int i) {
+                if(i==4) ContextHelp.open(CalendarActivity.this,"CalendarActivity"); else if(i==3) startActivity(new Intent(CalendarActivity.this,CalendarToolsActivity.class)); else if(i==0) edit(null); else if(i==1) { day.setTimeInMillis(System.currentTimeMillis()); showMonth(); } else events(true);
             }});
         }};
         footer(L.t("Opțiuni"),L.t("Ziua"),L.t("Înapoi")); face.setFocusable(true); face.requestFocus();
@@ -42,7 +42,7 @@ public final class CalendarActivity extends LeoActivity {
         }
         if(!create) return -1;
         ContentValues v=new ContentValues(); v.put("account_name","Leo local"); v.put("account_type",CalendarContract.ACCOUNT_TYPE_LOCAL);
-        v.put("name","Leo"); v.put("calendar_displayName","Calendar Leo"); v.put("calendar_color",0xff8b5fc9);
+        v.put("name","Leo"); v.put("calendar_displayName","Calendar"); v.put("calendar_color",0xff8b5fc9);
         v.put("calendar_access_level",CalendarContract.Calendars.CAL_ACCESS_OWNER); v.put("ownerAccount","Leo local");
         v.put("visible",1); v.put("sync_events",1); v.put("calendar_timezone",TimeZone.getDefault().getID());
         android.net.Uri uri=CalendarContract.Calendars.CONTENT_URI.buildUpon().appendQueryParameter(CalendarContract.CALLER_IS_SYNCADAPTER,"true")
@@ -139,7 +139,7 @@ public final class CalendarActivity extends LeoActivity {
                 if(eventDays.contains(value)){p.setColor(palette.accent);c.drawCircle(x,y+9,2,p);}
                 text(c,""+value,x,y,14,value==day.get(Calendar.DAY_OF_MONTH)?palette.ink:Color.WHITE);
             }
-            text(c,L.t("* luna precedentă · # luna următoare"),120,221,11,0xffd3bddf); c.restore();
+            c.restore();
         }
     }
 }

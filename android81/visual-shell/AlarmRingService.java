@@ -20,7 +20,7 @@ public final class AlarmRingService extends Service {
         if(intent!=null && "stop".equals(intent.getAction())) { stopSelf(); return START_NOT_STICKY; }
         String label=intent==null?L.t("Alarmă"):intent.getStringExtra("label");
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        NotificationChannel channel=new NotificationChannel("leo-alarm",L.t("Alarme Leo"),NotificationManager.IMPORTANCE_HIGH);
+        NotificationChannel channel=new NotificationChannel("leo-alarm",L.t("Alarme"),NotificationManager.IMPORTANCE_HIGH);
         channel.setSound(null,null); manager.createNotificationChannel(channel);
         Intent show=new Intent(this,AlarmRingActivity.class).putExtra("label",label).putExtra("alarm_id",intent==null?-1:intent.getIntExtra("alarm_id",-1)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent open=PendingIntent.getActivity(this,101,show,PendingIntent.FLAG_UPDATE_CURRENT);

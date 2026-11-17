@@ -4,18 +4,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,15 +22,23 @@ import ro.leo.i18n.L;
 public final class StreamRadioActivity extends PocketActivity {
     private static final String FAVORITES = BackupAppData.RADIO_FAVORITES;
     private final List<RomanianRadio.Station> rows = new ArrayList<>();
-    private boolean directory, favoritesOnly;
-    private int selected;
-    private TextView mark, stationTitle, stationState;
+    private boolean directory, listRequested, favoritesOnly, connecting;
+    private int selected = -1;
+    private RadioFace face;
     private String requested = "";
     private final BroadcastReceiver playback = new BroadcastReceiver() {
-        @Override public void onReceive(Context context, Intent intent) { updatePanel(); }
+        @Override public void onReceive(Context context, Intent intent) {
+            connecting = false;
+            updatePlaybackUi();
+        }
     };
 
     @Override protected void onCreate(Bundle state) {
+        if (state != null) {
+            selected = state.getInt("station", -1);
+            listRequested = state.getBoolean("directory");
+            favoritesOnly = state.getBoolean("favorites");
+        }
         super.onCreate(state);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
@@ -42,7 +46,14 @@ public final class StreamRadioActivity extends PocketActivity {
     @Override protected void onStart() {
         super.onStart();
         registerReceiver(playback, new IntentFilter("ro.leo.visual.MUSIC_CHANGED"));
-        updatePanel();
+        updatePlaybackUi();
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putInt("station", selected);
+        state.putBoolean("directory", listRequested);
+        state.putBoolean("favorites", favoritesOnly);
     }
 
     @Override protected void onStop() {
@@ -66,7 +77,12 @@ public final class StreamRadioActivity extends PocketActivity {
         if (favoritesOnly) {
             for (int i = rows.size() - 1; i >= 0; i--) if (!favorite(rows.get(i))) rows.remove(i);
         }
+        if (selected < 0) selected = stationIndex(activeUrl());
         selected = Math.max(0, Math.min(selected, rows.size() - 1));
+        if (!listRequested) {
+            showPlayer();
+            return;
+        }
 
         ArrayList<String> labels = new ArrayList<>();
         for (RomanianRadio.Station row : rows) {
@@ -77,8 +93,8 @@ public final class StreamRadioActivity extends PocketActivity {
                 new Choice() { public void pick(int index) { toggle(index); } }, L.t("Opțiuni"),
                 new Runnable() { public void run() { showOptions(); } });
         RadioSources.insert(this, true, new Runnable() { public void run() { openFm(); } });
-        insertPanel();
-        updatePanel();
+        back = new Runnable() { public void run() { showPlayer(); } };
+        updatePlaybackUi();
     }
 
     private boolean contains(String url) {
@@ -86,95 +102,151 @@ public final class StreamRadioActivity extends PocketActivity {
         return false;
     }
 
-    private void insertPanel() {
-        LinearLayout panel = new LinearLayout(this);
-        panel.setGravity(Gravity.CENTER_VERTICAL);
-        panel.setPadding(dp(9), dp(4), dp(8), dp(4));
-        GradientDrawable background = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{palette.card, Appearance.mix(palette.card, palette.accent, .12f)});
-        background.setCornerRadius(dp(7));
-        panel.setBackground(background);
+    private void showPlayer() {
+        directory = false;
+        listRequested = false;
+        begin(L.t("Radio Internet"));
+        face = new RadioFace();
+        root.addView(face, new LinearLayout.LayoutParams(-1, 0, 1));
+        left = new Runnable() { public void run() { showOptions(); } };
+        updatePlaybackUi();
+        face.requestFocus();
+    }
 
-        mark = text("NET", 16);
-        mark.setGravity(Gravity.CENTER);
-        mark.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
-        mark.setTextColor(0xff141b27);
-        mark.setPadding(0, 0, 0, 0);
-        panel.addView(mark, new LinearLayout.LayoutParams(dp(43), dp(38)));
-
-        LinearLayout details = new LinearLayout(this);
-        details.setOrientation(LinearLayout.VERTICAL);
-        details.setPadding(dp(9), 0, 0, 0);
-        stationTitle = text("", 15);
-        stationTitle.setMaxLines(2);
-        stationTitle.setEllipsize(TextUtils.TruncateAt.END);
-        stationTitle.setTypeface(UiChrome.TITLE);
-        stationState = text("", 12);
-        stationState.setTextColor(palette.accent);
-        stationState.setSingleLine(true);
-        stationState.setEllipsize(TextUtils.TruncateAt.END);
-        for (TextView line : new TextView[]{stationTitle, stationState}) {
-            line.setPadding(0, 0, 0, 0);
-            details.addView(line);
-        }
-        panel.addView(details, new LinearLayout.LayoutParams(0, -2, 1));
-        LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(-1, -2);
-        size.setMargins(dp(9), dp(3), dp(9), dp(5));
-        panel.setMinimumHeight(dp(54));
-        root.addView(panel, 3, size);
+    private void showDirectory() {
+        listRequested = true;
+        home();
     }
 
     @Override void onListSelection(String title, int index) {
-        selected = index;
-        updatePanel();
+        if (directory) {
+            selected = index;
+            updatePlaybackUi();
+        }
     }
 
     @Override Drawable rowIcon(String title, int index) { return new AppBadge("Radio Internet", dp(20)); }
 
-    private void updatePanel() {
-        if (!directory || mark == null || isFinishing()) return;
-        RomanianRadio.Station highlighted = selected < rows.size() ? rows.get(selected) : null;
+    private RomanianRadio.Station selectedStation() {
+        return selected >= 0 && selected < rows.size() ? rows.get(selected) : null;
+    }
+
+    private String activeUrl() {
         PlaybackService player = PlaybackService.instance;
-        String stream = player == null ? "" : player.radioUrl();
-        RomanianRadio.Station active = null;
-        for (RomanianRadio.Station candidate : rows) if (candidate.url.equals(stream)) {
-            active = candidate;
-            break;
+        return player == null ? "" : player.radioUrl();
+    }
+
+    private int stationIndex(String url) {
+        if (!url.isEmpty()) {
+            for (int i = 0; i < rows.size(); i++) if (rows.get(i).url.equals(url)) return i;
         }
-        RomanianRadio.Station display = active != null ? active : highlighted;
-        mark.setText(display == null ? "NET" : display.mark);
-        mark.setBackground(Appearance.surface(display == null ? palette.accent : display.color, dp(7)));
-        stationTitle.setText(!stream.isEmpty() ? PlaybackService.title : display == null
-                ? L.t("Niciun post favorit") : display.name);
-        if (!stream.isEmpty()) {
-            stationState.setText(player.playing() ? L.t("În direct") : PlaybackService.state);
-        } else if (highlighted != null && highlighted.url.equals(requested) && player == null && !L.t("Oprit").equals(PlaybackService.state)) {
-            stationState.setText(PlaybackService.state);
-        } else {
-            stationState.setText(L.t(display == null ? "Opțiuni pentru lista completă" : "Alege un post cu OK"));
+        return -1;
+    }
+
+    private boolean showingPlayer() {
+        return face != null && face.getParent() == root;
+    }
+
+    private void updatePlaybackUi() {
+        if (isFinishing() || root == null) return;
+        RomanianRadio.Station station = selectedStation();
+        String active = activeUrl();
+        if (showingPlayer()) {
+            boolean stop = !active.isEmpty() || connecting;
+            footer(L.t("Opțiuni"), stop ? L.t("Oprește") : station == null ? L.t("Posturi") : L.t("Ascultă"),
+                L.t("Înapoi"));
+            face.invalidate();
+        } else if (directory) {
+            footer(L.t("Opțiuni"), station == null ? "" : L.t(station.url.equals(active) ? "Oprește" : "Ascultă"),
+                L.t("Înapoi"));
         }
-        footer(L.t("Opțiuni"), highlighted == null ? "" : L.t(highlighted.url.equals(stream)
-                ? "Oprește" : "Ascultă"), L.t("Înapoi"));
     }
 
     private void toggle(int index) {
         if (index < 0 || index >= rows.size()) return;
+        selected = index;
         RomanianRadio.Station station = rows.get(index);
-        PlaybackService active = PlaybackService.instance;
-        if (active != null && station.url.equals(active.radioUrl())) {
+        if (station.url.equals(activeUrl())) stopRadio();
+        else startStation(station);
+        showPlayer();
+    }
+
+    private void togglePlayer() {
+        if (!activeUrl().isEmpty()) {
             stopRadio();
-            return;
+        } else if (!connecting) {
+            RomanianRadio.Station station = selectedStation();
+            if (station == null) showDirectory();
+            else startStation(station);
         }
+    }
+
+    private void stepStation(int direction) {
+        if (rows.isEmpty() || connecting) return;
+        int current = stationIndex(activeUrl());
+        selected = CircularNavigation.step(current < 0 ? selected : current, direction, rows.size());
+        if (!activeUrl().isEmpty() && selected != current) startStation(rows.get(selected));
+        else updatePlaybackUi();
+    }
+
+    private void startStation(RomanianRadio.Station station) {
         requested = station.url;
-        stationState.setText(L.t("Se conectează…"));
+        connecting = true;
         startForegroundService(new Intent(this, PlaybackService.class)
                 .setData(Uri.parse(station.url)).putExtra("title", station.name)
                 .putExtra(PlaybackService.EXTRA_RADIO, true));
+        updatePlaybackUi();
     }
 
     private void stopRadio() {
+        PlaybackService player = PlaybackService.instance;
+        if (player == null || player.radioUrl().isEmpty()) return;
         requested = "";
-        stopService(new Intent(this, PlaybackService.class));
+        connecting = false;
+        player.stopPlayback();
+        updatePlaybackUi();
+    }
+
+    private final class RadioFace extends View {
+        private final MediaPanel panel = new MediaPanel(StreamRadioActivity.this);
+        private final MediaPanel.State state = new MediaPanel.State();
+        private final AudioManager audio = (AudioManager) getSystemService(AUDIO_SERVICE);
+
+        RadioFace() {
+            super(StreamRadioActivity.this);
+            setFocusableInTouchMode(true);
+            state.internet = true;
+        }
+
+        void changeVolume(int direction) {
+            audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0);
+            state.refreshVolume();
+            invalidate();
+        }
+
+        @Override protected void onDraw(Canvas canvas) {
+            PlaybackService player = PlaybackService.instance;
+            String active = activeUrl();
+            int index = stationIndex(active);
+            RomanianRadio.Station station = connecting || active.isEmpty() ? selectedStation()
+                : index >= 0 ? rows.get(index) : null;
+            state.stationColor = station == null ? palette.accent : station.color;
+            state.stationMark = station == null ? "NET" : station.mark;
+            if (!connecting && !active.isEmpty()) state.title = PlaybackService.title;
+            else state.title = station == null ? L.t("Niciun post favorit") : station.name;
+            state.detail = station == null ? L.t("Radio Internet") : L.t(station.category);
+            state.canStop = !active.isEmpty() || connecting;
+            state.playing = !active.isEmpty() && player != null && player.playing();
+            if (connecting) state.status = L.t("Se conectează…");
+            else if (state.playing) state.status = L.t("În direct");
+            else if (!active.isEmpty() || (station != null && station.url.equals(requested) && player == null)) {
+                state.status = PlaybackService.state;
+            } else state.status = L.t("Oprit");
+            state.signal = "";
+            state.spectrumLabel = L.t("Flux live");
+            state.readVolume(audio);
+            panel.draw(canvas, getWidth(), getHeight(), palette, state);
+        }
     }
 
     private boolean favorite(RomanianRadio.Station station) {
@@ -182,13 +254,17 @@ public final class StreamRadioActivity extends PocketActivity {
     }
 
     private void showOptions() {
-        RomanianRadio.Station station = selected < rows.size() ? rows.get(selected) : null;
+        int active = directory ? -1 : stationIndex(activeUrl());
+        RomanianRadio.Station station = active < 0 ? selectedStation() : rows.get(active);
         ArrayList<String> labels = new ArrayList<>();
         ArrayList<Runnable> actions = new ArrayList<>();
+        addOption(labels, actions, directory ? "Player radio" : "Posturi", new Runnable() { public void run() {
+            if (directory) showPlayer(); else showDirectory();
+        }});
         addOption(labels, actions, favoritesOnly ? "Toate posturile" : "Favorite radio", new Runnable() { public void run() {
             favoritesOnly = !favoritesOnly;
             selected = 0;
-            home();
+            showDirectory();
         }});
         if (station != null) {
             addOption(labels, actions, favorite(station) ? "Elimină favoritul" : "Adaugă la favorite", new Runnable() { public void run() {
@@ -202,8 +278,13 @@ public final class StreamRadioActivity extends PocketActivity {
             addOption(labels, actions, "Oprește radioul", new Runnable() { public void run() { stopRadio(); } });
         }
         addOption(labels, actions, "Adaugă post", new Runnable() { public void run() { addStation(); } });
-        addOption(labels, actions, "Media curentă", new Runnable() { public void run() { startActivity(new Intent(StreamRadioActivity.this, NowPlayingActivity.class)); } });
+        addOption(labels, actions, "Media curentă", new Runnable() { public void run() {
+            startActivity(new Intent(StreamRadioActivity.this, NowPlayingActivity.class));
+        }});
         addOption(labels, actions, "Radio FM", new Runnable() { public void run() { openFm(); } });
+        addOption(labels, actions, "Info / Ajutor", new Runnable() { public void run() {
+            ContextHelp.open(StreamRadioActivity.this, "StreamRadioActivity");
+        }});
         options(L.t("Opțiuni"), labels.toArray(new String[0]), new Choice() { public void pick(int index) { actions.get(index).run(); } });
     }
 
@@ -242,7 +323,7 @@ public final class StreamRadioActivity extends PocketActivity {
             PocketStore.write(StreamRadioActivity.this, "streams", data.put("stations", stations));
             favoritesOnly = false;
             selected = Integer.MAX_VALUE;
-            home();
+            showDirectory();
         }}, goHome());
     }
 
@@ -271,10 +352,41 @@ public final class StreamRadioActivity extends PocketActivity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (isJackNavigationNoise(event)) return true;
+        if (showingPlayer() && dispatchPlayerKey(event)) return true;
         if (directory && event.getKeyCode() == KeyEvent.KEYCODE_POUND) {
             if (event.getAction() == KeyEvent.ACTION_UP) openFm();
             return true;
         }
         return super.dispatchKeyEvent(event);
+    }
+
+    private boolean dispatchPlayerKey(KeyEvent event) {
+        int key = event.getKeyCode();
+        boolean pressed = event.getAction() == KeyEvent.ACTION_DOWN;
+        switch (key) {
+            case KeyEvent.KEYCODE_DPAD_UP:
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                if (pressed) face.changeVolume(key == KeyEvent.KEYCODE_DPAD_UP ? 1 : -1);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+            case KeyEvent.KEYCODE_4:
+            case KeyEvent.KEYCODE_6:
+                if (pressed && event.getRepeatCount() == 0) {
+                    stepStation(key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_4 ? -1 : 1);
+                }
+                return true;
+            case KeyEvent.KEYCODE_DPAD_CENTER:
+            case KeyEvent.KEYCODE_ENTER:
+            case KeyEvent.KEYCODE_5:
+                if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) togglePlayer();
+                return true;
+            case KeyEvent.KEYCODE_POUND:
+                if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) showDirectory();
+                return true;
+            default:
+                return false;
+        }
     }
 }

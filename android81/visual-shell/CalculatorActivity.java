@@ -55,12 +55,13 @@ public final class CalculatorActivity extends Activity {
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER: calculate(); return true;
             case KeyEvent.KEYCODE_MENU:
-                new KeypadDialog(this,"Calculator",new String[]{L.t("Șterge tot"), L.t("Schimbă semnul"), L.t("Procent (%)"), L.t("Paranteză ("), L.t("Paranteză )")},new KeypadDialog.Action() {
+                new KeypadDialog(this,"Calculator",new String[]{L.t("Șterge tot"), L.t("Schimbă semnul"), L.t("Procent (%)"), L.t("Paranteză ("), L.t("Paranteză )"),ContextHelp.label()},new KeypadDialog.Action() {
                     public void select(int choice) {
                         if(choice==0) { expression=""; result=false; message=""; face.invalidate(); }
                         else if(choice==1) {
                             if(!expression.isEmpty()) { expression="-("+expression+")"; result=false; calculate(); }
-                        } else append(choice==2?"%":choice==3?"(":")");
+                        } else if(choice==5) ContextHelp.open(CalculatorActivity.this,"CalculatorActivity");
+                        else append(choice==2?"%":choice==3?"(":")");
                     }
                 }).show(); return true;
         }
@@ -74,16 +75,15 @@ public final class CalculatorActivity extends Activity {
         }
         final RetroStyle art=new RetroStyle();
         protected void onDraw(Canvas c) {
-            c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);UiChrome.header(c,"Calculator Leo",palette,art.p);
+            c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);UiChrome.header(c,L.t("Calculator"),palette,art.p);
             art.panel(c,10,54,230,149,0xffd4e9c6,0xff8eaa91);
-            art.text(c,"CALCULATOR  /  LEO CLASSIC",22,73,10,0xff314c40,Paint.Align.LEFT);
+            art.text(c,"CALCULATOR  /  CLASIC",22,73,10,0xff314c40,Paint.Align.LEFT);
             String shown=expression.isEmpty()?"0":expression.replace('*','×').replace('/','÷');
             if(shown.length()>18)shown="…"+shown.substring(shown.length()-17);
             art.digits(c,shown,218,121,0xff183a30);art.fit(c,message.isEmpty()?L.t("Introduceți o expresie"):message,120,140,11,196,0xff345349,Paint.Align.CENTER);
             String[] keys={"↑  +","↓  −","←  ×","→  ÷"};
             for(int i=0;i<4;i++){float x=10+i*57;art.panel(c,x,166,x+49,205,Appearance.mix(palette.card,Color.WHITE,.16f),palette.card);art.text(c,keys[i],x+24,192,16,Color.WHITE,Paint.Align.CENTER);}
             art.text(c,L.t("0–9 cifre  ·  * zecimal"),120,229,14,Color.WHITE,Paint.Align.CENTER);
-            art.text(c,L.t("# șterge tot  ·  OK rezultat"),120,250,13,palette.accent,Paint.Align.CENTER);
             p.setColor(palette.bar);c.drawRect(0,276,240,302,p);art.text(c,L.t("Opțiuni"),7,293,12,Color.WHITE,Paint.Align.LEFT);art.text(c,"=",120,294,20,palette.accent,Paint.Align.CENTER);art.text(c,L.t("Șterge"),233,293,12,Color.WHITE,Paint.Align.RIGHT);c.restore();
         }
     }

@@ -25,7 +25,7 @@ public final class HomeCanvasTests extends Instrumentation {
             check(loaded.begin(c,2,50,30,190,80,true),"hidden item available in editor");c.restore();checks++;
             loaded.reset(2);check(loaded.visible[2]&&loaded.size[2]==100&&loaded.rotation[2]==0&&loaded.x[2]==0,"reset restores safe default");checks++;
             Paint textPaint=new Paint(Paint.ANTI_ALIAS_FLAG);textPaint.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));
-            String[] texts={"LEO · CONNECTED","16:30","Saturday, 31 October","SIM 2: orange · 4G"};
+            String[] texts={"NETWORK · STARTING MODEM","16:30","Saturday, 31 October","SIM 2: orange · 4G"};
             int[] sizes={10,36,13,11};
             for(int index=0;index<texts.length;index++){
                 int item=index+1;loaded.reset(item);textPaint.setTextSize(sizes[index]);

@@ -44,7 +44,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <application android:name=".LeoApplication" android:label="Leo Visual" android:allowBackup="false" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.NoActionBar">
+    <application android:name=".LeoApplication" android:label="N0d3 KeyShell" android:allowBackup="false" android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:screenOrientation="portrait" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -78,45 +78,45 @@
         <service android:name=".LeoNotificationService" android:exported="true" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
         </service>
-        <activity android:name=".DownloadsActivity" android:exported="false" android:label="Descărcări Leo" android:screenOrientation="portrait" />
-        <activity android:name=".GalleryActivity" android:exported="false" android:label="Gallery Leo" android:screenOrientation="portrait" />
-        <activity android:name=".WallpaperActivity" android:exported="false" android:label="Wallpaper Leo" android:screenOrientation="portrait" />
-        <activity android:name=".ConverterActivity" android:exported="false" android:label="Converter Leo" android:screenOrientation="portrait" />
+        <activity android:name=".DownloadsActivity" android:exported="false" android:label="Descărcări" android:screenOrientation="portrait" />
+        <activity android:name=".GalleryActivity" android:exported="false" android:label="Galerie" android:screenOrientation="portrait" />
+        <activity android:name=".WallpaperActivity" android:exported="false" android:label="Fundaluri" android:screenOrientation="portrait" />
+        <activity android:name=".ConverterActivity" android:exported="false" android:label="Convertor" android:screenOrientation="portrait" />
         <activity android:name=".InputSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".SoundSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".DisplaySettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".StorageSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".BatterySettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".NotificationSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
-        <activity android:name=".SettingsActivity" android:exported="false" android:label="Settings Leo" android:screenOrientation="portrait" />
-        <activity android:name=".ConnectivityActivity" android:exported="false" android:label="Conectivitate Leo" android:screenOrientation="portrait" />
-        <activity android:name=".MobileSettingsActivity" android:exported="false" android:label="SIM-uri Leo" android:screenOrientation="portrait" />
-        <activity android:name=".DateTimeSettingsActivity" android:exported="false" android:label="Dată și oră Leo" android:screenOrientation="portrait" />
-        <activity android:name=".PrivacySettingsActivity" android:exported="false" android:label="Localizare Leo" android:screenOrientation="portrait" />
-        <activity android:name=".KeypadLockSettingsActivity" android:exported="false" android:label="Blocare taste Leo" android:screenOrientation="portrait" />
-        <activity android:name=".AppSettingsActivity" android:exported="false" android:label="Aplicații și permisiuni Leo" android:screenOrientation="portrait" />
+        <activity android:name=".SettingsActivity" android:exported="false" android:label="Setări" android:screenOrientation="portrait" />
+        <activity android:name=".ConnectivityActivity" android:exported="false" android:label="Conectivitate" android:screenOrientation="portrait" />
+        <activity android:name=".MobileSettingsActivity" android:exported="false" android:label="SIM-uri" android:screenOrientation="portrait" />
+        <activity android:name=".DateTimeSettingsActivity" android:exported="false" android:label="Dată și oră" android:screenOrientation="portrait" />
+        <activity android:name=".PrivacySettingsActivity" android:exported="false" android:label="Localizare" android:screenOrientation="portrait" />
+        <activity android:name=".KeypadLockSettingsActivity" android:exported="false" android:label="Blocare taste" android:screenOrientation="portrait" />
+        <activity android:name=".AppSettingsActivity" android:exported="false" android:label="Aplicații și permisiuni" android:screenOrientation="portrait" />
         <activity android:name=".MusicLibraryActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".NowPlayingActivity" android:exported="false" android:screenOrientation="portrait" />
-        <activity android:name=".MediaActivity" android:exported="false" android:label="Media Leo" android:screenOrientation="portrait" />
+        <activity android:name=".MediaActivity" android:exported="false" android:label="Media" android:screenOrientation="portrait" />
         <activity android:name=".UsbTransferActivity" android:exported="false" android:label="Transfer USB" android:screenOrientation="portrait" />
-        <activity android:name=".VideoActivity" android:exported="false" android:label="Video Leo" android:screenOrientation="portrait" />
-        <activity android:name=".RecorderActivity" android:exported="false" android:label="Recorder Leo" android:screenOrientation="portrait" />
-        <activity android:name=".KeypadLockActivity" android:exported="false" android:label="KeypadLock Leo" android:screenOrientation="portrait" />
+        <activity android:name=".VideoActivity" android:exported="false" android:label="Video" android:screenOrientation="portrait" />
+        <activity android:name=".RecorderActivity" android:exported="false" android:label="Reportofon" android:screenOrientation="portrait" />
+        <activity android:name=".KeypadLockActivity" android:exported="false" android:label="Blocare taste" android:screenOrientation="portrait" />
         <service android:name=".PlaybackService" android:exported="false" />
         <service android:name=".RecordingService" android:exported="false" />
         <activity android:name=".PointerTestActivity" android:exported="false" android:label="Test cursor" />
         <activity android:name=".AndroidAppsActivity" android:exported="false" android:label="Aplicații Android" android:screenOrientation="portrait" />
-        <activity android:name=".ClockActivity" android:exported="false" android:label="Ceas Leo" android:screenOrientation="portrait" />
-        <activity android:name=".WeatherActivity" android:exported="false" android:label="Meteo Leo" android:screenOrientation="portrait" />
+        <activity android:name=".ClockActivity" android:exported="false" android:label="Ceas" android:screenOrientation="portrait" />
+        <activity android:name=".WeatherActivity" android:exported="false" android:label="Meteo" android:screenOrientation="portrait" />
         <activity android:name=".GlobalSearchActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".StyleSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".PeopleBackupActivity" android:exported="false" android:screenOrientation="portrait" />
         <receiver android:name=".SmsDeliveryReceiver" android:exported="false" />
-        <activity android:name=".BackupActivity" android:exported="false" android:label="Backup Leo" android:screenOrientation="portrait" />
-        <activity android:name=".CalculatorActivity" android:exported="false" android:label="Calculator Leo" android:screenOrientation="portrait" />
-        <activity android:name=".NotesActivity" android:exported="false" android:label="Notițe Leo" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".ContactsActivity" android:exported="false" android:label="Contacte Leo" android:screenOrientation="portrait" />
-        <activity android:name=".PhoneActivity" android:exported="true" android:label="Telefon Leo" android:screenOrientation="portrait">
+        <activity android:name=".BackupActivity" android:exported="false" android:label="Backup" android:screenOrientation="portrait" />
+        <activity android:name=".CalculatorActivity" android:exported="false" android:label="Calculator" android:screenOrientation="portrait" />
+        <activity android:name=".NotesActivity" android:exported="false" android:label="Notițe" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ContactsActivity" android:exported="false" android:label="Contacte" android:screenOrientation="portrait" />
+        <activity android:name=".PhoneActivity" android:exported="true" android:label="Telefon" android:screenOrientation="portrait">
             <intent-filter><action android:name="android.intent.action.DIAL"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
             <intent-filter><action android:name="android.intent.action.DIAL"/><category android:name="android.intent.category.DEFAULT"/><data android:scheme="tel"/></intent-filter>
         </activity>
@@ -128,13 +128,13 @@
         <receiver android:name=".MissedCallReceiver" android:exported="true" android:permission="android.permission.MODIFY_PHONE_STATE">
             <intent-filter><action android:name="android.telecom.action.SHOW_MISSED_CALLS_NOTIFICATION"/></intent-filter>
         </receiver>
-        <activity android:name=".MessagesActivity" android:exported="false" android:label="Mesaje Leo" android:screenOrientation="portrait" />
-        <activity android:name=".AlarmsActivity" android:exported="false" android:label="Alarme Leo" android:screenOrientation="portrait" />
-        <activity android:name=".TimerActivity" android:exported="false" android:label="Temporizator Leo" android:screenOrientation="portrait" />
-        <activity android:name=".CalendarActivity" android:exported="false" android:label="Calendar Leo" android:screenOrientation="portrait" />
-        <activity android:name=".FilesActivity" android:exported="false" android:label="Fișiere Leo" android:screenOrientation="portrait" />
+        <activity android:name=".MessagesActivity" android:exported="false" android:label="Mesaje" android:screenOrientation="portrait" />
+        <activity android:name=".AlarmsActivity" android:exported="false" android:label="Alarme" android:screenOrientation="portrait" />
+        <activity android:name=".TimerActivity" android:exported="false" android:label="Temporizator" android:screenOrientation="portrait" />
+        <activity android:name=".CalendarActivity" android:exported="false" android:label="Calendar" android:screenOrientation="portrait" />
+        <activity android:name=".FilesActivity" android:exported="false" android:label="Fișiere" android:screenOrientation="portrait" />
         <provider android:name=".LeoFileProvider" android:authorities="ro.leo.visual.files" android:exported="false" android:grantUriPermissions="true" />
-        <activity android:name=".AlarmRingActivity" android:exported="false" android:launchMode="singleTop" android:label="Alarmă Leo" android:screenOrientation="portrait" />
+        <activity android:name=".AlarmRingActivity" android:exported="false" android:launchMode="singleTop" android:label="Alarmă" android:screenOrientation="portrait" />
         <service android:name=".AlarmRingService" android:exported="false" />
         <receiver android:name=".CalendarReminderReceiver" android:exported="false" />
         <receiver android:name=".AlarmReceiver" android:exported="false">

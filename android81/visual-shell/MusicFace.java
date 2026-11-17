@@ -31,14 +31,13 @@ final class MusicFace extends View {
 
     protected void onDraw(Canvas canvas) {
         long sleep = preview ? 0 : MusicSleep.remaining(getContext());
-        state.heading = sleep > 0 ? L.t("Muzică · ") + (sleep + 59999) / 60000 + " min" : L.t("Muzică Leo");
-        state.footer = L.t("# Bibliotecă");
+        state.heading = sleep > 0 ? L.t("Muzică · ") + (sleep + 59999) / 60000 + " min" : L.t("Muzică");
         state.spectrumLabel = meter;
         state.spectrum = spectrum;
         state.readMusic(audio);
         if (preview) {
             state.title = L.t("Lumini de seară");
-            state.artist = "Leo Sessions";
+            state.artist = "Sesiuni";
             state.detail = L.t("Piesa ") + "1 / 1";
             state.status = L.t("DEMO · fără redare");
             state.cover = null;

@@ -22,7 +22,7 @@ public final class GpsActivity extends LeoActivity implements LocationListener {
     private final Runnable refresh=new Runnable(){public void run(){paint();if(running)clock.postDelayed(this,1000);}};
     private final GnssStatus.Callback sky=new GnssStatus.Callback(){public void onSatelliteStatusChanged(GnssStatus s){satellites=s.getSatelliteCount();used=0;for(int i=0;i<satellites;i++)if(s.usedInFix(i))used++;paint();}};
     protected void onCreate(Bundle b){super.onCreate(b);manager=(LocationManager)getSystemService(LOCATION_SERVICE);show();}
-    private void show(){begin(L.t("GPS Leo"));ScrollView scroll=new ScrollView(this);details=text("",17);scroll.addView(details);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));scroll.setFocusable(true);scroll.requestFocus();left=new Runnable(){public void run(){menu();}};footer(L.t("Opțiuni"),"GPS",L.t("Înapoi"));paint();}
+    private void show(){begin(L.t("GPS"));ScrollView scroll=new ScrollView(this);details=text("",17);scroll.addView(details);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));scroll.setFocusable(true);scroll.requestFocus();left=new Runnable(){public void run(){menu();}};footer(L.t("Opțiuni"),"GPS",L.t("Înapoi"));paint();}
     private void paint(){if(details==null)return;StringBuilder s=new StringBuilder();
         boolean present=manager!=null&&manager.getAllProviders().contains(LocationManager.GPS_PROVIDER);
         s.append(!present?L.t("Serviciul GPS nu este disponibil"):running?L.t("GPS activ · caută sateliți"):L.t("GPS oprit · pornește din Opțiuni"));

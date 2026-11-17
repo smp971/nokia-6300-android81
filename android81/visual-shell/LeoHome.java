@@ -16,6 +16,9 @@ final class LeoHome {
     private static final int WIDTH = 240;
     private static final int BODY = 276;
     private static final int HEIGHT = 302;
+    private static final int APP_TILE_SIZE = 69;
+    private static final int APP_TILE_GAP = 4;
+    private static final int APP_GRID_LEFT = (WIDTH - APP_TILE_SIZE * 3 - APP_TILE_GAP * 2) / 2;
     private static final int INK = 0xfffaf8ff;
     private static final int MUTED = 0xffd3cddc;
     private static final Typeface REGULAR = Typeface.create("sans-serif", Typeface.NORMAL);
@@ -61,7 +64,8 @@ final class LeoHome {
             paint.setColor(0x66000000);
             canvas.drawRect(wallpaperBounds, paint);
         }
-        int heroBottom = screen.editing || (simSlots & visibleSims) != 0 ? 142 : 113;
+        boolean showSimRow = screen.editing || (simSlots & visibleSims) != 0;
+        int heroBottom = showSimRow ? 142 : 113;
         if (screen.homePart(canvas, 0, 9, 8, 231, heroBottom)) {
             paint.setColor(Color.WHITE);
             if (!screen.highContrast) paint.setShader(hero);
@@ -70,11 +74,14 @@ final class LeoHome {
             paint.setShader(null);
             canvas.restore();
         }
-        editableText(canvas, screen, 1, screen.networkBanner, 20, 29, 10, palette.accent, MEDIUM);
-        editableText(canvas, screen, 2, screen.time, 17, 79, screen.compactClock ? 37 : 52, INK, CLOCK);
-        editableText(canvas, screen, 3, screen.date, 20, 100, 13, MUTED, REGULAR);
         if (simSlots != 0) drawSims(canvas, screen, simSlots);
-        if (screen.editing) drawEditorHelp(canvas, heroBottom + 8);
+        if (!screen.networkBanner.isEmpty() || screen.editing) {
+            String banner = screen.networkBanner.isEmpty() ? L.t("Stare rețea") : screen.networkBanner;
+            editableText(canvas, screen, 1, banner, 20, showSimRow ? 131 : 29, 10, palette.accent, MEDIUM);
+        }
+        editableText(canvas, screen, 2, screen.time, 17, showSimRow ? 93 : 79,
+            screen.compactClock ? 37 : 52, INK, CLOCK);
+        editableText(canvas, screen, 3, screen.date, 20, showSimRow ? 112 : 100, 13, MUTED, REGULAR);
         if (showCard) drawCard(canvas, screen, heroBottom + 42);
         drawShortcuts(canvas, screen, showCard ? heroBottom + 91 : heroBottom + 53);
 
@@ -101,9 +108,9 @@ final class LeoHome {
     }
 
     private void drawSims(Canvas canvas, MainActivity.Screen screen, int slots) {
-        RectF first = new RectF(17, 110, 117, 136);
-        RectF second = new RectF(123, 110, 223, 136);
-        RectF full = new RectF(17, 110, 223, 136);
+        RectF first = new RectF(17, 16, 117, 42);
+        RectF second = new RectF(123, 16, 223, 42);
+        RectF full = new RectF(17, 16, 223, 42);
         screen.homeLayout.splitSims(full, first, second);
         for (int slot = 0; slot < 2; slot++) {
             if ((slots & (1 << slot)) == 0) continue;
@@ -115,16 +122,18 @@ final class LeoHome {
             surface(canvas, bounds.left, bounds.top, bounds.right, bounds.bottom, 10, palette.bar);
             float baseline = bounds.top + 17;
             screen.dashboardArt.sim(canvas, bounds.left + 12, baseline, slot, screen.inService[slot]);
+            String technology = screen.simTechnology[slot];
+            float suffixWidth = 0;
+            if (!technology.isEmpty()) {
+                prepare(10, MEDIUM);
+                suffixWidth = paint.measureText(technology) + 6;
+                text(canvas, technology, bounds.right - 6, baseline, 10, palette.accent, Paint.Align.RIGHT,
+                    suffixWidth, MEDIUM);
+            }
             text(canvas, screen.simLabels[slot], bounds.left + 23, baseline, 10, INK, Paint.Align.LEFT,
-                    bounds.width() - 28, MEDIUM);
+                    bounds.width() - 29 - suffixWidth, MEDIUM);
             canvas.restore();
         }
-    }
-
-    private void drawEditorHelp(Canvas canvas, float top) {
-        surface(canvas, 9, top, 231, top + 28, 10, tile);
-        text(canvas, L.t("Săgeți: mută · * / #: element"), 120, top + 11, 9, INK, Paint.Align.CENTER, 203, MEDIUM);
-        text(canvas, L.t("OK: aspect"), 120, top + 23, 9, palette.accent, Paint.Align.CENTER, 203, MEDIUM);
     }
 
     private void drawCard(Canvas canvas, MainActivity.Screen screen, float top) {
@@ -149,10 +158,13 @@ final class LeoHome {
             }
         }
         text(canvas, card.title, left, top + 13, 9, palette.accent, Paint.Align.LEFT, 165 - left, MEDIUM);
-        text(canvas, card.main, left, top + 29, 12, INK, Paint.Align.LEFT, 223 - left, MEDIUM);
-        text(canvas, card.detail, left, top + 40, 8, MUTED, Paint.Align.LEFT, 223 - left, REGULAR);
+        text(canvas, card.main, left, top + (card.detail.isEmpty() ? 33 : 29), 12, INK, Paint.Align.LEFT,
+            223 - left, MEDIUM);
+        if (!card.detail.isEmpty()) {
+            text(canvas, card.detail, left, top + 40, 8, MUTED, Paint.Align.LEFT, 223 - left, REGULAR);
+        }
         if (screen.cards.length > 1) {
-            String page = (screen.cardIndex + 1) + "/" + screen.cards.length + "  *";
+            String page = (screen.cardIndex + 1) + "/" + screen.cards.length ;
             text(canvas, page, 220, top + 13, 9, palette.accent, Paint.Align.RIGHT, 47, MEDIUM);
         }
         canvas.restore();
@@ -174,26 +186,14 @@ final class LeoHome {
         text(canvas, L.t("Aplicații"), 11, 26, 22, INK, Paint.Align.LEFT, 157, MEDIUM);
         String count = screen.order.length == 0 ? "0" : (screen.selected + 1) + " / " + screen.order.length;
         text(canvas, count, 229, 24, 11, MUTED, Paint.Align.RIGHT, 60, MEDIUM);
-        if (!screen.simple) {
-            surface(canvas, 9, 36, 231, 59, 11, tile);
-            text(canvas, "*", 22, 53, 13, palette.accent, Paint.Align.CENTER, 19, MEDIUM);
-            text(canvas, AppCatalog.CATEGORIES[screen.category], 120, 52, 11, INK, Paint.Align.CENTER, 172, MEDIUM);
-            text(canvas, "#", 218, 53, 12, palette.accent, Paint.Align.CENTER, 19, MEDIUM);
-        }
         int app = screen.focusedApp();
-        float top = screen.simple ? 42 : 66;
         if (app < 0) {
             text(canvas, L.t("Nicio aplicație"), 120, 144, 16, MUTED, Paint.Align.CENTER, 210, MEDIUM);
             return;
         }
-        if (screen.list) drawList(canvas, screen, top);
-        else drawGrid(canvas, screen, top);
-        if (!screen.list) {
-            text(canvas, screen.names[app], 11, 268, 11, palette.accent, Paint.Align.LEFT, 169, MEDIUM);
-            if (screen.order.length > 9) {
-                text(canvas, "0  ›", 230, 268, 11, palette.accent, Paint.Align.RIGHT, 35, MEDIUM);
-            }
-        }
+        text(canvas, screen.names[app], 11, 44, 13, palette.accent, Paint.Align.LEFT, 218, MEDIUM);
+        if (screen.list) drawList(canvas, screen, 53);
+        else drawGrid(canvas, screen, 53);
     }
 
     private void drawGrid(Canvas canvas, MainActivity.Screen screen, float top) {
@@ -201,12 +201,14 @@ final class LeoHome {
         for (int i = first; i < Math.min(first + 9, screen.order.length); i++) {
             int cell = i - first;
             int app = screen.order[i];
-            float x = 9 + 75 * (cell % 3);
-            float y = top + 62 * (cell / 3);
-            tile(canvas, x, y, x + 72, y + 59, 12, i == screen.selected);
-            icon(canvas, screen, app, x + 36, y + 23, .78f);
+            int step = APP_TILE_SIZE + APP_TILE_GAP;
+            float x = APP_GRID_LEFT + step * (cell % 3);
+            float y = top + step * (cell / 3);
+            float center = x + APP_TILE_SIZE / 2f;
+            tile(canvas, x, y, x + APP_TILE_SIZE, y + APP_TILE_SIZE, 5, i == screen.selected);
+            icon(canvas, screen, app, center, y + 27, .84f);
             String name = app == 9 ? "Android" : screen.names[app];
-            text(canvas, name, x + 36, y + 53, 10, INK, Paint.Align.CENTER, 65, MEDIUM);
+            text(canvas, name, center, y + 60, 10, INK, Paint.Align.CENTER, APP_TILE_SIZE - 7, MEDIUM);
         }
     }
 

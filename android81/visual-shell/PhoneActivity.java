@@ -76,14 +76,14 @@ public final class PhoneActivity extends LeoActivity {
         }});
     }
     private void phoneMenu(){
-        options(L.t("Telefon"),new String[]{L.t("Apelează"),L.t("Istoric apeluri"),L.t("Statistici"),L.t("Contacte"),L.t("Editează favorite"),L.t("Demo apel Leo"),L.t("Integrarea apelurilor"),L.t("Apeluri pierdute"),L.t("Servicii de apel")},new Choice(){public void pick(int i){
+        options(L.t("Telefon"),new String[]{L.t("Apelează"),L.t("Istoric apeluri"),L.t("Statistici"),L.t("Contacte"),L.t("Editează favorite"),L.t("Demo apel"),L.t("Integrarea apelurilor"),L.t("Apeluri pierdute"),L.t("Servicii de apel")},new Choice(){public void pick(int i){
             if(i==8)startActivity(new Intent(PhoneActivity.this,CallToolsActivity.class));else if(i==0){if(page!=0)dial(draft);else chooseSim();}else if(i==1)switchPage(1);else if(i==2)switchPage(2);
             else if(i==3)startActivity(new Intent(PhoneActivity.this,ContactsActivity.class));
             else if(i==4)options(L.t("Alege căsuța"),new String[]{L.t("Favorit 1"),L.t("Favorit 2"),L.t("Favorit 3")},new Choice(){public void pick(int slot){favoriteMenu(slot);}});
             else if(i==5)startActivity(new Intent(PhoneActivity.this,InCallActivity.class).putExtra("demo",true));else if(i==7){missedOnly=true;historyQuery="";historySim=-1;switchPage(1);}else integration();
         }});
     }
-    private void integration(){final TelecomManager t=(TelecomManager)getSystemService(TELECOM_SERVICE);String current=t.getDefaultDialerPackage();options(L.t("Apeluri în Leo"),new String[]{L.t("Rol telefon · ")+(getPackageName().equals(current)?L.t("Leo activ"):"Android"),L.t("Activează Telefon Leo"),L.t("Deschide apelul curent")},new Choice(){public void pick(int i){if(i==1){try{startActivity(new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME,getPackageName()));}catch(RuntimeException e){notice(L.t("Alegerea telefonului implicit nu este disponibilă"));}}else if(i==2){if(LeoInCallService.current()!=null)startActivity(new Intent(PhoneActivity.this,InCallActivity.class));else notice(L.t("Niciun apel curent în Leo"));}}});}
+    private void integration(){final TelecomManager t=(TelecomManager)getSystemService(TELECOM_SERVICE);String current=t.getDefaultDialerPackage();options(L.t("Istoric apeluri"),new String[]{L.t("Rol telefon · ")+(getPackageName().equals(current)?L.t("Activ"):"Android"),L.t("Activează Telefon"),L.t("Deschide apelul curent")},new Choice(){public void pick(int i){if(i==1){try{startActivity(new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME,getPackageName()));}catch(RuntimeException e){notice(L.t("Alegerea telefonului implicit nu este disponibilă"));}}else if(i==2){if(LeoInCallService.current()!=null)startActivity(new Intent(PhoneActivity.this,InCallActivity.class));else notice(L.t("Niciun apel curent"));}}});}
     private void dial(String initial) {
         page=0;generation++;draft=initial==null?"":initial;LinearLayout fields=fields(L.t("Telefon"));
         fields.setPadding(dp(6),dp(6),dp(6),dp(4));networkText=null;

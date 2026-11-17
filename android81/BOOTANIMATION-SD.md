@@ -1,28 +1,22 @@
-# Animație LEO și card microSD · 19 octombrie 2026
+# Animația N0d3 KeyShell și cardul microSD
 
 ## Animație
 
-Grafică originală generată de `make-bootanimation.py`: LEO alb, trei puncte mov
-pe negru, 240×320, 6 cadre/s, 4 cadre de intrare și 6 în buclă. ZIP-ul are
-aproximativ 37 KiB, cu intrări ZIP_STORED și PNG comprimate. Nu folosește fonturi
-sau imagini din firmware.
+D-pad-ul își luminează direcțiile pe rând, deasupra siglei N0d3 KeyShell.
+Animația are 240×320 pixeli la 6 cadre/s, cu 4 cadre de intrare și 6 în buclă.
+Generatorul necesită Pillow și salvează arhiva ZIP și previzualizările PNG și
+GIF în directorul `android81/output/`.
 
 ```text
 python android81/make-bootanimation.py
-python android81/install-bootanimation.py --enable-on-boot
+python android81/install-bootanimation.py
 ```
 
-Generatorul necesită Pillow. Rezultatele sunt locale, în `output/`. Instalatorul
-salvează originalele și verifică hashurile. `--restore` le restabilește.
-Fișierele instalate sunt `/system/media/bootanimation.zip` și
-`/system/etc/init/leo-bootanimation.rc`; boot/recovery nu sunt rescrise.
-
-Ramdisk-ul diagnostic dezactiva animația din cauza vechiului renderer
-SwiftShader. Hook-ul o reactivează pentru configurația Adreno actuală și o
-oprește la `sys.boot_completed=1`, fără întârziere artificială. Utilizatorul a
-confirmat logo-ul și punctele animate în proba de 30 s, apoi și la o **repornire
-completă**, urmate de meniul Leo. Software: boot_completed=1, bootanim=stopped.
-Sigla inițială a bootloaderului KaiOS rămâne separată.
+Instalatorul salvează o copie a animației anterioare și verifică hashul după
+scriere. `--restore` reinstalează originalul. La prima configurare,
+`--enable-on-boot` instalează și fișierul init pentru ROM-ul cu Adreno.
+Animația din `/system/media/bootanimation.zip` rulează până la
+`sys.boot_completed=1`. Sigla bootloaderului este afișată înainte de Android.
 
 ## De ce lipsea cardul
 

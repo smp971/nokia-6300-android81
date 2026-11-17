@@ -108,7 +108,7 @@ public final class KeypadLockActivity extends LeoActivity {
             paint.setShader(null);paint.setColor(palette.background);c.drawRect(0,0,240,320,paint);paint.setShader(null);
             if(wallpaper!=null){paint.setColor(Color.WHITE);c.drawBitmap(wallpaper,null,new RectF(0,0,240,320),paint);paint.setColor(0x66000000);c.drawRect(0,0,240,320,paint);}
             else{paint.setColor(0x5530204a);mountain.reset();mountain.moveTo(0,238);mountain.lineTo(68,155);mountain.lineTo(135,234);mountain.lineTo(188,176);mountain.lineTo(240,224);mountain.lineTo(240,320);mountain.lineTo(0,320);mountain.close();c.drawPath(mountain,paint);}
-            label(c,"LEO",12,23,11,0xffefe7fa,Paint.Align.LEFT);
+            label(c,"N0d3",12,23,11,0xffefe7fa,Paint.Align.LEFT);
             label(c,(charging?"+ ":"")+battery+"%",198,23,11,Color.WHITE,Paint.Align.RIGHT);
             paint.setColor(Color.WHITE);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.2f);c.drawRoundRect(new RectF(205,13,228,24),2,2,paint);paint.setStyle(Paint.Style.FILL);c.drawRect(229,16,231,21,paint);c.drawRect(207,15,207+19*battery/100f,22,paint);
             label(c,time,120,76,43,Color.WHITE,Paint.Align.CENTER);label(c,date,120,98,13,0xffd1e2e5,Paint.Align.CENTER);

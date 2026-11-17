@@ -1,7 +1,7 @@
 # Leo · Android 8.1 for Nokia 6300 4G
 
 Leo boots AOSP from the internal eMMC of the **Nokia 6300 4G TA-1286**.
-**Leo Visual** is the native Home, dialer and application shell. **Leo Keypad**
+**N0d3 KeyShell** is the native Home, dialer and application shell. The **Tastatură** input method
 provides physical multi-tap and Romanian T9. The project also adapts Android
 Settings, SystemUI and system dialogs for the 240 × 320 display and D-pad.
 

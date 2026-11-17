@@ -43,7 +43,7 @@ public final class NowPlayingActivity extends LeoActivity {
   options(L.t("Media curentă"), new String[]{L.t("Deschide playerul"),
       source == 0 ? L.t("Sursă · Radio FM") : L.t("Sursă · Muzică"),
       L.t("Piesa / postul anterior"), L.t("Piesa / postul următor"),
-      L.t("Oprește sursa"), L.t("Ajutor taste")}, new Choice() {
+      L.t("Oprește sursa"), ContextHelp.label()}, new Choice() {
    public void pick(int index) {
     if (index == 0) player();
     else if (index == 1) changeSource();
@@ -107,7 +107,6 @@ public final class NowPlayingActivity extends LeoActivity {
    state.heading = L.t("Media curentă");
    state.showSources = true;
    state.radio = source == 1;
-   state.footer = L.t("* Sursă  # Player");
    if (state.radio) {
     state.cover = null;
     state.title = FmService.stationName.isEmpty() ? "Radio FM" : FmService.stationName;
@@ -123,9 +122,9 @@ public final class NowPlayingActivity extends LeoActivity {
    if (preview) {
     state.cover = null;
     state.playing = previewPlaying;
-    state.title = state.radio ? "LEO FM" : L.t("Lumini de seară");
+    state.title = state.radio ? "RADIO FM" : L.t("Lumini de seară");
     if (!state.radio) {
-     state.artist = "Leo Sessions";
+     state.artist = "Sesiuni";
      state.detail = L.t("Piesa ") + "1 / 1";
     }
     state.status = L.t("DEMO · fără redare");
