@@ -131,3 +131,47 @@ The installed runtime is a data update with SHA-256
 `6dbd2c7b27c488d87e0114bde77cf5a03b133ebfff7c0bb678dc0eb3dd0fa11d`.
 The bundled system base has SHA-256
 `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
+
+## Clock, Android apps and keypad forms, 17 November 2026
+
+Clock now uses the shared page header and softkeys, with the same three-title
+tab window as Settings. Its five pages, alarms and timer preferences keep their
+existing identifiers and storage. Android Apps uses native themed list rows;
+package discovery and icon loading run on the existing worker. Returning to
+the list retains the selected component, including after a reload.
+
+`KeypadDialog` uses native themed rows, two-line option labels, a position
+indicator and the common softkeys. OK and numbered shortcuts accept on key
+release. Contact-number types and Calendar recurrence/reminder fields use
+`KeypadSpinner`, retaining Android Spinner selection and listener behavior.
+Form focus moves between editors and selectors with Up and Down. Shared
+headings can wrap to two lines and progress indicators follow the palette.
+
+The final source-built APK passed **48 UI polish checks**, **72 theme checks**
+and the physical keypad smoke routes on TA-1286 / API 27. The polish suite
+covers long labels, canceled and released keys, selector focus, draft retention,
+all five Clock tabs, asynchronous app loading and a stale list callback after
+reload. It restores Clock preferences and keeps the display awake during
+rendering checks. The host suite passed **63 tests**. The DEX audit retained all
+431 baseline dependency classes, with no unexpected or duplicate classes.
+
+The running app is a data update with SHA-256
+`c6c0b962246feb12100816cf7bf203b440f71bb408dabf5a4857f5513b71d683`.
+The handset's bundled Leo Visual system base remains
+`abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
+Home, accessibility, notification listener and the keypad IME were rechecked
+after replacement. Current screenshots are in the main README.
+
+```powershell
+python android81/build-pocket-tests-windows.py --ui-polish
+python android81/framework-command.py --timeout 180 /system/bin/am instrument -w ro.leo.visual.uipolishchecks/ro.leo.visual.UiPolishTests
+```
+
+Private ROM preparation uses the read-only `20261117-210259` device snapshot.
+Its overlays contain this Leo Visual APK and the current keypad IME
+`bf06791c88c55af099d46ac46edfa260531e0893c9d2041bc2f58255cf53353c`.
+Clean assembly preserves the IME and FM runtime from the verified system copy;
+older build inputs are fallback files for snapshots that lack those paths.
+Building and checking this package is separate from a clean installation,
+which erases internal userdata. A clean boot of this candidate still needs
+hardware validation.

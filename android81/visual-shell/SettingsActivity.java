@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.TrafficStats;
 import android.os.*;
-import android.util.TypedValue;
 import android.view.*;
 import android.widget.*;
 import java.util.*;
@@ -73,31 +72,9 @@ public final class SettingsActivity extends LeoActivity {
         list(activeSettingsList,current==0?networkRows(false):Arrays.asList(ROWS[current]),selections[current],new Choice(){
             public void pick(int row){selections[current]=row;open(current,row);}
         },L.t("Categorii"),new Runnable(){public void run(){chooseCategory();}});
-        LinearLayout tabs=KeypadTabs.create(this,new String[]{
-            "‹ "+TABS[KeypadTabs.next(current,-1,TABS.length)],
-            TABS[current],
-            TABS[KeypadTabs.next(current,1,TABS.length)]+" ›"
-        },1,new Choice(){public void pick(int offset){switchCategory(current+offset-1);}},
+        LinearLayout tabs=KeypadTabs.window(this,TABS,current,
+            new Choice(){public void pick(int index){switchCategory(index);}},
             new Runnable(){public void run(){KeypadTabs.focusList(SettingsActivity.this);}});
-        tabs.setPadding(dp(6), 0, dp(6), 0);
-        tabs.setBackgroundColor(palette.bar);
-        float textScale = Appearance.textScale(this);
-        for(int index=0;index<tabs.getChildCount();index++){
-            TextView tab=(TextView)tabs.getChildAt(index);
-            boolean active = index == 1;
-            int preferredSize = Math.round((active ? 19 : 15) * textScale);
-            tab.setHorizontallyScrolling(false);
-            tab.setAutoSizeTextTypeUniformWithConfiguration(
-                active ? 15 : 12, preferredSize, 1, TypedValue.COMPLEX_UNIT_SP
-            );
-            tab.getLayoutParams().height = dp(40);
-            tab.setPadding(dp(2), 0, dp(2), dp(3));
-            UiChrome.tab(tab, palette, active, dp(1));
-            if (active) {
-                tab.setTypeface(UiChrome.TITLE);
-                ((LinearLayout.LayoutParams) tab.getLayoutParams()).weight = 1.18f;
-            }
-        }
         root.addView(tabs,1);
         if(ShellMode.simple(this)&&allSettings)back=new Runnable(){public void run(){allSettings=false;show();}};
     }

@@ -57,7 +57,7 @@ public final class UiFoundationTests extends Instrumentation {
         runOnMainSync(new Runnable(){public void run(){
             check(list.getHeight()>=activity.dp(150),"compact chrome leaves room for content");
             check(bar.getBottom()<=activity.root.getHeight(),"softkeys remain within screen");
-            check(activity.root.getChildAt(0).getHeight()==activity.dp(UiChrome.HEADER_DP),"shared compact header height");
+            check(activity.root.getChildAt(0).getHeight()>=((TextView)activity.root.getChildAt(0)).getLineHeight()*((TextView)activity.root.getChildAt(0)).getLineCount(),"shared header accommodates its text");
             TextView row=(TextView)list.getChildAt(0);
             check(row.getText() instanceof android.text.Spanned,"secondary text preserves styled hierarchy");
             check(row.isSelected(),"first row has explicit focus");

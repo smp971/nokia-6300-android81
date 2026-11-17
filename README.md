@@ -14,14 +14,20 @@ the two softkeys. The **Nokia 6300 4G TA-1286** is the reference device.
 
 ## Screenshots
 
-Twenty-six screenshots from the Nokia 6300 4G, captured on 17 November 2026
-from shell commit `e5b26ad`. The audio and SMS examples use the built-in demos.
+Twenty-nine screenshots from the Nokia 6300 4G, captured on 17 November 2026.
+The original gallery uses shell commit `e5b26ad`; the shared-page update below
+is documented in [Leo Modern UI](android81/LEO-MODERN-UI.md).
+The audio and SMS examples use the built-in demos.
 The boot animation is a rendered preview. Select any thumbnail to open it at
 240 × 320.
 
 | Home dashboard | App launcher | Settings |
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/keyshell-2026-11-17/home.png"><img src="android81/screenshots/keyshell-2026-11-17/home.png" width="160" alt="Home with the SIM operator and technology above the clock"></a> | <a href="android81/screenshots/keyshell-2026-11-17/apps.png"><img src="android81/screenshots/keyshell-2026-11-17/apps.png" width="160" alt="Three-column launcher with colorful icons and focused app subtitle"></a> | <a href="android81/screenshots/keyshell-2026-11-17/settings.png"><img src="android81/screenshots/keyshell-2026-11-17/settings.png" width="160" alt="Settings with larger text and keypad tabs"></a> |
+
+| Updated Clock | Shared keypad options | Android apps |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/keyshell-2026-11-17/ui-polish/clock.png"><img src="android81/screenshots/keyshell-2026-11-17/ui-polish/clock.png" width="160" alt="Clock with shared heading and three visible neighboring tab titles"></a> | <a href="android81/screenshots/keyshell-2026-11-17/ui-polish/dialogs.png"><img src="android81/screenshots/keyshell-2026-11-17/ui-polish/dialogs.png" width="160" alt="Alarm options with themed native rows and a position indicator"></a> | <a href="android81/screenshots/keyshell-2026-11-17/ui-polish/android-apps.png"><img src="android81/screenshots/keyshell-2026-11-17/ui-polish/android-apps.png" width="160" alt="Android application list with icons and common selected-row styling"></a> |
 
 | Audio player · demo | Internet radio | Terminal |
 | :---: | :---: | :---: |

@@ -1,6 +1,6 @@
 package ro.leo.visual;
 import ro.leo.i18n.L;
-import android.content.*;import android.graphics.*;import android.os.*;import android.provider.Settings;import android.view.*;import java.text.SimpleDateFormat;import java.util.*;import org.json.*;
+import android.content.*;import android.widget.*;import android.graphics.*;import android.os.*;import android.provider.Settings;import android.view.*;import java.text.SimpleDateFormat;import java.util.*;import org.json.*;
 
 /** Five keypad tabs, using the same persistent alarm/timer backend as before. */
 public final class ClockActivity extends LeoActivity {
@@ -8,16 +8,36 @@ public final class ClockActivity extends LeoActivity {
  private static final String[] CITY=L.array(new String[]{"București","Londra","New York","Tokyo","Paris","Berlin","Chișinău","Dubai","Los Angeles","Sydney","Delhi","UTC"});
  private static final String[] ZONE={"Europe/Bucharest","Europe/London","America/New_York","Asia/Tokyo","Europe/Paris","Europe/Berlin","Europe/Chisinau","Asia/Dubai","America/Los_Angeles","Australia/Sydney","Asia/Kolkata","UTC"};
  private final String[] tabs={L.t("Ora"),L.t("Alarme"),L.t("Glob"),"Timer",L.t("Crono")};
- private Face face;private int page,selected,boot;private boolean running,visible;private long accumulated,started,paused;private JSONArray alarms=new JSONArray();
- private final Runnable tick=new Runnable(){public void run(){if(!visible)return;face.invalidate();handler.postDelayed(this,page==4&&running?100:1000);}};
+ private Face face;private int page,selected,boot;private int renderedPage=-1;private String lastAction;private boolean running,visible;private long accumulated,started,paused;private JSONArray alarms=new JSONArray();
+ private final Runnable tick=new Runnable(){public void run(){if(!visible)return;face.invalidate();updateFooter();handler.postDelayed(this,page==4&&running?100:1000);}};
  public void onCreate(Bundle state){super.onCreate(state);palette=Appearance.palette(this);getWindow().setStatusBarColor(palette.bar);boot=Settings.Global.getInt(getContentResolver(),Settings.Global.BOOT_COUNT,-1);SharedPreferences p=getSharedPreferences("clock",0);accumulated=p.getLong("elapsed",0);started=p.getLong("started",0);running=p.getBoolean("running",false)&&boot>=0&&p.getInt("boot",-2)==boot&&started<=SystemClock.elapsedRealtime();page=Math.max(0,Math.min(4,p.getInt("tab",p.getBoolean("stopwatch",false)?4:0)));paused=p.getLong("timer-paused",0);
-  for(String s:p.getString("laps","").split(","))try{if(laps.size()<50)laps.add(Long.parseLong(s));}catch(NumberFormatException ignored){}Set<String> valid=new HashSet<String>(Arrays.asList(TimeZone.getAvailableIDs()));for(String z:p.getString("zones","Europe/Bucharest,Europe/London,America/New_York,Asia/Tokyo").split(","))if(valid.contains(z)&&!zones.contains(z)&&zones.size()<8)zones.add(z);if(getIntent().hasExtra("tab"))page=Math.max(0,Math.min(4,getIntent().getIntExtra("tab",0)));face=new Face();setContentView(face);}
+  for(String s:p.getString("laps","").split(","))try{if(laps.size()<50)laps.add(Long.parseLong(s));}catch(NumberFormatException ignored){}Set<String> valid=new HashSet<String>(Arrays.asList(TimeZone.getAvailableIDs()));for(String z:p.getString("zones","Europe/Bucharest,Europe/London,America/New_York,Asia/Tokyo").split(","))if(valid.contains(z)&&!zones.contains(z)&&zones.size()<8)zones.add(z);if(getIntent().hasExtra("tab"))page=Math.max(0,Math.min(4,getIntent().getIntExtra("tab",0)));show();}
+ private void show(){
+  begin(L.t("Ceas"));
+  LinearLayout tabs=KeypadTabs.window(this,this.tabs,page,new Choice(){
+   public void pick(int selectedPage){page=selectedPage;selected=0;changed();}
+  },new Runnable(){public void run(){face.requestFocus();}});
+  root.addView(tabs,1);
+  face=new Face();
+  root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
+  left=new Runnable(){public void run(){menu();}};
+  renderedPage=page;
+  lastAction=null;
+  updateFooter();
+  face.requestFocus();
+ }
+ private void updateFooter(){
+  String action=page==0?L.t("Alarme"):page==1?"ON / OFF":page==2?L.t("Orașe"):
+   page==3?(AlarmScheduler.state(this).getBoolean("timer",false)?L.t("Pauză"):
+   paused>0?L.t("Continuă"):L.t("Durată")):running?L.t("Pauză"):"Start";
+  if(!action.equals(lastAction)){lastAction=action;footer(L.t("Opțiuni"),action,L.t("Înapoi"));}
+ }
  protected void onResume(){super.onResume();visible=true;reload();if(AlarmScheduler.state(this).getBoolean("timer",false))paused=0;handler.removeCallbacks(tick);handler.post(tick);}
  protected void onPause(){visible=false;handler.removeCallbacks(tick);save();super.onPause();}protected void onDestroy(){handler.removeCallbacksAndMessages(null);super.onDestroy();}
  private void reload(){try{alarms=AlarmScheduler.alarms(this);}catch(RuntimeException e){alarms=new JSONArray();}selected=Math.max(0,Math.min(selected,Math.max(0,(page==1?alarms.length():zones.size())-1)));}
  private long elapsed(){return accumulated+(running?SystemClock.elapsedRealtime()-started:0);}
  private void save(){if(running){accumulated=elapsed();started=SystemClock.elapsedRealtime();}StringBuilder s=new StringBuilder();for(Long lap:laps){if(s.length()>0)s.append(',');s.append(lap);}getSharedPreferences("clock",0).edit().putLong("elapsed",accumulated).putLong("started",started).putBoolean("running",running).putInt("boot",boot).putInt("tab",page).putString("laps",s.toString()).putString("zones",android.text.TextUtils.join(",",zones)).putLong("timer-paused",paused).apply();}
- private void changed(){save();reload();handler.removeCallbacks(tick);if(visible)handler.post(tick);}
+ private void changed(){save();reload();if(renderedPage!=page)show();else updateFooter();handler.removeCallbacks(tick);if(visible)handler.post(tick);}
  private void options(String title,String[] items,KeypadDialog.Action action){new KeypadDialog(this,title,items,action).show();}
  private void editAlarm(boolean create){Intent i=new Intent(this,AlarmsActivity.class);if(create)i.putExtra("new",true);else if(alarms.optJSONObject(selected)!=null)i.putExtra("edit_id",alarms.optJSONObject(selected).optInt("id"));startActivity(i);}
  private void toggleAlarm(){JSONObject a=alarms.optJSONObject(selected);if(a==null){editAlarm(true);return;}try{AlarmScheduler.save(this,a.getInt("id"),a.getInt("hour"),a.getInt("minute"),a.optString("label"),a.optBoolean("daily"),!a.optBoolean("enabled"));changed();}catch(Exception e){android.widget.Toast.makeText(this,L.t("Alarma nu poate fi modificată"),0).show();}}
@@ -31,14 +51,14 @@ public final class ClockActivity extends LeoActivity {
  private String nextAlarm(){long next=Long.MAX_VALUE;for(int i=0;i<alarms.length();i++){JSONObject a=alarms.optJSONObject(i);if(a!=null&&a.optBoolean("enabled"))try{next=Math.min(next,AlarmScheduler.next(System.currentTimeMillis(),a));}catch(RuntimeException ignored){}}return next==Long.MAX_VALUE?L.t("Nicio alarmă activă"):L.t("Alarmă · ")+fmt("EEE HH:mm",new Date(next),TimeZone.getDefault());}
  private final class Face extends View {
   final Paint p=new Paint(3);Face(){super(ClockActivity.this);setFocusableInTouchMode(true);requestFocus();}public boolean isOpaque(){return true;}
-  void text(Canvas c,String s,int x,int y,int size,int color,Paint.Align align){p.setStyle(Paint.Style.FILL);p.setTextSize(size);p.setColor(color);p.setTextAlign(align);while(p.measureText(s)>220&&p.getTextSize()>9)p.setTextSize(p.getTextSize()-1);c.drawText(s,x,y,p);}
+  void text(Canvas c,String s,int x,int y,int size,int color,Paint.Align align){p.setStyle(Paint.Style.FILL);p.setTextSize(size*Appearance.textScale(ClockActivity.this));p.setColor(color);p.setTextAlign(align);while(p.measureText(s)>220&&p.getTextSize()>9)p.setTextSize(p.getTextSize()-1);c.drawText(s,x,y,p);}
   void card(Canvas c,int y,int h,boolean focus){p.setStyle(Paint.Style.FILL);p.setColor(focus?Appearance.mix(palette.card,palette.accent,.2f):palette.card);c.drawRoundRect(8,y,232,y+h,5,5,p);if(focus){p.setStyle(Paint.Style.STROKE);p.setColor(palette.accent);p.setStrokeWidth(1);c.drawRoundRect(8,y,232,y+h,5,5,p);p.setStyle(Paint.Style.FILL);}}
-  protected void onDraw(Canvas c){c.save();c.scale(getWidth()/240f,getHeight()/302f);c.drawColor(palette.background);UiChrome.header(c,L.t("Ceas"),palette,p);for(int i=0;i<5;i++){if(i==page){p.setColor(palette.card);c.drawRect(i*48,34,i*48+48,58,p);p.setColor(palette.accent);c.drawRect(i*48,57,i*48+48,59,p);}text(c,tabs[i],24+i*48,50,11,i==page?palette.accent:Color.WHITE,Paint.Align.CENTER);}Date now=new Date();TimeZone local=TimeZone.getDefault();
+  protected void onDraw(Canvas c){c.save();c.scale(getWidth()/240f,getHeight()/218f);c.translate(0,-62);c.drawColor(palette.background);Date now=new Date();TimeZone local=TimeZone.getDefault();
    if(page==0){card(c,72,111,false);text(c,fmt("HH:mm:ss",now,local),120,117,37,Color.WHITE,Paint.Align.CENTER);text(c,fmt("EEEE, d MMM",now,local),120,145,16,palette.accent,Paint.Align.CENTER);text(c,fmt("yyyy · z",now,local),120,167,13,palette.secondary(),Paint.Align.CENTER);card(c,194,49,false);text(c,nextAlarm(),120,223,14,Color.WHITE,Paint.Align.CENTER);Calendar cal=Calendar.getInstance();text(c,L.t("Săptămâna ")+cal.get(Calendar.WEEK_OF_YEAR)+L.t(" · ziua ")+cal.get(Calendar.DAY_OF_YEAR),120,262,12,palette.accent,Paint.Align.CENTER);}
    else if(page==1){if(alarms.length()==0){text(c,L.t("Nicio alarmă"),120,141,23,Color.WHITE,Paint.Align.CENTER);text(c,L.t("Opțiuni → Alarmă nouă"),120,170,13,palette.accent,Paint.Align.CENTER);}int first=Math.max(0,selected-2);for(int i=first;i<Math.min(alarms.length(),first+3);i++){JSONObject a=alarms.optJSONObject(i);int y=72+(i-first)*59;card(c,y,52,i==selected);text(c,String.format(Locale.ROOT,"%02d:%02d",a.optInt("hour"),a.optInt("minute")),18,y+25,24,Color.WHITE,Paint.Align.LEFT);text(c,a.optBoolean("enabled")?"ON":"OFF",216,y+24,13,a.optBoolean("enabled")?palette.accent:palette.secondary(),Paint.Align.RIGHT);text(c,a.optString("label",L.t("Alarmă"))+" · "+AlarmScheduler.daysLabel(a),18,y+43,11,palette.accent,Paint.Align.LEFT);}text(c,alarms.length()+L.t(" alarme · OK: activare"),120,264,12,palette.accent,Paint.Align.CENTER);}
    else if(page==2){int first=Math.max(0,selected-2);for(int i=first;i<Math.min(zones.size(),first+3);i++){String z=zones.get(i);TimeZone zone=TimeZone.getTimeZone(z);int y=72+(i-first)*59;card(c,y,52,i==selected);text(c,zoneName(z),18,y+20,15,Color.WHITE,Paint.Align.LEFT);text(c,fmt("HH:mm",now,zone),220,y+24,23,palette.accent,Paint.Align.RIGHT);text(c,fmt("EEE, d MMM · Z",now,zone),18,y+41,11,palette.secondary(),Paint.Align.LEFT);}text(c,zones.size()+L.t(" / 8 orașe · fusuri cu DST"),120,264,12,palette.accent,Paint.Align.CENTER);}
    else if(page==3){boolean active=AlarmScheduler.state(ClockActivity.this).getBoolean("timer",false);long value=active?AlarmScheduler.remaining(ClockActivity.this):paused;card(c,80,127,false);text(c,duration(value,false),120,133,35,Color.WHITE,Paint.Align.CENTER);text(c,active?L.t("Numără invers"):paused>0?L.t("În pauză"):L.t("Alege durata"),120,164,15,palette.accent,Paint.Align.CENTER);text(c,active?L.t("Alarma sună și după Home"):L.t("Presetări din Opțiuni"),120,233,13,palette.secondary(),Paint.Align.CENTER);}
    else{card(c,76,87,false);text(c,duration(elapsed(),true),120,115,31,Color.WHITE,Paint.Align.CENTER);text(c,running?L.t("În mers"):accumulated>0?L.t("În pauză"):L.t("Pregătit"),120,143,13,palette.accent,Paint.Align.CENTER);int first=Math.max(0,laps.size()-3);for(int i=first;i<laps.size();i++){text(c,L.t("Tura ")+(i+1),14,191+(i-first)*26,13,Color.WHITE,Paint.Align.LEFT);text(c,duration(laps.get(i),true),225,191+(i-first)*26,14,palette.accent,Paint.Align.RIGHT);}}
-   p.setColor(palette.bar);c.drawRect(0,277,240,302,p);text(c,L.t("Opțiuni"),7,294,11,Color.WHITE,Paint.Align.LEFT);String action=page==0?L.t("Alarme"):page==1?"ON / OFF":page==2?L.t("Orașe"):page==3?(AlarmScheduler.state(ClockActivity.this).getBoolean("timer",false)?L.t("Pauză"):paused>0?L.t("Continuă"):L.t("Durată")):running?L.t("Pauză"):"Start";text(c,action,120,294,12,palette.accent,Paint.Align.CENTER);text(c,L.t("Înapoi"),233,294,11,Color.WHITE,Paint.Align.RIGHT);c.restore();}
+   c.restore();}
  }
 }

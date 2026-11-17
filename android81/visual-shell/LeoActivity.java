@@ -98,11 +98,12 @@ abstract class LeoActivity extends Activity {
         tabBars.clear();
         palette=Appearance.palette(this);SystemChrome.apply(this,palette);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
-        heading=text(title,22); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        heading=text(title,22); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setMaxLines(2);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
         heading.setBackground(UiChrome.panel(palette,getResources().getDisplayMetrics().density,false));
         if(palette.sxmo()){heading.setTypeface(android.graphics.Typeface.DEFAULT);heading.setCompoundDrawables(null,null,null,null);}else if(palette.classic()||palette.material()){heading.setPadding(dp(6),0,dp(6),0);heading.setCompoundDrawables(new AppBadge(title,dp(22)),null,null,null);}
-        root.addView(heading,new LinearLayout.LayoutParams(-1,dp(palette.sxmo()?26:palette.classic()?30:palette.material()?34:UiChrome.HEADER_DP)));
+        heading.setMinHeight(dp(palette.sxmo()?26:palette.classic()?30:palette.material()?34:UiChrome.HEADER_DP));
+        root.addView(heading,new LinearLayout.LayoutParams(-1,-2));
         View accent=new View(this);accent.setBackgroundColor(palette.background);root.addView(accent,new LinearLayout.LayoutParams(-1,dp(1)));
     }
     void footer(String a,String b,String c) {
@@ -164,6 +165,7 @@ abstract class LeoActivity extends Activity {
         listAdapter=adapter;list.setAdapter(adapter);
         list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> p,View v,int i,long id) {
+                if(list!=activeList)return;
                 int previous=focused[0]; focused[0]=i;
                 if(listPosition!=null)listPosition.position(i,rows.size());
                 onListSelection(title,i);
@@ -173,7 +175,7 @@ abstract class LeoActivity extends Activity {
             public void onNothingSelected(AdapterView<?> p) { }
         });
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> p,View v,int i,long id) { choice.pick(i); }
+            public void onItemClick(AdapterView<?> p,View v,int i,long id) { if(list==activeList)choice.pick(i); }
         });
         if(values.isEmpty()) {
             TextView empty=text(emptyMessage(title),16); empty.setGravity(Gravity.CENTER);
@@ -226,7 +228,7 @@ abstract class LeoActivity extends Activity {
                 if(key==KeyEvent.KEYCODE_DPAD_DOWN && line<field.getLayout().getLineCount()-1) return false;
             }
             View next=view.focusSearch(key==KeyEvent.KEYCODE_DPAD_UP?View.FOCUS_UP:View.FOCUS_DOWN);
-            if(next!=null && next!=view && (next instanceof EditText || next instanceof CheckBox)) { next.requestFocus(); return true; }
+            if(next!=null && next!=view && (next instanceof EditText || next instanceof CheckBox || next instanceof Spinner)) { next.requestFocus(); return true; }
             return false;
         }});
         LinearLayout.LayoutParams fieldLayout=new LinearLayout.LayoutParams(-1,-2);fieldLayout.bottomMargin=dp(5);

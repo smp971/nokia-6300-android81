@@ -20,6 +20,14 @@ DEFAULTS={
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
+def snapshot_file(image,work,target,name,linux,run):
+    if 'Inode:' not in run('debugfs','-R','stat '+target,image):return None
+    local=work/name
+    run('debugfs','-R','dump '+target+' "'+linux(local)+'"',image)
+    if not local.is_file() or not local.stat().st_size:
+        raise RuntimeError('Snapshot file could not be read: '+target)
+    return local
+
 def verify_metadata(stat,mode):
     found=re.search(r'Type:\s+regular\s+Mode:\s+(0[0-7]+)',stat)
     if not found or int(found[1],8)!=mode:
@@ -87,9 +95,11 @@ def prepare(system,dest,linux,run,visual=None):
     removed=remove_retired_shell(image,work,linux,run)
     # Updated APKs become factory packages. The IME used to be a user-only app.
     write('/priv-app/LeoVisual/LeoVisual.apk',visual or ROOT/'output/leo-visual.apk')
-    ime=ROOT/'output/leo-keypad-ime.apk'
-    if digest(ime)!='c1a064b02dd49e6201330ec43b328e439594a35135793ec2ce21c673f1f6c554':
-        raise RuntimeError('Unexpected IME build; audit and update its pinned hash')
+    ime=snapshot_file(image,work,'/app/LeoKeypad/LeoKeypad.apk','snapshot-ime.apk',linux,run)
+    if ime is None:
+        ime=ROOT/'output/leo-keypad-ime.apk'
+        if digest(ime)!='c1a064b02dd49e6201330ec43b328e439594a35135793ec2ce21c673f1f6c554':
+            raise RuntimeError('Unexpected IME build; audit and update its pinned hash')
     write('/app/LeoKeypad/LeoKeypad.apk',ime)
     write('/bin/leo-terminal-root',ROOT/'output/leo-terminal-root',0o755)
     write('/bin/leo-su',ROOT/'output/leo-terminal-root',0o755)
@@ -127,7 +137,10 @@ def prepare(system,dest,linux,run,visual=None):
         'trace.so':ROOT/'output/leo-fm-trace.so','audio.jar':ROOT/'output/leo-fm-audio.jar',
         'fm_qsoc_patches':ROOT.parent/'analysis/system/bin/fm_qsoc_patches',
         'lib/libqcci_legacy.so':ROOT.parent/'analysis/system/vendor/lib/libqcci_legacy.so'}
-    for name,source in fm.items():write('/vendor/leo-fm/'+name,source,0o755 if name in ('trial','route','fm_qsoc_patches') else 0o644)
+    for name,source in fm.items():
+        target='/vendor/leo-fm/'+name
+        captured=snapshot_file(image,work,target,'snapshot-fm-'+name.replace('/','-'),linux,run)
+        write(target,captured or source,0o755 if name in ('trial','route','fm_qsoc_patches') else 0o644)
     return {'runtime':records,'property_defaults':DEFAULTS,'retired_apks_removed':removed,
             'userdata_contents':'new empty filesystem; no live userdata copied',
             'first_boot_hardware_validated':False}

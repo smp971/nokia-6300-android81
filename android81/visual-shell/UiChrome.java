@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -65,13 +66,19 @@ final class UiChrome {
     }
 
     static void listRow(LeoActivity owner, TextView row) {
-        row.setTextSize(19 * Appearance.textScale(owner));
-        row.setMinHeight(owner.dp(44));
+        listRow(owner,row,owner.palette);
+    }
+
+    static void listRow(android.content.Context context,TextView row,Appearance.Palette palette) {
+        float density=context.getResources().getDisplayMetrics().density;
+        row.setTextSize(19 * Appearance.textScale(context));
+        row.setMinHeight(Math.round(44*density));
         row.setMaxLines(3);
-        row.setCompoundDrawablePadding(owner.dp(12));
-        row.setPadding(owner.dp(12), owner.dp(3), owner.dp(9), owner.dp(3));
-        row.setTextColor(textColors(owner.palette));
-        row.setBackground(row(owner.palette, 0, owner.dp(1)));
+        row.setCompoundDrawablePadding(Math.round(12*density));
+        row.setPadding(Math.round(12*density),Math.round(3*density),
+            Math.round(9*density),Math.round(3*density));
+        row.setTextColor(textColors(palette));
+        row.setBackground(row(palette,0,Math.max(1,Math.round(density))));
     }
 
     static void field(EditText field, Appearance.Palette palette, int padding) {
@@ -93,6 +100,9 @@ final class UiChrome {
         } else if (view instanceof Button) {
             ((Button) view).setTextColor(textColors(palette));
             view.setBackground(row(palette, 0, Math.max(1, padding / 8)));
+        } else if (view instanceof ProgressBar) {
+            ((ProgressBar)view).setIndeterminateTintList(ColorStateList.valueOf(palette.accent));
+            ((ProgressBar)view).setProgressTintList(ColorStateList.valueOf(palette.accent));
         } else if (view instanceof Spinner) {
             view.setBackgroundTintList(ColorStateList.valueOf(palette.accent));
         }

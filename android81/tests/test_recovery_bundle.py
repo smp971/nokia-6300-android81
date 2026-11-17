@@ -156,6 +156,28 @@ clean=importlib.util.module_from_spec(clean_spec);clean_spec.loader.exec_module(
 
 class SystemMetadataGuards(unittest.TestCase):
     GOOD='Inode: 1568 Type: regular Mode: 0755 Flags: 0x80000\nUser: 0 Group: 0 Project: 0\nsecurity.selinux = "u:object_r:system_file:s0"'
+    def test_clean_build_prefers_the_verified_snapshot_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work=Path(directory)
+            current=b"current installed IME"
+            calls=[]
+            def run(*args):
+                calls.append(args)
+                if args[2].startswith("stat "):return "Inode: 12"
+                (work/"ime.apk").write_bytes(current)
+                return ""
+            result=clean.snapshot_file("system.img",work,"/app/LeoKeypad/LeoKeypad.apk",
+                                       "ime.apk",str,run)
+            self.assertEqual(result.read_bytes(),current)
+            self.assertFalse(any("-w" in args for args in calls))
+
+    def test_old_snapshot_can_use_its_existing_build_input(self):
+        calls=[]
+        def run(*args):calls.append(args);return ""
+        self.assertIsNone(clean.snapshot_file("system.img",Path("."),"/missing.apk",
+                                             "ime.apk",str,run))
+        self.assertEqual(len(calls),1)
+
     def test_expected_executable_metadata(self):
         clean.verify_metadata(self.GOOD,0o755)
     def test_broad_permissions_rejected(self):
