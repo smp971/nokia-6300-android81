@@ -165,6 +165,17 @@ Only whitelisted status/capability fields are printed, excluding cell and
 subscriber identities. The diagnostic binary was built and run on the Nokia;
 the original IMS/LTE verifier passed afterward.
 
+### Read-only follow-up with Orange on both slots, 17 November
+
+With SIM 1 selected for mobile data, the same client-bound NAS/DMS probe found
+the reverse allocation: SIM 1 had mask `0x38` and LTE packet service, while
+SIM 2 had mask `0x18` and GSM circuit-switched service. Both SIMs were present
+in dual standby (`0x3` active mask), and both NAS allowed-mode masks included
+LTE. The modem still advertised the same two DMS allocations, each with LTE
+on one stack. The selected SIM's IMS voice registration and validated LTE
+data passed the live Android verifier after boot. No call was placed or DDS,
+APN or NV setting changed for the radio probe.
+
 ### Next steps
 
 1. Compare live per-subscription NAS/RIL allocation against a KaiOS baseline to

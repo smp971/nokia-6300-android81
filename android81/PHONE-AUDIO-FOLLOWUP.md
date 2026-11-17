@@ -33,3 +33,16 @@ errors. Audio runtime checks passed with the Qualcomm HAL and read-only system.
 The temporary test app was removed after verification.
 
 Private diagnostic logs and built APKs remain in ignored `output/`.
+
+## Mobile network rendering, 17 November 2026
+
+The native Mobile network page showed repeated tiles on the Nokia TA-1286.
+The build now uses the software renderer and an alpha-capable window buffer
+for `MobileNetworkSettings`. Oreo clears the buffer's dirty region before drawing. Software
+rendering alone removed the tiled corruption but left pixels from the old
+layout visible when SIM tabs appeared or changed.
+
+A platform-signed TeleService update was installed as a data APK and verified
+after a normal reboot. The two SIM tabs, Advanced preferences and physical
+D-pad scrolling rendered correctly. The live IMS/LTE verifier passed on the
+selected data SIM after the update.
