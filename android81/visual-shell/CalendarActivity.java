@@ -28,8 +28,8 @@ public final class CalendarActivity extends LeoActivity {
     private void showMonth() {
         ++pageGeneration;month=true;loadDots(); begin("Calendar"); face=new MonthFace(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable() { public void run() {
-            options("Calendar",new String[]{L.t("Eveniment nou"),L.t("Azi"),L.t("Agenda Leo"),L.t("Instrumente · săptămână, căutare, ICS")},new Choice() { public void pick(int i) {
-                if(i==3) startActivity(new Intent(CalendarActivity.this,CalendarToolsActivity.class)); else if(i==0) edit(null); else if(i==1) { day.setTimeInMillis(System.currentTimeMillis()); showMonth(); } else events(true);
+            options("Calendar",new String[]{L.t("Eveniment nou"),L.t("Azi"),L.t("Agenda Leo"),L.t("Instrumente · săptămână, căutare, ICS"),ContextHelp.label()},new Choice() { public void pick(int i) {
+                if(i==4) ContextHelp.open(CalendarActivity.this,"CalendarActivity"); else if(i==3) startActivity(new Intent(CalendarActivity.this,CalendarToolsActivity.class)); else if(i==0) edit(null); else if(i==1) { day.setTimeInMillis(System.currentTimeMillis()); showMonth(); } else events(true);
             }});
         }};
         footer(L.t("Opțiuni"),L.t("Ziua"),L.t("Înapoi")); face.setFocusable(true); face.requestFocus();
@@ -139,7 +139,7 @@ public final class CalendarActivity extends LeoActivity {
                 if(eventDays.contains(value)){p.setColor(palette.accent);c.drawCircle(x,y+9,2,p);}
                 text(c,""+value,x,y,14,value==day.get(Calendar.DAY_OF_MONTH)?palette.ink:Color.WHITE);
             }
-            text(c,L.t("* luna precedentă · # luna următoare"),120,221,11,0xffd3bddf); c.restore();
+            c.restore();
         }
     }
 }

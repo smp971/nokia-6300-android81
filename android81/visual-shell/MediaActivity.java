@@ -61,8 +61,9 @@ public final class MediaActivity extends LeoActivity {
 
     private void playerOptions(int selected) {
         new KeypadDialog(this, L.t("Redare"), new String[]{L.t("Bibliotecă"), L.t("Coada de redare"),
-            L.t("Detalii piesă"), L.t("Versuri locale · LRC"), L.t("Setări redare"), L.t("Oprește")}, new KeypadDialog.Action() {
+            L.t("Detalii piesă"), L.t("Versuri locale · LRC"), L.t("Setări redare"), L.t("Oprește"), ContextHelp.label()}, new KeypadDialog.Action() {
             public void select(int index) {
+                if (index == 6) { ContextHelp.open(MediaActivity.this, "MediaActivity"); return; }
                 if (preview) return;
                 if (index == 0) openLibrary();
                 else if (index == 1) queue();

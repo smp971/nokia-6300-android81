@@ -213,12 +213,14 @@ public final class MainActivity extends Activity {
         items.add(L.t("Caută în Leo"));
         items.add(L.t("Reordonează aplicațiile"));
         if(app>=0)items.add(L.t("Atribuie la soft dreapta"));
+        items.add(ContextHelp.label());
         shellDialog(L.t("Opțiuni aplicații"),items.toArray(new String[0]),new KeypadDialog.Action(){
             public void select(int at){
                 if(at==0)personalize(new Runnable(){public void run(){appOptions();}});
                 else if(at==1)startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));
                 else if(at==2)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class).putExtra("order",true));
                 else if(at==3&&app>=0)assignRightApp(app);
+                else ContextHelp.open(MainActivity.this, "MainActivity");
             }
         }).show();
     }
@@ -251,7 +253,7 @@ public final class MainActivity extends Activity {
             else if(key==KeyEvent.KEYCODE_BACK||key==KeyEvent.KEYCODE_SOFT_RIGHT){if(repeat==0)leaveEditor();}
             invalidate();return true;
         }
-        void editorOptions(){new KeypadDialog(MainActivity.this,L.t(HomeCanvasLayout.NAMES[editItem]),new String[]{L.t("Mărește")+" · "+homeLayout.size[editItem]+"%",L.t("Micșorează"),L.t("Rotește elementul")+" · "+homeLayout.rotation[editItem]*90+"°",L.t("Aliniere: liber / stânga / centru / dreapta"),L.t("Arată / ascunde"),L.t("Resetează elementul"),L.t("Resetează tot ecranul"),L.t("Salvează și închide")},new KeypadDialog.Action(){public void select(int i){if(i==0)homeLayout.size[editItem]=Math.min(150,homeLayout.size[editItem]+5);else if(i==1)homeLayout.size[editItem]=Math.max(50,homeLayout.size[editItem]-5);else if(i==2)homeLayout.rotation[editItem]=(homeLayout.rotation[editItem]+1)%4;else if(i==3)homeLayout.alignment[editItem]=(homeLayout.alignment[editItem]+1)%4;else if(i==4)homeLayout.visible[editItem]=!homeLayout.visible[editItem];else if(i==5)homeLayout.reset(editItem);else if(i==6){new KeypadDialog(MainActivity.this,L.t("Resetează tot ecranul"),new String[]{L.t("Anulează"),L.t("Resetează")},new KeypadDialog.Action(){public void select(int choice){if(choice==1)for(int item=0;item<HomeCanvasLayout.COUNT;item++)homeLayout.reset(item);invalidate();}}).show();}else if(i==7){homeLayout.save(MainActivity.this);editing=false;}invalidate();}}).show();}
+        void editorOptions(){new KeypadDialog(MainActivity.this,L.t(HomeCanvasLayout.NAMES[editItem]),new String[]{L.t("Mărește")+" · "+homeLayout.size[editItem]+"%",L.t("Micșorează"),L.t("Rotește elementul")+" · "+homeLayout.rotation[editItem]*90+"°",L.t("Aliniere: liber / stânga / centru / dreapta"),L.t("Arată / ascunde"),L.t("Resetează elementul"),L.t("Resetează tot ecranul"),L.t("Salvează și închide"),ContextHelp.label()},new KeypadDialog.Action(){public void select(int i){if(i==0)homeLayout.size[editItem]=Math.min(150,homeLayout.size[editItem]+5);else if(i==1)homeLayout.size[editItem]=Math.max(50,homeLayout.size[editItem]-5);else if(i==2)homeLayout.rotation[editItem]=(homeLayout.rotation[editItem]+1)%4;else if(i==3)homeLayout.alignment[editItem]=(homeLayout.alignment[editItem]+1)%4;else if(i==4)homeLayout.visible[editItem]=!homeLayout.visible[editItem];else if(i==5)homeLayout.reset(editItem);else if(i==6){new KeypadDialog(MainActivity.this,L.t("Resetează tot ecranul"),new String[]{L.t("Anulează"),L.t("Resetează")},new KeypadDialog.Action(){public void select(int choice){if(choice==1)for(int item=0;item<HomeCanvasLayout.COUNT;item++)homeLayout.reset(item);invalidate();}}).show();}else if(i==7){homeLayout.save(MainActivity.this);editing=false;}else ContextHelp.open(MainActivity.this,"HomeEditor");invalidate();}}).show();}
         boolean homePart(Canvas c,int id,float l,float t,float r,float b){return homeLayout.begin(c,id,l,t,r,b,editing);}
         final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         final String[] names = AppCatalog.NAMES;
@@ -324,7 +326,7 @@ public final class MainActivity extends Activity {
                 if (next[i].type == 3 && favorites.length > 0) {
                     HomeFavorites.Entry favorite = favorites[Math.min(favoriteIndex, favorites.length - 1)];
                     next[i] = new HomeCards.Card(3, L.t("Favorit · ") + (favoriteIndex + 1) + " / " + favorites.length,
-                        favorite.name, L.t("4 / 6 schimbă · OK deschide"));
+                        favorite.name, "");
                 }
             }
             boolean changed = !HomeCards.signature(cards).equals(HomeCards.signature(next));

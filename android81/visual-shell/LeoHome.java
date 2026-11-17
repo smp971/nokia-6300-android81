@@ -74,7 +74,6 @@ final class LeoHome {
         editableText(canvas, screen, 2, screen.time, 17, 79, screen.compactClock ? 37 : 52, INK, CLOCK);
         editableText(canvas, screen, 3, screen.date, 20, 100, 13, MUTED, REGULAR);
         if (simSlots != 0) drawSims(canvas, screen, simSlots);
-        if (screen.editing) drawEditorHelp(canvas, heroBottom + 8);
         if (showCard) drawCard(canvas, screen, heroBottom + 42);
         drawShortcuts(canvas, screen, showCard ? heroBottom + 91 : heroBottom + 53);
 
@@ -121,12 +120,6 @@ final class LeoHome {
         }
     }
 
-    private void drawEditorHelp(Canvas canvas, float top) {
-        surface(canvas, 9, top, 231, top + 28, 10, tile);
-        text(canvas, L.t("Săgeți: mută · * / #: element"), 120, top + 11, 9, INK, Paint.Align.CENTER, 203, MEDIUM);
-        text(canvas, L.t("OK: aspect"), 120, top + 23, 9, palette.accent, Paint.Align.CENTER, 203, MEDIUM);
-    }
-
     private void drawCard(Canvas canvas, MainActivity.Screen screen, float top) {
         if (!screen.homePart(canvas, 5, 9, top, 231, top + 44)) return;
         tile(canvas, 9, top, 231, top + 44, 12, screen.shortcut >= 4);
@@ -149,10 +142,13 @@ final class LeoHome {
             }
         }
         text(canvas, card.title, left, top + 13, 9, palette.accent, Paint.Align.LEFT, 165 - left, MEDIUM);
-        text(canvas, card.main, left, top + 29, 12, INK, Paint.Align.LEFT, 223 - left, MEDIUM);
-        text(canvas, card.detail, left, top + 40, 8, MUTED, Paint.Align.LEFT, 223 - left, REGULAR);
+        text(canvas, card.main, left, top + (card.detail.isEmpty() ? 33 : 29), 12, INK, Paint.Align.LEFT,
+            223 - left, MEDIUM);
+        if (!card.detail.isEmpty()) {
+            text(canvas, card.detail, left, top + 40, 8, MUTED, Paint.Align.LEFT, 223 - left, REGULAR);
+        }
         if (screen.cards.length > 1) {
-            String page = (screen.cardIndex + 1) + "/" + screen.cards.length + "  *";
+            String page = (screen.cardIndex + 1) + "/" + screen.cards.length ;
             text(canvas, page, 220, top + 13, 9, palette.accent, Paint.Align.RIGHT, 47, MEDIUM);
         }
         canvas.restore();
@@ -184,9 +180,6 @@ final class LeoHome {
         else drawGrid(canvas, screen, top);
         if (!screen.list) {
             text(canvas, screen.names[app], 11, 268, 11, palette.accent, Paint.Align.LEFT, 169, MEDIUM);
-            if (screen.order.length > 9) {
-                text(canvas, "* / #", 230, 268, 11, palette.accent, Paint.Align.RIGHT, 43, MEDIUM);
-            }
         }
     }
 

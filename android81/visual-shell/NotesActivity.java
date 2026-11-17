@@ -89,10 +89,10 @@ public final class NotesActivity extends Activity {
     private void showList() {
         editing=false; editor=null;shown.clear();for(Note n:notes)if(query.isEmpty()||GlobalSearchActivity.matches(n.body,query))shown.add(n);java.util.Collections.sort(shown,new java.util.Comparator<Note>(){public int compare(Note a,Note b){return Boolean.compare(b.pinned,a.pinned);}});
         LinearLayout root=base();
-        TextView help=label(L.t("# opțiuni · ")+shown.size()+" / "+notes.size()+(query.isEmpty()?"":" · "+query),14); help.setGravity(Gravity.CENTER);
-        root.addView(help,new LinearLayout.LayoutParams(-1,height(24)));
+        TextView count=label(shown.size()+" / "+notes.size()+(query.isEmpty()?"":" · "+query),14); count.setGravity(Gravity.CENTER);
+        root.addView(count,new LinearLayout.LayoutParams(-1,height(24)));
         if(readFailed || shown.isEmpty()) {
-            TextView empty=label(readFailed?L.t("Nu pot citi notițele salvate"):query.isEmpty()?L.t("Nicio notiță\nSoft stânga: notiță nouă"):L.t("Niciun rezultat · # căutare"),18);
+            TextView empty=label(readFailed?L.t("Nu pot citi notițele salvate"):query.isEmpty()?L.t("Nicio notiță"):L.t("Niciun rezultat"),18);
             empty.setGravity(Gravity.CENTER); root.addView(empty,new LinearLayout.LayoutParams(-1,0,1));
             list=null;
         } else {
@@ -185,9 +185,10 @@ public final class NotesActivity extends Activity {
         if(readFailed)return;
         if(shown.isEmpty()){search();return;}
         final Note target=shown.get(selected);
-        new KeypadDialog(this,L.t("Notiță"),new String[]{L.t("Deschide"), L.t("Șterge"),target.pinned?L.t("Desprinde"):L.t("Fixează sus"),L.t("Caută text / T9"),L.t("Exportă text"),L.t("Arată toate"),L.t("Partajează notița")},new KeypadDialog.Action() {
+        new KeypadDialog(this,L.t("Notiță"),new String[]{L.t("Deschide"), L.t("Șterge"),target.pinned?L.t("Desprinde"):L.t("Fixează sus"),L.t("Caută text / T9"),L.t("Exportă text"),L.t("Arată toate"),L.t("Partajează notița"),ContextHelp.label()},new KeypadDialog.Action() {
             public void select(int choice) {
-                if(choice==6){try{ShareHubActivity.send(NotesActivity.this,ShareHubActivity.textFile(NotesActivity.this,target.body),"text/plain",title(target.body));}catch(Exception e){toast(L.t("Partajarea nu a putut fi pregătită"));}}else if(choice==0) open(selected);
+                if(choice==7) ContextHelp.open(NotesActivity.this,"NotesActivity");
+                else if(choice==6){try{ShareHubActivity.send(NotesActivity.this,ShareHubActivity.textFile(NotesActivity.this,target.body),"text/plain",title(target.body));}catch(Exception e){toast(L.t("Partajarea nu a putut fi pregătită"));}}else if(choice==0) open(selected);
                 else if(choice==2){target.pinned=!target.pinned;if(!write(notes))target.pinned=!target.pinned;showList();}
                 else if(choice==3)search();
                 else if(choice==4)exportNote(target);

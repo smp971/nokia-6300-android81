@@ -32,7 +32,6 @@ final class MusicFace extends View {
     protected void onDraw(Canvas canvas) {
         long sleep = preview ? 0 : MusicSleep.remaining(getContext());
         state.heading = sleep > 0 ? L.t("Muzică · ") + (sleep + 59999) / 60000 + " min" : L.t("Muzică Leo");
-        state.footer = L.t("# Bibliotecă");
         state.spectrumLabel = meter;
         state.spectrum = spectrum;
         state.readMusic(audio);

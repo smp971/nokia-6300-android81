@@ -88,7 +88,7 @@ final class GlobalMenuModel {
             case RECENT: return L.t("Aplicații recente");
             case LOCK: return L.t("Blochează tastele");
             case POWER: return L.t("Pornire și oprire");
-            case HELP: return L.t("Comenzile paginii");
+            case HELP: return ContextHelp.label();
             case WORKSPACE: return L.t("Spațiu de lucru");
             case TRANSFERS: return L.t("Centrul de transferuri");
             case STUDIO: return "Leo Studio";

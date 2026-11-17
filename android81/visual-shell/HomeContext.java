@@ -9,6 +9,6 @@ final class HomeContext {
  if(alarm!=null)try{JSONArray alarms=AlarmScheduler.alarms(c);for(int i=0;i<alarms.length();i++){JSONObject a=alarms.optJSONObject(i);if(a!=null&&a.optBoolean("enabled"))next=Math.min(next,AlarmScheduler.next(now,a));}}catch(RuntimeException ignored){}
  long age=now-c.getSharedPreferences("weather",0).getLong("updated",0);boolean fresh=weather!=null&&weather.weatherCode>=0&&age>=0&&age<=21600000;
  int count=LeoNotificationService.actionableCount();String unread=unreadLabel(UnreadState.sms,UnreadState.calls);int type=priority(!unread.isEmpty(),active,count>0,next>=now&&next-now<=86400000,fresh);
- HomeCards.Card card=type==5?new HomeCards.Card(5,L.t("Notificări"),unread.isEmpty()?count+L.t(" notificări"):unread,L.t("#: deschide notificările")):type==2?media:type==1?alarm:type==0?weather:null;
+ HomeCards.Card card=type==5?new HomeCards.Card(5,L.t("Notificări"),unread.isEmpty()?count+L.t(" notificări"):unread,""):type==2?media:type==1?alarm:type==0?weather:null;
  return card==null?new HomeCards.Card[0]:new HomeCards.Card[]{card};}
 }

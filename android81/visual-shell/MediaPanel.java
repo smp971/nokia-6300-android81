@@ -16,7 +16,7 @@ import ro.leo.i18n.L;
 /** Shared 240 × 302 layout for the music player and Media Current. */
 final class MediaPanel {
     static final class State {
-        String heading, title, detail, status, signal, footer;
+        String heading, title, detail, status, signal;
         String artist = "";
         String spectrumLabel;
         float[] spectrum;
@@ -118,7 +118,6 @@ final class MediaPanel {
         drawControls(c, palette, s);
         box(c, 0, 280, 240, 302, palette.bar);
         text(c, L.t("Opțiuni"), 7, 295, 11, Color.WHITE, 62);
-        text(c, s.footer, 76, 295, 10, palette.accent, 108);
         paint.setTextSize(11);
         String back = KeypadText.fit(paint, L.t("Înapoi"), 47);
         text(c, back, 233 - paint.measureText(back), 295, 11, Color.WHITE, 47);
