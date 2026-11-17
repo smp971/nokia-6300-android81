@@ -38,4 +38,4 @@ python -X utf8 android81/install-visual-system-settings.py
 
 ## Captură
 
-![Biblioteca muzicală](screenshots/leo-music-library.png)
+![Biblioteca muzicală](../archive/screenshots/leo-music-library.png)

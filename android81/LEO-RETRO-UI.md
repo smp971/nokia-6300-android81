@@ -10,7 +10,7 @@
 
 | Calculator | Configurări rapide |
 | --- | --- |
-| ![Calculator retro](screenshots/retro-calculator-final.png) | ![Configurări rapide](screenshots/retro-quick-final.png) |
+| ![Calculator retro](../archive/screenshots/retro-calculator-final.png) | ![Configurări rapide](../archive/screenshots/retro-quick-final.png) |
 
 ## Terminal din taste
 

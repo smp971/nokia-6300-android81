@@ -67,11 +67,11 @@ Fișierele muzicale și coperta din capturi sunt probe originale silențioase, f
 
 | Muzică și copertă | Volum | Previzualizare temă |
 | --- | --- | --- |
-| ![Muzică](screenshots/daily-music.png) | ![Volum](screenshots/daily-volume.png) | ![Temă](screenshots/daily-theme.png) |
+| ![Muzică](../archive/screenshots/daily-music.png) | ![Volum](../archive/screenshots/daily-volume.png) | ![Temă](../archive/screenshots/daily-theme.png) |
 
 | Diagnostic | Muzică la blocare |
 | --- | --- |
-| ![Diagnostic](screenshots/daily-diagnostic.png) | ![Blocare](screenshots/daily-lock-music.png) |
+| ![Diagnostic](../archive/screenshots/daily-diagnostic.png) | ![Blocare](../archive/screenshots/daily-lock-music.png) |
 
 ## Verificări și reproducere
 

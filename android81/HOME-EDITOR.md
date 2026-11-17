@@ -66,8 +66,8 @@ network banner, clock and date. The icon/text bounds of each SIM row are separat
 selection bounds no longer reserve an almost full-width row. Regression checks
 verify movement through the available horizontal space in both directions.
 
-![Home without permanent unread counters](screenshots/leo-home-clean.png)
-![Home editor with clock selected](screenshots/leo-home-editor.png)
+![Home without permanent unread counters](../archive/screenshots/leo-home-clean.png)
+![Home editor with clock selected](../archive/screenshots/leo-home-editor.png)
 
 The published ROM ZIP is unchanged; future ROM assembly must use these updated
 Leo Visual and SystemUI builds.

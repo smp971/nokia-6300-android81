@@ -292,4 +292,4 @@ verification. Launcher3 stays in system, disabled. The clean builder now removes
 only the exact known legacy APK; an unknown hash stops the build. This does not
 rewrite the already-published ZIP.
 
-![Global menu over Android Settings after the fix](screenshots/leo-fresh-install-global-menu.png)
+![Global menu over Android Settings after the fix](../archive/screenshots/leo-fresh-install-global-menu.png)

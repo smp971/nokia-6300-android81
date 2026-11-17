@@ -66,9 +66,9 @@ din taste și o probă reală fără conexiune rămân de verificat separat.
 
 | Ora | Glob | Cronometru în pauză |
 | :---: | :---: | :---: |
-| ![Ora](screenshots/leo-clock-tabs.png) | ![Glob](screenshots/leo-clock-world.png) | ![Cronometru](screenshots/leo-clock-stopwatch.png) |
+| ![Ora](../archive/screenshots/leo-clock-tabs.png) | ![Glob](../archive/screenshots/leo-clock-world.png) | ![Cronometru](../archive/screenshots/leo-clock-stopwatch.png) |
 | Meteo București | Șapte zile | Detalii |
-| ![Meteo](screenshots/leo-weather-current.png) | ![Prognoză](screenshots/leo-weather-week.png) | ![Detalii](screenshots/leo-weather-details.png) |
+| ![Meteo](../archive/screenshots/leo-weather-current.png) | ![Prognoză](../archive/screenshots/leo-weather-week.png) | ![Detalii](../archive/screenshots/leo-weather-details.png) |
 
 Recompilare: `build-visual-shell.sh`; probe: `build-six-feature-tests.sh`, apoi
 `am instrument -w ro.leo.visual.tests/ro.leo.visual.ClockWeatherTests` în mediul

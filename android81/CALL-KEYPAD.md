@@ -48,8 +48,8 @@ Post-boot software regression checks passed: stock audio HAL active, LTE data
 validated with two ping replies, both SIMs ready and voice-registered, and system
 mounted read-only. Boot ID: `5209e1f8-0c5b-45f6-bb47-4a5baf4a7ba6`.
 
-![Offline incoming preview](screenshots/call-keypad-incoming-demo.png)
-![Keypad options dialog](screenshots/call-keypad-options-demo.png)
+![Offline incoming preview](../archive/screenshots/call-keypad-incoming-demo.png)
+![Keypad options dialog](../archive/screenshots/call-keypad-options-demo.png)
 
 The existing AOSP Oreo Dialer/InCallUI keeps ownership of Telecom calls. A small
 native control strip reserves 48 dp at the bottom of the call screen; no web

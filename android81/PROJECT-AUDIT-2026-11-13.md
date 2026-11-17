@@ -11,7 +11,7 @@ ROM prerelease predates both the integrated radio and adaptive single-SIM Home.
 | Source catalog | 48 stable IDs, all wired to declared native routes. Fourteen are contextual or Settings-only. |
 | Manifest | 108 activities, 12 services, 12 receivers, one provider. The source audit checked that declared implementations exist. |
 | Host suite | 60 Python tests passed, including app/recovery bundle and partition guards. |
-| On-device navigation | 111 reviewed captures in the [screen atlas](screenshots/atlas-2026-11-13/README.md), including all seven launcher categories, six Settings tabs and app ordering. Captures show screen rendering and navigation. |
+| On-device navigation | 111 reviewed captures in the [screen atlas](../archive/screenshots/atlas-2026-11-13/README.md), including all seven launcher categories, six Settings tabs and app ordering. Captures show screen rendering and navigation. |
 | Running state | SIM 2 ready, SIM 1 absent, Leo Keypad selected, Leo accessibility and notification listener configured. |
 | Firmware | October clean-install evidence is tied to its exact ZIP. November ZIP passed offline verification. See [packages and validation](GITHUB-PACKAGES.md). |
 

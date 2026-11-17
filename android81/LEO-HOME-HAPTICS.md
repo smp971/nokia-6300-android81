@@ -41,7 +41,7 @@ testul nu programează alarme și nu pornește media sau rețeaua.
 
 | Meteo din cache | Următoarea alarmă existentă | Muzică / FM |
 | :---: | :---: | :---: |
-| ![Meteo Home](screenshots/leo-home-cards-weather.png) | ![Alarmă Home](screenshots/leo-home-cards-alarm.png) | ![Media Home](screenshots/leo-home-cards-music.png) |
+| ![Meteo Home](../archive/screenshots/leo-home-cards-weather.png) | ![Alarmă Home](../archive/screenshots/leo-home-cards-alarm.png) | ![Media Home](../archive/screenshots/leo-home-cards-music.png) |
 
 ## Vibrații: cauza și corecția
 

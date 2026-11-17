@@ -62,9 +62,9 @@ Home compact este o preferință demonstrată și apoi restaurată. Apelul și c
 
 | Home compact | Acțiuni notificare locală | Dicționar personal |
 | :---: | :---: | :---: |
-| ![Home](screenshots/leo-daily-six-home-compact.png) | ![Acțiuni](screenshots/leo-daily-six-notifications.png) | ![Dicționar](screenshots/leo-daily-six-dictionary.png) |
+| ![Home](../archive/screenshots/leo-daily-six-home-compact.png) | ![Acțiuni](../archive/screenshots/leo-daily-six-notifications.png) | ![Dicționar](../archive/screenshots/leo-daily-six-dictionary.png) |
 | **Apel demo** | **Mesaje demo** | **FM flat, oprit** |
-| ![Apel demo](screenshots/leo-daily-six-call-demo.png) | ![Mesaje demo](screenshots/leo-daily-six-messages-demo.png) | ![FM](screenshots/leo-daily-six-fm.png) |
+| ![Apel demo](../archive/screenshots/leo-daily-six-call-demo.png) | ![Mesaje demo](../archive/screenshots/leo-daily-six-messages-demo.png) | ![FM](../archive/screenshots/leo-daily-six-fm.png) |
 
 ## Recompilare
 

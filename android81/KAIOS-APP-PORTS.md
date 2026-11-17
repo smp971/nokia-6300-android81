@@ -52,7 +52,7 @@ Etapa următoare a adăugat alarme și temporizator, cu declanșare în fundal v
 sunetul temporizatorului a fost confirmat de utilizator. Recuperarea după reboot
 rămâne de verificat. [Detalii](LEO-SYSTEM-APPS.md).
 
-![Cronometru Leo](screenshots/leo-clock-stopwatch.png)
+![Cronometru Leo](../archive/screenshots/leo-clock-stopwatch.png)
 
 ## Lista de portare
 

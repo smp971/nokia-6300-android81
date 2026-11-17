@@ -53,7 +53,7 @@ The menu visibly shows “Preferred network type: 4G (recommended)” and the
 status bar displays 4G. The temporary radio diagnostic app was uninstalled.
 No calls, VoLTE registration or VoWiFi were tested.
 
-![LTE setting on the phone](screenshots/mobile-network-lte.png)
+![LTE setting on the phone](../archive/screenshots/mobile-network-lte.png)
 
 To disable automatic packet data support, set `persist.leo.data.enabled=0`
 and reboot. This leaves the established voice-only radio boot path available.

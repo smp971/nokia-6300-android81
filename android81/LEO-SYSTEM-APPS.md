@@ -220,8 +220,8 @@ brute. Capturile selectate trebuie să conțină numai datele sintetice ale prob
 
 | Contact sintetic găsit | Telefon Leo |
 | --- | --- |
-| ![Căutare contact de probă](screenshots/leo-contacts-search.png) | ![Telefon](screenshots/leo-phone.png) |
+| ![Căutare contact de probă](../archive/screenshots/leo-contacts-search.png) | ![Telefon](../archive/screenshots/leo-phone.png) |
 
 | Ciornă sintetică, fără trimitere în această captură | Alarmă de probă |
 | --- | --- |
-| ![SMS de probă](screenshots/leo-messages-compose.png) | ![Alarmă declanșată în proces nou](screenshots/leo-alarm.png) |
+| ![SMS de probă](../archive/screenshots/leo-messages-compose.png) | ![Alarmă declanșată în proces nou](../archive/screenshots/leo-alarm.png) |

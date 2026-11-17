@@ -83,7 +83,7 @@ Acestea sunt repere de implementare; comenzile private și comportamentul au fos
 
 | Acordaj și semnal măsurat | Meniu din taste |
 | --- | --- |
-| ![Radio FM Leo](screenshots/leo-fm-tuner.png) | ![Meniu Radio FM](screenshots/leo-fm-menu.png) |
+| ![Radio FM Leo](../archive/screenshots/leo-fm-tuner.png) | ![Meniu Radio FM](../archive/screenshots/leo-fm-menu.png) |
 
 ## Verificarea opririi după comutarea pe difuzor
 

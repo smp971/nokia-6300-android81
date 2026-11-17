@@ -89,10 +89,10 @@ Visual are copia de sistem sincronizată. Keypad este instalat ca actualizare pe
 
 | Categorii | Ecran / taste | Tastatură |
 | --- | --- | --- |
-| ![Categorii](screenshots/settings-expanded-categories.png) | ![Ecran](screenshots/settings-expanded-display.png) | ![Text](screenshots/settings-expanded-input.png) |
+| ![Categorii](../archive/screenshots/settings-expanded-categories.png) | ![Ecran](../archive/screenshots/settings-expanded-display.png) | ![Text](../archive/screenshots/settings-expanded-input.png) |
 
 | Sunet | Stocare | Baterie |
 | --- | --- | --- |
-| ![Sunet](screenshots/settings-expanded-sound.png) | ![Stocare](screenshots/settings-expanded-storage.png) | ![Baterie](screenshots/settings-expanded-battery.png) |
+| ![Sunet](../archive/screenshots/settings-expanded-sound.png) | ![Stocare](../archive/screenshots/settings-expanded-storage.png) | ![Baterie](../archive/screenshots/settings-expanded-battery.png) |
 
-![Notificări](screenshots/settings-expanded-notifications.png)
+![Notificări](../archive/screenshots/settings-expanded-notifications.png)

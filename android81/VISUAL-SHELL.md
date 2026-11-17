@@ -42,7 +42,7 @@ Nu sunt adăugate permisiuni și nu sunt lansate aplicații doar prin deschidere
 Verificat pe telefon: 12 intrări, deschidere Calculator, revenire în listă și
 derulare până la 12/12. Aceasta verifică lansarea, nu funcționalitatea fiecărei aplicații.
 
-![Aplicații Android](screenshots/visual-shell-android-apps.png)
+![Aplicații Android](../archive/screenshots/visual-shell-android-apps.png)
 
 ### Listă, grilă și preferințe
 
@@ -58,13 +58,13 @@ Meniul global a fost deschis prin scan code 212 peste Calculator și captura
 a fost inspectată. Scriptul de activare reface legătura cu serviciul propriu
 după înlocuirea APK-ului, păstrând celelalte servicii de accesibilitate.
 
-![Meniu global din tasta fizică](screenshots/visual-shell-global-menu.png)
+![Meniu global din tasta fizică](../archive/screenshots/visual-shell-global-menu.png)
 
 Verificare pe telefon: captură reală inspectată, deschidere/închidere din taste,
 Calculator și revenire, notificări și rezolvarea HOME. Alegerea listă/grilă din
 noul meniu a fost verificată prin preferința salvată. Nu s-a efectuat un reboot.
 
-![Meniu Opțiuni din taste](screenshots/visual-shell-options.png)
+![Meniu Opțiuni din taste](../archive/screenshots/visual-shell-options.png)
 
 Din Opțiuni se poate alege **Afișare listă / Afișare grilă**. Lista afișează până
 la cinci rânduri și se parcurge cu sus/jos. Alegerea și culoarea fundalului sunt
@@ -72,7 +72,7 @@ salvate în preferințe private. Persistența listei a fost verificată după op
 și relansarea procesului; Calculatorul s-a deschis din lista navigată cu tastele.
 Nu s-a efectuat un reboot nou pentru acest test.
 
-![Listă de aplicații](screenshots/visual-shell-list.png)
+![Listă de aplicații](../archive/screenshots/visual-shell-list.png)
 
 Planul comun al interfeței și aplicațiilor: [PROJECT.md](PROJECT.md).
 
@@ -126,7 +126,7 @@ sau scris o imagine nouă în această probă.
 
 | Meniu global peste Calculator | Clic prin cursor în ecranul de test |
 | --- | --- |
-| ![Meniu global](screenshots/visual-global-menu.png) | ![Clic confirmat](screenshots/visual-pointer-test.png) |
+| ![Meniu global](../archive/screenshots/visual-global-menu.png) | ![Clic confirmat](../archive/screenshots/visual-pointer-test.png) |
 
 ## Implementat
 
@@ -191,7 +191,7 @@ de Leo sau funcționarea completă a fiecărei aplicații deschise. Nu au fost
 
 | Home cu două SIM-uri | Grila 3×3 |
 | --- | --- |
-| ![Home](screenshots/visual-shell-home.png) | ![Grilă](screenshots/visual-shell-grid.png) |
+| ![Home](../archive/screenshots/visual-shell-home.png) | ![Grilă](../archive/screenshots/visual-shell-grid.png) |
 
 ## Compilare și instalare în mediul proiectului
 

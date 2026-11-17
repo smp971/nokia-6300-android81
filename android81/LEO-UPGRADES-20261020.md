@@ -86,7 +86,7 @@ fișiere Java suplimentare; apply.py --check-only le recunoaște în checkout.
 
 | Personalizare | Configurare email din taste |
 | --- | --- |
-| ![Personalizare Leo](screenshots/leo-personalization.png) | ![Tip de cont email](screenshots/leo-email-keypad-setup.png) |
+| ![Personalizare Leo](../archive/screenshots/leo-personalization.png) | ![Tip de cont email](../archive/screenshots/leo-email-keypad-setup.png) |
 
 
 ## Configurare reală IMAP confirmată

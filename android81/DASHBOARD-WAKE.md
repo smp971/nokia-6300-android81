@@ -54,7 +54,7 @@ boot, recovery and radio were not restarted or rewritten.
   battery-only deep-suspend wake remains a manual check.
 - The new weather/SIM rendering was captured on the phone with its saved layout.
 
-![Dashboard with weather and separate SIM symbols](screenshots/leo-dashboard-sim-icons.png)
+![Dashboard with weather and separate SIM symbols](../archive/screenshots/leo-dashboard-sim-icons.png)
 
 The release ZIP has not been replaced. Future image assembly must include the
 updated native service and Leo Visual APK.

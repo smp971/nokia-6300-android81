@@ -59,10 +59,10 @@ oferă suport pentru activarea NFC pe TA-1286. Nu s-a adăugat un comutator fict
 
 ## Capturi
 
-<img src="screenshots/leo13-search.png" width="180" alt="Căutare locală cu rezultat din Setări și număr de rezultate">
-<img src="screenshots/leo13-recent.png" width="180" alt="Aplicații recente cu media curentă fixată">
-<img src="screenshots/leo13-accessibility.png" width="180" alt="Accesibilitate și ritmul săgeților">
-<img src="screenshots/leo13-schedule.png" width="180" alt="Programarea profilului sonor">
+<img src="../archive/screenshots/leo13-search.png" width="180" alt="Căutare locală cu rezultat din Setări și număr de rezultate">
+<img src="../archive/screenshots/leo13-recent.png" width="180" alt="Aplicații recente cu media curentă fixată">
+<img src="../archive/screenshots/leo13-accessibility.png" width="180" alt="Accesibilitate și ritmul săgeților">
+<img src="../archive/screenshots/leo13-schedule.png" width="180" alt="Programarea profilului sonor">
 
 Pachetul aplicațiilor se construiește cu [release-apps.py](release-apps.py).
 Arhiva recovery construită la 0.12 rămâne snapshot-ul acelei versiuni: actualizarea

@@ -30,8 +30,8 @@ More retains Now playing, recent apps, keypad lock, power options, page help, Bl
 
 The Apps action opens Leo's app menu directly from Home or another application. If the Home editor is active, its existing save/discard dialog is shown instead of discarding the draft.
 
-![Primary menu](screenshots/leo-global-menu-simple.png)
-![Advanced actions](screenshots/leo-global-more.png)
+![Primary menu](../archive/screenshots/leo-global-menu-simple.png)
+![Advanced actions](../archive/screenshots/leo-global-more.png)
 
 ## Verification
 

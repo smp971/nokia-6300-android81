@@ -75,6 +75,6 @@ of this update.
 
 ## Real screenshots
 
-![English settings](screenshots/leo-settings-english.png)
+![English settings](../archive/screenshots/leo-settings-english.png)
 
-![English application menu](screenshots/leo-apps-english.png)
+![English application menu](../archive/screenshots/leo-apps-english.png)

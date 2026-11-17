@@ -1,4 +1,4 @@
-# Leo Android 8.1 · documentation index
+# N0d3 KeyShell documentation
 
 Native keypad Android for the Nokia 6300 4G TA-1286. Start with the
 [project overview, feature table and current audit](../README.md).
@@ -25,7 +25,7 @@ These are dated records. “Untested” or “not implemented” describes that 
 use the current guides for today's procedure. Old commands may refer to
 abandoned experiments or local-only inputs.
 
-- [Initial preparation, 15–16 October](README.preparation-2026-10-16.ro.md)
+- [Initial preparation, 15–16 October](../archive/readmes/README.preparation-2026-10-16.ro.md)
 - [Development log](STATUS.md) and [hardware audit](FUNCTION-AUDIT-2026-10-18.md)
 - [Adreno](ADRENO-INTEGRATION.md) and [latency](UI-LATENCY.md)
 - [Audio](AUDIO-BRINGUP.md), [headphones](WIRED-HEADSET.md), [FM](FM-INVESTIGATION.md)
@@ -33,10 +33,10 @@ abandoned experiments or local-only inputs.
 - [Camera](CAMERA-RUNTIME.md) and [original camera audit](CAMERA-PORT-AUDIT.md)
 - [UI foundation](LEO-UI-FOUNDATION.md) and [keypad IME](KEYPAD-IME.md)
 - [0.14](LEO-14-DAILY-EXPERIENCE.md), [0.13](LEO-13-DAILY-TOOLS.md), [0.12](LEO-12-DAILY-CANDIDATE.md)
-- [KaiOS 3.1 donor experiment](../kaios31/README.md)
+- [KaiOS 3.1 donor experiment](../archive/kaios31/README.md)
 
-Other dated feature reports remain in Romanian. The retired `shell/` is
-historical; the active UI is `visual-shell/`.
+The original launcher, earlier screenshots and README snapshots are in the
+[project archive](../archive/README.md).
 
 ## Documentation language
 
