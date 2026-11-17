@@ -58,10 +58,10 @@ Capturile folosesc doar ecrane de sistem sau date sintetice:
 
 | Meniu | Galerie / EXIF | T9 |
 | --- | --- | --- |
-| ![Meniu Leo](screenshots/leo-suite-menu.png) | ![Orientare EXIF](screenshots/leo-gallery-exif.png) | ![T9 local](screenshots/leo-t9.png) |
+| ![Meniu Leo](../archive/screenshots/leo-suite-menu.png) | ![Orientare EXIF](../archive/screenshots/leo-gallery-exif.png) | ![T9 local](../archive/screenshots/leo-t9.png) |
 
 | Muzică · listă | Video · listă | Reportofon · interfață |
 | --- | --- | --- |
-| ![Bibliotecă muzică](screenshots/leo-music-library.png) | ![Bibliotecă video](screenshots/leo-video-library.png) | ![Reportofon](screenshots/leo-recorder.png) |
+| ![Bibliotecă muzică](../archive/screenshots/leo-music-library.png) | ![Bibliotecă video](../archive/screenshots/leo-video-library.png) | ![Reportofon](../archive/screenshots/leo-recorder.png) |
 
 Aceste trei capturi media demonstrează interfața și inventarierea, nu o înregistrare sau redare reușită.

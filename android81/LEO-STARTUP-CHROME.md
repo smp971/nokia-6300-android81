@@ -88,10 +88,10 @@ formatează date și nu se scriu boot/recovery sau calibrarea modemului.
 
 ## Capturi reale
 
-![Liste Leo, selecție și subtitluri](screenshots/leo-chrome-lists.png)
+![Liste Leo, selecție și subtitluri](../archive/screenshots/leo-chrome-lists.png)
 
-![Calculator cu antet comun](screenshots/leo-chrome-calculator.png)
+![Calculator cu antet comun](../archive/screenshots/leo-chrome-calculator.png)
 
-![Meniul de oprire Leo](screenshots/leo-power-menu.png)
+![Meniul de oprire Leo](../archive/screenshots/leo-power-menu.png)
 
-![Confirmare accesibilă din taste](screenshots/leo-power-confirm.png)
+![Confirmare accesibilă din taste](../archive/screenshots/leo-power-confirm.png)

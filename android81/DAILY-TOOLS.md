@@ -43,7 +43,7 @@ The approved ROM is `leo-fresh-0.14.0-dev-20261027-232615.zip` (351257972 bytes;
 
 **That clean ROM erases internal data and restores the older published base. It does not contain these later UI changes.** Verification and recovery entry do not turn it into a current ROM update. Installation remains a manual action inside recovery, with its existing backup/power/partition guards. Generic OTA ZIPs and newly built ROMs need a separately reviewed recovery catalog update. Neither recovery nor the published ROM was rebuilt here.
 
-![Leo update centre on the device](screenshots/leo-daily-updates.png)
+![Leo update centre on the device](../archive/screenshots/leo-daily-updates.png)
 
 ## Validation · 6 November 2026
 

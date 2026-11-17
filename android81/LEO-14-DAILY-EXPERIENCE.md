@@ -70,8 +70,8 @@ RemoteInput și amânarea. Nu creează apeluri sau SMS-uri în istoricul real ș
 trimit mesaje. Fișierele și notificarea de probă sunt eliminate, iar preferințele
 modificate sunt restaurate. Capturile păstrate conțin numai documente de test.
 
-<img src="screenshots/leo14-markdown.png" width="180" alt="Markdown local de test">
-<img src="screenshots/leo14-pdf.png" width="180" alt="A doua pagină a PDF-ului local de test">
+<img src="../archive/screenshots/leo14-markdown.png" width="180" alt="Markdown local de test">
+<img src="../archive/screenshots/leo14-pdf.png" width="180" alt="A doua pagină a PDF-ului local de test">
 
 Testele de navigare așteaptă acum focusul ferestrei după confirmările de oprire;
 `waitForIdleSync` singur nu garantează încheierea tranziției WindowManager.

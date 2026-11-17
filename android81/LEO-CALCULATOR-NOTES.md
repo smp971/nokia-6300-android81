@@ -24,7 +24,7 @@ vendor. În arhivele de referință sunt `calculator` (`index.html`, `dist/bundl
 
 | Calculator Leo | Notițe și IME |
 | --- | --- |
-| ![Rezultat 14](screenshots/leo-calculator.png) | ![Notiță de probă](screenshots/leo-notes-editor.png) |
+| ![Rezultat 14](../archive/screenshots/leo-calculator.png) | ![Notiță de probă](../archive/screenshots/leo-notes-editor.png) |
 
 ## Calculator
 

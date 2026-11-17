@@ -14,9 +14,9 @@ The nine-app first page, app categories, short context menus, five personalizati
 
 Custom app canvases continue to use their own layouts; common palette changes do not mean every control has been rebuilt as an official Material widget. Native Android system panels retain their existing keypad adaptations.
 
-![Material launcher](screenshots/leo-material-grid.png)
-![Material personalization](screenshots/leo-material-settings.png)
-![Material global menu](screenshots/leo-material-global-menu.png)
+![Material launcher](../archive/screenshots/leo-material-grid.png)
+![Material personalization](../archive/screenshots/leo-material-settings.png)
+![Material global menu](../archive/screenshots/leo-material-global-menu.png)
 
 ## Validation on 6 November 2026
 

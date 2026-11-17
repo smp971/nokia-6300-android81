@@ -84,4 +84,4 @@ Inventarul reproductibil este în [KAIOS-UI-INVENTORY](KAIOS-UI-INVENTORY.md).
 - Fiecare funcție are o stare: implementată, verificată automat, confirmată pe telefon
   sau nevalidată. Un demo nu este echivalent cu o funcție hardware completă.
 
-![Listă de aplicații Leo](screenshots/visual-shell-list.png)
+![Listă de aplicații Leo](../archive/screenshots/visual-shell-list.png)

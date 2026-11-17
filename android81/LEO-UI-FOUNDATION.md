@@ -28,7 +28,7 @@ este păstrată pentru compatibilitate cu vizorul camerei.
 Ecran demonstrativ randat pe telefon de testul UI; nu este o pagină nouă de setări.
 Nu conține date personale.
 
-![Componentele comune Leo](screenshots/leo-ui-foundation.png)
+![Componentele comune Leo](../archive/screenshots/leo-ui-foundation.png)
 
 ## Verificare
 

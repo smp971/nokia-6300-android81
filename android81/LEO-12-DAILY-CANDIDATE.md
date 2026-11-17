@@ -67,10 +67,10 @@ oricărui lag sau un anumit FPS. Datele brute rămân local în `output/performa
 
 ## Capturi de pe telefon
 
-<img src="screenshots/leo12-readiness.png" width="180" alt="Verificarea finală Daily readiness după repornire">
-<img src="screenshots/leo12-list.png" width="180" alt="Listă locală de test, poziția 3 din 3">
-<img src="screenshots/leo12-permission.png" width="180" alt="Dialog Android, Refuză selectat din taste">
-<img src="screenshots/leo12-volume.png" width="180" alt="Slider Android de volum selectat din taste">
+<img src="../archive/screenshots/leo12-readiness.png" width="180" alt="Verificarea finală Daily readiness după repornire">
+<img src="../archive/screenshots/leo12-list.png" width="180" alt="Listă locală de test, poziția 3 din 3">
+<img src="../archive/screenshots/leo12-permission.png" width="180" alt="Dialog Android, Refuză selectat din taste">
+<img src="../archive/screenshots/leo12-volume.png" width="180" alt="Slider Android de volum selectat din taste">
 
 Sunt capturi din probe locale, fără conținutul conturilor utilizatorului.
 

@@ -21,9 +21,9 @@ Contact detail: Call, SMS, Numbers, Favorite, More. Conversation options: Reply,
 
 Notification list previews are bounded to 250 code points per field; full details allow up to 4096. Home reads counts rather than notification bodies. Notification contents and list bookmarks are not persisted by these additions.
 
-![Synthetic SMS conversation on the device](screenshots/leo-refined-messages.png)
+![Synthetic SMS conversation on the device](../archive/screenshots/leo-refined-messages.png)
 
-![Keypad notification options](screenshots/leo-refined-notifications.png)
+![Keypad notification options](../archive/screenshots/leo-refined-notifications.png)
 
 The conversation above uses Leo's preview mode. Its names, messages and times are synthetic; no SMS was sent for the capture.
 

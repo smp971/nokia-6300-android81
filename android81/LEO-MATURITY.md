@@ -23,7 +23,7 @@ interfeței; nu reprezintă certificarea unui ROM final.
 
 | Media | Comenzile telefonului | Recente |
 | --- | --- | --- |
-| ![Media](screenshots/leo-maturity-media.png) | ![Ghid](screenshots/leo-maturity-setup.png) | ![Recente](screenshots/leo-maturity-recents.png) |
+| ![Media](../archive/screenshots/leo-maturity-media.png) | ![Ghid](../archive/screenshots/leo-maturity-setup.png) | ![Recente](../archive/screenshots/leo-maturity-recents.png) |
 
 ## Meniul pe categorii
 

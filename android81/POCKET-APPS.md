@@ -21,11 +21,11 @@ Choose **Full** interface mode if needed. In the app menu, `*` / `#` change cate
 
 The **All** category also contains all ten. No camera, GPS, NFC or touchscreen is required.
 
-![New apps in the real launcher](screenshots/leo-pocket-apps.png)
+![New apps in the real launcher](../archive/screenshots/leo-pocket-apps.png)
 
-![Metronome controls](screenshots/leo-pocket-metronome.png)
+![Metronome controls](../archive/screenshots/leo-pocket-metronome.png)
 
-![Synthetic QR for https://example.com/leo](screenshots/leo-pocket-qr.png)
+![Synthetic QR for https://example.com/leo](../archive/screenshots/leo-pocket-qr.png)
 
 The QR capture contains only the example URL above. It does not contain account or Wi-Fi credentials. The metronome was stopped during the capture.
 

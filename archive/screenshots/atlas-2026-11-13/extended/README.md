@@ -5,7 +5,7 @@ Form fields are blank or show app defaults. Empty lists are shown as they appear
 Theme previews and any screenshots marked as demos use sample content built into Leo.
 
 [Overview atlas](../README.md) · [Project README](../../../../README.md) ·
-[Technical audit](../../../PROJECT-AUDIT-2026-11-13.md)
+[Technical audit](../../../../android81/PROJECT-AUDIT-2026-11-13.md)
 
 
 ## Home and navigation

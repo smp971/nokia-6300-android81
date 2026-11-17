@@ -122,4 +122,4 @@ de rețea. Probele inițiale eșuate nu sunt incluse în totalul de mai sus.
 
 | Punctul comun Leo | Setări Android | Panoul Android |
 | --- | --- | --- |
-| <img src="screenshots/leo11-android-controls.png" width="180" alt="Android din taste"> | <img src="screenshots/leo11-native-settings.png" width="180" alt="Selecție din taste în Setări Android"> | <img src="screenshots/leo11-native-notifications.png" width="180" alt="Notificarea locală de test selectată în panoul Android"> |
+| <img src="../archive/screenshots/leo11-android-controls.png" width="180" alt="Android din taste"> | <img src="../archive/screenshots/leo11-native-settings.png" width="180" alt="Selecție din taste în Setări Android"> | <img src="../archive/screenshots/leo11-native-notifications.png" width="180" alt="Notificarea locală de test selectată în panoul Android"> |

@@ -77,6 +77,6 @@ Vezi [SDK-ul web](web-app-sdk/README.md) și [build-ul aplicațiilor](RELEASE-AP
 
 | Leo Studio | Aplicație HTML locală |
 | --- | --- |
-| <img src="screenshots/leo10-studio.png" width="180" alt="Leo Studio"> | <img src="screenshots/leo10-web-runtime.png" width="180" alt="Pocket Board în runtime-ul HTML Leo"> |
+| <img src="../archive/screenshots/leo10-studio.png" width="180" alt="Leo Studio"> | <img src="../archive/screenshots/leo10-web-runtime.png" width="180" alt="Pocket Board în runtime-ul HTML Leo"> |
 
 Aspectul Studio · Grafit a fost aplicat pe telefon din meniul Studio și verificat vizual.

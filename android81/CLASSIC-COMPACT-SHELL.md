@@ -25,9 +25,9 @@ The optional Leo Classic pack adds dark blue surfaces, blue selection, compact h
 
 Switching packs now reloads the saved grid/list preference when Home resumes. The previous visual settings and wallpaper are retained by the existing theme checkpoint. Theme restoration affects appearance, not the new menu organisation.
 
-![Essential app grid](screenshots/leo-classic-grid.png)
-![App-menu options](screenshots/leo-classic-app-options.png)
-![Grouped personalization](screenshots/leo-classic-personalization.png)
+![Essential app grid](../archive/screenshots/leo-classic-grid.png)
+![App-menu options](../archive/screenshots/leo-classic-app-options.png)
+![Grouped personalization](../archive/screenshots/leo-classic-personalization.png)
 
 ## Validation
 

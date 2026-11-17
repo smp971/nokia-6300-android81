@@ -60,8 +60,8 @@ The boot animation is a rendered preview. Select any thumbnail to open it at
 
 </details>
 
-[Earlier on-device screen atlas](android81/screenshots/atlas-2026-11-13/README.md) ·
-[Extended atlas](android81/screenshots/atlas-2026-11-13/extended/README.md) ·
+[Earlier on-device screen atlas](archive/screenshots/atlas-2026-11-13/README.md) ·
+[Extended atlas](archive/screenshots/atlas-2026-11-13/extended/README.md) ·
 [Boot animation build](android81/BOOTANIMATION-SD.md)
 
 <a id="ce-poți-face-deja"></a>
@@ -191,4 +191,4 @@ of keys pressed and the behavior observed. [Technical audit](android81/PROJECT-A
 ## Documentation
 
 [Documentation index](android81/README.md) · [Hardware and lab notes](android81/STATUS.md) ·
-[Earlier Romanian project README](README.archive-2026-10-28-ro.md)
+[Project archive](archive/README.md)

@@ -47,4 +47,4 @@ am instrument -w ro.leo.visual.tests/ro.leo.visual.FeatureTests
 
 | Stocare | Baterie | Reportofon |
 | --- | --- | --- |
-| ![Stocări Leo](screenshots/leo-daily-files.png) | ![Baterie Leo](screenshots/leo-daily-battery.png) | ![Reportofon Leo](screenshots/leo-daily-recorder.png) |
+| ![Stocări Leo](../archive/screenshots/leo-daily-files.png) | ![Baterie Leo](../archive/screenshots/leo-daily-battery.png) | ![Reportofon Leo](../archive/screenshots/leo-daily-recorder.png) |

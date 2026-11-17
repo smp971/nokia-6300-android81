@@ -33,7 +33,7 @@ Tests used local fixtures; no calls, SMS, media playback or connectivity switche
 
 Original APKs were saved and hash-verified before installation. A phone-side 900-second rollback protected installation until all checks passed; acceptance cancelled that rollback. The final system APK hashes are recorded locally in output/framework-keypad/keypad-incremental-build.json. No reboot was needed or performed in this verification.
 
-![Native Settings selection](screenshots/android-keypad-v2-settings.png)
+![Native Settings selection](../archive/screenshots/android-keypad-v2-settings.png)
 
 ## Build and installation
 

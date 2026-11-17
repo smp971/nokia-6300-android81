@@ -21,8 +21,8 @@ Home and the launcher menu were inspected from device screenshots. The active AP
 
 WSL remains unavailable with an HCS connection timeout. This candidate was compiled using portable Windows JDK 8 and Android SDK tools: the nine changed visual classes were recompiled against the existing project class archive, the remaining compiled project classes were reused, and the APK was signed with the existing AOSP test certificate. All original non-code APK entries were checked byte-for-byte. This was an incremental build, not a full AOSP ROM rebuild. The normal source build remains `build-visual-shell.sh` when WSL is available again.
 
-![Sxmo launcher menu](screenshots/leo-sxmo-menu.png)
-![Home with preserved custom placement](screenshots/leo-sxmo-home.png)
+![Sxmo launcher menu](../archive/screenshots/leo-sxmo-menu.png)
+![Home with preserved custom placement](../archive/screenshots/leo-sxmo-home.png)
 
 ## Follow-up packaging audit
 

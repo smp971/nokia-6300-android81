@@ -355,8 +355,8 @@ Both SIMs voice-registered. Data needs a selected SIM: after wipe,
 not revalidated, no calls/SMS initiated and no listening tests repeated.
 ADB needed a ten-second physical USB disconnect/reconnect after boot.
 
-![Home after clean installation](screenshots/leo-fresh-install-home.png)
-![App menu after clean installation](screenshots/leo-fresh-install-menu.png)
+![Home after clean installation](../archive/screenshots/leo-fresh-install-home.png)
+![App menu after clean installation](../archive/screenshots/leo-fresh-install-menu.png)
 
 <a id="corecție-post-instalare-identificată-în-probă"></a>
 
@@ -385,4 +385,4 @@ At the user's request, old Leo Shell was later physically removed from
 Launcher3 stays disabled in system. The clean builder now removes only the exact
 known legacy APK; unknown hashes stop it. That does not replace the published ZIP.
 
-![Fixed global menu over Android Settings](screenshots/leo-fresh-install-global-menu.png)
+![Fixed global menu over Android Settings](../archive/screenshots/leo-fresh-install-global-menu.png)

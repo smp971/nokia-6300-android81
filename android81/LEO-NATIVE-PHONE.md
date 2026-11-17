@@ -92,7 +92,7 @@ comportamentul după reboot rămân probe distincte.
 
 | Apelare Night | Apel primit · demo | În convorbire · demo |
 | :---: | :---: | :---: |
-| ![Telefon](screenshots/leo-night-phone.png) | ![Apel primit demo](screenshots/leo-night-incoming-demo.png) | ![Convorbire demo](screenshots/leo-night-active-demo.png) |
+| ![Telefon](../archive/screenshots/leo-night-phone.png) | ![Apel primit demo](../archive/screenshots/leo-night-incoming-demo.png) | ![Convorbire demo](../archive/screenshots/leo-night-active-demo.png) |
 
 ## Vibrații · investigație separată
 

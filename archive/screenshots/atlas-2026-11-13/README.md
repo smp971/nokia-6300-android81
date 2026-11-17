@@ -8,8 +8,8 @@ Selected rows with local identifiers or filenames were masked.
 [Detailed atlas · 44 additional screens](extended/README.md) ·
 [Detailed atlas · 45 additional screens](extended/README.md) ·
 [Detailed atlas · 48 additional screens](extended/README.md) ·
-[Project README](../../../README.md) · [Technical audit](../../PROJECT-AUDIT-2026-11-13.md) ·
-[Earlier gallery](../archive/2026-11-06/README.md)
+[Project README](../../../README.md) · [Technical audit](../../../android81/PROJECT-AUDIT-2026-11-13.md) ·
+[Earlier gallery](../2026-11-06/README.md)
 
 ## Home and launcher
 
@@ -183,5 +183,5 @@ Selected rows with local identifiers or filenames were masked.
 
 The overview and the [detailed atlas](extended/README.md) cover the launcher,
 all six Settings tabs and the listed application flows. The
-[technical audit](../../PROJECT-AUDIT-2026-11-13.md) tracks scenarios that require
+[technical audit](../../../android81/PROJECT-AUDIT-2026-11-13.md) tracks scenarios that require
 live accessories, personal records or dedicated hardware trials.
