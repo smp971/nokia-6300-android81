@@ -46,3 +46,11 @@ A platform-signed TeleService update was installed as a data APK and verified
 after a normal reboot. The two SIM tabs, Advanced preferences and physical
 D-pad scrolling rendered correctly. The live IMS/LTE verifier passed on the
 selected data SIM after the update.
+
+The return from the KaiOS comparison reproduced the TeleService boot failure
+described in [LTE bring-up](LTE-BRINGUP.md#teleservice-installation-correction).
+The data APK lacked the effective `PERSISTENT` flag, so Oreo rejected the
+background start of `TelephonyDebugService` during `PhoneGlobals.onCreate`.
+The data update was removed with user data retained, and the same verified APK
+was placed in `/system/priv-app/TeleService`. Install the rendering fix
+as the persistent system package on this ROM.

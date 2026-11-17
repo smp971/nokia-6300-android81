@@ -11,7 +11,7 @@ fresh Leo installation, without a new call. The selected-slot fix is installed
 in both the system base and data update. The dual-slot candidate remains an
 experimental build and is not installed for everyday use.
 
-## Results on the current SIMs
+## Initial results with Digi and Orange
 
 | Observation | Physical SIM 1 · Digi | Physical SIM 2 · Orange |
 | --- | --- | --- |
@@ -125,7 +125,7 @@ A subsequent dual rebuild also includes the shared capability-refresh fix;
 that rebuild (`97c66b8f282050fd0625c6b165a1bdd15a38b5233366d742913e40ecc4182bdb`)
 compiled successfully but was not installed for another dual observation.
 
-## Remaining work
+## Follow-up measurements
 
 ### Read-only modem allocation follow-up, 29 October
 
@@ -150,10 +150,8 @@ with the number of subscriptions that can remain registered in standby.
 This establishes an allocation restriction in the currently running modem
 configuration, despite both NAS allowed-mode masks including LTE. It does not
 establish a permanent hardware limit or disprove the user's KaiOS observation.
-A live KaiOS snapshot of these same DMS/NAS fields is still required to locate
-the difference in firmware configuration, stack allocation or startup handling.
-No DDS switch, radio restart, APN/NV write, call or reboot was performed here.
-The original KaiOS init files inspected do not themselves establish dual LTE.
+No DDS switch, radio restart, APN/NV write, call or reboot was performed in
+the October trial. The live KaiOS comparison follows below.
 
 The DMS wire schema was inspected from `qmi/services/` in the same pinned
 reference repository/revision used by the IMS reference fetcher. The ignored
@@ -176,12 +174,34 @@ on one stack. The selected SIM's IMS voice registration and validated LTE
 data passed the live Android verifier after boot. No call was placed or DDS,
 APN or NV setting changed for the radio probe.
 
-### Next steps
+### Live comparison with stock KaiOS, 17 November
 
-1. Compare live per-subscription NAS/RIL allocation against a KaiOS baseline to
-   explain why Digi remains GSM despite the allowed LTE mask.
-2. Validate a second real LTE/IMS registration before enabling dual IMS normally.
-3. Replace manual trial activation with per-slot lifecycle/recovery and test SIM
-   removal, data-SIM changes, airplane mode and incoming/outgoing calls per SIM.
+The same TA-1286 and two Orange SIMs were measured on internal Android 8.1 and
+stock KaiOS 20.00.17.01, booted once from SD. Both runs used the same client-bound
+NAS/DMS probe, with the SIMs kept in the same slots.
+
+| Modem observation | Internal Android | KaiOS 20.00.17.01 |
+| --- | --- | --- |
+| Active subscriptions in dual standby | Both, mask `0x3` | Both, mask `0x3` |
+| SIM 1 actual NAS service | LTE, circuit- and packet-switched domains | LTE, circuit- and packet-switched domains |
+| SIM 2 actual NAS service | GSM, circuit-switched only | GSM, circuit-switched only |
+| Current DMS masks | `[0x38, 0x18]` | `[0x38, 0x18]` |
+| Advertised DMS allocations | `[0x38, 0x18]` or `[0x18, 0x38]` | Same bytes as Android |
+
+KaiOS reached full LTE service after the initial registration period. Its own
+properties advertised `gsm,wcdma,lte` for slot 0 and `gsm,wcdma` for slot 1.
+Once registered, KaiOS reported a NAS preferred-mode mask of `0x0c` on SIM 2
+and `0x1c` on SIM 1. Android reported `0x1c` for both SIMs.
+
+A separate client-bound [IMSA read](https://github.com/linux-mobile-broadband/libqmi/blob/3454c2c619d516fd46a08fe16c6eebdee061857d/data/qmi-service-imsa.json)
+on KaiOS showed full IMS registration and voice service over WWAN on SIM 1.
+The same registration and voice requests for SIM 2 returned QMI result 70, so
+there was no second verified VoLTE registration. The test did not place a
+call or change data-SIM selection, preferred RATs, APNs or NV.
+
+Both systems exhibited the same one-LTE-stack allocation for this device,
+carrier pair and configuration. This result applies to the tested firmware
+and subscriptions. Any future dual-IMS trial needs independent evidence of an
+allocation with LTE on both stacks and a real second IMS registration.
 
 The published ROM ZIP predates this change and has not been silently replaced.
