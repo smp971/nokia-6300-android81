@@ -13,9 +13,9 @@ accent and the Home layout editor work together on the same screen.
 | Home | Right softkey | Open its assigned app, initially Contacts |
 | Home | Dedicated Back | Clear the current selection |
 | Home | Dedicated Menu | Open the universal Leo menu |
-| Apps | Left softkey | Personalization, search, ordering and categories |
-| Apps | `* / #` | Previous / next category in full mode |
-| Apps list | Left / Right | Previous / next category in full mode |
+| Apps | Left softkey | Personalization, search and ordering |
+| Apps | `* / #` | Previous / next page |
+| Apps list | Left / Right | Previous / next page |
 | Apps | `1–9` / `0` | Select a slot / advance to the next page |
 | Apps | OK / right softkey | Open the selected app / return Home |
 

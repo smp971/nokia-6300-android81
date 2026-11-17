@@ -174,14 +174,8 @@ final class LeoHome {
         text(canvas, L.t("Aplicații"), 11, 26, 22, INK, Paint.Align.LEFT, 157, MEDIUM);
         String count = screen.order.length == 0 ? "0" : (screen.selected + 1) + " / " + screen.order.length;
         text(canvas, count, 229, 24, 11, MUTED, Paint.Align.RIGHT, 60, MEDIUM);
-        if (!screen.simple) {
-            surface(canvas, 9, 36, 231, 59, 11, tile);
-            text(canvas, "*", 22, 53, 13, palette.accent, Paint.Align.CENTER, 19, MEDIUM);
-            text(canvas, AppCatalog.CATEGORIES[screen.category], 120, 52, 11, INK, Paint.Align.CENTER, 172, MEDIUM);
-            text(canvas, "#", 218, 53, 12, palette.accent, Paint.Align.CENTER, 19, MEDIUM);
-        }
         int app = screen.focusedApp();
-        float top = screen.simple ? 42 : 66;
+        float top = 42;
         if (app < 0) {
             text(canvas, L.t("Nicio aplicație"), 120, 144, 16, MUTED, Paint.Align.CENTER, 210, MEDIUM);
             return;
@@ -191,7 +185,7 @@ final class LeoHome {
         if (!screen.list) {
             text(canvas, screen.names[app], 11, 268, 11, palette.accent, Paint.Align.LEFT, 169, MEDIUM);
             if (screen.order.length > 9) {
-                text(canvas, "0  ›", 230, 268, 11, palette.accent, Paint.Align.RIGHT, 35, MEDIUM);
+                text(canvas, "* / #", 230, 268, 11, palette.accent, Paint.Align.RIGHT, 43, MEDIUM);
             }
         }
     }

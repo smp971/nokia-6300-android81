@@ -18,9 +18,17 @@ public final class MaturityTests extends Instrumentation {
  void capture(String name)throws Exception{waitForIdleSync();SystemClock.sleep(400);Bitmap b=getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES).takeScreenshot();try(FileOutputStream out=new FileOutputStream(new File(getTargetContext().getFilesDir(),"maturity-"+name+".png"))){b.compress(Bitmap.CompressFormat.PNG,100,out);}finally{b.recycle();}}
  public void onCreate(Bundle b){start();}
  public void onStart(){Bundle result=new Bundle();Context c=getTargetContext();try{
-  int[] all=AppCatalog.menuOrder(c,0);Set<Integer> visible=new HashSet<Integer>();for(int id:all){check(!AppCatalog.settingsOnly(id),"settings-only entry omitted");check(visible.add(id),"no repeated IDs");}check(all.length==22&&AppCatalog.NAMES.length==35,"22 launcher entries; 35 stable IDs retained");
-  Set<Integer> grouped=new HashSet<Integer>();for(int group=1;group<AppCatalog.CATEGORIES.length;group++){int[] ids=AppCatalog.menuOrder(c,group);check(ids.length>0,"nonempty category");for(int id:ids)check(grouped.add(id)&&AppCatalog.category(id)==group,"category membership unique");}check(grouped.equals(visible),"categories cover visible launcher exactly");
-  Activity home=open(MainActivity.class);Object screen=get(home,"screen");call(screen,"category",new Class<?>[]{int.class},5);check(((int[])get(screen,"order")).length==3,"small system category");set(screen,"grid",true);call(screen,"key",new Class<?>[]{int.class,int.class},KeyEvent.KEYCODE_9,0);check((Integer)get(screen,"selected")==2,"digit selection clamped in short category");call(screen,"category",new Class<?>[]{int.class},2);capture("media-menu");close();
+  int[] all=AppCatalog.menuOrder(c);Set<Integer> visible=new HashSet<Integer>();
+  for(int id:all){check(!AppCatalog.settingsOnly(id),"settings-only entry omitted");check(visible.add(id),"no repeated IDs");}
+  check(all.length==(ShellMode.simple(c)?6:34),"one catalog covers the current launcher mode");
+  Activity home=open(MainActivity.class);Object screen=get(home,"screen");set(screen,"grid",true);set(screen,"selected",0);
+  call(screen,"stepAppPage",new Class<?>[]{int.class},-1);
+  check((Integer)get(screen,"selected")==((all.length-1)/9)*9,"previous page wraps to the final page");
+  call(screen,"key",new Class<?>[]{int.class,int.class},KeyEvent.KEYCODE_9,0);
+  check((Integer)get(screen,"selected")==all.length-1,"digit selection clamps in a short page");
+  call(screen,"stepAppPage",new Class<?>[]{int.class},1);
+  check((Integer)get(screen,"selected")==0,"next page wraps to the first page");
+  capture("flat-menu");close();
   check(SmsFolders.accepts(2,Telephony.Sms.MESSAGE_TYPE_SENT)&&!SmsFolders.accepts(2,Telephony.Sms.MESSAGE_TYPE_FAILED),"sent folder separates failed messages");check(SmsFolders.accepts(3,Telephony.Sms.MESSAGE_TYPE_QUEUED)&&SmsFolders.accepts(3,Telephony.Sms.MESSAGE_TYPE_OUTBOX),"pending folder includes queued and outbox");check(SmsFolders.accepts(0,Telephony.Sms.MESSAGE_TYPE_FAILED)&&SmsFolders.accepts(4,Telephony.Sms.MESSAGE_TYPE_FAILED),"all and failed folders retain failures");
   final MessagesActivity messages=(MessagesActivity)open(new Intent(c,MessagesActivity.class).putExtra("preview",true));
   Class<?> message=Class.forName("ro.leo.visual.MessagesActivity$Message");Constructor<?> constructor=message.getDeclaredConstructor();constructor.setAccessible(true);final ArrayList<Object> rows=new ArrayList<Object>();
