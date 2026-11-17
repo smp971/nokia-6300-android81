@@ -1,11 +1,33 @@
 package ro.leo.visual;
 import ro.leo.i18n.L;
-import android.content.*;import android.graphics.drawable.Drawable;import android.graphics.drawable.GradientDrawable;import android.graphics.drawable.StateListDrawable;import android.net.TrafficStats;import android.os.*;import android.view.*;import android.widget.*;import java.util.*;
-/** Six keypad categories, inspired by the local KaiOS settings reference. */
+import android.content.*;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.StateListDrawable;
+import android.net.TrafficStats;
+import android.os.*;
+import android.view.*;
+import android.widget.*;
+import java.util.*;
+
+import static ro.leo.visual.SettingsIcon.Glyph.*;
+/** Six keypad categories with Gaia-inspired lists and connection summaries. */
 public final class SettingsActivity extends LeoActivity {
     static final String[] TABS=L.array(new String[]{"Rețele","Aspect","Sunet","Siguranță","Stocare","Telefon"});
     private static final String[][] ROWS=L.array(new String[][]{{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă","Transfer USB","Mai multe"},{"Ecran și taste","Personalizare","Tastatură și text"},{"Sunete și tonuri","Volume separate","Profiluri sonore","Notificări","Program sonor"},{"Blocarea tastelor","Permisiuni și aplicații","Localizare","Accesibilitate"},{"Spațiu telefon / card SD","Fișiere","Descărcări","Backup"},{"Baterie","Dată și oră","Despre telefon","Ajutor","Actualizări","Instrumente avansate"}});
     private static final String[] EVERYDAY=L.array(new String[]{"Wi-Fi","SIM-uri și rețea mobilă","Sunete și tonuri","Ecran și taste","Personalizare","Toate setările"});
+    private static final SettingsIcon.Glyph[][] ROW_ICONS = {
+        {WIFI, BLUETOOTH, TETHERING, SIM, USB, MENU},
+        {BRIGHTNESS, THEMES, KEYBOARD},
+        {SOUND, HEADPHONES, MUTE, NOTIFICATIONS, TIME},
+        {LOCK, ADDONS, LOCATION, ACCESSIBILITY},
+        {STORAGE, FILES, DOWNLOAD, SYNC},
+        {BATTERY, TIME, INFO, HELP, RELOAD, DEVELOPER}
+    };
+    private static final SettingsIcon.Glyph[] EVERYDAY_ICONS = {WIFI, SIM, SOUND, BRIGHTNESS, THEMES, SETTINGS};
     private int[] selections=new int[TABS.length];
     private int category,simpleSelection;
     private boolean categories,allSettings;
@@ -59,15 +81,31 @@ public final class SettingsActivity extends LeoActivity {
             TABS[KeypadTabs.next(current,1,TABS.length)]+" ›"
         },1,new Choice(){public void pick(int offset){switchCategory(current+offset-1);}},
             new Runnable(){public void run(){KeypadTabs.focusList(SettingsActivity.this);}});
-        tabs.setPadding(dp(6),0,dp(6),0);
+        tabs.setPadding(dp(6), 0, dp(6), 0);
+        tabs.setBackgroundColor(palette.bar);
+        int divider = Appearance.mix(palette.background, Color.WHITE, .16f);
         for(int index=0;index<tabs.getChildCount();index++){
             TextView tab=(TextView)tabs.getChildAt(index);
-            tab.setTextSize((index==1?14:11)*Appearance.textScale(this));
-            tab.getLayoutParams().height=dp(27);
-            if(index==1){
+            boolean active = index == 1;
+            tab.setTextSize((active ? 16 : 12) * Appearance.textScale(this));
+            tab.getLayoutParams().height = dp(33);
+            tab.setPadding(dp(4), 0, dp(4), dp(2));
+            StateListDrawable states = new StateListDrawable();
+            states.addState(new int[]{android.R.attr.state_focused}, new ColorDrawable(palette.selection));
+            LayerDrawable labelSurface = new LayerDrawable(new Drawable[]{
+                new ColorDrawable(palette.bar), new ColorDrawable(active ? palette.accent : divider)
+            });
+            labelSurface.setLayerHeight(1, dp(active ? 3 : 1));
+            labelSurface.setLayerGravity(1, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
+            states.addState(new int[0], labelSurface);
+            tab.setBackground(states);
+            tab.setTextColor(new ColorStateList(
+                new int[][]{new int[]{android.R.attr.state_focused}, new int[0]},
+                new int[]{palette.ink, active ? Color.WHITE : Appearance.mix(palette.bar, Color.WHITE, .76f)}
+            ));
+            if (active) {
                 tab.setTypeface(UiChrome.TITLE);
-                tab.getLayoutParams().width=0;
-                ((LinearLayout.LayoutParams)tab.getLayoutParams()).weight=1.2f;
+                ((LinearLayout.LayoutParams) tab.getLayoutParams()).weight = 1.25f;
             }
         }
         root.addView(tabs,1);
@@ -85,9 +123,9 @@ public final class SettingsActivity extends LeoActivity {
     }
     private List<String> networkRows(boolean everyday){
         String[] labels=(everyday?EVERYDAY:ROWS[0]).clone();
-        labels[0]+=" · "+network.wifi();
-        if(!everyday)labels[1]+=" · "+network.bluetooth();
-        labels[everyday?1:3]+=" · "+network.dataSim();
+        labels[0] += "\n" + network.wifi();
+        if(!everyday)labels[1] += "\n" + network.bluetooth();
+        labels[everyday?1:3] += "\n" + network.dataSim();
         return Arrays.asList(labels);
     }
     private void refreshNetworkRows(){
@@ -104,31 +142,40 @@ public final class SettingsActivity extends LeoActivity {
         if(title.equals(L.t("Setări uzuale")))return EVERYDAY[index];
         return super.rowMemoryKey(title,index,label);
     }
-    @Override void styleList(TextView heading,ListView list){
-        if(categories)heading.setText(L.t("Setări"));
-        list.setPadding(dp(6),dp(4),dp(6),dp(3));
-        list.setDividerHeight(dp(2));
+    @Override void styleList(TextView heading, ListView list) {
+        if (categories) heading.setText(L.t("Setări"));
+        heading.setBackgroundColor(palette.bar);
+        heading.setTextSize(20 * Appearance.textScale(this));
+        list.setPadding(dp(8), 0, dp(8), 0);
+        list.setDivider(new ColorDrawable(Appearance.mix(palette.background, Color.WHITE, .16f)));
+        list.setDividerHeight(dp(1));
     }
-    @Override void styleListRow(TextView row){
-        row.setTextSize(17*Appearance.textScale(this));
-        row.setTypeface(android.graphics.Typeface.DEFAULT);
-        row.setMinHeight(dp(40));
-        row.setCompoundDrawablePadding(dp(8));
-        int radius=dp(7);
-        GradientDrawable selected=Appearance.surface(palette.selection,radius);
-        selected.setStroke(dp(1),palette.accent);
-        StateListDrawable surfaces=new StateListDrawable();
-        surfaces.addState(new int[]{android.R.attr.state_selected},selected);
-        surfaces.addState(new int[]{},Appearance.surface(palette.card,radius));
-        row.setBackground(surfaces);
-        row.setPadding(dp(8),dp(3),dp(8),dp(3));
+
+    @Override void styleListRow(TextView row) {
+        row.setTextSize(17 * Appearance.textScale(this));
+        row.setMinHeight(dp(42));
+        row.setMaxLines(3);
+        row.setCompoundDrawablePadding(dp(12));
+        LayerDrawable selected = new LayerDrawable(new Drawable[]{
+            new ColorDrawable(palette.selection), new ColorDrawable(palette.accent)
+        });
+        selected.setLayerWidth(1, dp(3));
+        selected.setLayerGravity(1, Gravity.LEFT | Gravity.FILL_VERTICAL);
+        StateListDrawable background = new StateListDrawable();
+        background.addState(new int[]{android.R.attr.state_selected}, selected);
+        background.addState(new int[0], new ColorDrawable(palette.background));
+        row.setBackground(background);
+        row.setPadding(dp(12), dp(4), dp(9), dp(4));
     }
-    @Override Drawable rowIcon(String title,int index){
-        int size=dp(21);
-        if(!title.equals(categories?categoryListKey(category):L.t("Setări uzuale")))return null;
-        if((categories&&category==0&&index<3)||(!categories&&index==0))return new QuickIcon(index,size);
-        if((categories&&category==0&&index==3)||(!categories&&index==1))return new SimIcon(0,size,palette.accent);
-        return new AppBadge((categories?ROWS[category]:EVERYDAY)[index],size);
+
+    @Override Drawable rowIcon(String title, int index) {
+        if (!title.equals(activeSettingsList)) return null;
+        SettingsIcon.Glyph glyph = (categories ? ROW_ICONS[category] : EVERYDAY_ICONS)[index];
+        ColorStateList colors = new ColorStateList(
+            new int[][]{new int[]{android.R.attr.state_selected}, new int[0]},
+            new int[]{palette.ink, palette.accent}
+        );
+        return new SettingsIcon(this, glyph, dp(24), colors);
     }
     boolean stableRowIcons(){return true;}
     private void start(Class<?> type){startActivity(new Intent(this,type));}
