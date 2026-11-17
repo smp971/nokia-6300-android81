@@ -175,3 +175,30 @@ older build inputs are fallback files for snapshots that lack those paths.
 Building and checking this package is separate from a clean installation,
 which erases internal userdata. A clean boot of this candidate still needs
 hardware validation.
+
+### Verified private ROM assembly
+
+`leo-fresh-0.14.0-dev-20261117-210259.zip` was built locally from clean source
+commit `4dabe542a10af4b335f01948e1d735439a5ad72f`. The schema 2 package is
+357,113,426 bytes and is kept under `android81/output/ui-polish-rom/`.
+It contains Boot, the updated System and verified empty Data. It is a private
+development candidate; the published 16 November release remains separate.
+
+The builder's archive verifier passed. A separate invocation of
+`install-recovery-bundle.py` also passed complete archive verification without
+connecting to the phone. System and empty Data passed `e2fsck -f -n`. APKs read back from
+the final System image match the tested shell, current keypad IME and current
+TeleService. The latter has SHA-256
+`1f7251b22084526c6254cfb16545f69e0ca9d936a07e4315a8138e679df1d4d3`.
+
+```text
+ZIP     3c891db3541f30af94061f046102dee66ab54954849634876d2d15476d3e56e1
+System  31c45c1f6b704f56734d53043cc770f0c25f94317dde0ffaf34466ea2ae85bbe
+Boot    bb8731b1b7f3dd506e3180c00bbaea67f096a305697c49f5dc070b6738408d2b
+Data    cd89c3d37616925b17de315b9373e5a0e95f38d95ee12b9b0d8eb37afc9b9b0d
+```
+
+This ROM has not been flashed or booted after a wipe. The development phone
+continues to run the tested data APK update. The existing on-device Recovery
+catalog pins older archives; this new candidate uses the included PC installer
+when a clean installation is explicitly chosen. See [the install guide](INSTALL-GUIDE.md).

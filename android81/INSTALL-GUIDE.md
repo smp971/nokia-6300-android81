@@ -169,6 +169,21 @@ The installer writes System, empty Data and Boot in that order, with a full
 readback after each. The candidate's clean flash has offline validation. After a
 successful install, boot the internal OS and allow the first setup to finish.
 
+### Private UI candidate, 17 November
+
+The newer local candidate is
+`android81/output/ui-polish-rom/leo-fresh-0.14.0-dev-20261117-210259.zip`.
+It includes the Clock, Android Apps, dialogs and form selectors from source
+commit `4dabe54`, plus the currently verified keypad IME and TeleService.
+Package hashes and validation are recorded in [Leo Modern UI](LEO-MODERN-UI.md#verified-private-rom-assembly).
+This candidate is kept locally and has offline verification; clean boot after
+installation remains untested. The phone currently runs the updated shell APK.
+
+Verify this ZIP with the PC installer above using its actual filename. The
+native Recovery menu's existing archive pins do not include it. A subsequent
+clean installation still needs the verified stock backups and the explicit
+wipe flags; it erases internal userdata.
+
 ## 5. Return to KaiOS or recover p33
 
 For an internal stock return, copy `kaios-original-restore-695d.zip` to
