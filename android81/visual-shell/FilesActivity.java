@@ -12,7 +12,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 public final class FilesActivity extends LeoActivity {
-    private int browseGeneration;private boolean busy;private String artworkTitle="";private final RowArtwork artwork=new RowArtwork(this);
+    private volatile int browseGeneration;private boolean busy;private String artworkTitle="";private final RowArtwork artwork=new RowArtwork(this);
     private File base,current;private int focused,sort;private LinearLayout listing;
     private File selected;private final LinkedHashSet<File> marked=new LinkedHashSet<File>();private final ArrayList<File> clipboard=new ArrayList<File>();private File sourceBoundary;private boolean cut;
     private final ArrayList<File> entries=new ArrayList<File>();
@@ -31,21 +31,24 @@ public final class FilesActivity extends LeoActivity {
     private void browse(final File directory) {
         try { if(base==null || !LeoFileProvider.inside(base,directory) || !directory.isDirectory()) { notice(L.t("Stocare indisponibilă")); return; } }
         catch(IOException invalid) { notice(L.t("Locație invalidă")); return; }
-        final int request=++browseGeneration;final File boundary=base;
+        final int request=++browseGeneration;final File boundary=base;final int ordering=sort;
         if(!directory.equals(current))focused=0;current=directory; selected=null;
+        loading(L.t("Fișiere"));
+        back=new Runnable(){public void run(){if(directory.equals(boundary))locations();else browse(directory.getParentFile());}};
         worker.execute(new Runnable() { public void run() {
+            if(request!=browseGeneration)return;
             File[] contents=directory.listFiles(); final ArrayList<File> found=new ArrayList<File>();
             if(contents!=null) for(File file:contents) {
                 try { if(LeoFileProvider.inside(boundary,file) && !file.getName().startsWith(".leo-")) found.add(file); } catch(IOException ignored) { }
             }
-            Collections.sort(found,new Comparator<File>() { public int compare(File a,File b) { if(a.isDirectory()!=b.isDirectory()) return a.isDirectory()?-1:1; return sort==1?Long.compare(b.lastModified(),a.lastModified()):sort==2?Long.compare(b.length(),a.length()):a.getName().compareToIgnoreCase(b.getName()); } });
+            Collections.sort(found,new Comparator<File>() { public int compare(File a,File b) { if(a.isDirectory()!=b.isDirectory()) return a.isDirectory()?-1:1; return ordering==1?Long.compare(b.lastModified(),a.lastModified()):ordering==2?Long.compare(b.length(),a.length()):a.getName().compareToIgnoreCase(b.getName()); } });
             final boolean inaccessible=contents==null;
             ui(new Runnable() { public void run() {
                 if(request!=browseGeneration)return;entries.clear(); entries.addAll(found); ArrayList<String> labels=new ArrayList<String>();
-                for(File file:found) labels.add((marked.contains(file)?"✓ ":file.isDirectory()?"▸ ":"")+file.getName()+(file.isDirectory()?"":"\n"+file.length()+L.t(" octeți")));
+                for(File file:found) labels.add((marked.contains(file)?"✓ ":file.isDirectory()?"▸ ":"")+file.getName()+(file.isDirectory()?"":"\n"+android.text.format.Formatter.formatFileSize(FilesActivity.this,file.length())));
                 artworkTitle=directory.equals(base)?L.t("Fișiere"):directory.getName();list(artworkTitle,labels,Math.min(focused,Math.max(0,found.size()-1)),new Choice() { public void pick(int i) {
                     selected=entries.get(i); if(selected.isDirectory()) browse(selected); else fileOptions(selected);
-                } },L.t("Opțiuni"),new Runnable() { public void run() { directoryOptions(); } });listing=root;if(!entries.isEmpty())selected=entries.get(Math.min(focused,entries.size()-1));
+                } },L.t("Opțiuni"),new Runnable() { public void run() { directoryOptions(); } });listing=root;subtitle(locationPath(directory));if(!entries.isEmpty())selected=entries.get(Math.min(focused,entries.size()-1));
                 back=new Runnable() { public void run() { if(directory.equals(base)) locations(); else browse(directory.getParentFile()); } };
                 String wanted=getIntent().getStringExtra("select_file");if(wanted!=null){getIntent().removeExtra("select_file");for(File f:found)if(f.getAbsolutePath().equals(wanted)&&f.isFile()){selected=f;fileOptions(f);break;}}if(inaccessible) notice(L.t("Folderul nu poate fi citit; verifică permisiunile"));
             }});
@@ -54,6 +57,14 @@ public final class FilesActivity extends LeoActivity {
     private File named(String name) throws IOException {
         name=name.trim(); if(name.isEmpty() || name.length()>120 || name.equals(".") || name.equals("..") || name.contains("/") || name.contains("\\")) throw new IOException();
         File target=new File(current,name); if(!LeoFileProvider.inside(base,target)) throw new IOException(); return target;
+    }
+    private String locationPath(File directory){
+        String label=L.t("Stocare");
+        for(Map.Entry<String,File> entry:LeoFileProvider.roots(this).entrySet())if(entry.getValue().equals(base)){
+            label=entry.getKey().equals("phone")?L.t("Memorie telefon"):entry.getKey().equals("leo")?L.t("Documente"):L.t("Card SD");break;
+        }
+        String relative=directory.getPath().substring(base.getPath().length()).replaceFirst("^/","");
+        return label+(relative.isEmpty()?"":" / "+relative);
     }
     private void directoryOptions() {
         final ArrayList<String> actions=new ArrayList<String>(Arrays.asList(L.t("Folder nou"),L.t("Fișier text nou"),L.t("Reîmprospătează"),L.t("Caută în această stocare"),L.t("Marchează fișierele de aici"),L.t("Selecție · ")+marked.size(),L.t("Lipește aici · ")+clipboard.size()));if(!current.equals(base)){actions.add(L.t("Redenumește folderul"));actions.add(L.t("Șterge folderul gol"));}
@@ -97,7 +108,7 @@ public final class FilesActivity extends LeoActivity {
                 if(source==null?!target.mkdir():!source.renameTo(target)) throw new IOException(); browse(source!=null && source.equals(previous)?target:previous);
             } catch(IOException failure) { notice(L.t("Operația a eșuat; verifică numele și accesul")); }
         }};
-        back=new Runnable() { public void run() { browse(current); } }; footer(L.t("Salvează"),"",L.t("Șterge")); name.requestFocus();
+        protectDraft(new Runnable(){public void run(){browse(current);}},name); footer(L.t("Salvează"),"",L.t("Șterge")); name.requestFocus();
     }
     private void fileOptions(final File file) {
         if(getIntent().hasExtra("pocket_ext")){String extensions=getIntent().getStringExtra("pocket_ext");String lower=file.getName().toLowerCase(Locale.ROOT);boolean accepted="*".equals(extensions);for(String ext:extensions.split("\\|"))if(lower.endsWith("."+ext))accepted=true;if(!file.isFile()||!accepted){notice(L.t("Alege un fișier compatibil"));return;}setResult(RESULT_OK,new Intent().putExtra("file",file.getAbsolutePath()));finish();return;}
@@ -113,8 +124,24 @@ public final class FilesActivity extends LeoActivity {
         }});
     }
     void onListSelection(String title,int index){if(root==listing&&index>=0&&index<entries.size()){focused=index;selected=entries.get(index);}}
-    public boolean dispatchKeyEvent(android.view.KeyEvent e){if(root==listing&&e.getKeyCode()==android.view.KeyEvent.KEYCODE_5){android.view.View v=getCurrentFocus();while(v!=null&&!(v instanceof android.widget.ListView)){android.view.ViewParent parent=v.getParent();v=parent instanceof android.view.View?(android.view.View)parent:null;}if(v instanceof android.widget.ListView){int at=((android.widget.ListView)v).getSelectedItemPosition();if(at>=0&&at<entries.size()){focused=at;selected=entries.get(at);}}}if(e.getKeyCode()==android.view.KeyEvent.KEYCODE_5&&root==listing&&selected!=null&&selected.isFile()){if(e.getAction()==android.view.KeyEvent.ACTION_DOWN)onKeyDown(e.getKeyCode(),e);return true;}return super.dispatchKeyEvent(e);}
-    public boolean onKeyDown(int key,android.view.KeyEvent e){if(key==android.view.KeyEvent.KEYCODE_5&&root==listing&&selected!=null&&selected.isFile()){if(e.getRepeatCount()==0){if(!marked.remove(selected)){if(marked.size()>=100){notice(L.t("Maximum 100 fișiere"));return true;}marked.add(selected);}browse(current);}return true;}return super.onKeyDown(key,e);}
+    private final KeyRelease markRelease=new KeyRelease();
+    private File markCandidate;
+    @Override String listMemoryTitle(String title){return current!=null&&title.equals(artworkTitle)?"files:"+current.getAbsolutePath():title;}
+    @Override String rowMemoryKey(String title,int index,String label){return current!=null&&title.equals(artworkTitle)&&index<entries.size()?entries.get(index).getAbsolutePath():label;}
+    @Override String emptyMessage(String title){return title.equals(artworkTitle)?L.t("Folder gol"):super.emptyMessage(title);}
+    @Override void styleListRow(TextView row){super.styleListRow(row);row.setMaxLines(3);}
+    @Override protected void onDestroy(){browseGeneration++;artwork.close();super.onDestroy();}
+    public boolean dispatchKeyEvent(android.view.KeyEvent event){
+        if(event.getKeyCode()==android.view.KeyEvent.KEYCODE_5&&root==listing){
+            if(event.getAction()==android.view.KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0)markCandidate=selected;
+            if(markRelease.accept(event)&&markCandidate!=null&&markCandidate.equals(selected)&&selected.isFile()){
+                if(!marked.remove(selected)){if(marked.size()>=100){notice(L.t("Maximum 100 fișiere"));return true;}marked.add(selected);}
+                browse(current);
+            }
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
     private void metadata(final File f){ArrayList<String> rows=new ArrayList<String>();rows.add(f.isDirectory()?"Folder":L.t("Fișier"));if(f.isFile())rows.add(L.t("Mărime · ")+android.text.format.Formatter.formatFileSize(this,f.length()));rows.add(L.t("Liber · ")+android.text.format.Formatter.formatFileSize(this,f.getUsableSpace()));rows.add("Total · "+android.text.format.Formatter.formatFileSize(this,f.getTotalSpace()));rows.add(L.t("Modificat · ")+new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new Date(f.lastModified())));rows.add(L.t("Cale · ")+f.getAbsolutePath());rows.add(L.t("Acces · ")+(f.canRead()?L.t("citire "):"")+(f.canWrite()?L.t("scriere"):""));if(f.isFile())try{rows.add(L.t("Tip · ")+getContentResolver().getType(LeoFileProvider.uri(this,f)));}catch(Exception ignored){}rows.add(L.t("Selecție · ")+marked.size()+L.t(" fișiere"));list(f.getName(),rows,0,new Choice(){public void pick(int i){}},"",null);back=new Runnable(){public void run(){browse(current);}};}
     private void open(File file) {
         String lower=file.getName().toLowerCase(Locale.ROOT);if(lower.endsWith(".leoapp.zip")){startActivity(new Intent(this,WebAppsActivity.class).putExtra("web_package",file.getAbsolutePath()));return;}if(lower.matches(".*\\.(txt|md|markdown|epub|pdf)$")){startActivity(new Intent(this,ReaderActivity.class).putExtra("file",file.getAbsolutePath()));return;}if(lower.startsWith("leo-apps-")&&lower.endsWith(".zip")){startActivity(new Intent(this,UpdatesActivity.class).putExtra("file",file.getAbsolutePath()));return;}if(lower.endsWith(".zip")){startActivity(new Intent(this,ZipActivity.class).putExtra("zip_file",file.getAbsolutePath()));return;}
@@ -159,7 +186,8 @@ public final class FilesActivity extends LeoActivity {
                 atomic=new AtomicFile(target); stream=atomic.startWrite(); stream.write(bytes); atomic.finishWrite(stream); browse(current); notice(L.t("Fișier salvat"));
             } catch(Exception failure) { if(atomic!=null && stream!=null) atomic.failWrite(stream); notice(L.t("Salvarea a eșuat; textul rămâne în editor")); }
         }};
-        back=new Runnable() { public void run() { options(L.t("Renunți la text?"),new String[]{L.t("Continuă"),L.t("Renunță")},new Choice() { public void pick(int i) { if(i==1) browse(current); } }); } };
+        if(name==null)protectDraft(new Runnable(){public void run(){browse(current);}},body);
+        else protectDraft(new Runnable(){public void run(){browse(current);}},name,body);
         footer(L.t("Salvează"),L.t("Următor"),L.t("Șterge")); (name==null?body:name).requestFocus();
     }
 }

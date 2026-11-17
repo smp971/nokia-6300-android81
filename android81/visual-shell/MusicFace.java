@@ -17,7 +17,7 @@ final class MusicFace extends View {
         setFocusable(true);
         requestFocus();
     }
-    void appearance(){palette=Appearance.palette(getContext());invalidate();}
+    void appearance(){palette=Appearance.palette(getContext());panel.appearance();invalidate();}
     void volumeChanged(){state.refreshVolume();invalidate();}
     void release(){if(visualizer!=null){try{visualizer.setEnabled(false);visualizer.release();}catch(RuntimeException ignored){}visualizer=null;}session=-1;captured=false;spectrum=new float[12];}
     void tick(){if (preview) { invalidate(); return; } PlaybackService service=PlaybackService.instance;int wanted=service==null?0:service.audioSession();boolean playing=service!=null&&service.playing();
@@ -31,6 +31,7 @@ final class MusicFace extends View {
 
     protected void onDraw(Canvas canvas) {
         long sleep = preview ? 0 : MusicSleep.remaining(getContext());
+        state.bodyOnly = true;
         state.heading = sleep > 0 ? L.t("Muzică · ") + (sleep + 59999) / 60000 + " min" : L.t("Muzică");
         state.spectrumLabel = meter;
         state.spectrum = spectrum;

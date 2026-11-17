@@ -23,7 +23,7 @@ final class MediaPanel {
         Bitmap cover;
         int position, duration, volume, volumeMax;
         boolean playing, radio, showSources;
-        boolean internet, canStop;
+        boolean internet, canStop, bodyOnly;
         String stationMark;
         int stationColor;
         private long nextVolumeRead;
@@ -58,10 +58,14 @@ final class MediaPanel {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final RectF artwork = new RectF(20, 81, 88, 149);
     private final Bitmap placeholder;
+    private final CanvasText labels;
 
     MediaPanel(Context context) {
+        labels=new CanvasText(context,paint);
         placeholder = loadPlaceholder(new File(context.getFilesDir(), "music-placeholder.png"));
     }
+
+    void appearance(){labels.appearance();}
 
     private static Bitmap loadPlaceholder(File file) {
         if (!file.isFile() || file.length() > 256 * 1024) return null;
@@ -77,10 +81,10 @@ final class MediaPanel {
 
     void draw(Canvas c, int width, int height, Appearance.Palette palette, State s) {
         c.save();
-        c.scale(width / 240f, height / (s.internet ? 240f : 302f));
-        if (s.internet) c.translate(0, -40);
+        c.scale(width / 240f, height / (s.internet || s.bodyOnly ? 240f : 302f));
+        if (s.internet || s.bodyOnly) c.translate(0, -40);
         c.drawColor(palette.background);
-        if (!s.internet) UiChrome.header(c, s.heading, palette, paint);
+        if (!s.internet && !s.bodyOnly) UiChrome.header(c, s.heading, palette, paint);
         if (s.showSources) {
             source(c, L.t("MUZICĂ"), 12, !s.radio, palette);
             source(c, "RADIO FM", 124, s.radio, palette);
@@ -96,7 +100,7 @@ final class MediaPanel {
         drawArtwork(c, palette, s);
         paint.setTypeface(FONT);
         paint.setTextSize(16);
-        String[] lines = KeypadText.twoLines(paint, s.title, 118);
+        String[] lines = labels.lines(s.title,s.radio||s.internet?16:18,118);
         if (s.radio || s.internet) {
             text(c, lines[0], 101, 101, 16, Color.WHITE, 118);
             text(c, lines[1], 101, 122, 16, Color.WHITE, 118);
@@ -105,9 +109,9 @@ final class MediaPanel {
             text(c, s.signal, 14, 210, 12, Color.WHITE, 212);
         } else {
             boolean twoLines = !lines[1].isEmpty();
-            text(c, lines[0], 101, twoLines ? 101 : 108, 16, Color.WHITE, 118);
-            if (twoLines) text(c, lines[1], 101, 121, 16, Color.WHITE, 118);
-            text(c, s.artist, 101, twoLines ? 143 : 130, 12, palette.accent, 118);
+            text(c, lines[0], 101, twoLines ? 101 : 108, 18, Color.WHITE, 118);
+            if (twoLines) text(c, lines[1], 101, 121, 18, Color.WHITE, 118);
+            text(c, s.artist, 101, twoLines ? 145 : 131, 13, palette.accent, 118);
             text(c, s.status, 14, 178, 13, palette.accent, 124);
             paint.setTextSize(11);
             String detail = KeypadText.fit(paint, s.detail, 82);
@@ -124,7 +128,7 @@ final class MediaPanel {
                 (i + 1) * s.volumeMax <= s.volume * 10 ? palette.accent : palette.selection);
         }
         drawControls(c, palette, s);
-        if (!s.internet) {
+        if (!s.internet && !s.bodyOnly) {
             box(c, 0, 280, 240, 302, palette.bar);
             text(c, L.t("Opțiuni"), 7, 295, 11, Color.WHITE, 62);
             paint.setTextSize(11);
@@ -198,11 +202,6 @@ final class MediaPanel {
     }
 
     private void text(Canvas c, String label, float x, float baseline, int size, int color, float width) {
-        paint.setTypeface(FONT);
-        paint.setTextSize(size);
-        paint.setTextAlign(Paint.Align.LEFT);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(color);
-        c.drawText(KeypadText.fit(paint, label, width), x, baseline, paint);
+        labels.draw(c,label,x,baseline,size,color,Paint.Align.LEFT,width);
     }
 }

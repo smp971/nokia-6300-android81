@@ -61,6 +61,7 @@ public final class MainActivity extends Activity {
     };
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        setIntent(HomeAccess.sanitize(getIntent()));
         if(ShellHealth.start(this))return;
         getWindow().setStatusBarColor(Color.rgb(26, 14, 58));
         screen = new Screen();
@@ -134,7 +135,7 @@ public final class MainActivity extends Activity {
         super.onSaveInstanceState(state);
     }
     protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent); setIntent(intent);
+        super.onNewIntent(intent); intent=HomeAccess.sanitize(intent); setIntent(intent);
         if(intent.getBooleanExtra("open_menu",false)){intent.removeExtra("open_menu");if(screen.editing){screen.leaveEditor();return;}screen.grid=true;screen.shortcut=-1;screen.message="";screen.invalidate();return;}
         if(intent.getBooleanExtra("edit_home",false)){intent.removeExtra("edit_home");screen.startEditor();return;}
         if(intent.hasExtra("open_app")){int id=intent.getIntExtra("open_app",-1);intent.removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length){screen.open(id);return;}}
@@ -257,7 +258,6 @@ public final class MainActivity extends Activity {
         boolean homePart(Canvas c,int id,float l,float t,float r,float b){return homeLayout.begin(c,id,l,t,r,b,editing);}
         final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         final String[] names = AppCatalog.NAMES;
-        final String[] packages = {"com.android.dialer", "com.android.contacts", "com.android.messaging", "com.android.deskclock", "com.android.calculator2", "com.android.gallery3d", "com.android.music", "com.android.documentsui", "com.android.settings"};
 
         Bitmap wallpaper;
         long wallpaperStamp=-1,wallpaperSize=-1;boolean highContrast;
@@ -487,63 +487,10 @@ public final class MainActivity extends Activity {
             return false;
         }
         void open(int index) {
-            if(index>=38&&index<=47){HomeAccess.record(MainActivity.this,index);Intent intent=new Intent(MainActivity.this,new Class<?>[]{FeedsActivity.class,FeedsActivity.class,StreamRadioActivity.class,SshActivity.class,LexiconActivity.class,StudyActivity.class,ZipActivity.class,ExpensesActivity.class,MetronomeActivity.class,QrActivity.class}[index-38]);if(index==39)intent.putExtra("podcast",true);startActivity(intent);return;}
-            if(index==36||index==37){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,index==36?PremiumStudioActivity.class:WebAppsActivity.class));return;}
-            if(index==35){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,GpsActivity.class));return;}
-            if(index>=29&&index<=34){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,new Class<?>[]{ThemePacksActivity.class,ReaderActivity.class,GamesActivity.class,ConnectionDashboardActivity.class,UpdatesActivity.class,CameraActivity.class}[index-29]));return;}
-            if(index==28){HomeAccess.record(MainActivity.this,index);startActivity(new Intent(MainActivity.this,HelpActivity.class));return;}
-            HomeAccess.record(MainActivity.this,index);
-            if(index==27){startActivity(new Intent(MainActivity.this,BackupActivity.class));return;}
-            if(index==26){startActivity(new Intent(MainActivity.this,WeatherActivity.class));return;}
-            if(index==25){startActivity(new Intent(MainActivity.this,FmActivity.class));return;}
-            if(index==24){startActivity(new Intent(MainActivity.this,DiagnosticActivity.class));return;}
-            if(index==23){startActivity(new Intent(MainActivity.this,TerminalActivity.class));return;}
-            if(index==22){startActivity(new Intent(MainActivity.this,EmailActivity.class));return;}
-            if(index==19){startActivity(new Intent(MainActivity.this,BrowserActivity.class));return;}
-            if(index==20){startActivity(new Intent(MainActivity.this,QuickSettingsActivity.class));return;}
-            if(index==21){startActivity(new Intent(MainActivity.this,SetupWizardActivity.class));return;}
-            if(index==5) {startActivity(new Intent(MainActivity.this,GalleryActivity.class));return;}
-            if(index==6) {startActivity(new Intent(MainActivity.this,MusicLibraryActivity.class));return;}
-            if(index==12) {startActivity(new Intent(MainActivity.this,MediaActivity.class).putExtra("kind","video"));return;}
-            if(index==8) {startActivity(new Intent(MainActivity.this,SettingsActivity.class));return;}
-            if(index==13) {startActivity(new Intent(MainActivity.this,RecorderActivity.class));return;}
-            if(index==14) {startActivity(new Intent(MainActivity.this,ConverterActivity.class));return;}
-            if(index==15) {startActivity(new Intent(MainActivity.this,DownloadsActivity.class));return;}
-            if(index==16) {startActivity(new Intent(MainActivity.this,WallpaperActivity.class));return;}
-            if(index==17) {startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}
-            if(index==18) {startActivity(new Intent(MainActivity.this,KeypadLockActivity.class));return;}
-            if(index==7) { startActivity(new Intent(MainActivity.this,FilesActivity.class)); return; }
-            if(index==11) { startActivity(new Intent(MainActivity.this,CalendarActivity.class)); return; }
-            if(index==0) { startActivity(new Intent(MainActivity.this,PhoneActivity.class)); return; }
-            if(index==1) { startActivity(new Intent(MainActivity.this,ContactsActivity.class)); return; }
-            if(index==2) { startActivity(new Intent(MainActivity.this,MessagesActivity.class)); return; }
-            if(index==4) { startActivity(new Intent(MainActivity.this,CalculatorActivity.class)); return; }
-            if(index==10) { startActivity(new Intent(MainActivity.this,NotesActivity.class)); return; }
-            if(index==3) { startActivity(new Intent(MainActivity.this,ClockActivity.class)); return; }
-            if(index==9) { startActivity(new Intent(MainActivity.this,AndroidAppsActivity.class)); return; }
-            Intent intent;
-            if (index == 0) intent = new Intent(Intent.ACTION_DIAL);
-            else if (index == 1) intent = new Intent(Intent.ACTION_VIEW, android.provider.ContactsContract.Contacts.CONTENT_URI);
-            else if (index == 8) intent = new Intent(Settings.ACTION_SETTINGS);
-            else {
-                intent = getPackageManager().getLaunchIntentForPackage(packages[index]);
-                if (intent == null) {
-                    // Resolve launcher activities for OEM/AOSP package variants.
-                    List<ResolveInfo> apps = getPackageManager().queryIntentActivities(
-                        new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0);
-                    for (ResolveInfo info : apps) {
-                        String pkg = info.activityInfo.packageName;
-                        if (pkg.equals(packages[index]) || (index == 4 && pkg.contains("calculator"))) {
-                            intent = new Intent(Intent.ACTION_MAIN).setComponent(new ComponentName(pkg, info.activityInfo.name)); break;
-                        }
-                    }
-                }
-            }
-            if (intent == null || intent.resolveActivity(getPackageManager()) == null) {
-                message = names[index] + L.t(": indisponibil"); invalidate(); return;
-            }
-            try { startActivity(intent); }
-            catch (RuntimeException ignored) { message = L.t("Nu se poate deschide"); invalidate(); }
+            try {
+                if(!AppCatalog.launch(MainActivity.this,index))message=L.t("Aplicație indisponibilă");
+            } catch(RuntimeException unavailable) { message=L.t("Nu se poate deschide"); }
+            invalidate();
         }
         final IconArt artwork=new IconArt();
         final CatalogIcons catalogIcons = new CatalogIcons(getContext());

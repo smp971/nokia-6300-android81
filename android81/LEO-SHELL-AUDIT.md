@@ -11,6 +11,15 @@ include manual trials and historical tests.
 
 ## Findings in order of priority
 
+This table records the historical 9 November baseline. Current status is
+documented in [Daily UI and resource checks](DAILY-UI-POLISH.md). Public Home
+commands now enter through a private alias, app destinations and labels share
+one catalog, and the shared header has current layout checks. The Windows
+builder already builds all shell sources. App-data backup and startup journal
+recovery were added in earlier batches; their old findings below describe the
+baseline, rather than the current implementation. The Companion transfer
+boundary requires its own follow-up.
+
 | Priority | Finding and impact | First corrective step |
 | --- | --- | --- |
 | P1 | **Public Home can execute an internal action.** The [exported Home declaration](visual-shell/AndroidManifest.xml#L48) accepts `open_app` in both [creation](visual-shell/MainActivity.java#L66) and [intent reuse](visual-shell/MainActivity.java#L125). An external app that can start an activity can explicitly target Home with ID 18. The route opens `KeypadLockActivity`, whose [creation writes the lock preference](visual-shell/KeypadLockActivity.java#L42). This is an unauthorized Leo action, with local disruption. Verified by source trace. | Separate internal commands from the public Home entry. Test ordinary Android Home and legitimate shortcuts, plus rejection of an unsolicited lock command. Check the other internal flags at the same boundary. |

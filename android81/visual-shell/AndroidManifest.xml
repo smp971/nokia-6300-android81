@@ -56,6 +56,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity-alias android:name=".InternalHome" android:targetActivity=".MainActivity" android:exported="false" />
         <activity android:name=".NotificationsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".DailyAgendaActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".ContactTimelineActivity" android:exported="false" android:screenOrientation="portrait" />

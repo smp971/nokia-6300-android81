@@ -4,14 +4,18 @@ import android.content.*;import android.graphics.*;import android.media.*;import
 /** One visible-only native dashboard for music and FM. No additional audio session. */
 public final class NowPlayingActivity extends LeoActivity {
  private final MusicTransport transport = new MusicTransport();
- private final Handler timer=new Handler();private int source;private Dashboard face;private boolean visible,preview,previewPlaying;private int previewVolume=6;
- private final BroadcastReceiver changes=new BroadcastReceiver(){public void onReceive(Context c,Intent i){if(face!=null)face.invalidate();}};
- private final Runnable tick=new Runnable(){public void run(){if(!visible)return;face.invalidate();timer.postDelayed(this,source==0&&PlaybackService.instance!=null&&PlaybackService.instance.playing()?1000:5000);}};
+ private int source;private Dashboard face;private boolean visible,preview,previewPlaying;private int previewVolume=6;
+ private final BroadcastReceiver changes=new BroadcastReceiver(){public void onReceive(Context c,Intent i){if(face!=null){face.invalidate();ticker.refresh();}}};
+ private final ScreenTicker ticker=new ScreenTicker(this,new ScreenTicker.Work(){public long refresh(){
+  if(face==null)return -1;face.invalidate();
+  if(preview)return -1;
+  return source==0&&PlaybackService.instance!=null&&PlaybackService.instance.playing()?1000:source==1&&FmService.playing?5000:-1;
+ }});
  protected void onCreate(Bundle b){super.onCreate(b);preview=getIntent().getBooleanExtra("preview",false);source=b!=null?b.getInt("source",0):PlaybackService.instance!=null&&PlaybackService.instance.playing()?0:FmService.playing||FmService.starting?1:0;face=new Dashboard();setContentView(face);}
  protected void onSaveInstanceState(Bundle b){super.onSaveInstanceState(b);b.putInt("source",source);}
- protected void onResume(){super.onResume();palette=Appearance.palette(this);visible=true;IntentFilter f=new IntentFilter("ro.leo.visual.MUSIC_CHANGED");f.addAction(FmService.CHANGED);registerReceiver(changes,f);timer.post(tick);}
- protected void onPause(){transport.reset();visible=false;timer.removeCallbacks(tick);unregisterReceiver(changes);super.onPause();}
- protected void onDestroy(){timer.removeCallbacksAndMessages(null);super.onDestroy();}
+ protected void onResume(){super.onResume();palette=Appearance.palette(this);visible=true;IntentFilter f=new IntentFilter("ro.leo.visual.MUSIC_CHANGED");f.addAction(FmService.CHANGED);registerReceiver(changes,f);ticker.start();}
+ protected void onPause(){transport.reset();visible=false;ticker.stop();unregisterReceiver(changes);super.onPause();}
+ protected void onDestroy(){ticker.stop();super.onDestroy();}
  private void player(){if(preview){notice(L.t("DEMO · fără redare audio"));return;}startActivity(new Intent(this,source==1?FmActivity.class:MediaActivity.class).putExtra("now",true));}
  private void toggle(){if(preview){previewPlaying=!previewPlaying;face.invalidate();return;}if(source==1){if(FmService.playing||FmService.starting)stopService(new Intent(this,FmService.class));else player();}else if(PlaybackService.instance!=null)PlaybackService.instance.toggle();else player();face.invalidate();}
  private void previous(boolean next){if(preview){notice(L.t("DEMO · fără redare audio"));return;}if(source==1){if(FmService.instance!=null&&FmService.playing)FmService.instance.seek(next);else notice(L.t("Pornește radioul din player"));}else if(PlaybackService.instance!=null)PlaybackService.instance.next(next);else notice(L.t("Alege o piesă din bibliotecă"));face.invalidate();}

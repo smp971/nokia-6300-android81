@@ -18,7 +18,8 @@ public final class KeypadLockActivity extends LeoActivity {
     private LockView screen;
     private final Handler handler=new Handler();
     private final Runnable disarm=new Runnable(){public void run(){armed=0;if(screen!=null)screen.invalidate();}};
-    private final Runnable minute=new Runnable(){public void run(){screen.refresh();handler.postDelayed(this,60000-System.currentTimeMillis()%60000);}};
+    private final KeyRelease keys=new KeyRelease();
+    private final ScreenTicker ticker=new ScreenTicker(this,new ScreenTicker.Work(){public long refresh(){screen.refresh();return 60000-System.currentTimeMillis()%60000;}});
     private final BroadcastReceiver changes=new BroadcastReceiver(){public void onReceive(Context c,Intent intent){
         if(Intent.ACTION_BATTERY_CHANGED.equals(intent.getAction())){
             int scale=intent.getIntExtra(BatteryManager.EXTRA_SCALE,100);
@@ -33,9 +34,9 @@ public final class KeypadLockActivity extends LeoActivity {
         f.addAction(Intent.ACTION_TIME_CHANGED);f.addAction(Intent.ACTION_TIMEZONE_CHANGED);f.addAction(Intent.ACTION_SCREEN_ON);
         f.addAction("android.intent.action.SERVICE_STATE");f.addAction("android.intent.action.SIM_STATE_CHANGED");f.addAction("android.intent.action.ACTION_SUBINFO_RECORD_UPDATED");
         f.addAction(FmService.CHANGED);f.addAction("ro.leo.visual.MUSIC_CHANGED");f.addAction(UnreadState.CHANGED);f.addAction(LeoNotificationService.CHANGED);UnreadState.watch(this);UnreadState.refresh(this);
-        registerReceiver(changes,f);handler.removeCallbacks(minute);handler.post(minute);
+        registerReceiver(changes,f);ticker.start();
     }
-    protected void onPause(){visible=false;unregisterReceiver(changes);handler.removeCallbacks(minute);handler.removeCallbacks(disarm);armed=0;super.onPause();}
+    protected void onPause(){visible=false;unregisterReceiver(changes);ticker.stop();keys.reset();handler.removeCallbacks(disarm);armed=0;super.onPause();}
     protected void onDestroy(){if(screen.wallpaper!=null)screen.wallpaper.recycle();super.onDestroy();}
     static boolean locked(Context c) { return c.getSharedPreferences("keyguard",0).getBoolean("locked",false); }
     static void unlock(Context c) { c.getSharedPreferences("keyguard",0).edit().putBoolean("locked",false).apply(); }
@@ -46,7 +47,7 @@ public final class KeypadLockActivity extends LeoActivity {
     }
     public boolean dispatchKeyEvent(KeyEvent event) {
         int key=event.getKeyCode();
-        if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0) {
+        if(keys.accept(event)) {
             PlaybackService music=PlaybackService.instance;
             if(armed==0&&FmService.playing&&(music==null||!music.playing())&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(key==KeyEvent.KEYCODE_5)stopService(new Intent(this,FmService.class));else if(FmService.instance!=null)FmService.instance.seek(key==KeyEvent.KEYCODE_6);screen.refresh();return true;}
             if(armed==0&&music!=null&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(key==KeyEvent.KEYCODE_5)music.toggle();else music.next(key==KeyEvent.KEYCODE_6);screen.refresh();return true;}
@@ -113,11 +114,11 @@ public final class KeypadLockActivity extends LeoActivity {
             art.background(canvas, palette, wallpaper);
             art.text(canvas, L.t("Taste blocate"), 12, 22, 12, palette.accent, Paint.Align.LEFT, 126);
             art.battery(canvas, battery, charging);
-            art.text(canvas, sims[0], 12, 44, 10, Color.WHITE, Paint.Align.LEFT, 103);
-            art.text(canvas, sims[1], 228, 44, 10, Color.WHITE, Paint.Align.RIGHT, 103);
+            art.text(canvas,sims[0],12,40,12,Color.WHITE,Paint.Align.LEFT,216);
+            art.text(canvas,sims[1],12,56,12,Color.WHITE,Paint.Align.LEFT,216);
 
             boolean showInfo = appearance.getBoolean("lock-info", true);
-            art.clock(canvas, time, date, showInfo ? 0 : 22);
+            art.clock(canvas, time, date, showInfo ? 7 : 22);
             if (showInfo) {
                 art.weather(canvas, palette, cardOfType(0));
                 HomeCards.Card alarm = cardOfType(1);
@@ -132,7 +133,7 @@ public final class KeypadLockActivity extends LeoActivity {
             drawMediaOrNotification(canvas);
             boolean awaitingStar = armed > 0;
             art.panel(canvas, awaitingStar ? palette.selection : palette.bar, 12, 293, 228, 316, 7);
-            art.text(canvas, awaitingStar ? L.t("Apasă * în 3 secunde") : L.t("Soft stânga, apoi *"),
+            art.text(canvas, awaitingStar ? L.t("Deblocare · apasă *") : L.t("Soft stânga, apoi *"),
                 120, 309, 13, awaitingStar ? palette.ink : Color.WHITE, Paint.Align.CENTER, 204);
             canvas.restore();
         }

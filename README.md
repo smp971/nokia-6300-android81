@@ -14,7 +14,7 @@ the two softkeys. The **Nokia 6300 4G TA-1286** is the reference device.
 
 ## Screenshots
 
-Twenty-nine screenshots from the Nokia 6300 4G, captured on 17 November 2026.
+On-device screenshots from the Nokia 6300 4G, captured during the November UI work.
 The original gallery uses shell commit `e5b26ad`; the shared-page update below
 is documented in [Leo Modern UI](android81/LEO-MODERN-UI.md).
 The audio and SMS examples use the built-in demos.
@@ -28,6 +28,13 @@ The boot animation is a rendered preview. Select any thumbnail to open it at
 | Updated Clock | Shared keypad options | Android apps |
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/keyshell-2026-11-17/ui-polish/clock.png"><img src="android81/screenshots/keyshell-2026-11-17/ui-polish/clock.png" width="160" alt="Clock with shared heading and three visible neighboring tab titles"></a> | <a href="android81/screenshots/keyshell-2026-11-17/ui-polish/dialogs.png"><img src="android81/screenshots/keyshell-2026-11-17/ui-polish/dialogs.png" width="160" alt="Alarm options with themed native rows and a position indicator"></a> | <a href="android81/screenshots/keyshell-2026-11-17/ui-polish/android-apps.png"><img src="android81/screenshots/keyshell-2026-11-17/ui-polish/android-apps.png" width="160" alt="Android application list with icons and common selected-row styling"></a> |
+
+| Files · fixture | Gallery · Gaia samples | Updated player · demo |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/daily-ui/files.png"><img src="android81/screenshots/daily-ui/files.png" width="160" alt="Files with a storage breadcrumb, readable size and preserved selection"></a> | <a href="android81/screenshots/daily-ui/gallery.png"><img src="android81/screenshots/daily-ui/gallery.png" width="160" alt="Four larger thumbnails with wrapping names"></a> | <a href="android81/screenshots/daily-ui/player.png"><img src="android81/screenshots/daily-ui/player.png" width="160" alt="Music player with the shared native heading and softkeys"></a> |
+
+[Updated lock screen](android81/screenshots/daily-ui/lock.png) ·
+[Daily UI tests and resource measurements](android81/DAILY-UI-POLISH.md)
 
 | Audio player · demo | Internet radio | Terminal |
 | :---: | :---: | :---: |

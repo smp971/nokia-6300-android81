@@ -25,7 +25,8 @@ abstract class LeoActivity extends Activity {
     Appearance.Palette palette;
     private LinearLayout softkeyBar;
     private ListView activeList;private final UiRowCache rowCache=new UiRowCache();private final UiListMemory listMemory=new UiListMemory();
-    private String listTitle;private java.util.ArrayList<String> listRows,listMemoryKeys;private BaseAdapter listAdapter;
+    private String listTitle,listBookmarkTitle;private java.util.ArrayList<String> listRows,listMemoryKeys;private BaseAdapter listAdapter;
+    private final KeyRelease softkeyRelease=new KeyRelease();
     private final NavigationPace navigationPace=new NavigationPace();
     private TextView heading;private ListPositionDrawable listPosition;
     private final java.util.ArrayList<LinearLayout> tabBars=new java.util.ArrayList<LinearLayout>();
@@ -83,18 +84,28 @@ abstract class LeoActivity extends Activity {
         center.setBackground(highlight?Appearance.surface(Appearance.mix(palette.bar,palette.accent,.12f),dp(5)):null);
     }
     String helpControls(){if(softkeyBar==null)return "";StringBuilder out=new StringBuilder();for(int n=0;n<softkeyBar.getChildCount();n++){String value=((TextView)softkeyBar.getChildAt(n)).getText().toString();if(!value.isEmpty())out.append(n==0?L.t("Stânga · "):n==1?"OK · ":L.t("Dreapta · ")).append(value).append("\n");}return out.toString().trim();}
-    protected void onPause(){rememberList();if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
+    protected void onPause(){softkeyRelease.reset();rememberList();if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
     protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
     int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     TextView text(String value,int size) {
         TextView view=new TextView(this); view.setText(value); view.setTextSize(size*Appearance.textScale(this));
         view.setTextColor(Color.WHITE); view.setPadding(dp(8),dp(4),dp(8),dp(4)); return view;
     }
-    private void rememberList(){listMemory.remember(listTitle,listMemoryKeys,activeList);}
+    private void rememberList(){listMemory.remember(listBookmarkTitle,listMemoryKeys,activeList);}
+    TextView subtitle(String value){TextView view=text(value,15);view.setTextColor(palette.secondary());view.setMaxLines(2);view.setEllipsize(TextUtils.TruncateAt.END);root.addView(view,2,new LinearLayout.LayoutParams(-1,-2));return view;}
+    String listMemoryTitle(String title){return title;}
+    void headingTitle(String title){if(heading!=null)heading.setText(title);}
+    void protectDraft(final Runnable leave,final EditText... fields){
+        final String[] original=new String[fields.length];for(int i=0;i<fields.length;i++)original[i]=fields[i].getText().toString();
+        back=new Runnable(){public void run(){boolean dirty=false;for(int i=0;i<fields.length;i++)if(!original[i].equals(fields[i].getText().toString()))dirty=true;
+            if(!dirty){leave.run();return;}
+            options(L.t("Renunți la editare?"),new String[]{L.t("Continuă"),L.t("Renunță")},new Choice(){public void pick(int selected){if(selected==1)leave.run();}});
+        }};
+    }
     void begin(String title) {
         rememberList();
         form=false; left=null; back=null; softkeyBar=null;
-        activeList=null;listTitle=null;listRows=null;listMemoryKeys=null;listAdapter=null;listPosition=null;
+        activeList=null;listTitle=null;listBookmarkTitle=null;listRows=null;listMemoryKeys=null;listAdapter=null;listPosition=null;
         tabBars.clear();
         palette=Appearance.palette(this);SystemChrome.apply(this,palette);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
@@ -132,8 +143,8 @@ abstract class LeoActivity extends Activity {
         final boolean workspace=getIntent().getBooleanExtra("workspace_resume",false);
         if(workspace){selected=WorkspaceSessions.selection(this,getClass().getSimpleName());getIntent().removeExtra("workspace_resume");}
         begin(title); left=command;
-        final java.util.ArrayList<String> memoryKeys=new java.util.ArrayList<String>();for(int i=0;i<values.size();i++)memoryKeys.add(rowMemoryKey(title,i,values.get(i)));UiListMemory.Entry remembered=workspace?null:listMemory.restore(title,memoryKeys);final UiListMemory.Entry bookmark=remembered!=null&&(selected==0||selected==remembered.index)?remembered:null;if(bookmark!=null)selected=bookmark.index;
-        listMemoryKeys=memoryKeys;listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
+        final java.util.ArrayList<String> memoryKeys=new java.util.ArrayList<String>();for(int i=0;i<values.size();i++)memoryKeys.add(rowMemoryKey(title,i,values.get(i)));UiListMemory.Entry remembered=workspace?null:listMemory.restore(listMemoryTitle(title),memoryKeys);final UiListMemory.Entry bookmark=remembered!=null&&(selected==0||selected==remembered.index)?remembered:null;if(bookmark!=null)selected=bookmark.index;
+        listMemoryKeys=memoryKeys;listTitle=title;listBookmarkTitle=listMemoryTitle(title);listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
         final ListView list=new ListView(this);activeList=list;
         list.setFocusableInTouchMode(true);list.setClipToPadding(false);
         styleList(heading,list);
@@ -245,7 +256,7 @@ abstract class LeoActivity extends Activity {
         if(navigationPace.consume(this,event))return true;
         if(CircularNavigation.dispatch(this,event))return true;
         if(event.getKeyCode()==KeyEvent.KEYCODE_MENU && left!=null) {
-            if(event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) left.run(); return true;
+            if(softkeyRelease.accept(event)) left.run(); return true;
         }
         return super.dispatchKeyEvent(event);
     }

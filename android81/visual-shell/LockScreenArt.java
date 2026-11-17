@@ -20,11 +20,12 @@ final class LockScreenArt {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final RectF bounds = new RectF(0, 0, 240, 320);
     private final DashboardArt icons;
+    private final CanvasText labels;
     private Appearance.Palette backgroundPalette;
     private LinearGradient gradient;
 
     LockScreenArt(Context context) {
-        icons = new DashboardArt(context);
+        icons = new DashboardArt(context);labels=new CanvasText(context,paint);
     }
 
     void background(Canvas canvas, Appearance.Palette palette, Bitmap wallpaper) {
@@ -57,15 +58,16 @@ final class LockScreenArt {
     }
 
     void weather(Canvas canvas, Appearance.Palette palette, HomeCards.Card weather) {
-        panel(canvas, palette.card, 12, 152, 228, 220, 12);
-        icons.weather(canvas, 39, 184, 34, weather == null ? -1 : weather.weatherCode);
-        boolean cached = weather != null && !weather.detail.isEmpty();
-        text(canvas, weather == null ? L.t("Meteo") : weather.title, 64, 170, 11,
-            SECONDARY, Paint.Align.LEFT, 152);
-        text(canvas, weather == null ? L.t("Prognoză neîncărcată") : weather.main,
-            64, cached ? 192 : 197, cached ? 18 : 13, Color.WHITE, Paint.Align.LEFT, 152);
-        if (cached) {
-            text(canvas, weather.detail, 64, 208, 10, SECONDARY, Paint.Align.LEFT, 152);
+        panel(canvas,palette.card,12,152,228,222,12);
+        icons.weather(canvas,36,184,32,weather==null?-1:weather.weatherCode);
+        text(canvas,weather==null?L.t("Meteo"):weather.title,61,167,11,SECONDARY,Paint.Align.LEFT,157);
+        String[] lines=labels.lines(weather==null?L.t("Prognoză neîncărcată"):weather.main,16,157);
+        text(canvas,lines[0],61,185,16,Color.WHITE,Paint.Align.LEFT,157);
+        text(canvas,lines[1],61,201,16,Color.WHITE,Paint.Align.LEFT,157);
+        if(weather!=null&&!weather.detail.isEmpty()){
+            long now=System.currentTimeMillis();
+            text(canvas,WeatherFreshness.label(now,weather.updatedAt),61,215,10,
+                WeatherFreshness.stale(now,weather.updatedAt)?0xffffce75:SECONDARY,Paint.Align.LEFT,157);
         }
     }
 
@@ -88,10 +90,6 @@ final class LockScreenArt {
 
     void text(Canvas canvas, String value, float x, float y, int size, int color,
               Paint.Align alignment, float width) {
-        paint.setTypeface(Typeface.DEFAULT);
-        paint.setColor(color);
-        paint.setTextAlign(alignment);
-        paint.setTextSize(size);
-        canvas.drawText(KeypadText.fit(paint, value, width), x, y, paint);
+        labels.draw(canvas,value,x,y,size,color,alignment,width);
     }
 }

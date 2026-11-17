@@ -202,3 +202,12 @@ This ROM has not been flashed or booted after a wipe. The development phone
 continues to run the tested data APK update. The existing on-device Recovery
 catalog pins older archives; this new candidate uses the included PC installer
 when a clean installation is explicitly chosen. See [the install guide](INSTALL-GUIDE.md).
+
+## Daily-use pages, lock and resource profiling
+
+The next data APK updates Files, Gallery, the music player, released-key
+handling, the saved-weather lock screen and the shared launcher catalog.
+It passed 174 new device checks alongside the previous 48 polish and 72 theme
+checks. The physical keypad smoke passed after normal reboot. See
+[Daily UI and resource checks](DAILY-UI-POLISH.md) for current APK identity,
+screenshots, resource measurements and the distinction from the private ROM.

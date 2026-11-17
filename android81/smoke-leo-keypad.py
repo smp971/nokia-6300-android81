@@ -32,7 +32,8 @@ def shell(command):
         capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=13,
     )
     if result.returncode:
-        raise SmokeFailure("A bounded device command failed.")
+        raise SmokeFailure("A bounded device command failed: " + command +
+                           ("; " + result.stderr.strip()[:240] if result.stderr.strip() else ""))
     return result.stdout.strip()
 
 

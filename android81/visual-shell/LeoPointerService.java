@@ -247,7 +247,7 @@ public final class LeoPointerService extends AccessibilityService {
         if(id==GlobalMenuModel.CUSTOMIZE){showMenuEditor(0);return;}
         if(id==GlobalMenuModel.POINTER){setActive(!active);return;}
         if(id==GlobalMenuModel.HOME){setActive(false);performGlobalAction(GLOBAL_ACTION_HOME);return;}
-        if(id==GlobalMenuModel.APPS){setActive(false);startActivity(new android.content.Intent(this,MainActivity.class).putExtra("open_menu",true).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK|android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP|android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP));return;}
+        if(id==GlobalMenuModel.APPS){setActive(false);startActivity(HomeAccess.intent(this).putExtra("open_menu",true).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK|android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP|android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP));return;}
         if(id==GlobalMenuModel.NOTIFICATIONS){if(!openAndroidPanel(false))openPage(NotificationsActivity.class);return;}
         if(id==GlobalMenuModel.QUICK){openPage(QuickSettingsActivity.class);return;}
         if(id==GlobalMenuModel.SETTINGS){openPage(SettingsActivity.class);return;}
