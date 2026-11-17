@@ -16,7 +16,7 @@ public final class AppSettingsActivity extends LeoActivity {
     protected void onResume(){super.onResume();if(current==null)load();else details(current);}
     private void load(){
         final int generation=++pageGeneration;
-        current=null;begin(L.t("Aplicații Leo"));root.addView(text(L.t("Se încarcă…"),18));footer("","",L.t("Înapoi"));
+        current=null;begin(L.t("Aplicații"));root.addView(text(L.t("Se încarcă…"),18));footer("","",L.t("Înapoi"));
         worker.execute(new Runnable(){public void run(){
             final ArrayList<ApplicationInfo> apps=new ArrayList<>();
             for(ApplicationInfo app:getPackageManager().getInstalledApplications(0))
@@ -36,7 +36,7 @@ public final class AppSettingsActivity extends LeoActivity {
             final PackageInfo info=getPackageManager().getPackageInfo(name,PackageManager.GET_PERMISSIONS);current=name;
             String label=info.applicationInfo.loadLabel(getPackageManager()).toString();
             list(label,Arrays.asList(L.t("Deschide"),L.t("Permisiuni · vezi starea"),L.t("Modifică permisiuni (Android)"),L.t("Informații pachet"),L.t("Detalii Android"),L.t("Dezinstalează"),L.t("Spațiu aplicație (Android)")),0,new Choice(){public void pick(int i){
-                if(i==5){if((info.applicationInfo.flags&ApplicationInfo.FLAG_SYSTEM)!=0||name.equals(getPackageName())||name.equals("ro.leo.keypad")){notice(L.t("Pachet de sistem sau componentă Leo protejată"));return;}options(L.t("Dezinstalezi ")+name+"?",new String[]{L.t("Păstrează"),L.t("Continuă în Android")},new Choice(){public void pick(int n){if(n==1)try{startActivity(new Intent(Intent.ACTION_UNINSTALL_PACKAGE,Uri.parse("package:"+name)));}catch(RuntimeException e){notice(L.t("Dezinstalarea nu este disponibilă"));}}});}
+                if(i==5){if((info.applicationInfo.flags&ApplicationInfo.FLAG_SYSTEM)!=0||name.equals(getPackageName())||name.equals("ro.leo.keypad")){notice(L.t("Pachet de sistem sau componentă protejată"));return;}options(L.t("Dezinstalezi ")+name+"?",new String[]{L.t("Păstrează"),L.t("Continuă în Android")},new Choice(){public void pick(int n){if(n==1)try{startActivity(new Intent(Intent.ACTION_UNINSTALL_PACKAGE,Uri.parse("package:"+name)));}catch(RuntimeException e){notice(L.t("Dezinstalarea nu este disponibilă"));}}});}
                 else if(i==6)androidDetails(name);
                 else if(i==0){Intent intent=getPackageManager().getLaunchIntentForPackage(name);if(intent==null)notice(L.t("Pachet fără ecran de lansare"));else startActivity(intent);}
                 else if(i==1)permissions(info);

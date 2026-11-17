@@ -75,9 +75,9 @@ public final class CalculatorActivity extends Activity {
         }
         final RetroStyle art=new RetroStyle();
         protected void onDraw(Canvas c) {
-            c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);UiChrome.header(c,"Calculator Leo",palette,art.p);
+            c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);UiChrome.header(c,L.t("Calculator"),palette,art.p);
             art.panel(c,10,54,230,149,0xffd4e9c6,0xff8eaa91);
-            art.text(c,"CALCULATOR  /  LEO CLASSIC",22,73,10,0xff314c40,Paint.Align.LEFT);
+            art.text(c,"CALCULATOR  /  CLASIC",22,73,10,0xff314c40,Paint.Align.LEFT);
             String shown=expression.isEmpty()?"0":expression.replace('*','×').replace('/','÷');
             if(shown.length()>18)shown="…"+shown.substring(shown.length()-17);
             art.digits(c,shown,218,121,0xff183a30);art.fit(c,message.isEmpty()?L.t("Introduceți o expresie"):message,120,140,11,196,0xff345349,Paint.Align.CENTER);

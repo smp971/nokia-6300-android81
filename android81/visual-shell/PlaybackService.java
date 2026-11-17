@@ -24,7 +24,7 @@ public final class PlaybackService extends Service implements AudioManager.OnAud
     public IBinder onBind(Intent intent){return null;}
     static boolean hardwareReady(){return new File("/proc/asound/card0").exists();}
     public void onCreate(){super.onCreate();instance=this;MusicSleep.cancel(this);main.postDelayed(bookmark,30000);queue.shuffle=getSharedPreferences("music-player",0).getBoolean("shuffle",false);queue.repeat=Math.max(0,Math.min(2,getSharedPreferences("music-player",0).getInt("repeat",0)));audio=(AudioManager)getSystemService(AUDIO_SERVICE);
-        mediaSession=new MediaSession(this,"Leo Music");mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS|MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);mediaSession.setCallback(new MediaSession.Callback(){public void onPlay(){if(!playing())toggle();}public void onPause(){if(playing())toggle();}public void onSkipToNext(){next(true);}public void onSkipToPrevious(){next(false);}public void onStop(){stopSelf();}public void onSeekTo(long pos){seek((int)Math.max(Integer.MIN_VALUE,Math.min(Integer.MAX_VALUE,pos-position())));}});mediaSession.setActive(true);
+        mediaSession=new MediaSession(this,"Music");mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS|MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);mediaSession.setCallback(new MediaSession.Callback(){public void onPlay(){if(!playing())toggle();}public void onPause(){if(playing())toggle();}public void onSkipToNext(){next(true);}public void onSkipToPrevious(){next(false);}public void onStop(){stopSelf();}public void onSeekTo(long pos){seek((int)Math.max(Integer.MIN_VALUE,Math.min(Integer.MAX_VALUE,pos-position())));}});mediaSession.setActive(true);
         File[] stale=getCacheDir().listFiles();if(stale!=null)for(File f:stale)if(f.isFile()&&f.getName().startsWith("leo-wma-"))f.delete();
     }
     public int onStartCommand(Intent intent,int flags,int id){
@@ -38,7 +38,7 @@ public final class PlaybackService extends Service implements AudioManager.OnAud
         if(!hardwareReady()){state=L.t("Driverul audio este inactiv");stopSelf();return START_NOT_STICKY;}
         saveBookmark();radio=intent.getBooleanExtra(EXTRA_RADIO,false);bookmarkReady=false;resumePosition=0;ArrayList<String> sources=intent.getStringArrayListExtra("queue"),labels=intent.getStringArrayListExtra("titles");
         if(sources!=null&&labels!=null)queue.set(sources,labels,intent.getIntExtra("index",0));
-        else if(intent.getData()!=null)queue.set(Arrays.asList(intent.getData().toString()),Arrays.asList(intent.getStringExtra("title")==null?L.t("Muzică Leo"):intent.getStringExtra("title")),0);
+        else if(intent.getData()!=null)queue.set(Arrays.asList(intent.getData().toString()),Arrays.asList(intent.getStringExtra("title")==null?L.t("Muzică"):intent.getStringExtra("title")),0);
         playCurrent();return START_NOT_STICKY;
     }
     private void playCurrent(){playCurrent(false);}
@@ -47,7 +47,7 @@ public final class PlaybackService extends Service implements AudioManager.OnAud
         saveBookmark();release();stopped=false;stoppedDuration=0;cover=null;artist="";
         title=queue.titles.get(queue.index);
         if(radio)state=L.t("Se conectează…");
-        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);NotificationChannel channel=new NotificationChannel("leo-music",L.t("Muzică Leo"),NotificationManager.IMPORTANCE_LOW);channel.setSound(null,null);nm.createNotificationChannel(channel);
+        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);NotificationChannel channel=new NotificationChannel("leo-music",L.t("Muzică"),NotificationManager.IMPORTANCE_LOW);channel.setSound(null,null);nm.createNotificationChannel(channel);
         publish();
         if(audio.requestAudioFocus(this,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){state=L.t("Sunet ocupat de altă aplicație");stopSelf();return;}
         final Uri source=Uri.parse(queue.sources.get(queue.index));

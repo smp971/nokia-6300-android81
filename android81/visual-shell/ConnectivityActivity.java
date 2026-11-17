@@ -109,7 +109,7 @@ public final class ConnectivityActivity extends LeoActivity {
                 networks.add(scan); rows.add(scan.SSID+" · "+(scan.capabilities.contains("PSK")?"WPA/WPA2":scan.capabilities.contains("WEP")||scan.capabilities.contains("EAP")?L.t("Alte setări"):L.t("Deschisă")));
             }
         }
-        list("Wi-Fi Leo",rows,selected,new Choice() { public void pick(int i) {
+        list("Wi-Fi",rows,selected,new Choice() { public void pick(int i) {
             if(i==0) { if(!wifi.isWifiEnabled() && apState()!=11) { notice(L.t("Oprește întâi hotspotul")); return; } if(!wifi.setWifiEnabled(!wifi.isWifiEnabled())) notice(L.t("Cererea Wi-Fi a fost refuzată")); }
             else if(i==1) notice(L.t("Starea conexiunii se actualizează automat"));
             else if(i==2) { if(!wifi.isWifiEnabled()) notice(L.t("Pornește întâi Wi-Fi")); else if(locationReady() && !wifi.startScan()) notice(L.t("Scanarea nu a pornit")); }
@@ -161,7 +161,7 @@ public final class ConnectivityActivity extends LeoActivity {
             boolean connected=input!=null && input.getConnectionState(device)==BluetoothProfile.STATE_CONNECTED;
             boolean audioConnected=a2dp!=null&&a2dp.getConnectionState(device)==BluetoothProfile.STATE_CONNECTED;boolean callsConnected=headset!=null&&headset.getConnectionState(device)==BluetoothProfile.STATE_CONNECTED;rows.add(name+" · "+(callsConnected?(audioConnected?L.t("Apeluri HFP + muzică"):L.t("Apeluri HFP conectat")):audioConnected?L.t("Audio A2DP conectat"):connected?L.t("HID conectat"):device.getBondState()==BluetoothDevice.BOND_BONDED?L.t("Asociat"):L.t("Nou")));
         }
-        list("Bluetooth Leo",rows,selected,new Choice(){public void pick(int i){
+        list("Bluetooth",rows,selected,new Choice(){public void pick(int i){
             if(i==0) { boolean accepted=bluetooth.isEnabled()?bluetooth.disable():bluetooth.enable(); if(!accepted) notice(L.t("Cererea Bluetooth a fost refuzată")); }
             else if(i==1) {
                 if(bluetooth.isDiscovering()) bluetooth.cancelDiscovery();
@@ -197,7 +197,7 @@ public final class ConnectivityActivity extends LeoActivity {
         try { WifiConfiguration c=apConfig(); if(c!=null) name=c.SSID; } catch(Exception ignored) { }
         ArrayList<String> rows=new ArrayList<>(Arrays.asList("Hotspot · "+status,L.t("Nume · ")+name,L.t("Configurează WPA2"),L.t("Setări Android")));
         if(!hotspotResult.isEmpty()) rows.add(hotspotResult);
-        list("Hotspot Leo",rows,selected,new Choice(){public void pick(int i){
+        list("Hotspot",rows,selected,new Choice(){public void pick(int i){
             if(i==0) toggleHotspot(); else if(i==1||i==2) hotspotForm(); else if(i==3) androidPage("android.settings.TETHER_SETTINGS"); else notice(hotspotResult);
         }},L.t("Actualiz."),new Runnable(){public void run(){show();}});
     }
@@ -205,12 +205,12 @@ public final class ConnectivityActivity extends LeoActivity {
         if(apState()!=11) { notice(L.t("Oprește întâi hotspotul")); return; }
         WifiConfiguration old=null; try { old=apConfig(); } catch(Exception ignored) { }
         LinearLayout panel=fields(L.t("Configurare hotspot"));
-        final EditText ssid=field(panel,L.t("Nume rețea"),old!=null?old.SSID:"Leo 6300",InputType.TYPE_CLASS_TEXT);
+        final EditText ssid=field(panel,L.t("Nume rețea"),old!=null?old.SSID:"N0d3 KeyShell",InputType.TYPE_CLASS_TEXT);
         final EditText password=field(panel,L.t("Parolă WPA2 · 8–63 caractere"),old!=null && old.preSharedKey!=null?old.preSharedKey:"",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
         left=new Runnable(){public void run(){
             String name=ssid.getText().toString(),key=password.getText().toString();
             if(name.isEmpty() || name.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>32 || key.length()<8 || key.length()>63) { notice(L.t("Verifică numele și parola")); return; }
-            if(!Settings.System.canWrite(ConnectivityActivity.this)) { notice(L.t("Leo necesită acces la modificarea setărilor")); return; }
+            if(!Settings.System.canWrite(ConnectivityActivity.this)) { notice(L.t("Aplicația necesită acces la modificarea setărilor")); return; }
             WifiConfiguration c=new WifiConfiguration(); c.SSID=name; c.preSharedKey=key; c.allowedKeyManagement.set(AP_WPA2_PSK);
             try { if(Boolean.TRUE.equals(wifi.getClass().getMethod("setWifiApConfiguration",WifiConfiguration.class).invoke(wifi,c))) { notice(L.t("Configurație salvată")); show(); } else notice(L.t("Configurația a fost refuzată")); }
             catch(Exception failure) { notice(L.t("Hotspotul nu poate fi configurat")); }

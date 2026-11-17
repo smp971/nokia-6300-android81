@@ -8,7 +8,7 @@ import android.widget.*;
 public final class VideoActivity extends LeoActivity implements SurfaceHolder.Callback,AudioManager.OnAudioFocusChangeListener {
     private MediaPlayer player;private SurfaceView surface;private boolean ready;private int savedPosition;private AudioManager audio;
     protected void onCreate(Bundle state){super.onCreate(state);audio=(AudioManager)getSystemService(AUDIO_SERVICE);if(state!=null)savedPosition=state.getInt("position");
-        begin("Video Leo");surface=new SurfaceView(this);surface.getHolder().addCallback(this);root.addView(surface,new LinearLayout.LayoutParams(-1,0,1));
+        begin(L.t("Video"));surface=new SurfaceView(this);surface.getHolder().addCallback(this);root.addView(surface,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable(){public void run(){notice(L.t("OK: pauză/redare · ←/→: ±10 s · ↑/↓: volum"));}};footer(L.t("Comenzi"),L.t("Pauză / Redă"),L.t("Înapoi"));surface.setFocusable(true);surface.requestFocus();
     }
     private void prepare(){

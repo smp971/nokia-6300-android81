@@ -64,7 +64,7 @@ final class ContextHelp {
             return L.t("Selectează transferul cu OK. În așteptare poți accepta sau refuza primirea. Progresul și starea provin din stiva Bluetooth Android. Trimiterea începe numai după alegerea explicită a dispozitivului.");
         }
         if (page.contains("GlobalSearch")) {
-            return L.t("Scrie termenul din taste; Jos intră în rezultate și OK deschide selecția. Căutarea este locală și limitată: SMS, calendar, fișiere, contacte, notițe, muzică și aplicații. Expeditorii filtrați în Leo nu apar în rezultate.");
+            return L.t("Scrie termenul din taste; Jos intră în rezultate și OK deschide selecția. Căutarea este locală și limitată: SMS, calendar, fișiere, contacte, notițe, muzică și aplicații. Expeditorii filtrați nu apar în rezultate.");
         }
         if (page.contains("Calendar")) {
             return L.t("D-pad mută ziua, OK deschide ziua, iar * / # schimbă luna. În Opțiuni găsești agenda și poți crea un eveniment.");
@@ -81,6 +81,6 @@ final class ContextHelp {
         if (page.contains("Music") || page.contains("Media") || page.contains("Lyrics")) {
             return HelpActivity.TEXT[4] + "\n\n" + L.t("În player, # deschide biblioteca.");
         }
-        return L.t("Sus/jos mută selecția; listele Leo se derulează circular. OK deschide elementul. Acțiunile softkey sunt scrise în bara de jos. În câmpurile de text, tastele numerice folosesc tastatura Leo, iar soft dreapta șterge. Pentru o aplicație Android, meniul global oferă mouse din taste.");
+        return L.t("Sus/jos mută selecția; listele se derulează circular. OK deschide elementul. Acțiunile softkey sunt scrise în bara de jos. În câmpurile de text, tastele numerice folosesc tastatura, iar soft dreapta șterge. Pentru o aplicație Android, meniul global oferă mouse din taste.");
     }
 }

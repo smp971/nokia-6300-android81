@@ -116,7 +116,7 @@ public final class LeoPointerService extends AccessibilityService {
     }
     private void showGlobalMenu(final boolean tools, int selected) {
         final int[] actions = GlobalMenuModel.actions(menuPins(), tools);
-        showMenuDialog(tools ? L.t("Mai multe") : L.t("Meniu Leo"),
+        showMenuDialog(tools ? L.t("Mai multe") : L.t("Meniu"),
             GlobalMenuModel.labels(actions, active), selected, new KeypadDialog.Action() {
                 public void select(int row) { globalAction(actions[row]); }
             }, tools ? new Runnable() {

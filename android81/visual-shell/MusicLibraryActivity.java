@@ -223,7 +223,7 @@ public final class MusicLibraryActivity extends LeoActivity {
                 long id = rows.getLong(0);
                 seen.add(id);
                 found.add(new String[]{ContentUris.withAppendedId(AUDIO, id).toString(),
-                    label(rows.getString(1), label(rows.getString(4), L.t("Muzică Leo"))),
+                    label(rows.getString(1), label(rows.getString(4), L.t("Muzică"))),
                     label(rows.getString(2), L.t("Artist necunoscut")),
                     label(rows.getString(3), L.t("Album necunoscut")),
                     "content://media/external/audio/albumart/" + rows.getLong(5), rows.getString(6)});
@@ -237,7 +237,7 @@ public final class MusicLibraryActivity extends LeoActivity {
             while (rows != null && rows.moveToNext() && found.size() < MusicQueue.LIMIT) {
                 long id = rows.getLong(0);
                 if (seen.add(id)) found.add(new String[]{ContentUris.withAppendedId(FILES, id).toString(),
-                    label(rows.getString(1), L.t("Muzică Leo")), L.t("Artist necunoscut"),
+                    label(rows.getString(1), L.t("Muzică")), L.t("Artist necunoscut"),
                     L.t("Album necunoscut"), "", rows.getString(2)});
             }
         } catch (RuntimeException denied) {
@@ -324,7 +324,7 @@ public final class MusicLibraryActivity extends LeoActivity {
             labels.add(key + " · " + group.size());
             images.add(artKey(group.get(0)));
         }
-        prepareList(album ? L.t("Albume Leo") : L.t("Artiști Leo"), keys, images);
+        prepareList(album ? L.t("Albume") : L.t("Artiști"), keys, images);
         list(listTitle, labels, 0, new Choice() {
             public void pick(int at) { trackPage(album ? Page.ALBUM : Page.ARTIST, keys.get(at)); }
         }, "", null);

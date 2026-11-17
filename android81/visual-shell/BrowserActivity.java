@@ -30,7 +30,7 @@ public final class BrowserActivity extends LeoActivity {
     private volatile HttpURLConnection connection;
     protected void onCreate(Bundle b){super.onCreate(b);font=Math.max(14,Math.min(26,getSharedPreferences("browser",0).getInt("font",17)));if(getIntent().getData()!=null&&("https".equals(getIntent().getData().getScheme())||"http".equals(getIntent().getData().getScheme()))){home();fetch(getIntent().getData().toString());}else home();}
     protected void onDestroy(){generation++;HttpURLConnection c=connection;if(c!=null)c.disconnect();super.onDestroy();}
-    private void home(){generation++;trail.clear();scrollY=0;linkIndex=-1;search="";match=-1;current="leo:home";title=L.t("Browser text");document=Html.fromHtml(L.t("<h2>Leo · Web în mod text</h2><p><a href='https://example.org/'>Deschide example.org</a></p>"),Html.FROM_HTML_MODE_LEGACY);display();}
+    private void home(){generation++;trail.clear();scrollY=0;linkIndex=-1;search="";match=-1;current="leo:home";title=L.t("Browser text");document=Html.fromHtml(L.t("<h2>Web în mod text</h2><p><a href='https://example.org/'>Deschide example.org</a></p>"),Html.FROM_HTML_MODE_LEGACY);display();}
     private void display(){
         begin(title);readingRoot=root;scroll=new ScrollView(this);body=text("",font);body.setTextIsSelectable(false);scroll.addView(body);scroll.setFocusable(true);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         pageLinks.clear();for(URLSpan span:document.getSpans(0,document.length(),URLSpan.class))if(pageLinks.size()<150&&document.getSpanEnd(span)>document.getSpanStart(span)){try{resolveLink(span);pageLinks.add(span);}catch(Exception ignored){}}

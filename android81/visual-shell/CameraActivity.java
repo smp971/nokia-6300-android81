@@ -111,9 +111,9 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
         rows.add(count == 0 ? L.t("Camera nu este încă disponibilă\nVerifică pornirea serviciilor") : L.t("Deschide vizorul · OK declanșează"));
         rows.add(L.t("Calea de salvare · Pictures/Leo"));
         rows.add(L.t("BF20A1 · driver KaiOS și adaptor Android 8.1"));
-        list(L.t("Cameră Leo · experimental"), rows, 0, new Choice() {
+        list(L.t("Cameră · experimental"), rows, 0, new Choice() {
             public void pick(int at) {
-                if (at != 1) { notice(L.t("Cameră Leo · diagnostic și salvare locală")); return; }
+                if (at != 1) { notice(L.t("Cameră · diagnostic și salvare locală")); return; }
                 if (total == 0) { notice(L.t("Camera nu este expusă de serviciul Android")); return; }
                 if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.CAMERA}, 73); return;
@@ -125,7 +125,7 @@ public final class CameraActivity extends LeoActivity implements SurfaceHolder.C
     }
 
     private void viewfinder() {
-        begin(L.t("Cameră Leo"));
+        begin(L.t("Cameră"));
         preview = root;
         cameraInfo=text(L.t("Se pregătește vizorul…"),12);root.addView(cameraInfo);
         surface = new SurfaceView(this);

@@ -35,7 +35,7 @@ final class MediaPanel {
             artist = service == null ? "" : service.artist();
             status = PlaybackService.state;
             cover = service == null ? null : service.cover();
-            detail = service == null || service.queue.titles.isEmpty() ? L.t("Bibliotecă Leo")
+            detail = service == null || service.queue.titles.isEmpty() ? L.t("Bibliotecă")
                 : L.t("Piesa ") + (service.queue.index + 1) + " / " + service.queue.titles.size();
             position = service == null ? 0 : service.position();
             duration = service == null ? 0 : service.duration();

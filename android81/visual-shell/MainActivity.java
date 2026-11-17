@@ -210,7 +210,7 @@ public final class MainActivity extends Activity {
         final int app=screen.focusedApp();
         ArrayList<String> items=new ArrayList<>();
         items.add(L.t("Personalizare"));
-        items.add(L.t("Caută în Leo"));
+        items.add(L.t("Căutare locală"));
         items.add(L.t("Reordonează aplicațiile"));
         if(app>=0)items.add(L.t("Atribuie la soft dreapta"));
         items.add(ContextHelp.label());
@@ -358,8 +358,9 @@ public final class MainActivity extends Activity {
         boolean compactClock,showSims=true,showUnread=true;
         final SimpleDateFormat timeFormat=new SimpleDateFormat("HH:mm",Locale.getDefault());
         final SimpleDateFormat dateFormat=new SimpleDateFormat("EEEE, d MMMM",L.locale());
-        String time = "", date = "", message = "", networkBanner="L E O · ACTIVE STANDBY";
+        String time = "", date = "", message = "", networkBanner=L.t("REȚEA · ÎN AȘTEPTARE");
         final String[] simLabels = {L.t("se verifică"), L.t("se verifică")};
+        final String[] simTechnology = {"", ""};
         final boolean[] inService={false,false};
         int simSlots=3;
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
@@ -367,6 +368,7 @@ public final class MainActivity extends Activity {
         void refresh() {
             reloadCards();
             String previousTime=time,previousDate=date,first=simLabels[0],second=simLabels[1],previousBanner=networkBanner;
+            String previousFirstTechnology=simTechnology[0],previousSecondTechnology=simTechnology[1];
             int previousSlots=simSlots;
             boolean previousFirstService=inService[0],previousSecondService=inService[1];
             java.util.TimeZone zone=java.util.TimeZone.getDefault();timeFormat.setTimeZone(zone);dateFormat.setTimeZone(zone);
@@ -376,12 +378,13 @@ public final class MainActivity extends Activity {
             updateSims();
             networkBanner=NetworkStartup.label(NetworkStartup.stage(),inService[0]||inService[1],Settings.Global.getInt(getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0)!=0,android.os.SystemClock.elapsedRealtime());
             // Telemetry is cached while the grid is visible; it has no pixels there.
-            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)||!networkBanner.equals(previousBanner)||simSlots!=previousSlots||inService[0]!=previousFirstService||inService[1]!=previousSecondService))invalidate();
+            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)||!networkBanner.equals(previousBanner)||!simTechnology[0].equals(previousFirstTechnology)||!simTechnology[1].equals(previousSecondTechnology)||simSlots!=previousSlots||inService[0]!=previousFirstService||inService[1]!=previousSecondService))invalidate();
         }
         void updateSims() {
             TelephonyManager base = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
             for(int slot=0;slot<2;slot++) {
                 inService[slot]=false;
+                simTechnology[slot]="";
                 try {
                     int sim = base.getSimState(slot);
                     int bit = 1 << slot;
@@ -400,16 +403,12 @@ public final class MainActivity extends Activity {
                         String carrier = phone.getNetworkOperatorName();
                         if(carrier == null || carrier.isEmpty()) carrier = info.getCarrierName() == null ? "" : info.getCarrierName().toString();
                         ServiceState service = phone.getServiceState();
-                        String name = carrier.isEmpty() ? "operator" : carrier;
+                        String name = carrier.isEmpty() ? L.t("Operator") : carrier;
                         if(service == null) simLabels[slot] = L.t("se verifică");
                         else if(service.getState() == ServiceState.STATE_IN_SERVICE) {
                             inService[slot]=true;
-                            int type = phone.getDataNetworkType();
-                            String rat = type == TelephonyManager.NETWORK_TYPE_LTE ? " · 4G"
-                                : (type == TelephonyManager.NETWORK_TYPE_UMTS || type == TelephonyManager.NETWORK_TYPE_HSDPA
-                                || type == TelephonyManager.NETWORK_TYPE_HSUPA || type == TelephonyManager.NETWORK_TYPE_HSPA
-                                || type == TelephonyManager.NETWORK_TYPE_HSPAP) ? " · 3G" : L.t(" · conectat");
-                            simLabels[slot] = name + rat;
+                            simLabels[slot] = name;
+                            simTechnology[slot] = NetworkTelemetry.rat(NetworkTelemetry.servingType(phone));
                         } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = L.t("doar urgențe");
                         else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = L.t("radio oprit");
                         else simLabels[slot] = L.t("fără serviciu");

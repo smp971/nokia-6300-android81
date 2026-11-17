@@ -64,7 +64,8 @@ final class LeoHome {
             paint.setColor(0x66000000);
             canvas.drawRect(wallpaperBounds, paint);
         }
-        int heroBottom = screen.editing || (simSlots & visibleSims) != 0 ? 142 : 113;
+        boolean showSimRow = screen.editing || (simSlots & visibleSims) != 0;
+        int heroBottom = showSimRow ? 142 : 113;
         if (screen.homePart(canvas, 0, 9, 8, 231, heroBottom)) {
             paint.setColor(Color.WHITE);
             if (!screen.highContrast) paint.setShader(hero);
@@ -73,10 +74,14 @@ final class LeoHome {
             paint.setShader(null);
             canvas.restore();
         }
-        editableText(canvas, screen, 1, screen.networkBanner, 20, 29, 10, palette.accent, MEDIUM);
-        editableText(canvas, screen, 2, screen.time, 17, 79, screen.compactClock ? 37 : 52, INK, CLOCK);
-        editableText(canvas, screen, 3, screen.date, 20, 100, 13, MUTED, REGULAR);
         if (simSlots != 0) drawSims(canvas, screen, simSlots);
+        if (!screen.networkBanner.isEmpty() || screen.editing) {
+            String banner = screen.networkBanner.isEmpty() ? L.t("Stare rețea") : screen.networkBanner;
+            editableText(canvas, screen, 1, banner, 20, showSimRow ? 131 : 29, 10, palette.accent, MEDIUM);
+        }
+        editableText(canvas, screen, 2, screen.time, 17, showSimRow ? 93 : 79,
+            screen.compactClock ? 37 : 52, INK, CLOCK);
+        editableText(canvas, screen, 3, screen.date, 20, showSimRow ? 112 : 100, 13, MUTED, REGULAR);
         if (showCard) drawCard(canvas, screen, heroBottom + 42);
         drawShortcuts(canvas, screen, showCard ? heroBottom + 91 : heroBottom + 53);
 
@@ -103,9 +108,9 @@ final class LeoHome {
     }
 
     private void drawSims(Canvas canvas, MainActivity.Screen screen, int slots) {
-        RectF first = new RectF(17, 110, 117, 136);
-        RectF second = new RectF(123, 110, 223, 136);
-        RectF full = new RectF(17, 110, 223, 136);
+        RectF first = new RectF(17, 16, 117, 42);
+        RectF second = new RectF(123, 16, 223, 42);
+        RectF full = new RectF(17, 16, 223, 42);
         screen.homeLayout.splitSims(full, first, second);
         for (int slot = 0; slot < 2; slot++) {
             if ((slots & (1 << slot)) == 0) continue;
@@ -117,8 +122,16 @@ final class LeoHome {
             surface(canvas, bounds.left, bounds.top, bounds.right, bounds.bottom, 10, palette.bar);
             float baseline = bounds.top + 17;
             screen.dashboardArt.sim(canvas, bounds.left + 12, baseline, slot, screen.inService[slot]);
+            String technology = screen.simTechnology[slot];
+            float suffixWidth = 0;
+            if (!technology.isEmpty()) {
+                prepare(10, MEDIUM);
+                suffixWidth = paint.measureText(technology) + 6;
+                text(canvas, technology, bounds.right - 6, baseline, 10, palette.accent, Paint.Align.RIGHT,
+                    suffixWidth, MEDIUM);
+            }
             text(canvas, screen.simLabels[slot], bounds.left + 23, baseline, 10, INK, Paint.Align.LEFT,
-                    bounds.width() - 28, MEDIUM);
+                    bounds.width() - 29 - suffixWidth, MEDIUM);
             canvas.restore();
         }
     }

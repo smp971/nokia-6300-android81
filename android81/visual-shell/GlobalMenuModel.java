@@ -81,7 +81,7 @@ final class GlobalMenuModel {
             case APPS: return L.t("Aplicații");
             case NOTIFICATIONS: return L.t("Notificări");
             case QUICK: return L.t("Configurări rapide");
-            case SETTINGS: return L.t("Setări Leo");
+            case SETTINGS: return L.t("Setări");
             case POINTER: return pointer ? L.t("Oprește mouse-ul") : L.t("Mouse din taste");
             case MORE: return L.t("Mai multe");
             case MEDIA: return L.t("Acum se redă");
@@ -91,7 +91,7 @@ final class GlobalMenuModel {
             case HELP: return ContextHelp.label();
             case WORKSPACE: return L.t("Spațiu de lucru");
             case TRANSFERS: return L.t("Centrul de transferuri");
-            case STUDIO: return "Leo Studio";
+            case STUDIO: return "Studio";
             case ANDROID: return L.t("Android din taste");
             case CLOSE: return L.t("Închide aplicația curentă");
             case CUSTOMIZE: return L.t("Personalizează meniul");

@@ -122,9 +122,9 @@ public final class NowPlayingActivity extends LeoActivity {
    if (preview) {
     state.cover = null;
     state.playing = previewPlaying;
-    state.title = state.radio ? "LEO FM" : L.t("Lumini de seară");
+    state.title = state.radio ? "RADIO FM" : L.t("Lumini de seară");
     if (!state.radio) {
-     state.artist = "Leo Sessions";
+     state.artist = "Sesiuni";
      state.detail = L.t("Piesa ") + "1 / 1";
     }
     state.status = L.t("DEMO · fără redare");

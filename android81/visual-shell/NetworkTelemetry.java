@@ -28,7 +28,7 @@ final class NetworkTelemetry {
                 int dbm=Integer.MIN_VALUE;
                 private void update(){
                     try{String name=phone.getNetworkOperatorName();if(name==null||name.isEmpty())name="Operator";ServiceState state=phone.getServiceState();String status=L.t("fără serviciu");
-                        if(state!=null){if(state.getState()==ServiceState.STATE_IN_SERVICE){int type=phone.getDataNetworkType();if(type==TelephonyManager.NETWORK_TYPE_UNKNOWN)type=phone.getVoiceNetworkType();status=rat(type)+(dbm!=Integer.MIN_VALUE?" · "+dbm+" dBm":"");}else if(state.getState()==ServiceState.STATE_EMERGENCY_ONLY)status=L.t("doar urgențe");else if(state.getState()==ServiceState.STATE_POWER_OFF)status=L.t("radio oprit");}
+                        if(state!=null){if(state.getState()==ServiceState.STATE_IN_SERVICE){String network=rat(servingType(phone));status=(network.isEmpty()?L.t("Tip necunoscut"):network)+(dbm!=Integer.MIN_VALUE?" · "+dbm+" dBm":"");}else if(state.getState()==ServiceState.STATE_EMERGENCY_ONLY)status=L.t("doar urgențe");else if(state.getState()==ServiceState.STATE_POWER_OFF)status=L.t("radio oprit");}
                         rows[slot]="SIM "+(slot+1)+" · "+name+" · "+status+(ImsStatus.registered(slot)?" · VoLTE":"");
                     }catch(RuntimeException e){rows[slot]="SIM "+(slot+1)+L.t(" · indisponibil");}changed.run();
                 }
@@ -46,5 +46,32 @@ final class NetworkTelemetry {
         // GSM ASU is valid only for GSM; do not label a fallback GSM value as LTE.
         return Integer.MIN_VALUE;
     }
-    static String rat(int type){switch(type){case TelephonyManager.NETWORK_TYPE_LTE:return "4G";case TelephonyManager.NETWORK_TYPE_GPRS:case TelephonyManager.NETWORK_TYPE_EDGE:case TelephonyManager.NETWORK_TYPE_GSM:return "2G";case TelephonyManager.NETWORK_TYPE_UMTS:case TelephonyManager.NETWORK_TYPE_HSDPA:case TelephonyManager.NETWORK_TYPE_HSUPA:case TelephonyManager.NETWORK_TYPE_HSPA:case TelephonyManager.NETWORK_TYPE_HSPAP:return "3G";default:return L.t("conectat");}}
+    static int servingType(TelephonyManager phone) {
+        int data = phone.getDataNetworkType();
+        return data == TelephonyManager.NETWORK_TYPE_UNKNOWN || data == TelephonyManager.NETWORK_TYPE_IWLAN
+            ? phone.getVoiceNetworkType() : data;
+    }
+
+    static String rat(int type) {
+        switch (type) {
+            case TelephonyManager.NETWORK_TYPE_LTE: return "4G";
+            case TelephonyManager.NETWORK_TYPE_GPRS:
+            case TelephonyManager.NETWORK_TYPE_EDGE:
+            case TelephonyManager.NETWORK_TYPE_GSM:
+            case TelephonyManager.NETWORK_TYPE_CDMA:
+            case TelephonyManager.NETWORK_TYPE_1xRTT:
+            case TelephonyManager.NETWORK_TYPE_IDEN: return "2G";
+            case TelephonyManager.NETWORK_TYPE_UMTS:
+            case TelephonyManager.NETWORK_TYPE_HSDPA:
+            case TelephonyManager.NETWORK_TYPE_HSUPA:
+            case TelephonyManager.NETWORK_TYPE_HSPA:
+            case TelephonyManager.NETWORK_TYPE_HSPAP:
+            case TelephonyManager.NETWORK_TYPE_EVDO_0:
+            case TelephonyManager.NETWORK_TYPE_EVDO_A:
+            case TelephonyManager.NETWORK_TYPE_EVDO_B:
+            case TelephonyManager.NETWORK_TYPE_EHRPD:
+            case TelephonyManager.NETWORK_TYPE_TD_SCDMA: return "3G";
+            default: return "";
+        }
+    }
 }

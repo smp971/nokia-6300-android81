@@ -13,7 +13,7 @@ public final class PrivacySettingsActivity extends LeoActivity {
         int mode=Settings.Secure.getInt(getContentResolver(),Settings.Secure.LOCATION_MODE,0);
         LocationManager location=(LocationManager)getSystemService(LOCATION_SERVICE);
         List<String> providers=location==null?Collections.<String>emptyList():location.getProviders(true);
-        list(L.t("Localizare Leo"),Arrays.asList(L.t("Localizare · ")+(mode==0?L.t("Oprită"):L.t("Pornită")),L.t("Scanare Wi-Fi / Bluetooth"),L.t("Furnizori · ")+(providers.isEmpty()?L.t("Niciunul"):android.text.TextUtils.join(", ",providers)),L.t("GPS · neintegrat")),0,new Choice(){public void pick(int i){
+        list(L.t("Localizare"),Arrays.asList(L.t("Localizare · ")+(mode==0?L.t("Oprită"):L.t("Pornită")),L.t("Scanare Wi-Fi / Bluetooth"),L.t("Furnizori · ")+(providers.isEmpty()?L.t("Niciunul"):android.text.TextUtils.join(", ",providers)),L.t("GPS · neintegrat")),0,new Choice(){public void pick(int i){
             if(i==0) {
                 final boolean enable=Settings.Secure.getInt(getContentResolver(),Settings.Secure.LOCATION_MODE,0)==0;
                 options(enable?L.t("Pornește localizarea?"):L.t("Oprește localizarea?"),new String[]{L.t("Anulează"),enable?L.t("Pornește pentru scanare"):L.t("Oprește")},new Choice(){public void pick(int yes){
