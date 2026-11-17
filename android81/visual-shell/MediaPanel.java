@@ -23,6 +23,9 @@ final class MediaPanel {
         Bitmap cover;
         int position, duration, volume, volumeMax;
         boolean playing, radio, showSources;
+        boolean internet, canStop;
+        String stationMark;
+        int stationColor;
         private long nextVolumeRead;
 
         void readMusic(AudioManager audio) {
@@ -36,6 +39,10 @@ final class MediaPanel {
                 : L.t("Piesa ") + (service.queue.index + 1) + " / " + service.queue.titles.size();
             position = service == null ? 0 : service.position();
             duration = service == null ? 0 : service.duration();
+            readVolume(audio);
+        }
+
+        void readVolume(AudioManager audio) {
             long now = SystemClock.elapsedRealtime();
             if (now >= nextVolumeRead) {
                 volume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
@@ -70,9 +77,10 @@ final class MediaPanel {
 
     void draw(Canvas c, int width, int height, Appearance.Palette palette, State s) {
         c.save();
-        c.scale(width / 240f, height / 302f);
+        c.scale(width / 240f, height / (s.internet ? 240f : 302f));
+        if (s.internet) c.translate(0, -40);
         c.drawColor(palette.background);
-        UiChrome.header(c, s.heading, palette, paint);
+        if (!s.internet) UiChrome.header(c, s.heading, palette, paint);
         if (s.showSources) {
             source(c, L.t("MUZICĂ"), 12, !s.radio, palette);
             source(c, "RADIO FM", 124, s.radio, palette);
@@ -89,7 +97,7 @@ final class MediaPanel {
         paint.setTypeface(FONT);
         paint.setTextSize(16);
         String[] lines = KeypadText.twoLines(paint, s.title, 118);
-        if (s.radio) {
+        if (s.radio || s.internet) {
             text(c, lines[0], 101, 101, 16, Color.WHITE, 118);
             text(c, lines[1], 101, 122, 16, Color.WHITE, 118);
             text(c, s.detail, 101, 143, 12, palette.accent, 118);
@@ -116,18 +124,20 @@ final class MediaPanel {
                 (i + 1) * s.volumeMax <= s.volume * 10 ? palette.accent : palette.selection);
         }
         drawControls(c, palette, s);
-        box(c, 0, 280, 240, 302, palette.bar);
-        text(c, L.t("Opțiuni"), 7, 295, 11, Color.WHITE, 62);
-        paint.setTextSize(11);
-        String back = KeypadText.fit(paint, L.t("Înapoi"), 47);
-        text(c, back, 233 - paint.measureText(back), 295, 11, Color.WHITE, 47);
+        if (!s.internet) {
+            box(c, 0, 280, 240, 302, palette.bar);
+            text(c, L.t("Opțiuni"), 7, 295, 11, Color.WHITE, 62);
+            paint.setTextSize(11);
+            String back = KeypadText.fit(paint, L.t("Înapoi"), 47);
+            text(c, back, 233 - paint.measureText(back), 295, 11, Color.WHITE, 47);
+        }
         c.restore();
     }
 
     private void drawControls(Canvas c, Appearance.Palette palette, State s) {
-        if (s.radio) {
+        if (s.radio || s.internet) {
             control(c, palette, "4  ◀◀", 12, 68, false, 12);
-            control(c, palette, s.playing ? "5  Stop" : L.t("5  Redă"), 86, 68, true, 12);
+            control(c, palette, (s.internet ? s.canStop : s.playing) ? "5  Stop" : L.t("5  Redă"), 86, 68, true, 12);
             control(c, palette, "6  ▶▶", 160, 68, false, 12);
             return;
         }
@@ -149,6 +159,13 @@ final class MediaPanel {
     }
 
     private void drawArtwork(Canvas c, Appearance.Palette palette, State s) {
+        if (s.internet) {
+            box(c, 20, 81, 88, 149, s.stationColor);
+            paint.setTypeface(FONT);
+            paint.setTextSize(23);
+            text(c, s.stationMark, 54 - paint.measureText(s.stationMark) / 2, 123, 23, 0xff141b27, 63);
+            return;
+        }
         Bitmap cover = s.cover != null && !s.cover.isRecycled() ? s.cover : s.radio ? null : placeholder;
         if (cover != null) {
             paint.setColor(Color.WHITE);

@@ -72,6 +72,9 @@ final class ContextHelp {
         if (page.contains("Files")) {
             return L.t("OK deschide folderul sau acțiunile fișierului. 5 marchează fișierele. Opțiuni oferă căutare, copiere și mutare. Partajarea prin Bluetooth cere alegerea dispozitivului și confirmare.");
         }
+        if (page.contains("StreamRadio")) {
+            return L.t("În player, OK sau 5 pornește ori oprește radioul. Stânga / dreapta sau 4 / 6 schimbă postul, iar sus / jos reglează volumul. # deschide lista de posturi. În listă, OK alege postul și Înapoi revine la player.");
+        }
         if (page.contains("NowPlaying")) {
             return L.t("* schimbă sursa între Muzică și FM. # deschide playerul sursei. Pentru comenzile sursei curente, deschide Opțiuni → Info / Ajutor.");
         }
