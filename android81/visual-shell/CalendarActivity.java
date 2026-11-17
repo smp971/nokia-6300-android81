@@ -131,7 +131,7 @@ public final class CalendarActivity extends LeoActivity {
         protected void onDraw(Canvas c) {
             c.save(); c.scale(getWidth()/240f,getHeight()/226f);
             text(c,new SimpleDateFormat("MMMM yyyy",L.locale()).format(day.getTime()),120,24,18,Color.WHITE);
-            String[] names={L.t("Lu"),L.t("Ma"),L.t("Mi"),L.t("Jo"),L.t("Vi"),L.t("Sâ"),L.t("Du")}; for(int i=0;i<7;i++) text(c,names[i],18+i*34,53,12,0xffd3bddf);
+            String[] names={L.t("Lu"),L.t("Ma"),L.t("Mi"),L.t("Jo"),L.t("Vi"),L.t("Sâ"),L.t("Du")}; for(int i=0;i<7;i++) text(c,names[i],18+i*34,53,12,palette.secondary());
             Calendar first=(Calendar)day.clone(); first.set(Calendar.DAY_OF_MONTH,1); int offset=(first.get(Calendar.DAY_OF_WEEK)+5)%7;
             for(int value=1;value<=day.getActualMaximum(Calendar.DAY_OF_MONTH);value++) {
                 int cell=offset+value-1; float x=18+cell%7*34,y=78+cell/7*25;

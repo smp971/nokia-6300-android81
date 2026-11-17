@@ -1,7 +1,6 @@
 package ro.leo.visual;
 import ro.leo.i18n.L;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -34,8 +33,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 /** Private local notes; no contacts, storage, network or message permissions. */
-public final class NotesActivity extends Activity {
-    private Appearance.Palette palette;
+public final class NotesActivity extends LeoActivity {
     private final ArrayList<Note> notes=new ArrayList<Note>();
     private final ArrayList<Note> shown=new ArrayList<Note>();private String query="";
     private final Handler handler=new Handler();
@@ -68,23 +66,15 @@ public final class NotesActivity extends Activity {
     private void toast(String value) { Toast.makeText(this,value,Toast.LENGTH_SHORT).show(); }
     private int height(int dp) { return (int)(dp*getResources().getDisplayMetrics().density+.5f); }
     private TextView label(String value,int size) {
-        TextView text=new TextView(this); text.setText(value); text.setTextSize(size);
+        TextView text=new TextView(this); text.setText(value); text.setTextSize(size*Appearance.textScale(this));
         text.setTextColor(Color.WHITE); text.setGravity(Gravity.CENTER_VERTICAL); return text;
     }
     private LinearLayout base() {
-        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(palette.background);
-        TextView title=label(editing?L.t("Notiță"):L.t("Notițe"),22); title.setGravity(Gravity.CENTER);
-        title.setBackgroundColor(palette.card);
-        root.addView(title,new LinearLayout.LayoutParams(-1,height(42))); return root;
+        begin(editing?L.t("Notiță"):L.t("Notițe"));
+        return root;
     }
-    private void footer(LinearLayout root,String left,String center,String right) {
-        LinearLayout bar=new LinearLayout(this); bar.setBackgroundColor(palette.bar);
-        String[] labels={left,center,right};
-        for(int i=0;i<3;i++) {
-            TextView item=label(labels[i],14); item.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-            item.setPadding(height(5),0,height(5),0); bar.addView(item,new LinearLayout.LayoutParams(0,height(34),1));
-        }
-        root.addView(bar);
+    @Override void onAppearanceChanged() {
+        if(list!=null&&list.getAdapter()!=null)((BaseAdapter)list.getAdapter()).notifyDataSetChanged();
     }
     private void showList() {
         editing=false; editor=null;shown.clear();for(Note n:notes)if(query.isEmpty()||GlobalSearchActivity.matches(n.body,query))shown.add(n);java.util.Collections.sort(shown,new java.util.Comparator<Note>(){public int compare(Note a,Note b){return Boolean.compare(b.pinned,a.pinned);}});
@@ -96,7 +86,7 @@ public final class NotesActivity extends Activity {
             empty.setGravity(Gravity.CENTER); root.addView(empty,new LinearLayout.LayoutParams(-1,0,1));
             list=null;
         } else {
-            list=new ListView(this); list.setDividerHeight(height(3)); list.setPadding(height(6),0,height(6),0);
+            list=new ListView(this); UiChrome.list(this,list);
             list.setSelector(android.R.color.transparent); list.setAdapter(new BaseAdapter() {
                 public int getCount() { return shown.size(); }
                 public Object getItem(int position) { return shown.get(position); }
@@ -104,9 +94,9 @@ public final class NotesActivity extends Activity {
                 public View getView(int position,View reuse,ViewGroup parent) {
                     TextView item=label((shown.get(position).pinned?"★ ":"")+title(shown.get(position).body),18);
                     item.setSingleLine(true); item.setEllipsize(TextUtils.TruncateAt.END);
-                    item.setPadding(height(10),0,height(10),0); item.setMinHeight(height(48));
-                    item.setBackground(Appearance.surface(position==selected?palette.selection:palette.card,height(8)));
-                    item.setTextColor(position==selected?palette.ink:Color.WHITE); return item;
+                    UiChrome.listRow(NotesActivity.this,item);
+                    item.setSelected(position==selected);
+                    return item;
                 }
             });
             list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -120,7 +110,7 @@ public final class NotesActivity extends Activity {
             });
             root.addView(list,new LinearLayout.LayoutParams(-1,0,1));
         }
-        footer(root,L.t("Nouă"),L.t("Deschide"),L.t("Înapoi")); setContentView(root);
+        footer(L.t("Nouă"),L.t("Deschide"),L.t("Înapoi")); setContentView(root);
         if(list!=null) { selected=Math.min(selected,shown.size()-1); list.requestFocus(); list.setSelection(selected); }
         ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);
     }
@@ -134,9 +124,9 @@ public final class NotesActivity extends Activity {
     private void edit(String id,String body) {
         if(readFailed) return;
         editing=true; editingId=id;
-        LinearLayout root=base(); editor=new EditText(this);
-        editor.setTextColor(Color.WHITE); editor.setHintTextColor(0xffd3bddf); editor.setTextSize(19);
-        editor.setBackground(Appearance.surface(palette.card,height(8))); editor.setGravity(Gravity.TOP|Gravity.LEFT);
+        LinearLayout root=base(); form=true; editor=new EditText(this);
+        editor.setTextColor(Color.WHITE); editor.setHintTextColor(palette.secondary()); editor.setTextSize(19*Appearance.textScale(this));
+        editor.setBackground(Appearance.fieldSurface(palette,height(8))); editor.setGravity(Gravity.TOP|Gravity.LEFT);
         editor.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         editor.setFilters(new InputFilter[]{new InputFilter.LengthFilter(8192)});
         editor.setHint(L.t("Scrie din taste…")); editor.setText(body); editor.setSelection(editor.length());
@@ -148,7 +138,7 @@ public final class NotesActivity extends Activity {
             public void afterTextChanged(Editable value) { }
         });
         root.addView(editor,new LinearLayout.LayoutParams(-1,0,1));
-        footer(root,L.t("Opțiuni"),L.t("Rând nou"),L.t("Șterge")); setContentView(root); editor.requestFocus();
+        footer(L.t("Opțiuni"),L.t("Rând nou"),L.t("Șterge")); setContentView(root); editor.requestFocus();
         editor.post(new Runnable() { public void run() {
             if(editing && editor!=null) ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(editor,InputMethodManager.SHOW_IMPLICIT);
         }});
@@ -204,7 +194,7 @@ public final class NotesActivity extends Activity {
             }
         }).show();
     }
-    private void search(){final EditText input=new EditText(this);input.setTextColor(Color.WHITE);input.setText(query);input.setSingleLine(true);input.setHint(L.t("Text sau cifre T9"));final android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this).setTitle(L.t("Caută notițe")).setView(input).setPositiveButton(L.t("Caută"),new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){query=input.getText().toString().trim();selected=0;showList();}}).setNegativeButton(L.t("Înapoi"),null).create();dialog.setOnKeyListener(new android.content.DialogInterface.OnKeyListener(){public boolean onKey(android.content.DialogInterface d,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_MENU){if(e.getAction()==KeyEvent.ACTION_DOWN&&e.getRepeatCount()==0){query=input.getText().toString().trim();selected=0;dialog.dismiss();showList();}return true;}return false;}});dialog.show();input.requestFocus();((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(input,InputMethodManager.SHOW_IMPLICIT);}
+    private void search(){final EditText input=new EditText(this);input.setTextColor(Color.WHITE);input.setText(query);input.setSingleLine(true);input.setHint(L.t("Text sau cifre T9"));final android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this).setTitle(L.t("Caută notițe")).setView(input).setPositiveButton(L.t("Caută"),new android.content.DialogInterface.OnClickListener(){public void onClick(android.content.DialogInterface d,int n){query=input.getText().toString().trim();selected=0;showList();}}).setNegativeButton(L.t("Înapoi"),null).create();dialog.setOnKeyListener(new android.content.DialogInterface.OnKeyListener(){public boolean onKey(android.content.DialogInterface d,int key,KeyEvent e){if(key==KeyEvent.KEYCODE_MENU){if(e.getAction()==KeyEvent.ACTION_DOWN&&e.getRepeatCount()==0){query=input.getText().toString().trim();selected=0;dialog.dismiss();showList();}return true;}return false;}});dialog.show();dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));UiChrome.controls(dialog.getWindow().getDecorView(),palette,height(8));input.requestFocus();((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(input,InputMethodManager.SHOW_IMPLICIT);}
     private void exportNote(Note n){try{File dir=new File(SaveLocations.selected(this),"Notes");if(!dir.isDirectory()&&!dir.mkdirs())throw new java.io.IOException();File f=new File(dir,"nota-"+System.currentTimeMillis()+"-"+UUID.randomUUID().toString().substring(0,8)+".txt");BackupEngine.write(f,n.body.getBytes(StandardCharsets.UTF_8));toast(L.t("Exportată în ")+(SaveLocations.key(this).equals("leo")?L.t("Documente"):L.t("Card SD / Exports"))+" / Notes");}catch(Exception e){toast(L.t("Exportul a eșuat"));}}
     static String checklist(String body){StringBuilder out=new StringBuilder();for(String line:body.split("\n",-1)){if(out.length()>0)out.append('\n');out.append(line.startsWith("[ ] ")||line.startsWith("[x] ")?line:"[ ] "+line);}return out.toString();}
     static String toggleLine(String body,int cursor){int start=body.lastIndexOf('\n',Math.max(-1,cursor-1))+1;String tail=body.substring(start);if(tail.startsWith("[ ] "))tail="[x] "+tail.substring(4);else if(tail.startsWith("[x] "))tail="[ ] "+tail.substring(4);else tail="[ ] "+tail;return body.substring(0,start)+tail;}

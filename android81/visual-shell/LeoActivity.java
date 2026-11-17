@@ -28,11 +28,60 @@ abstract class LeoActivity extends Activity {
     private String listTitle;private java.util.ArrayList<String> listRows,listMemoryKeys;private BaseAdapter listAdapter;
     private final NavigationPace navigationPace=new NavigationPace();
     private TextView heading;private ListPositionDrawable listPosition;
+    private final java.util.ArrayList<LinearLayout> tabBars=new java.util.ArrayList<LinearLayout>();
+    private static final class RowAppearance {
+        final int index;
+        final Appearance.Palette palette;
+        RowAppearance(int index,Appearance.Palette palette){this.index=index;this.palette=palette;}
+    }
     protected void onCreate(Bundle state) {
         super.onCreate(state); palette=Appearance.palette(this);SystemChrome.apply(this,palette);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
-    protected void onResume(){super.onResume();palette=Appearance.palette(this);SystemChrome.apply(this,palette);if(listPosition!=null&&activeList!=null&&listRows!=null)listPosition.position(activeList.getSelectedItemPosition(),listRows.size());ContextHelp.current=new java.lang.ref.WeakReference<LeoActivity>(this);}
+    protected void onResume(){
+        super.onResume();
+        // Camera and browser pages also run in separate app processes.
+        getSharedPreferences("appearance",MODE_MULTI_PROCESS);
+        Appearance.Palette previous=palette;
+        palette=Appearance.palette(this);
+        SystemChrome.apply(this,palette);
+        if(!Appearance.samePalette(previous,palette)){
+            refreshAppearance();
+            onAppearanceChanged();
+            getWindow().getDecorView().invalidate();
+        }
+        if(listPosition!=null&&activeList!=null&&listRows!=null)listPosition.position(activeList.getSelectedItemPosition(),listRows.size());
+        ContextHelp.current=new java.lang.ref.WeakReference<LeoActivity>(this);
+    }
+    void onAppearanceChanged(){}
+    private void refreshAppearance(){
+        if(root==null)return;
+        root.setBackgroundColor(palette.background);
+        if(heading!=null)heading.setBackgroundColor(palette.bar);
+        UiChrome.controls(root,palette,dp(8));
+        if(softkeyBar!=null)styleSoftkeys();
+        for(LinearLayout tabs:tabBars){
+            tabs.setBackgroundColor(palette.bar);
+            for(int i=0;i<tabs.getChildCount();i++){
+                TextView tab=(TextView)tabs.getChildAt(i);
+                UiChrome.tab(tab,palette,tab.isSelected(),dp(1));
+            }
+        }
+        if(activeList!=null){
+            styleList(heading,activeList);
+            listPosition=new ListPositionDrawable(palette,getResources().getDisplayMetrics().density);
+            heading.setCompoundDrawables(heading.getCompoundDrawables()[0],null,listPosition,null);
+            if(listAdapter!=null)listAdapter.notifyDataSetChanged();
+        }
+    }
+    void registerTabs(LinearLayout tabs){tabBars.add(tabs);}
+    private void styleSoftkeys(){
+        softkeyBar.setBackground(UiChrome.panel(palette,getResources().getDisplayMetrics().density,true));
+        TextView center=(TextView)softkeyBar.getChildAt(1);
+        boolean highlight=!palette.sxmo()&&!palette.classic();
+        center.setTextColor(highlight?palette.accent:Color.WHITE);
+        center.setBackground(highlight?Appearance.surface(Appearance.mix(palette.bar,palette.accent,.12f),dp(5)):null);
+    }
     String helpControls(){if(softkeyBar==null)return "";StringBuilder out=new StringBuilder();for(int n=0;n<softkeyBar.getChildCount();n++){String value=((TextView)softkeyBar.getChildAt(n)).getText().toString();if(!value.isEmpty())out.append(n==0?L.t("Stânga · "):n==1?"OK · ":L.t("Dreapta · ")).append(value).append("\n");}return out.toString().trim();}
     protected void onPause(){rememberList();if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
     protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
@@ -46,9 +95,10 @@ abstract class LeoActivity extends Activity {
         rememberList();
         form=false; left=null; back=null; softkeyBar=null;
         activeList=null;listTitle=null;listRows=null;listMemoryKeys=null;listAdapter=null;listPosition=null;
+        tabBars.clear();
         palette=Appearance.palette(this);SystemChrome.apply(this,palette);
         root=new LinearLayout(this); root.setOrientation(1); root.setBackgroundColor(palette.background);
-        heading=text(title,17); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
+        heading=text(title,22); heading.setTypeface(UiChrome.TITLE);heading.setGravity(Gravity.CENTER_VERTICAL);heading.setSingleLine(true);heading.setEllipsize(TextUtils.TruncateAt.END);
         heading.setCompoundDrawables(new AppBadge(title,dp(25)),null,null,null);heading.setCompoundDrawablePadding(dp(8));
         heading.setBackground(UiChrome.panel(palette,getResources().getDisplayMetrics().density,false));
         if(palette.sxmo()){heading.setTypeface(android.graphics.Typeface.DEFAULT);heading.setCompoundDrawables(null,null,null,null);}else if(palette.classic()||palette.material()){heading.setPadding(dp(6),0,dp(6),0);heading.setCompoundDrawables(new AppBadge(title,dp(22)),null,null,null);}
@@ -67,12 +117,12 @@ abstract class LeoActivity extends Activity {
             if(attach){label.setSingleLine(true);label.setEllipsize(TextUtils.TruncateAt.END);
             label.setPadding(dp(5),0,dp(5),0);
             label.setAutoSizeTextTypeUniformWithConfiguration(9,Math.round(12*Appearance.textScale(this)),1,android.util.TypedValue.COMPLEX_UNIT_SP);
-            label.setTypeface(UiChrome.TITLE);if(i==1&&!palette.sxmo()&&!palette.classic()){label.setTextColor(palette.accent);label.setBackground(Appearance.surface(Appearance.mix(palette.bar,palette.accent,.12f),dp(5)));}
+            label.setTypeface(UiChrome.TITLE);
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
             if(attach)bar.addView(label,new LinearLayout.LayoutParams(0,dp(UiChrome.FOOTER_DP),1));
             }
         }
-        if(attach){root.addView(bar);setContentView(root);}
+        if(attach){styleSoftkeys();root.addView(bar);UiChrome.controls(root,palette,dp(8));setContentView(root);}
         if(attach&&!form) root.post(new Runnable() { public void run() {
             ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(),0);
         }});
@@ -83,10 +133,9 @@ abstract class LeoActivity extends Activity {
         begin(title); left=command;
         final java.util.ArrayList<String> memoryKeys=new java.util.ArrayList<String>();for(int i=0;i<values.size();i++)memoryKeys.add(rowMemoryKey(title,i,values.get(i)));UiListMemory.Entry remembered=workspace?null:listMemory.restore(title,memoryKeys);final UiListMemory.Entry bookmark=remembered!=null&&(selected==0||selected==remembered.index)?remembered:null;if(bookmark!=null)selected=bookmark.index;
         listMemoryKeys=memoryKeys;listTitle=title;listRows=new java.util.ArrayList<String>(values);final List<String> rows=listRows;
-        final ListView list=new ListView(this);activeList=list;list.setFocusableInTouchMode(true); list.setPadding(dp(6),dp(4),dp(6),dp(4)); list.setClipToPadding(false);list.setDivider(null);list.setDividerHeight(dp(4));
-        if(palette.sxmo()||palette.classic()||palette.material()){list.setPadding(0,0,0,0);list.setDividerHeight(0);}
+        final ListView list=new ListView(this);activeList=list;
+        list.setFocusableInTouchMode(true);list.setClipToPadding(false);
         styleList(heading,list);
-        list.setSelector(android.R.color.transparent);
         final int[] focused={Math.max(0,Math.min(selected,values.size()-1))};
         listPosition=new ListPositionDrawable(palette,getResources().getDisplayMetrics().density);
         listPosition.position(focused[0],values.size());
@@ -99,15 +148,16 @@ abstract class LeoActivity extends Activity {
                 TextView label;
                 if(reuse instanceof TextView) label=(TextView)reuse;
                 else {
-                    label=text("",17); label.setMaxLines(2); label.setEllipsize(TextUtils.TruncateAt.END);
-                    label.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{android.R.attr.state_selected},new int[]{}},new int[]{palette.ink,Color.WHITE}));
-                    label.setPadding(dp(15),dp(7),dp(10),dp(7));label.setMinHeight(dp(48)); label.setGravity(Gravity.CENTER_VERTICAL);label.setCompoundDrawablePadding(dp(9));
-                    label.setBackground(UiChrome.row(palette,dp(7),dp(1)));
-                    if(palette.sxmo()){label.setPadding(dp(5),dp(2),dp(5),dp(2));label.setMinHeight(dp(28));}else if(palette.classic()||palette.material()){label.setPadding(dp(8),dp(4),dp(6),dp(4));label.setMinHeight(dp(palette.material()?40:36));}
-                    styleListRow(label);
+                    label=text("",19);label.setEllipsize(TextUtils.TruncateAt.END);
+                    label.setGravity(Gravity.CENTER_VERTICAL);
                 }
                 CharSequence styled=rowText(rows.get(i));if(!TextUtils.equals(label.getText(),styled))label.setText(styled);
-                if(!stableRowIcons()||!(label.getTag() instanceof Integer)||((Integer)label.getTag())!=i){label.setCompoundDrawables(rowIcon(title,i),null,null,null);label.setTag(i);}
+                RowAppearance appearance=label.getTag() instanceof RowAppearance?(RowAppearance)label.getTag():null;
+                if(appearance==null||!Appearance.samePalette(appearance.palette,palette))styleListRow(label);
+                if(!stableRowIcons()||appearance==null||appearance.index!=i||!Appearance.samePalette(appearance.palette,palette)){
+                    label.setCompoundDrawables(rowIcon(title,i),null,null,null);
+                    label.setTag(new RowAppearance(i,palette));
+                }
                 paintSelection(label,i==focused[0]); return label;
             }
         };
@@ -141,8 +191,8 @@ abstract class LeoActivity extends Activity {
     private CharSequence rowText(String value){
         return rowCache.get(value);
     }
-    void styleList(TextView heading,ListView list){}
-    void styleListRow(TextView row){}
+    void styleList(TextView heading,ListView list){UiChrome.list(this,list);}
+    void styleListRow(TextView row){UiChrome.listRow(this,row);}
     android.graphics.drawable.Drawable rowIcon(String title,int index){return null;}
     boolean stableRowIcons(){return false;}
     String rowMemoryKey(String title,int at,String label){return label;}
@@ -159,7 +209,7 @@ abstract class LeoActivity extends Activity {
     }
     EditText field(LinearLayout fields,String label,String value,int type) {
         fields.addView(text(label,15)); EditText edit=new EditText(this); edit.setId(View.generateViewId());
-        edit.setTextSize(19*Appearance.textScale(this)); edit.setTextColor(Color.WHITE); edit.setHintTextColor(0xffd3bddf);
+        edit.setTextSize(19*Appearance.textScale(this)); edit.setTextColor(Color.WHITE); edit.setHintTextColor(palette.secondary());
         edit.setBackground(Appearance.fieldSurface(palette,dp(7)));edit.setPadding(dp(10),dp(8),dp(10),dp(8)); edit.setInputType(type); edit.setText(value);
         if((type&InputType.TYPE_TEXT_FLAG_MULTI_LINE)==0) edit.setSingleLine(true);
         // setSingleLine replaces the transformation; restore masking for password fields.

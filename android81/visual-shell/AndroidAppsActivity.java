@@ -1,7 +1,6 @@
 package ro.leo.visual;
 import ro.leo.i18n.L;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -21,8 +20,7 @@ import java.util.HashSet;
 import java.util.Locale;
 
 /** Launchable Android activities only; opening this screen never launches an app. */
-public final class AndroidAppsActivity extends Activity {
-    private Appearance.Palette palette;
+public final class AndroidAppsActivity extends LeoActivity {
     private final ArrayList<Entry> apps=new ArrayList<Entry>();
     private AppList screen;
     private int selected;

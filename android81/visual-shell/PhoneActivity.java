@@ -52,6 +52,15 @@ public final class PhoneActivity extends LeoActivity {
     private String intentNumber(Intent i){if(i.getData()!=null&&"tel".equals(i.getData().getScheme()))return i.getData().getSchemeSpecificPart();return i.getStringExtra("number");}
     protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);dial(intentNumber(i));if(i.getBooleanExtra("history",false))switchPage(1);}
     protected void onResume(){super.onResume();network.start();loadPhonebook();if(page==0&&favoriteRow!=null){favoriteCards();loadRecent();}}
+    @Override void onAppearanceChanged(){
+        if(simChips==null)return;
+        for(int slot=0;slot<simChips.length;slot++){
+            TextView chip=simChips[slot];
+            chip.setTextColor(palette.accent);
+            chip.setCompoundDrawables(new SimIcon(slot,dp(18),palette.accent),null,null,null);
+            chip.setBackground(Appearance.surface(Appearance.mix(palette.card,palette.accent,.10f),dp(4)));
+        }
+    }
     protected void onPause(){network.stop();matchHandler.removeCallbacks(findMatches);super.onPause();}
     protected void onDestroy(){generation++;phonebookGeneration++;super.onDestroy();}
     protected void onSaveInstanceState(Bundle state) {
@@ -87,9 +96,9 @@ public final class PhoneActivity extends LeoActivity {
     private void dial(String initial) {
         page=0;generation++;draft=initial==null?"":initial;LinearLayout fields=fields(L.t("Telefon"));
         fields.setPadding(dp(6),dp(6),dp(6),dp(4));networkText=null;
-        simChips=new TextView[2];for(int i=0;i<2;i++){TextView chip=text("",13);chip.setSingleLine();chip.setEllipsize(android.text.TextUtils.TruncateAt.END);chip.setGravity(Gravity.CENTER_VERTICAL);chip.setPadding(dp(7),0,dp(7),0);chip.setTextColor(palette.material()?(i==0?palette.accent:0xffb8d8ca):i==0?0xff62e8cf:0xffc4a5ff);chip.setCompoundDrawables(new SimIcon(i,dp(18),palette.material()?(i==0?palette.accent:0xffb8d8ca):palette.accent),null,null,null);chip.setCompoundDrawablePadding(dp(5));chip.setBackground(Appearance.surface(Appearance.mix(palette.card,i==0?0xff62e8cf:0xffc4a5ff,.10f),dp(4)));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(26));lp.bottomMargin=dp(4);fields.addView(chip,lp);simChips[i]=chip;}updateSimChips();
+        simChips=new TextView[2];for(int i=0;i<2;i++){TextView chip=text("",13);chip.setSingleLine();chip.setEllipsize(android.text.TextUtils.TruncateAt.END);chip.setGravity(Gravity.CENTER_VERTICAL);chip.setPadding(dp(7),0,dp(7),0);chip.setTextColor(palette.accent);chip.setCompoundDrawables(new SimIcon(i,dp(18),palette.accent),null,null,null);chip.setCompoundDrawablePadding(dp(5));chip.setBackground(Appearance.surface(Appearance.mix(palette.card,palette.accent,.10f),dp(4)));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(26));lp.bottomMargin=dp(4);fields.addView(chip,lp);simChips[i]=chip;}updateSimChips();
         number=new EditText(this);number.setId(View.generateViewId());number.setInputType(InputType.TYPE_CLASS_PHONE);number.setSingleLine(true);
-        number.setText(draft);number.setHint(L.t("Introdu numărul"));number.setHintTextColor(0xffa8b6c9);
+        number.setText(draft);number.setHint(L.t("Introdu numărul"));number.setHintTextColor(palette.secondary());
         number.setTextDirection(View.TEXT_DIRECTION_LTR);number.setTextSize(23*Appearance.textScale(this));number.setTextColor(Color.WHITE);number.setGravity(Gravity.CENTER);number.setPadding(dp(5),0,dp(5),0);
         number.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(32)});
         number.setBackground(PhoneTheme.focus(palette,palette.card));fields.addView(number,new LinearLayout.LayoutParams(-1,dp(46)));number.setSelection(number.length());

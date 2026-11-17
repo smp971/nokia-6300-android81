@@ -105,7 +105,7 @@ public final class GlobalSearchActivity extends LeoActivity {
   query.setTextSize(18 * Appearance.textScale(this));
   query.setSingleLine(true);
   query.setTextColor(android.graphics.Color.WHITE);
-  query.setHintTextColor(0xffaaaaaa);
+  query.setHintTextColor(palette.secondary());
   query.setFilters(new InputFilter[]{new InputFilter.LengthFilter(80)});
   setInputMode();
   root.addView(query);
@@ -113,6 +113,7 @@ public final class GlobalSearchActivity extends LeoActivity {
   root.addView(summary);
   results = new ListView(this);
   results.setFocusableInTouchMode(true);
+  UiChrome.list(this,results);
   root.addView(results, new LinearLayout.LayoutParams(-1, 0, 1));
   left = new Runnable() { public void run() { showScopes(); } };
   footer(L.t("Categorii"), L.t("Rezultate ↓"), L.t("Înapoi"));
@@ -208,7 +209,7 @@ public final class GlobalSearchActivity extends LeoActivity {
  protected void onSaveInstanceState(Bundle b){b.putBoolean("numeric",numericEntry);b.putInt("scope",scope);b.putString("query",query.getText().toString());b.putInt("settings_result",settingsResult);super.onSaveInstanceState(b);}
  protected void onResume(){super.onResume();if(query!=null)find();}
  protected void onPause(){handler.removeCallbacks(search);++generation;super.onPause();}protected void onDestroy(){handler.removeCallbacksAndMessages(null);super.onDestroy();}
- private void find(){summary.setText(L.t("Se caută…"));results.setEnabled(false);final String term=query.getText().toString().trim();final int token=++generation,chosen=scope;worker.execute(new Runnable(){public void run(){if(token!=generation)return;final ArrayList<Hit> hits=collect(GlobalSearchActivity.this,term,chosen);for(int i=hits.size()-1;i>=0;i--)if(!inScope(hits.get(i),chosen))hits.remove(i);ui(new Runnable(){public void run(){if(token!=generation||isFinishing())return;summary.setText(L.t(SCOPES[chosen])+" · "+hits.size());results.setEnabled(!hits.isEmpty());if(hits.isEmpty())query.requestFocus();ArrayList<String> labels=new ArrayList<String>();for(Hit h:hits)labels.add(h.label);if(labels.isEmpty())labels.add(term.isEmpty()?L.t("Scrie pentru a căuta local"):L.t("Niciun rezultat · limite locale"));results.setAdapter(new ArrayAdapter<String>(GlobalSearchActivity.this,android.R.layout.simple_list_item_1,labels){public View getView(int p,View v,android.view.ViewGroup parent){TextView t=(TextView)super.getView(p,v,parent);t.setTextColor(android.graphics.Color.WHITE);t.setTextSize(16*Appearance.textScale(GlobalSearchActivity.this));t.setMaxLines(2);t.setEllipsize(android.text.TextUtils.TruncateAt.END);t.setPadding(dp(8),dp(5),dp(8),dp(5));t.setBackground(UiChrome.row(palette,dp(6),dp(1)));t.setSelected(p==results.getSelectedItemPosition());return t;}});results.setOnItemClickListener(new AdapterView.OnItemClickListener(){public void onItemClick(AdapterView<?> a,View v,int i,long id){
+ private void find(){summary.setText(L.t("Se caută…"));results.setEnabled(false);final String term=query.getText().toString().trim();final int token=++generation,chosen=scope;worker.execute(new Runnable(){public void run(){if(token!=generation)return;final ArrayList<Hit> hits=collect(GlobalSearchActivity.this,term,chosen);for(int i=hits.size()-1;i>=0;i--)if(!inScope(hits.get(i),chosen))hits.remove(i);ui(new Runnable(){public void run(){if(token!=generation||isFinishing())return;summary.setText(L.t(SCOPES[chosen])+" · "+hits.size());results.setEnabled(!hits.isEmpty());if(hits.isEmpty())query.requestFocus();ArrayList<String> labels=new ArrayList<String>();for(Hit h:hits)labels.add(h.label);if(labels.isEmpty())labels.add(term.isEmpty()?L.t("Scrie pentru a căuta local"):L.t("Niciun rezultat · limite locale"));results.setAdapter(new ArrayAdapter<String>(GlobalSearchActivity.this,android.R.layout.simple_list_item_1,labels){public View getView(int p,View v,android.view.ViewGroup parent){TextView t=(TextView)super.getView(p,v,parent);UiChrome.listRow(GlobalSearchActivity.this,t);t.setMaxLines(2);t.setEllipsize(android.text.TextUtils.TruncateAt.END);t.setPadding(dp(8),dp(5),dp(8),dp(5));t.setBackground(UiChrome.row(palette,dp(6),dp(1)));t.setSelected(p==results.getSelectedItemPosition());return t;}});results.setOnItemClickListener(new AdapterView.OnItemClickListener(){public void onItemClick(AdapterView<?> a,View v,int i,long id){
     if(i>=hits.size())return;
     try{startActivity(hits.get(i).intent);if(chosen==SETTINGS_SCOPE)settingsResult=i;}
     catch(RuntimeException e){notice(L.t("Rezultat indisponibil"));}

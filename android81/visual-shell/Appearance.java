@@ -12,6 +12,8 @@ final class Appearance {
     static final int[][] COLORS={{0xff241047,0xff593185,0xffbc6e91},{0xff243959,0xff98707c,0xffedb17c},{0xff081d36,0xff17628b,0xff58b6be},{0xff102d28,0xff3c7657,0xffaac47e},{0xff091a37,0xff205cb4,0xff5fc9ed},{0xff32182c,0xffa44162,0xffffad83},{0xff280d2b,0xff9c255f,0xffff779f},{0xff061f28,0xff08796b,0xff83f1b0},{0xff2e2212,0xff79633a,0xffffd085},{0xff101c20,0xff29474b,0xff61dacc},{0xff141025,0xff30394e,0xff42d5c4},{0xff101c30,0xff355a87,0xff8ebfff},{0xff281e12,0xff6d5030,0xffffcb74},{0xff0e1821,0xff233746,0xff63e1c9},{0xff101923,0xff203445,0xff60e1ce},{0xff242b2e,0xff485653,0xffc3d2b7},{0xff101b2b,0xff153b66,0xff8bc9ff},{0xff141218,0xff1d1b20,0xffd0bcff}};
     static final class Palette {
         final int background,bar,card,accent,selection,ink;
+        int secondary(){return mix(background,Color.WHITE,.74f);}
+        int divider(){return mix(background,Color.WHITE,.16f);}
         boolean material(){return background==0xff141218;}
         boolean classic(){return background==0xff101b2b;}
         boolean sxmo(){return background==0xff242b2e;}
@@ -20,7 +22,53 @@ final class Appearance {
         Palette(int[] colors){if(colors[0]==0xff141218){gradient=colors;background=colors[0];bar=colors[1];card=0xff211f26;accent=colors[2];selection=0xff4f378b;ink=0xffeaddff;return;}if(colors[0]==0xff101b2b){gradient=colors;background=colors[0];bar=colors[1];card=0xff192d45;accent=colors[2];selection=0xff2b72bc;ink=Color.WHITE;return;}if(colors[0]==0xff242b2e){gradient=colors;background=colors[0];bar=0xff485653;card=background;accent=colors[2];selection=0xff426449;ink=0xfff1f1df;return;}if(colors[0]==0xff101923){gradient=colors;background=colors[0];bar=0xff0b121b;card=0xff192633;accent=colors[2];selection=mix(card,accent,.26f);ink=Color.WHITE;return;}gradient=colors;background=mix(colors[0],0xff080e19,.48f);bar=mix(colors[0],0xff03070e,.6f);card=mix(colors[0],colors[1],.24f);accent=colors[2];selection=mix(colors[2],Color.WHITE,.84f);ink=mix(colors[0],Color.BLACK,.18f);}
     }
     static final int[] ACCENTS={0xff58daca,0xffffbe57,0xff8ebcff,0xffff7b9c,0xffbca2ff,0xffa4df78};
-    static Palette palette(Context c){if(AccessibilityPrefs.contrast(c))return new Palette(0xff000000,0xff000000,0xff181818,0xffffff00,0xffffffff,0xff000000);android.content.SharedPreferences p=c.getSharedPreferences("appearance",0);String app=c.getClass().getSimpleName();int theme=p.getInt("app-theme-"+app,-1);if(theme<0&&!p.getBoolean("unified-phone",false)&&(c instanceof PhoneActivity||c instanceof InCallActivity))return PhoneTheme.palette();int i=theme<0?p.getInt("theme",p.getBoolean("warm",false)?1:0):theme;i=Math.max(0,Math.min(COLORS.length-1,i));int[] colors=COLORS[i].clone();int accent=p.getInt("accent",-1);if(accent>=0&&accent<ACCENTS.length)colors[2]=ACCENTS[accent];return new Palette(colors);}
+    static String themeOwner(String activity){
+        switch(activity){
+            case "ContactTimelineActivity": case "ContactExtrasActivity":
+            case "ContactDuplicatesActivity": case "PeopleBackupActivity": case "VCardActivity":
+                return "ContactsActivity";
+            case "MessageTransportActivity": return "MessagesActivity";
+            case "PlaylistEditorActivity": case "StreamRadioActivity": return "MusicLibraryActivity";
+            case "LyricsActivity": return "MediaActivity";
+            case "RecorderLibraryActivity": return "RecorderActivity";
+            case "CalendarToolsActivity": case "DailyAgendaActivity": return "CalendarActivity";
+            case "PdfReaderActivity": return "ReaderActivity";
+            case "CallToolsActivity": case "SpeedDialActivity": return "PhoneActivity";
+            case "ZipActivity": case "BluetoothTransfersActivity": return "FilesActivity";
+            case "SoundScheduleActivity": case "DiagnosticActivity": case "DailyReadinessActivity":
+            case "ThemePacksActivity": case "PersonalizationActivity": return "SettingsActivity";
+            case "HomeLayoutActivity": case "VisualProfilesActivity": case "WallpaperActivity":
+                return "PersonalizationActivity";
+            default:
+                if(activity.endsWith("SettingsActivity") || activity.equals("ConnectivityActivity")
+                        || activity.equals("UsbTransferActivity") || activity.equals("AppControlActivity"))
+                    return "SettingsActivity";
+                return activity;
+        }
+    }
+    static Palette palette(Context c){
+        if(AccessibilityPrefs.contrast(c))return new Palette(0xff000000,0xff000000,0xff181818,0xffffff00,0xffffffff,0xff000000);
+        SharedPreferences p=c.getSharedPreferences("appearance",0);
+        String app=c.getClass().getSimpleName();
+        int theme=p.getInt("app-theme-"+app,-1);
+        String owner=themeOwner(app);
+        while(theme<0&&!owner.equals(app)){
+            app=owner;
+            theme=p.getInt("app-theme-"+app,-1);
+            owner=themeOwner(app);
+        }
+        if(theme<0&&!p.getBoolean("unified-phone",false)&&(c instanceof PhoneActivity||c instanceof InCallActivity))return PhoneTheme.palette();
+        int index=theme<0?p.getInt("theme",p.getBoolean("warm",false)?1:0):theme;
+        index=Math.max(0,Math.min(COLORS.length-1,index));
+        int[] colors=COLORS[index].clone();
+        int accent=p.getInt("accent",-1);
+        if(accent>=0&&accent<ACCENTS.length)colors[2]=ACCENTS[accent];
+        return new Palette(colors);
+    }
+    static boolean samePalette(Palette a,Palette b){
+        return a!=null && b!=null && a.background==b.background && a.bar==b.bar
+            && a.card==b.card && a.accent==b.accent && a.selection==b.selection && a.ink==b.ink;
+    }
     static int mix(int a,int b,float f){return Color.rgb((int)(Color.red(a)*(1-f)+Color.red(b)*f),(int)(Color.green(a)*(1-f)+Color.green(b)*f),(int)(Color.blue(a)*(1-f)+Color.blue(b)*f));}
     static android.graphics.drawable.GradientDrawable surface(int color,int radius){android.graphics.drawable.GradientDrawable d=new android.graphics.drawable.GradientDrawable();d.setColor(color);d.setCornerRadius(Math.min(radius,10));return d;}
     static android.graphics.drawable.StateListDrawable fieldSurface(Palette p,int radius){

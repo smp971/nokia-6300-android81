@@ -3,10 +3,7 @@ import ro.leo.i18n.L;
 import android.content.*;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
-import android.graphics.drawable.StateListDrawable;
 import android.net.TrafficStats;
 import android.os.*;
 import android.util.TypedValue;
@@ -84,7 +81,6 @@ public final class SettingsActivity extends LeoActivity {
             new Runnable(){public void run(){KeypadTabs.focusList(SettingsActivity.this);}});
         tabs.setPadding(dp(6), 0, dp(6), 0);
         tabs.setBackgroundColor(palette.bar);
-        int divider = Appearance.mix(palette.background, Color.WHITE, .16f);
         float textScale = Appearance.textScale(this);
         for(int index=0;index<tabs.getChildCount();index++){
             TextView tab=(TextView)tabs.getChildAt(index);
@@ -96,19 +92,7 @@ public final class SettingsActivity extends LeoActivity {
             );
             tab.getLayoutParams().height = dp(40);
             tab.setPadding(dp(2), 0, dp(2), dp(3));
-            StateListDrawable states = new StateListDrawable();
-            states.addState(new int[]{android.R.attr.state_focused}, new ColorDrawable(palette.selection));
-            LayerDrawable labelSurface = new LayerDrawable(new Drawable[]{
-                new ColorDrawable(palette.bar), new ColorDrawable(active ? palette.accent : divider)
-            });
-            labelSurface.setLayerHeight(1, dp(active ? 3 : 1));
-            labelSurface.setLayerGravity(1, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
-            states.addState(new int[0], labelSurface);
-            tab.setBackground(states);
-            tab.setTextColor(new ColorStateList(
-                new int[][]{new int[]{android.R.attr.state_focused}, new int[0]},
-                new int[]{palette.ink, active ? Color.WHITE : Appearance.mix(palette.bar, Color.WHITE, .76f)}
-            ));
+            UiChrome.tab(tab, palette, active, dp(1));
             if (active) {
                 tab.setTypeface(UiChrome.TITLE);
                 ((LinearLayout.LayoutParams) tab.getLayoutParams()).weight = 1.18f;
@@ -152,26 +136,7 @@ public final class SettingsActivity extends LeoActivity {
         if (categories) heading.setText(L.t("Setări"));
         heading.setBackgroundColor(palette.bar);
         heading.setTextSize(22 * Appearance.textScale(this));
-        list.setPadding(dp(8), 0, dp(8), 0);
-        list.setDivider(new ColorDrawable(Appearance.mix(palette.background, Color.WHITE, .16f)));
-        list.setDividerHeight(dp(1));
-    }
-
-    @Override void styleListRow(TextView row) {
-        row.setTextSize(19 * Appearance.textScale(this));
-        row.setMinHeight(dp(44));
-        row.setMaxLines(3);
-        row.setCompoundDrawablePadding(dp(12));
-        LayerDrawable selected = new LayerDrawable(new Drawable[]{
-            new ColorDrawable(palette.selection), new ColorDrawable(palette.accent)
-        });
-        selected.setLayerWidth(1, dp(3));
-        selected.setLayerGravity(1, Gravity.LEFT | Gravity.FILL_VERTICAL);
-        StateListDrawable background = new StateListDrawable();
-        background.addState(new int[]{android.R.attr.state_selected}, selected);
-        background.addState(new int[0], new ColorDrawable(palette.background));
-        row.setBackground(background);
-        row.setPadding(dp(12), dp(3), dp(9), dp(3));
+        super.styleList(heading,list);
     }
 
     @Override Drawable rowIcon(String title, int index) {

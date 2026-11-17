@@ -88,3 +88,46 @@ Installed APK SHA-256 values (both system bases synchronized):
 LeoVisual 26250b0b2ff8395febedd094e00e3c0c6c10433f8d0b57498206e43a704378c9
 SystemUI  dec951c362b61a103a5458531ac8fbeb1100162543cfd560626051c8705293c9
 ```
+
+## Shared internal pages, 17 November 2026
+
+The settings list layout now supplies the common native page style. Lists use
+19 sp text, 44 dp minimum rows, flat dividers and a selected surface with an
+accent rail. Headers, tab indicators, option dialogs, form fields and softkeys
+share the current palette through `UiChrome`. Notes, Clock, Desk Clock,
+Calculator and Android Apps use the `LeoActivity` theme lifecycle.
+
+An explicit `app-theme-<Activity>` preference has priority. A subpage then
+inherits its parent application's theme, followed by the global theme.
+Personalization pages can inherit through Settings. Existing theme indices and
+preference keys keep their meaning.
+
+Returning to an existing page reapplies its palette to lists, fields, tabs and
+softkeys in place. Forms retain text, selection and focus. Camera and browser
+processes reload appearance preferences at resume. Palette reads during drawing
+use the cached preferences.
+
+Build and check the native theme regression suite on the development handset.
+
+```powershell
+python android81/build-pocket-apps-windows.py
+python android81/build-pocket-tests-windows.py --ui-theme
+python android81/framework-command.py --timeout 180 /system/bin/am instrument -w ro.leo.visual.uithemechecks/ro.leo.visual.UiThemeTests
+python android81/smoke-leo-keypad.py --serial 695d
+```
+
+The regression suite restores appearance preferences after checking inherited
+themes, an explicit subpage override, a nested Settings subpage, returning to
+an existing list and retaining an unsaved editor. It also draws the shared
+selected and unselected surfaces for every registered palette.
+
+On TA-1286 / Android API 27, the final APK passed 72 theme checks and the physical
+keypad smoke routes through Home, notifications, the global menu and Settings.
+Device screenshots were inspected for Settings subpages, themes, Terminal,
+music preview, Clock, Calculator, Notes and Android Apps. The host suite passed
+61 tests. The APK audit retained all 431 baseline external dependency classes.
+
+The installed runtime is a data update with SHA-256
+`6dbd2c7b27c488d87e0114bde77cf5a03b133ebfff7c0bb678dc0eb3dd0fa11d`.
+The bundled system base has SHA-256
+`abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.

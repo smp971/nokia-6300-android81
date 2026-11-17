@@ -1,7 +1,6 @@
 package ro.leo.visual;
 import ro.leo.i18n.L;
 
-import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -9,8 +8,7 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 
-public final class CalculatorActivity extends Activity {
-    private Appearance.Palette palette;
+public final class CalculatorActivity extends LeoActivity {
     private String expression="",message="";
     private boolean result;
     private Face face;
@@ -76,11 +74,11 @@ public final class CalculatorActivity extends Activity {
         final RetroStyle art=new RetroStyle();
         protected void onDraw(Canvas c) {
             c.save();c.scale(getWidth()/240f,getHeight()/302f);art.background(c,palette);UiChrome.header(c,L.t("Calculator"),palette,art.p);
-            art.panel(c,10,54,230,149,0xffd4e9c6,0xff8eaa91);
-            art.text(c,"CALCULATOR  /  CLASIC",22,73,10,0xff314c40,Paint.Align.LEFT);
+            art.panel(c,10,54,230,149,palette.card,palette.card);
+            art.text(c,"CALCULATOR  /  CLASIC",22,73,10,palette.accent,Paint.Align.LEFT);
             String shown=expression.isEmpty()?"0":expression.replace('*','×').replace('/','÷');
             if(shown.length()>18)shown="…"+shown.substring(shown.length()-17);
-            art.digits(c,shown,218,121,0xff183a30);art.fit(c,message.isEmpty()?L.t("Introduceți o expresie"):message,120,140,11,196,0xff345349,Paint.Align.CENTER);
+            art.digits(c,shown,218,121,Color.WHITE);art.fit(c,message.isEmpty()?L.t("Introduceți o expresie"):message,120,140,11,196,palette.secondary(),Paint.Align.CENTER);
             String[] keys={"↑  +","↓  −","←  ×","→  ÷"};
             for(int i=0;i<4;i++){float x=10+i*57;art.panel(c,x,166,x+49,205,Appearance.mix(palette.card,Color.WHITE,.16f),palette.card);art.text(c,keys[i],x+24,192,16,Color.WHITE,Paint.Align.CENTER);}
             art.text(c,L.t("0–9 cifre  ·  * zecimal"),120,229,14,Color.WHITE,Paint.Align.CENTER);

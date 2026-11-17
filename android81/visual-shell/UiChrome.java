@@ -1,46 +1,134 @@
 package ro.leo.visual;
 
-import android.graphics.*;
+import android.content.res.ColorStateList;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.StateListDrawable;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TextView;
 
-/** Compact shared chrome; callers retain their own content and navigation. */
+/** Shared surfaces and controls for native keypad pages. */
 final class UiChrome {
-    static final int HEADER_DP=36, FOOTER_DP=28;
-    static final Typeface TITLE=Typeface.create("sans-serif-medium",Typeface.NORMAL);
-    /** Reusable opaque surfaces: no shadows, bitmap layers or animation timers. */
-    static android.graphics.drawable.Drawable panel(final Appearance.Palette a,final float density,final boolean footer){
-        return new android.graphics.drawable.Drawable(){
-            final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
-            public void draw(Canvas c){Rect b=getBounds();if(a.material()){p.setColor(footer?a.bar:a.background);c.drawRect(b,p);if(footer){p.setColor(0xff49454f);c.drawRect(b.left,b.top,b.right,b.top+density,p);}return;}if(a.sxmo()||a.classic()){p.setColor(a.bar);c.drawRect(b,p);return;}p.setColor(footer?a.bar:a.card);c.drawRect(b,p);
-                p.setColor(Appearance.mix(a.card,a.accent,.25f));
-                if(footer)c.drawRect(b.left,b.top,b.right,b.top+density,p);
-                else c.drawRect(b.left+10*density,b.bottom-density,b.left+34*density,b.bottom,p);
-            }
-            public void setAlpha(int v){}public void setColorFilter(ColorFilter f){}public int getOpacity(){return PixelFormat.OPAQUE;}
-        };
+    static final int HEADER_DP = 36, FOOTER_DP = 28;
+    static final Typeface TITLE = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+
+    static Drawable panel(Appearance.Palette palette, float density, boolean footer) {
+        if (!footer) return new ColorDrawable(palette.bar);
+        LayerDrawable surface = new LayerDrawable(new Drawable[]{
+            new ColorDrawable(palette.bar), new ColorDrawable(palette.divider())
+        });
+        surface.setLayerHeight(1, Math.max(1, Math.round(density)));
+        surface.setLayerGravity(1, Gravity.TOP | Gravity.FILL_HORIZONTAL);
+        return surface;
     }
-    static android.graphics.drawable.Drawable row(Appearance.Palette a,int radius,int stripe){
-        if(a.material()){android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();android.graphics.drawable.GradientDrawable focus=Appearance.surface(a.selection,Math.max(radius,8));focus.setStroke(Math.max(1,stripe),a.accent);states.addState(new int[]{android.R.attr.state_selected},focus);states.addState(new int[]{},Appearance.surface(a.background,0));return states;}
-        if(a.classic()){android.graphics.drawable.StateListDrawable classic=new android.graphics.drawable.StateListDrawable();android.graphics.drawable.GradientDrawable focus=Appearance.surface(a.selection,2);focus.setStroke(1,0xff73baff);classic.addState(new int[]{android.R.attr.state_selected},focus);classic.addState(new int[]{},Appearance.surface(a.background,0));return classic;}
-        if(a.sxmo()){android.graphics.drawable.StateListDrawable flat=new android.graphics.drawable.StateListDrawable();flat.addState(new int[]{android.R.attr.state_selected},Appearance.surface(a.selection,0));flat.addState(new int[]{},Appearance.surface(a.background,0));return flat;}
-        android.graphics.drawable.GradientDrawable focus=Appearance.surface(a.selection,radius);
-        focus.setStroke(stripe,Appearance.mix(a.selection,a.accent,.55f));
-        android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();
-        states.addState(new int[]{android.R.attr.state_selected},new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{focus,new FocusRail(a.accent,stripe)}));
-        states.addState(new int[]{},Appearance.surface(a.card,radius));return states;
+
+    static Drawable row(Appearance.Palette palette, int radius, int stripe) {
+        LayerDrawable selected = new LayerDrawable(new Drawable[]{
+            new ColorDrawable(palette.selection), new ColorDrawable(palette.accent)
+        });
+        selected.setLayerWidth(1, Math.max(1, stripe) * 3);
+        selected.setLayerGravity(1, Gravity.LEFT | Gravity.FILL_VERTICAL);
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_selected}, selected);
+        states.addState(new int[]{android.R.attr.state_focused}, selected);
+        states.addState(new int[]{android.R.attr.state_pressed}, selected);
+        states.addState(new int[0], new ColorDrawable(palette.background));
+        return states;
     }
-    private static final class FocusRail extends android.graphics.drawable.Drawable{
-        final Paint p=new Paint(3);final int width;
-        FocusRail(int color,int width){p.setColor(color);this.width=Math.max(1,width)*3;}
-        public void draw(Canvas c){Rect b=getBounds();c.drawRoundRect(b.left+width,b.top+8,b.left+width*2,b.bottom-8,width/2f,width/2f,p);}
-        public void setAlpha(int v){p.setAlpha(v);}public void setColorFilter(ColorFilter f){p.setColorFilter(f);}public int getOpacity(){return PixelFormat.TRANSLUCENT;}
+
+    static ColorStateList textColors(Appearance.Palette palette) {
+        return new ColorStateList(new int[][]{
+            new int[]{-android.R.attr.state_enabled},
+            new int[]{android.R.attr.state_selected},
+            new int[]{android.R.attr.state_focused},
+            new int[]{android.R.attr.state_pressed}, new int[0]
+        }, new int[]{palette.secondary(), palette.ink, palette.ink, palette.ink, Color.WHITE});
     }
-    static void header(Canvas c,String title,Appearance.Palette a,Paint p){
-        Typeface previous=p.getTypeface();
-        p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(a.material()?a.background:a.card);c.drawRect(0,0,240,34,p);
-        p.setColor(a.accent);if(!a.material())c.drawRoundRect(10,10,13,24,1.5f,1.5f,p);p.setTypeface(TITLE);p.setTextAlign(Paint.Align.LEFT);p.setTextSize(17);p.setColor(Color.WHITE);
-        String value=title;while(value.length()>1&&p.measureText(value)>210)value=value.substring(0,value.length()-1);
-        if(!value.equals(title)&&value.length()>1)value=value.substring(0,value.length()-1)+"…";
-        c.drawText(value,a.material()?12:21,24,p);
-        p.setTypeface(previous);
+
+    static void list(LeoActivity owner, ListView list) {
+        list.setPadding(owner.dp(8), 0, owner.dp(8), 0);
+        list.setDivider(new ColorDrawable(owner.palette.divider()));
+        list.setDividerHeight(owner.dp(1));
+        list.setSelector(android.R.color.transparent);
+    }
+
+    static void listRow(LeoActivity owner, TextView row) {
+        row.setTextSize(19 * Appearance.textScale(owner));
+        row.setMinHeight(owner.dp(44));
+        row.setMaxLines(3);
+        row.setCompoundDrawablePadding(owner.dp(12));
+        row.setPadding(owner.dp(12), owner.dp(3), owner.dp(9), owner.dp(3));
+        row.setTextColor(textColors(owner.palette));
+        row.setBackground(row(owner.palette, 0, owner.dp(1)));
+    }
+
+    static void field(EditText field, Appearance.Palette palette, int padding) {
+        field.setTextColor(Color.WHITE);
+        field.setHintTextColor(palette.secondary());
+        field.setHighlightColor(Appearance.mix(palette.card, palette.accent, .45f));
+        field.setBackground(Appearance.fieldSurface(palette, padding));
+        field.setPadding(padding, padding, padding, padding);
+    }
+
+    static void controls(View view, Appearance.Palette palette, int padding) {
+        if (view instanceof EditText) field((EditText) view, palette, padding);
+        else if (view instanceof CompoundButton) {
+            CompoundButton button = (CompoundButton) view;
+            button.setTextColor(Color.WHITE);
+            button.setButtonTintList(new ColorStateList(new int[][]{
+                new int[]{android.R.attr.state_checked}, new int[0]
+            }, new int[]{palette.accent, palette.secondary()}));
+        } else if (view instanceof Button) {
+            ((Button) view).setTextColor(textColors(palette));
+            view.setBackground(row(palette, 0, Math.max(1, padding / 8)));
+        } else if (view instanceof Spinner) {
+            view.setBackgroundTintList(ColorStateList.valueOf(palette.accent));
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) controls(group.getChildAt(i), palette, padding);
+        }
+        view.invalidate();
+    }
+
+    static void tab(TextView tab, Appearance.Palette palette, boolean active, int line) {
+        LayerDrawable surface = new LayerDrawable(new Drawable[]{
+            new ColorDrawable(palette.bar), new ColorDrawable(active ? palette.accent : palette.divider())
+        });
+        surface.setLayerHeight(1, line * (active ? 3 : 1));
+        surface.setLayerGravity(1, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_focused}, new ColorDrawable(palette.selection));
+        states.addState(new int[0], surface);
+        tab.setBackground(states);
+        tab.setTextColor(new ColorStateList(new int[][]{
+            new int[]{android.R.attr.state_focused}, new int[0]
+        }, new int[]{palette.ink, active ? Color.WHITE : palette.secondary()}));
+    }
+
+    static void header(Canvas canvas, String title, Appearance.Palette palette, Paint paint) {
+        Typeface previous = paint.getTypeface();
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(palette.bar);
+        canvas.drawRect(0, 0, 240, HEADER_DP, paint);
+        paint.setTypeface(TITLE);
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTextSize(22);
+        paint.setColor(Color.WHITE);
+        canvas.drawText(KeypadText.fit(paint, title, 216), 12, 26, paint);
+        paint.setTypeface(previous);
     }
 }
