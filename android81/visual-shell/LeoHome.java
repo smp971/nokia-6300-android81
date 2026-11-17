@@ -16,6 +16,9 @@ final class LeoHome {
     private static final int WIDTH = 240;
     private static final int BODY = 276;
     private static final int HEIGHT = 302;
+    private static final int APP_TILE_SIZE = 69;
+    private static final int APP_TILE_GAP = 4;
+    private static final int APP_GRID_LEFT = (WIDTH - APP_TILE_SIZE * 3 - APP_TILE_GAP * 2) / 2;
     private static final int INK = 0xfffaf8ff;
     private static final int MUTED = 0xffd3cddc;
     private static final Typeface REGULAR = Typeface.create("sans-serif", Typeface.NORMAL);
@@ -171,16 +174,13 @@ final class LeoHome {
         String count = screen.order.length == 0 ? "0" : (screen.selected + 1) + " / " + screen.order.length;
         text(canvas, count, 229, 24, 11, MUTED, Paint.Align.RIGHT, 60, MEDIUM);
         int app = screen.focusedApp();
-        float top = 42;
         if (app < 0) {
             text(canvas, L.t("Nicio aplicație"), 120, 144, 16, MUTED, Paint.Align.CENTER, 210, MEDIUM);
             return;
         }
-        if (screen.list) drawList(canvas, screen, top);
-        else drawGrid(canvas, screen, top);
-        if (!screen.list) {
-            text(canvas, screen.names[app], 11, 268, 11, palette.accent, Paint.Align.LEFT, 169, MEDIUM);
-        }
+        text(canvas, screen.names[app], 11, 44, 13, palette.accent, Paint.Align.LEFT, 218, MEDIUM);
+        if (screen.list) drawList(canvas, screen, 53);
+        else drawGrid(canvas, screen, 53);
     }
 
     private void drawGrid(Canvas canvas, MainActivity.Screen screen, float top) {
@@ -188,12 +188,14 @@ final class LeoHome {
         for (int i = first; i < Math.min(first + 9, screen.order.length); i++) {
             int cell = i - first;
             int app = screen.order[i];
-            float x = 9 + 75 * (cell % 3);
-            float y = top + 62 * (cell / 3);
-            tile(canvas, x, y, x + 72, y + 59, 12, i == screen.selected);
-            icon(canvas, screen, app, x + 36, y + 23, .78f);
+            int step = APP_TILE_SIZE + APP_TILE_GAP;
+            float x = APP_GRID_LEFT + step * (cell % 3);
+            float y = top + step * (cell / 3);
+            float center = x + APP_TILE_SIZE / 2f;
+            tile(canvas, x, y, x + APP_TILE_SIZE, y + APP_TILE_SIZE, 5, i == screen.selected);
+            icon(canvas, screen, app, center, y + 27, .84f);
             String name = app == 9 ? "Android" : screen.names[app];
-            text(canvas, name, x + 36, y + 53, 10, INK, Paint.Align.CENTER, 65, MEDIUM);
+            text(canvas, name, center, y + 60, 10, INK, Paint.Align.CENTER, APP_TILE_SIZE - 7, MEDIUM);
         }
     }
 
