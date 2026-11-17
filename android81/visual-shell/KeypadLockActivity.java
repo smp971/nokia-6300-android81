@@ -60,7 +60,9 @@ public final class KeypadLockActivity extends LeoActivity {
     public void onBackPressed() { }
     private final class LockView extends View {
         final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
-        final Path mountain=new Path();
+        final LockScreenArt art = new LockScreenArt(KeypadLockActivity.this);
+        final SharedPreferences appearance = getSharedPreferences("appearance", 0);
+        final RectF coverBounds = new RectF(19, 255, 47, 283);
         Bitmap wallpaper;
         int battery;
         boolean charging;
@@ -69,8 +71,10 @@ public final class KeypadLockActivity extends LeoActivity {
         final String[] sims={L.t("SIM 1 · se verifică"),L.t("SIM 2 · se verifică")};
         LockView(){
             super(KeypadLockActivity.this);setFocusable(true);setFocusableInTouchMode(true);requestFocus();
-            int theme=Math.max(0,Math.min(Appearance.COLORS.length-1,getSharedPreferences("appearance",0).getInt("theme",getSharedPreferences("appearance",0).getBoolean("warm",false)?1:0)));
-            if(getSharedPreferences("appearance",0).getBoolean("lock-wallpaper",true)&&Appearance.wallpaper(KeypadLockActivity.this).isFile())wallpaper=BitmapFactory.decodeFile(Appearance.wallpaper(KeypadLockActivity.this).getPath());
+            if (appearance.getBoolean("lock-wallpaper", true)) {
+                java.io.File image = Appearance.wallpaper(KeypadLockActivity.this);
+                if (image.isFile()) wallpaper = BitmapFactory.decodeFile(image.getPath());
+            }
         }
         void refresh(){
             Date now=new Date();time=android.text.format.DateFormat.getTimeFormat(KeypadLockActivity.this).format(now);
@@ -90,7 +94,7 @@ public final class KeypadLockActivity extends LeoActivity {
                     if(active!=null)for(SubscriptionInfo sim:active)if(sim.getSimSlotIndex()==slot){
                         TelephonyManager phone=base.createForSubscriptionId(sim.getSubscriptionId());ServiceState service=phone.getServiceState();
                         if(service==null)break;
-                        if(service.getState()==ServiceState.STATE_IN_SERVICE){String operator=phone.getNetworkOperatorName();if(operator==null || operator.isEmpty())operator=String.valueOf(sim.getCarrierName());sims[slot]=prefix+operator+(phone.getDataNetworkType()==TelephonyManager.NETWORK_TYPE_LTE?" · 4G":"");}
+                        if(service.getState()==ServiceState.STATE_IN_SERVICE){String operator=phone.getNetworkOperatorName();if(operator==null || operator.isEmpty())operator=String.valueOf(sim.getCarrierName());String technology=NetworkTelemetry.rat(NetworkTelemetry.servingType(phone));sims[slot]=prefix+operator+(technology.isEmpty()?"":" · "+technology);}
                         else sims[slot]=prefix+(service.getState()==ServiceState.STATE_EMERGENCY_ONLY?L.t("doar urgențe"):service.getState()==ServiceState.STATE_POWER_OFF?L.t("radio oprit"):L.t("fără serviciu"));
                         break;
                     }
@@ -98,28 +102,74 @@ public final class KeypadLockActivity extends LeoActivity {
             }
             invalidate();
         }
-        void label(Canvas c,String value,float x,float y,int size,int color,Paint.Align align){
-            paint.setShader(null);paint.setColor(color);paint.setTextAlign(align);paint.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));paint.setTextSize(size);
-            while(paint.measureText(value)>220 && paint.getTextSize()>10)paint.setTextSize(paint.getTextSize()-1);
-            c.drawText(value,x,y,paint);
+        private HomeCards.Card cardOfType(int type) {
+            for (HomeCards.Card card : cards) if (card.type == type) return card;
+            return null;
         }
-        protected void onDraw(Canvas c){
-            c.save();c.scale(getWidth()/240f,getHeight()/320f);
-            paint.setShader(null);paint.setColor(palette.background);c.drawRect(0,0,240,320,paint);paint.setShader(null);
-            if(wallpaper!=null){paint.setColor(Color.WHITE);c.drawBitmap(wallpaper,null,new RectF(0,0,240,320),paint);paint.setColor(0x66000000);c.drawRect(0,0,240,320,paint);}
-            else{paint.setColor(0x5530204a);mountain.reset();mountain.moveTo(0,238);mountain.lineTo(68,155);mountain.lineTo(135,234);mountain.lineTo(188,176);mountain.lineTo(240,224);mountain.lineTo(240,320);mountain.lineTo(0,320);mountain.close();c.drawPath(mountain,paint);}
-            label(c,"N0d3",12,23,11,0xffefe7fa,Paint.Align.LEFT);
-            label(c,(charging?"+ ":"")+battery+"%",198,23,11,Color.WHITE,Paint.Align.RIGHT);
-            paint.setColor(Color.WHITE);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.2f);c.drawRoundRect(new RectF(205,13,228,24),2,2,paint);paint.setStyle(Paint.Style.FILL);c.drawRect(229,16,231,21,paint);c.drawRect(207,15,207+19*battery/100f,22,paint);
-            label(c,time,120,76,43,Color.WHITE,Paint.Align.CENTER);label(c,date,120,98,13,0xffd1e2e5,Paint.Align.CENTER);
-            label(c,sims[0],120,119,11,0xffd1e2e5,Paint.Align.CENTER);label(c,sims[1],120,136,11,0xffd1e2e5,Paint.Align.CENTER);label(c,UnreadState.label(),120,154,11,Color.WHITE,Paint.Align.CENTER);
-            if(getSharedPreferences("appearance",0).getBoolean("lock-info",true)){for(int i=0;i<2;i++){float x=12+i*112;paint.setColor(palette.card);c.drawRoundRect(x,163,x+104,207,7,7,paint);String title=i==0?L.t("Meteo · cache"):L.t("Următoarea alarmă"),value=L.t("Indisponibil");for(HomeCards.Card card:cards)if(card.type==i){value=card.main;break;}paint.setTextSize(11);int limit=paint.breakText(value,true,94,null);if(limit<value.length())value=value.substring(0,Math.max(0,limit-1))+"…";label(c,title,x+7,178,9,palette.accent,Paint.Align.LEFT);label(c,value,x+7,197,11,Color.WHITE,Paint.Align.LEFT);}}
-            PlaybackService music=PlaybackService.instance;boolean fm=FmService.playing&&(music==null||!music.playing()),hasMusic=music!=null&&!music.queue.sources.isEmpty(),showMedia=getSharedPreferences("appearance",0).getBoolean("lock-media",true)&&(hasMusic||fm);
-            if(showMedia||!preview[0].isEmpty()){paint.setColor(palette.card);c.drawRoundRect(12,215,228,263,7,7,paint);if(showMedia){Bitmap art=fm?null:music.cover();if(art!=null&&!art.isRecycled()){paint.setColor(Color.WHITE);c.drawBitmap(art,null,new RectF(18,221,54,257),paint);}else{paint.setColor(palette.accent);c.drawCircle(36,239,15,paint);paint.setColor(palette.background);c.drawCircle(36,239,6,paint);}String title=fm?(FmService.stationName.isEmpty()?String.format(Locale.ROOT,"%.1f MHz",FmService.frequency/1000f):FmService.stationName):PlaybackService.title;paint.setTextSize(12);int n=paint.breakText(title,true,160,null);if(n<title.length())title=title.substring(0,Math.max(0,n-1))+"…";label(c,title,62,233,12,Color.WHITE,Paint.Align.LEFT);label(c,"4 ◀  5 "+(fm?"stop":music.playing()?L.t("pauză"):L.t("redă"))+"  6 ▶",62,251,11,palette.accent,Paint.Align.LEFT);}else{label(c,preview[0],120,233,12,Color.WHITE,Paint.Align.CENTER);label(c,preview[1],120,251,11,palette.accent,Paint.Align.CENTER);}}
-            paint.setColor(palette.bar);c.drawRoundRect(12,270,228,302,7,7,paint);label(c,armed>0?L.t("Apasă * în 3 secunde"):L.t("Soft stânga, apoi *"),120,291,14,Color.WHITE,Paint.Align.CENTER);
-            label(c,L.t("Deblochează"),10,315,11,Color.WHITE,Paint.Align.LEFT);label(c,"*",230,315,14,Color.WHITE,Paint.Align.RIGHT);
-            c.restore();
+
+        @Override protected void onDraw(Canvas canvas) {
+            canvas.save();
+            canvas.scale(getWidth() / 240f, getHeight() / 320f);
+            art.background(canvas, palette, wallpaper);
+            art.text(canvas, L.t("Taste blocate"), 12, 22, 12, palette.accent, Paint.Align.LEFT, 126);
+            art.battery(canvas, battery, charging);
+            art.text(canvas, sims[0], 12, 44, 10, Color.WHITE, Paint.Align.LEFT, 103);
+            art.text(canvas, sims[1], 228, 44, 10, Color.WHITE, Paint.Align.RIGHT, 103);
+
+            boolean showInfo = appearance.getBoolean("lock-info", true);
+            art.clock(canvas, time, date, showInfo ? 0 : 22);
+            if (showInfo) {
+                art.weather(canvas, palette, cardOfType(0));
+                HomeCards.Card alarm = cardOfType(1);
+                if (alarm != null && !L.t("Nicio alarmă activă").equals(alarm.main)) {
+                    art.text(canvas, alarm.title + " · " + alarm.main, 12, 233, 10,
+                        Color.WHITE, Paint.Align.LEFT, 216);
+                }
+            }
+            if (UnreadState.sms != 0 || UnreadState.calls != 0) {
+                art.text(canvas, UnreadState.label(), 12, 247, 10, Color.WHITE, Paint.Align.LEFT, 216);
+            }
+            drawMediaOrNotification(canvas);
+            boolean awaitingStar = armed > 0;
+            art.panel(canvas, awaitingStar ? palette.selection : palette.bar, 12, 293, 228, 316, 7);
+            art.text(canvas, awaitingStar ? L.t("Apasă * în 3 secunde") : L.t("Soft stânga, apoi *"),
+                120, 309, 13, awaitingStar ? palette.ink : Color.WHITE, Paint.Align.CENTER, 204);
+            canvas.restore();
         }
+
+        private void drawMediaOrNotification(Canvas canvas) {
+            PlaybackService music = PlaybackService.instance;
+            boolean fm = FmService.playing && (music == null || !music.playing());
+            boolean showMedia = appearance.getBoolean("lock-media", true)
+                && (fm || music != null && !music.queue.sources.isEmpty());
+            if (!showMedia && preview[0].isEmpty()) return;
+
+            art.panel(canvas, palette.card, 12, 251, 228, 287, 8);
+            if (!showMedia) {
+                art.text(canvas, preview[0], 20, 266, 12, Color.WHITE, Paint.Align.LEFT, 200);
+                art.text(canvas, preview[1], 20, 281, 10, palette.accent, Paint.Align.LEFT, 200);
+                return;
+            }
+
+            Bitmap cover = fm ? null : music.cover();
+            if (cover != null && !cover.isRecycled()) {
+                paint.setColor(Color.WHITE);
+                canvas.drawBitmap(cover, null, coverBounds, paint);
+            } else {
+                paint.setColor(palette.accent);
+                canvas.drawCircle(33, 269, 12, paint);
+                paint.setColor(palette.background);
+                canvas.drawCircle(33, 269, 4, paint);
+            }
+            String title = fm ? (FmService.stationName.isEmpty()
+                ? String.format(Locale.ROOT, "%.1f MHz", FmService.frequency / 1000f) : FmService.stationName)
+                : PlaybackService.title;
+            String action = fm ? "stop" : L.t(music.playing() ? "pauză" : "redă");
+            art.text(canvas, title, 54, 267, 12, Color.WHITE, Paint.Align.LEFT, 166);
+            art.text(canvas, "4 ◀   5 " + action + "   6 ▶", 54, 281, 10,
+                palette.accent, Paint.Align.LEFT, 166);
+        }
+
         public boolean onTouchEvent(android.view.MotionEvent event){return true;}
     }
 }

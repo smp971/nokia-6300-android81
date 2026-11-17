@@ -9,6 +9,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.net.TrafficStats;
 import android.os.*;
+import android.util.TypedValue;
 import android.view.*;
 import android.widget.*;
 import java.util.*;
@@ -17,11 +18,11 @@ import static ro.leo.visual.SettingsIcon.Glyph.*;
 /** Six keypad categories with Gaia-inspired lists and connection summaries. */
 public final class SettingsActivity extends LeoActivity {
     static final String[] TABS=L.array(new String[]{"Rețele","Aspect","Sunet","Siguranță","Stocare","Telefon"});
-    private static final String[][] ROWS=L.array(new String[][]{{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă","Transfer USB","Mai multe"},{"Ecran și taste","Personalizare","Tastatură și text"},{"Sunete și tonuri","Volume separate","Profiluri sonore","Notificări","Program sonor"},{"Blocarea tastelor","Permisiuni și aplicații","Localizare","Accesibilitate"},{"Spațiu telefon / card SD","Fișiere","Descărcări","Backup"},{"Baterie","Dată și oră","Despre telefon","Ajutor","Actualizări","Instrumente avansate"}});
+    private static final String[][] ROWS=L.array(new String[][]{{"Wi-Fi","Bluetooth","Hotspot Wi-Fi","SIM-uri și rețea mobilă","Transfer USB","Mai multe"},{"Ecran și taste","Personalizare","Tastatură și text","Teme"},{"Sunete și tonuri","Volume separate","Profiluri sonore","Notificări","Program sonor"},{"Blocarea tastelor","Permisiuni și aplicații","Localizare","Accesibilitate"},{"Spațiu telefon / card SD","Fișiere","Descărcări","Backup"},{"Baterie","Dată și oră","Despre telefon","Ajutor","Actualizări","Instrumente avansate"}});
     private static final String[] EVERYDAY=L.array(new String[]{"Wi-Fi","SIM-uri și rețea mobilă","Sunete și tonuri","Ecran și taste","Personalizare","Toate setările"});
     private static final SettingsIcon.Glyph[][] ROW_ICONS = {
         {WIFI, BLUETOOTH, TETHERING, SIM, USB, MENU},
-        {BRIGHTNESS, THEMES, KEYBOARD},
+        {BRIGHTNESS, SETTINGS, KEYBOARD, THEMES},
         {SOUND, HEADPHONES, MUTE, NOTIFICATIONS, TIME},
         {LOCK, ADDONS, LOCATION, ACCESSIBILITY},
         {STORAGE, FILES, DOWNLOAD, SYNC},
@@ -84,12 +85,17 @@ public final class SettingsActivity extends LeoActivity {
         tabs.setPadding(dp(6), 0, dp(6), 0);
         tabs.setBackgroundColor(palette.bar);
         int divider = Appearance.mix(palette.background, Color.WHITE, .16f);
+        float textScale = Appearance.textScale(this);
         for(int index=0;index<tabs.getChildCount();index++){
             TextView tab=(TextView)tabs.getChildAt(index);
             boolean active = index == 1;
-            tab.setTextSize((active ? 16 : 12) * Appearance.textScale(this));
-            tab.getLayoutParams().height = dp(33);
-            tab.setPadding(dp(4), 0, dp(4), dp(2));
+            int preferredSize = Math.round((active ? 19 : 15) * textScale);
+            tab.setHorizontallyScrolling(false);
+            tab.setAutoSizeTextTypeUniformWithConfiguration(
+                active ? 15 : 12, preferredSize, 1, TypedValue.COMPLEX_UNIT_SP
+            );
+            tab.getLayoutParams().height = dp(40);
+            tab.setPadding(dp(2), 0, dp(2), dp(3));
             StateListDrawable states = new StateListDrawable();
             states.addState(new int[]{android.R.attr.state_focused}, new ColorDrawable(palette.selection));
             LayerDrawable labelSurface = new LayerDrawable(new Drawable[]{
@@ -105,7 +111,7 @@ public final class SettingsActivity extends LeoActivity {
             ));
             if (active) {
                 tab.setTypeface(UiChrome.TITLE);
-                ((LinearLayout.LayoutParams) tab.getLayoutParams()).weight = 1.25f;
+                ((LinearLayout.LayoutParams) tab.getLayoutParams()).weight = 1.18f;
             }
         }
         root.addView(tabs,1);
@@ -145,15 +151,15 @@ public final class SettingsActivity extends LeoActivity {
     @Override void styleList(TextView heading, ListView list) {
         if (categories) heading.setText(L.t("Setări"));
         heading.setBackgroundColor(palette.bar);
-        heading.setTextSize(20 * Appearance.textScale(this));
+        heading.setTextSize(22 * Appearance.textScale(this));
         list.setPadding(dp(8), 0, dp(8), 0);
         list.setDivider(new ColorDrawable(Appearance.mix(palette.background, Color.WHITE, .16f)));
         list.setDividerHeight(dp(1));
     }
 
     @Override void styleListRow(TextView row) {
-        row.setTextSize(17 * Appearance.textScale(this));
-        row.setMinHeight(dp(42));
+        row.setTextSize(19 * Appearance.textScale(this));
+        row.setMinHeight(dp(44));
         row.setMaxLines(3);
         row.setCompoundDrawablePadding(dp(12));
         LayerDrawable selected = new LayerDrawable(new Drawable[]{
@@ -165,7 +171,7 @@ public final class SettingsActivity extends LeoActivity {
         background.addState(new int[]{android.R.attr.state_selected}, selected);
         background.addState(new int[0], new ColorDrawable(palette.background));
         row.setBackground(background);
-        row.setPadding(dp(12), dp(4), dp(9), dp(4));
+        row.setPadding(dp(12), dp(3), dp(9), dp(3));
     }
 
     @Override Drawable rowIcon(String title, int index) {
@@ -180,7 +186,7 @@ public final class SettingsActivity extends LeoActivity {
     boolean stableRowIcons(){return true;}
     private void start(Class<?> type){startActivity(new Intent(this,type));}
     private void advancedPhone(){options(L.t("Instrumente avansate"),new String[]{L.t("Diagnostic"),L.t("Android din taste"),L.t("Configurare inițială"),"Studio",L.t("Pregătit de utilizare")},new Choice(){public void pick(int at){start(new Class<?>[]{DiagnosticActivity.class,AndroidControlsActivity.class,SetupWizardActivity.class,PremiumStudioActivity.class,DailyReadinessActivity.class}[at]);}});}
-    private void open(int group,int row){if(group==0&&row==5){options(L.t("Rețele"),new String[]{L.t("Trafic de date"),L.t("Panou conexiuni")},new Choice(){public void pick(int at){if(at==0)traffic();else start(ConnectionDashboardActivity.class);}});return;}if(group==5){if(row==5){advancedPhone();return;}row=new int[]{0,1,3,6,7}[row];}if(group==0){if(row==6){start(ConnectionDashboardActivity.class);return;}if(row<3)startActivity(new Intent(this,ConnectivityActivity.class).putExtra("kind",new String[]{"wifi","bluetooth","hotspot"}[row]));else if(row==3)start(MobileSettingsActivity.class);else if(row==4)start(UsbTransferActivity.class);else traffic();}else if(group==1){start(new Class<?>[]{DisplaySettingsActivity.class,PersonalizationActivity.class,InputSettingsActivity.class}[row]);}else if(group==2){if(row==4)start(SoundScheduleActivity.class);else if(row==0)start(SoundSettingsActivity.class);else if(row==1)startActivity(new Intent(this,QuickSettingsActivity.class).putExtra("volumes",true));else if(row==2)SoundProfiles.select(this,new Runnable(){public void run(){show();}});else start(NotificationSettingsActivity.class);}else if(group==3){start(new Class<?>[]{KeypadLockSettingsActivity.class,AppControlActivity.class,PrivacySettingsActivity.class,AccessibilitySettingsActivity.class}[row]);}else if(group==4){if(row==2){startActivity(new Intent(this,DownloadsActivity.class).putExtra("center",true));return;}start(new Class<?>[]{StorageSettingsActivity.class,FilesActivity.class,DownloadsActivity.class,BackupActivity.class}[row]);}else if(row==0)start(BatterySettingsActivity.class);else if(row==1)start(DateTimeSettingsActivity.class);else if(row==2)start(DiagnosticActivity.class);else if(row==3)aboutShell();else if(row==4)start(AndroidControlsActivity.class);else if(row==9)start(DailyReadinessActivity.class);else if(row==8)start(PremiumStudioActivity.class);else if(row==7)start(UpdatesActivity.class);else if(row==6)start(HelpActivity.class);else start(SetupWizardActivity.class);}
+    private void open(int group,int row){if(group==0&&row==5){options(L.t("Rețele"),new String[]{L.t("Trafic de date"),L.t("Panou conexiuni")},new Choice(){public void pick(int at){if(at==0)traffic();else start(ConnectionDashboardActivity.class);}});return;}if(group==5){if(row==5){advancedPhone();return;}row=new int[]{0,1,3,6,7}[row];}if(group==0){if(row==6){start(ConnectionDashboardActivity.class);return;}if(row<3)startActivity(new Intent(this,ConnectivityActivity.class).putExtra("kind",new String[]{"wifi","bluetooth","hotspot"}[row]));else if(row==3)start(MobileSettingsActivity.class);else if(row==4)start(UsbTransferActivity.class);else traffic();}else if(group==1){start(new Class<?>[]{DisplaySettingsActivity.class,PersonalizationActivity.class,InputSettingsActivity.class,ThemePacksActivity.class}[row]);}else if(group==2){if(row==4)start(SoundScheduleActivity.class);else if(row==0)start(SoundSettingsActivity.class);else if(row==1)startActivity(new Intent(this,QuickSettingsActivity.class).putExtra("volumes",true));else if(row==2)SoundProfiles.select(this,new Runnable(){public void run(){show();}});else start(NotificationSettingsActivity.class);}else if(group==3){start(new Class<?>[]{KeypadLockSettingsActivity.class,AppControlActivity.class,PrivacySettingsActivity.class,AccessibilitySettingsActivity.class}[row]);}else if(group==4){if(row==2){startActivity(new Intent(this,DownloadsActivity.class).putExtra("center",true));return;}start(new Class<?>[]{StorageSettingsActivity.class,FilesActivity.class,DownloadsActivity.class,BackupActivity.class}[row]);}else if(row==0)start(BatterySettingsActivity.class);else if(row==1)start(DateTimeSettingsActivity.class);else if(row==2)start(DiagnosticActivity.class);else if(row==3)aboutShell();else if(row==4)start(AndroidControlsActivity.class);else if(row==9)start(DailyReadinessActivity.class);else if(row==8)start(PremiumStudioActivity.class);else if(row==7)start(UpdatesActivity.class);else if(row==6)start(HelpActivity.class);else start(SetupWizardActivity.class);}
     private String bytes(long value){return value<0?L.t("Neraportat"):android.text.format.Formatter.formatFileSize(this,value);}
     private void traffic(){page(L.t("Trafic de date"),L.t("De la pornire / contoarele interfețelor\n\nMobil primit · ")+bytes(TrafficStats.getMobileRxBytes())+L.t("\nMobil trimis · ")+bytes(TrafficStats.getMobileTxBytes())+L.t("\nTotal primit · ")+bytes(TrafficStats.getTotalRxBytes())+L.t("\nTotal trimis · ")+bytes(TrafficStats.getTotalTxBytes())+L.t("\n\nNu este contorul facturii operatorului și nu reprezintă un ciclu lunar."));}
     private void aboutShell() {

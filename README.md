@@ -83,9 +83,14 @@ The boot animation is a rendered preview. Select any thumbnail to open it at
 - **Media and daily apps.** Music library, a dedicated Internet radio player,
   FM tuner, recorder, calendar, alarms, notes and internal or microSD file
   browsing. [Pocket apps](android81/POCKET-APPS.md)
+- **Java ME games.** Open the separately installed J2ME Loader from **Games →
+  Java games (J2ME)**. In **Files**, select a local JAR and choose **Open** to
+  import it. [J2ME Loader 1.8.2](https://github.com/nikita36078/J2ME-Loader/releases/tag/1.8.2)
 - **Appearance.** A KaiOS-inspired app grid with selected Mozilla Gaia icons
   and wallpapers, Material-inspired themes, adjustable accents and an
-  editable Home layout. [Gaia artwork credits](android81/visual-shell/assets/catalog-icons/gaia/README.md) ·
+  editable Home layout. **Settings → Appearance → Themes** includes a preview
+  of the digital lock screen. The lock screen uses the latest weather saved
+  by the Weather app. [Gaia artwork credits](android81/visual-shell/assets/catalog-icons/gaia/README.md) ·
   [Wallpaper credits](android81/visual-shell/assets/wallpapers/gaia/README.md) ·
   [Material theme](android81/MATERIAL-SHELL.md)
 

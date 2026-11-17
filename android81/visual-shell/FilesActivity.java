@@ -123,6 +123,7 @@ public final class FilesActivity extends LeoActivity {
             String extension=file.getName().contains(".")?file.getName().substring(file.getName().lastIndexOf('.')+1).toLowerCase(Locale.ROOT):"";
             String mime=android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
             if(extension.equals("apk")){apk(file);return;}
+            if (extension.equals("jar") && JavaGames.openJar(this, uri)) return;
             if(mime!=null&&mime.startsWith("image/")){startActivity(new Intent(this,GalleryActivity.class).setData(uri).putExtra("title",file.getName()));return;}
             if(mime!=null&&mime.startsWith("video/")){startActivity(new Intent(this,VideoActivity.class).setData(uri).putExtra("title",file.getName()));return;}
             if((mime!=null&&mime.startsWith("audio/"))||extension.equals("wma")){startActivity(new Intent(this,MediaActivity.class).setData(uri).putExtra("title",file.getName()));return;}
