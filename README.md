@@ -41,8 +41,9 @@ The boot animation is a rendered preview. Select any thumbnail to open it at
 | <a href="android81/screenshots/browser/hub.png"><img src="android81/screenshots/browser/hub.png" width="160" alt="Native browser hub with graphical browsing, text mode and optional Opera Mini"></a> | <a href="android81/screenshots/browser/https.png"><img src="android81/screenshots/browser/https.png" width="160" alt="External HTTPS page with the built-in keypad cursor"></a> | <a href="android81/screenshots/browser/fixture.png"><img src="android81/screenshots/browser/fixture.png" width="160" alt="Controlled local page showing the cursor, a loaded image and executed JavaScript"></a> |
 
 The browser starts with a visible cursor: D-pad moves it, OK clicks, and the
-page scrolls at its edges. `#` switches modes outside text fields; **Options →
-Cursor** restores the pointer after editing. See [browser controls and validation](android81/KEYSHELL-WEB-BROWSER.md).
+page scrolls at its edges. `*` selects scrolling and `#` switches cursor mode
+outside text fields. Favorites/history are shared with the text reader, and the
+hub can continue the last page. See [daily browser use and resource checks](android81/BROWSER-DAILY-USE.md).
 
 | Audio player · demo | Internet radio | Terminal |
 | :---: | :---: | :---: |
@@ -108,8 +109,9 @@ Cursor** restores the pointer after editing. See [browser controls and validatio
   Java games (J2ME)**. In **Files**, select a local JAR and choose **Open** to
   import it. [J2ME Loader 1.8.2](https://github.com/nikita36078/J2ME-Loader/releases/tag/1.8.2)
 - **Web browsing.** **Browser** provides native address/search, a graphical
-  page, text sizing, JavaScript controls and the existing text reader. The
-  global keypad pointer supports page controls. Opera Mini remains an optional
+  page, shared favorites/history, last-page continuation, contextual editor keys,
+  three cursor speeds and explicit scrolling. The existing text reader stays
+  available. Opera Mini remains an optional
   compatibility trial. [Browser guide and device tests](android81/KEYSHELL-WEB-BROWSER.md)
 - **Appearance.** A KaiOS-inspired app grid with selected Mozilla Gaia icons
   and wallpapers, Material-inspired themes, adjustable accents and an

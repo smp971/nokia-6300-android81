@@ -7,6 +7,10 @@ meaning. The hub and graphical page inherit the existing Browser-specific
 theme override. Address entry includes **Open with** selection and retains a draft
 when returning to the hub.
 
+The shared Favorites/History/Continue hub, contextual editor keys, configurable
+pointer and service-reconnection work are described in the
+[daily-use report](BROWSER-DAILY-USE.md).
+
 ## Graphical page
 
 The page uses shared KeyShell headers, address subtitle, progress, dialogs and
@@ -124,7 +128,7 @@ python android81/smoke-leo-keypad.py --serial 695d
 ```
 
 Running KeyShell data update SHA-256:
-`14c2a4ebd50e0a90532f2b5a0c4190003ad18a94afbb055cdae221dbe21c2260`.
+`c9a9822938f9e269162f9c23f76d1bf2f141bd4911aa3238578254758d064dbf`.
 The bundled system base is
 `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
 The previous private clean ROM predates the browser. Resource measurements in

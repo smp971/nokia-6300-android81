@@ -127,7 +127,7 @@ public final class KeyShellDailyUiTests extends Instrumentation {
         theme.edit().putInt("app-theme-BrowserActivity",2).commit();launch(BrowserHubActivity.class);
         check(AccessibilityPrefs.contrast(page)||page.palette.background==new Appearance.Palette(Appearance.COLORS[2]).background,"hub inherits the existing browser-specific theme");close();
         android.content.SharedPreferences.Editor restore=theme.edit();if(had)restore.putInt("app-theme-BrowserActivity",before);else restore.remove("app-theme-BrowserActivity");restore.commit();
-        launch(BrowserHubActivity.class);check(list().getCount()==4,"browser choices stay available");
+        launch(BrowserHubActivity.class);check(list().getCount()>=6,"browser choices and shared records stay available");
         check(((BrowserHubActivity)page).operaAvailable(),"official installed Opera launcher detected");
         try{Intent web=((BrowserHubActivity)page).operaIntent("https://example.org/");check(web!=null&&Intent.ACTION_VIEW.equals(web.getAction())&&"https://example.org/".equals(web.getDataString()),"web URL intent preserves address");check(!web.getComponent().equals(getTargetContext().getPackageManager().getLaunchIntentForPackage(BrowserHubActivity.OPERA).getComponent()),"URL uses Opera HTTP handler rather than its launcher alias");}catch(IOException invalid){throw new RuntimeException(invalid);}
         shot("browser");

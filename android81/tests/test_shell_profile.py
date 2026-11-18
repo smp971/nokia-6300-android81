@@ -35,6 +35,20 @@ class ResourceProfileCalculations(unittest.TestCase):
         with self.assertRaises(ValueError):
             profile.clock_ticks(struct.pack("<II", 0, 0))
 
+    def test_all_processes_includes_children_and_ime_but_not_similar_packages(self):
+        self.assertEqual(profile.process_rows("PID NAME\n42 ro.leo.visual\n43 ro.leo.visual:webapps\n44 ro.leo.keypad\n45 ro.leo.visual.bad\n46 other\n"),[(42,"ro.leo.visual"),(43,"ro.leo.visual:webapps"),(44,"ro.leo.keypad")])
+
+    def test_pss_uses_the_total_column_and_missing_is_unknown(self):
+        self.assertEqual(profile.pss_kib("       TOTAL     12345  100 200\n"),12345)
+        self.assertIsNone(profile.pss_kib("No process found"))
+
+    def test_system_available_ram_is_not_inferred_from_free_plus_cached(self):
+        self.assertEqual(profile.system_memory("MemTotal: 500000 kB\nMemFree: 10000 kB\nCached: 20000 kB\n"),{"MemTotal":500000,"MemFree":10000,"Cached":20000})
+
+    def test_shared_audio_services_require_explicit_selection(self):
+        self.assertEqual(profile.process_rows("41 audioserver\n42 media.codec\n"),[])
+        self.assertEqual(profile.process_rows("41 audioserver\n42 media.codec\n",True),[(41,"audioserver"),(42,"media.codec")])
+
 
 if __name__ == "__main__":
     unittest.main()

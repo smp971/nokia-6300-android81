@@ -11,6 +11,8 @@ import android.widget.Spinner;
 import android.widget.ArrayAdapter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.ArrayList;
+import org.json.*;
 import ro.leo.i18n.L;
 
 /** Native keypad entry to the separately installed web browser and text reader. */
@@ -20,23 +22,43 @@ public final class BrowserHubActivity extends LeoActivity {
     private int selected;
     private EditText editor;
     private int engine;private Spinner provider;
+    private String storedKey;private int storedIndex;private boolean hub;
+    protected void onResume(){super.onResume();if(root!=null&&!form){if(hub)home();else if(storedKey!=null)stored(storedKey);}}
 
     protected void onCreate(Bundle state){
         super.onCreate(state);
         if(state!=null){address=state.getString("address","");selected=state.getInt("selected",0);engine=state.getInt("engine",0);}
         if(state==null&&getIntent().getBooleanExtra("edit_address",false))address=getIntent().getStringExtra("address")==null?"":getIntent().getStringExtra("address");
-        if(state!=null&&state.getBoolean("editing",false)||state==null&&getIntent().getBooleanExtra("edit_address",false))address();else home();
+        String stored=state==null?getIntent().getStringExtra("show_list"):state.getString("stored");
+        if(state!=null&&state.getBoolean("editing",false)||state==null&&getIntent().getBooleanExtra("edit_address",false))address();else if("bookmarks".equals(stored)||"history".equals(stored))stored(stored);else home();
     }
-    protected void onSaveInstanceState(Bundle state){state.putString("address",editor==null?address:editor.getText().toString());state.putInt("selected",selected);state.putBoolean("editing",form);state.putInt("engine",provider==null?engine:provider.getSelectedItemPosition());super.onSaveInstanceState(state);}
+    protected void onSaveInstanceState(Bundle state){state.putString("address",editor==null?address:editor.getText().toString());state.putInt("selected",selected);state.putBoolean("editing",form);state.putString("stored",storedKey);state.putInt("engine",provider==null?engine:provider.getSelectedItemPosition());super.onSaveInstanceState(state);}
     boolean operaAvailable(){return getPackageManager().getLaunchIntentForPackage(OPERA)!=null;}
     private void home(){
-        editor=null;provider=null;
-        list(L.t("Browser"),Arrays.asList(L.t("Browser web\nAdresă / căutare"),L.t("Mod text\nCitire simplă din taste"),
-            "Opera Mini\n"+L.t(operaAvailable()?"Browser extern":"Necesită instalare"),L.t("Ajutor")),selected,
-            new Choice(){public void pick(int index){selected=index;if(index==0){engine=0;address();}else if(index==1)openText(null);else if(index==2)openOpera(null);else help();}},
+        editor=null;provider=null;storedKey=null;hub=true;final Bundle saved=BrowserStore.snapshot(this);
+        final ArrayList<Integer> ids=new ArrayList<>();ArrayList<String> labels=new ArrayList<>();
+        ids.add(0);labels.add(L.t("Browser web\nAdresă / căutare"));
+        if(WebBrowserActivity.allowed(saved.getString("last-url",""))){ids.add(4);labels.add(L.t("Continuă ultima pagină")+"\n"+saved.getString("last-title",saved.getString("last-url")));}
+        ids.add(5);labels.add(L.t("Favorite"));ids.add(6);labels.add(L.t("Istoric"));ids.add(1);labels.add(L.t("Mod text\nCitire simplă din taste"));
+        ids.add(2);labels.add("Opera Mini\n"+L.t(operaAvailable()?"Browser extern":"Necesită instalare"));ids.add(3);labels.add(L.t("Ajutor"));
+        list(L.t("Browser"),labels,Math.max(0,ids.indexOf(selected)),
+            new Choice(){public void pick(int index){selected=ids.get(index);if(selected==0){engine=0;address();}else if(selected==1)openText(null);else if(selected==2)openOpera(null);else if(selected==4)startActivity(new Intent(BrowserHubActivity.this,WebBrowserActivity.class).setData(Uri.parse(saved.getString("last-url"))).putExtra("resume_page",true).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));else if(selected==5||selected==6)stored(selected==5?"bookmarks":"history");else help();}},
             L.t("Adresă"),new Runnable(){public void run(){address();}});
     }
+    private void stored(final String key){
+        editor=null;provider=null;storedKey=key;hub=false;final JSONArray entries=BrowserStore.records(this,key);ArrayList<String> rows=new ArrayList<>();
+        for(int i=0;i<entries.length();i++){JSONObject entry=entries.optJSONObject(i);rows.add(entry.optString("title")+"\n"+entry.optString("url"));}
+        list(L.t("bookmarks".equals(key)?"Favorite web":"Istoric web"),rows,Math.min(storedIndex,Math.max(0,rows.size()-1)),new Choice(){public void pick(int at){storedIndex=at;openWeb(entries.optJSONObject(at).optString("url"));}},L.t("Opțiuni"),new Runnable(){public void run(){
+            options(L.t("bookmarks".equals(key)?"Favorite web":"Istoric web"),entries.length()==0?new String[]{L.t("Înapoi")}:new String[]{L.t("Deschide"),L.t("Elimină intrarea"),L.t("Șterge lista")},new Choice(){public void pick(final int action){
+                if(entries.length()==0)return;final int at=Math.max(0,Math.min(entries.length()-1,storedIndex));
+                if(action==0){openWeb(entries.optJSONObject(at).optString("url"));return;}
+                options(L.t(action==1?"Elimini intrarea?":"Ștergi lista?"),new String[]{L.t("Păstrează"),L.t("Șterge")},new Choice(){public void pick(int yes){if(yes==1){if(action==1)BrowserStore.remove(BrowserHubActivity.this,key,entries.optJSONObject(at).optString("url"));else BrowserStore.clear(BrowserHubActivity.this,key);stored(key);}}});
+            }});
+        }});back=new Runnable(){public void run(){home();}};
+    }
+    void onListSelection(String title,int index){if(storedKey!=null)storedIndex=index;}
     private void address(){
+        storedKey=null;
         LinearLayout fields=fields(L.t("Adresă / căutare"));
         final EditText input=field(fields,L.t("URL sau cuvinte"),address,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
         editor=input;
@@ -68,6 +90,7 @@ public final class BrowserHubActivity extends LeoActivity {
     private void openWeb(String url){startActivity(new Intent(this,WebBrowserActivity.class).setData(Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));}
     private void openText(String url){Intent intent=new Intent(this,BrowserActivity.class);if(url!=null)intent.setData(Uri.parse(url));startActivity(intent);}
     private void help(){
+        hub=false;
         list(L.t("Ajutor Browser"),Arrays.asList(L.t("Browser web\nPagini cu imagini în interfața KeyShell."),L.t("Opera Mini\nBrowser separat. Compatibilitatea depinde de versiunea instalată."),
             L.t("Adresă / căutare\nDeschide un site sau caută cuvintele introduse."),
             L.t("Cursor în pagină\nSăgețile mișcă, OK apasă. La margini derulează. # comută cursorul; în editor folosește Opțiuni → Cursor."),

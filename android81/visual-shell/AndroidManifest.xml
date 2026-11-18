@@ -137,6 +137,7 @@
         <activity android:name=".CalendarActivity" android:exported="false" android:label="Calendar" android:screenOrientation="portrait" />
         <activity android:name=".FilesActivity" android:exported="false" android:label="Fișiere" android:screenOrientation="portrait" />
         <provider android:name=".LeoFileProvider" android:authorities="ro.leo.visual.files" android:exported="false" android:grantUriPermissions="true" />
+        <provider android:name=".BrowserStateProvider" android:authorities="ro.leo.visual.browser" android:exported="false" />
         <activity android:name=".AlarmRingActivity" android:exported="false" android:launchMode="singleTop" android:label="Alarmă" android:screenOrientation="portrait" />
         <service android:name=".AlarmRingService" android:exported="false" />
         <receiver android:name=".CalendarReminderReceiver" android:exported="false" />

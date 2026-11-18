@@ -8,22 +8,38 @@ import java.util.*;
 
 /** Ephemeral view of Android notifications; never persists their contents. */
 public final class LeoNotificationService extends NotificationListenerService {
-    /** Refresh only our component after Oreo retains a dead service binding.
-     * This never grants notification access or changes another listener. */
-    static void reconnect(final Context context){
-        final ComponentName own=new ComponentName(context,LeoNotificationService.class);
-        requestRebind(own);
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable(){public void run(){
-            if(active!=null)return;
-            final android.content.pm.PackageManager pm=context.getPackageManager();
-            final int original=pm.getComponentEnabledSetting(own);
-            if(original!=android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT&&original!=android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED)return;
-            pm.setComponentEnabledSetting(own,android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,android.content.pm.PackageManager.DONT_KILL_APP);
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable(){public void run(){
-                pm.setComponentEnabledSetting(own,original,android.content.pm.PackageManager.DONT_KILL_APP);
-                requestRebind(own);
-            }},500);
-        }},500);
+    private static final android.os.Handler repair=new android.os.Handler(android.os.Looper.getMainLooper());
+    private static long lastRepair;private static boolean repairing;
+    static boolean allowed(Context c){String value=android.provider.Settings.Secure.getString(c.getContentResolver(),"enabled_notification_listeners");if(value==null)return false;for(String item:value.split(":"))if(item.equals("ro.leo.visual/.LeoNotificationService")||item.equals("ro.leo.visual/ro.leo.visual.LeoNotificationService"))return true;return false;}
+    private static boolean enabled(Context c){int state=c.getPackageManager().getComponentEnabledSetting(new ComponentName(c,LeoNotificationService.class));return state==0||state==1;}
+    static void recoverRepair(Context c){
+        android.content.SharedPreferences p=c.getSharedPreferences("listener-repair",0);if(repairing||!p.contains("component-state"))return;
+        ComponentName own=new ComponentName(c,LeoNotificationService.class);android.content.pm.PackageManager pm=c.getPackageManager();
+        try{if(pm.getComponentEnabledSetting(own)==android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED)pm.setComponentEnabledSetting(own,p.getInt("component-state",0),android.content.pm.PackageManager.DONT_KILL_APP);p.edit().clear().commit();}catch(RuntimeException denied){}
+    }
+    static void ensure(Context context){reconnect(context,false);}
+    static void reconnect(Context context){reconnect(context,true);}
+    private static void reconnect(Context context,boolean explicit){
+        final Context c=context.getApplicationContext();
+        if(!(c instanceof LeoApplication)||!((LeoApplication)c).ownsServices()||active!=null||repairing||!allowed(c)||!enabled(c))return;
+        long now=android.os.SystemClock.elapsedRealtime();if(!explicit&&now-lastRepair<60000)return;lastRepair=now;repairing=true;
+        final ComponentName own=new ComponentName(c,LeoNotificationService.class);
+        try{requestRebind(own);}catch(RuntimeException denied){repairing=false;return;}
+        repair.postDelayed(new Runnable(){public void run(){
+            if(active!=null||!allowed(c)||!enabled(c)){repairing=false;return;}
+            final android.content.pm.PackageManager pm=c.getPackageManager();final int original=pm.getComponentEnabledSetting(own);
+            final android.content.SharedPreferences journal=c.getSharedPreferences("listener-repair",0);
+            if(!journal.edit().putInt("component-state",original).putLong("when",System.currentTimeMillis()).commit()){repairing=false;return;}
+            try{pm.setComponentEnabledSetting(own,android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,android.content.pm.PackageManager.DONT_KILL_APP);}
+            catch(RuntimeException denied){journal.edit().clear().commit();repairing=false;return;}
+            // Oreo batches DONT_KILL_APP package broadcasts for ten seconds.
+            // A short off/on cycle is coalesced and never drops the dead binder.
+            repair.postDelayed(new Runnable(){public void run(){
+                try{if(pm.getComponentEnabledSetting(own)==android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED)pm.setComponentEnabledSetting(own,original,android.content.pm.PackageManager.DONT_KILL_APP);journal.edit().clear().commit();}
+                catch(RuntimeException denied){}finally{repairing=false;}
+                if(allowed(c)&&enabled(c))try{requestRebind(own);}catch(RuntimeException ignored){}
+            }},15000);
+        }},1500);
     }
     static String[] preview(Context context,int selected){
         int mode=context.getSharedPreferences("appearance",0).getInt("lock-preview",0);if(mode==0)return new String[]{"",""};
@@ -39,7 +55,7 @@ public final class LeoNotificationService extends NotificationListenerService {
     static volatile LeoNotificationService active;
     private final LinkedHashMap<String,StatusBarNotification> items=new LinkedHashMap<String,StatusBarNotification>();
     public void onListenerConnected(){active=this; synchronized(items){items.clear();StatusBarNotification[] all=getActiveNotifications();if(all!=null)for(StatusBarNotification n:all)items.put(n.getKey(),n);}changed();}
-    public void onListenerDisconnected(){active=null;synchronized(items){items.clear();}changed();}
+    public void onListenerDisconnected(){if(active==this)active=null;synchronized(items){items.clear();}changed();ensure(this);}
     public void onNotificationPosted(StatusBarNotification n){synchronized(items){items.put(n.getKey(),n);}changed();}
     public void onNotificationRemoved(StatusBarNotification n){synchronized(items){items.remove(n.getKey());}changed();}
     private void changed(){sendBroadcast(new Intent(CHANGED).setPackage(getPackageName()));}
