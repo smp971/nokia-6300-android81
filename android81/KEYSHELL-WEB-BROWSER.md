@@ -20,6 +20,13 @@ provides the switch. Clicking a text field hides the cursor and returns focus to
 the WebView and keypad IME. The IME keeps its `#` mode shortcut while editing.
 Guidance stays inside Help.
 
+The input handoff follows WebView's actual editor connection, including its
+threaded proxy input connection. A page can replace or focus a search field
+after the click handler returns, as YouTube's mobile search does. The cursor no
+longer takes focus back after a fixed 120 ms delay, and automatic editing mode
+does not issue a second focus request. Input-connection notifications post their
+UI changes to the view thread, following the [WebView API contract](https://developer.android.com/reference/android/webkit/WebView#onCreateInputConnection(android.view.inputmethod.EditorInfo)).
+
 The pointer is a small page-local view, with no accessibility grant or global
 overlay required. It draws only when its position/mode changes and schedules
 movement only while a direction is held. Movement and pending touches stop when
@@ -72,12 +79,21 @@ of reusing its launcher alias.
 
 ## Validation
 
-The cursor update passed **155 graphical browser checks** on the Nokia. These
+The editor-focus fix passed **296 graphical browser checks** on the Nokia. These
 cover actual cursor clicks on links, canceled and held OK, normal navigation,
 edge scrolling and stopping after release, entering an HTML field with the keypad
-IME, and returning to the pointer through Options. The full Windows build
+IME, and returning to the pointer through Options. A field replaced and focused
+after 450 ms reproduces the failure on the previous `e19bdc76…` build and passes
+on this update, along with textarea and contenteditable input. The full Windows build
 compiled **280** sources; the DEX audit retained all **431** baseline dependency
 classes without additions or duplicates.
+
+The live mobile YouTube search was checked separately with physical scan codes:
+the built-in cursor clicked the search control, the keypad entered `ada`, and OK
+submitted the search. The IME reported a live text editor (`inputType=0x840a1`)
+with its input view shown, the cursor hid, and the page displayed the query's
+results. No video was opened. The earlier one-field fixture alone did not cover
+this site's delayed focus/proxy-editor transition.
 
 Physical matrix-keypad scans also passed: left softkey opens the native address
 form/page, Right moves the cursor, OK follows a local HTTP link, Back restores the
@@ -108,7 +124,7 @@ python android81/smoke-leo-keypad.py --serial 695d
 ```
 
 Running KeyShell data update SHA-256:
-`e19bdc76eeeda415920a33476a8bcea554112cc18538ed47e36efc658df63ee1`.
+`14c2a4ebd50e0a90532f2b5a0c4190003ad18a94afbb055cdae221dbe21c2260`.
 The bundled system base is
 `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
 The previous private clean ROM predates the browser. Resource measurements in

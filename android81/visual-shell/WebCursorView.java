@@ -28,9 +28,8 @@ final class WebCursorView extends View {
     }};
     private final Runnable afterTap=new Runnable(){public void run(){
         if(!isShown()||!hasWindowFocus())return;
-        WebView.HitTestResult hit=web.getHitTestResult();
-        if(web.onCheckIsTextEditor()||hit!=null&&hit.getType()==WebView.HitTestResult.EDIT_TEXT_TYPE)setCursorEnabled(false);
-        else if(enabled)requestFocus();
+        if(web.onCheckIsTextEditor())editorReady();
+        // A SPA can replace/focus its input later. Never take focus back after a tap.
     }};
     private final Runnable releaseTap=new Runnable(){public void run(){
         if(tapDown==0)return;
@@ -52,6 +51,11 @@ final class WebCursorView extends View {
         else web.requestFocus();
         listener.changed(enabled);
     }
+    void editorReady(){
+        if(!enabled||hasFocus()||!isShown()||!hasWindowFocus())return;
+        suspend();enabled=false;setFocusable(false);invalidate();listener.changed(false);
+        // The WebView's real or proxy editor already owns focus. Do not refocus it.
+    }
     protected void onSizeChanged(int w,int h,int oldw,int oldh){
         super.onSizeChanged(w,h,oldw,oldh);
         float fx=positioned&&oldw>1?x/(oldw-1):restoreX,fy=positioned&&oldh>1?y/(oldh-1):restoreY;
@@ -66,6 +70,7 @@ final class WebCursorView extends View {
         canvas.restore();
     }
     boolean key(KeyEvent event){
+        if(enabled&&!hasFocus()&&web.onCheckIsTextEditor())editorReady();
         int key=event.getKeyCode();
         // Keep # available to the keypad IME while editing an HTML field.
         if(key==KeyEvent.KEYCODE_POUND&&!web.onCheckIsTextEditor()){

@@ -7,6 +7,9 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.view.*;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
+import android.text.InputType;
 import android.webkit.*;
 import android.widget.*;
 import java.io.IOException;
@@ -30,7 +33,14 @@ public final class WebBrowserActivity extends LeoActivity {
         progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(100);
         root.addView(progress,new LinearLayout.LayoutParams(-1,dp(3)));
         try{
-            web=new WebView(this);web.setLayerType(View.LAYER_TYPE_SOFTWARE,null);web.setBackgroundColor(android.graphics.Color.WHITE);
+            web=new WebView(this){
+                public InputConnection onCreateInputConnection(EditorInfo info){
+                    InputConnection connection=super.onCreateInputConnection(info);
+                    if(connection!=null&&(info.inputType&InputType.TYPE_MASK_CLASS)!=InputType.TYPE_NULL)
+                        post(new Runnable(){public void run(){if(cursor!=null&&!isFinishing()&&!isDestroyed())cursor.editorReady();}});
+                    return connection;
+                }
+            };web.setLayerType(View.LAYER_TYPE_SOFTWARE,null);web.setBackgroundColor(android.graphics.Color.WHITE);
             WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(javascript);settings.setDomStorageEnabled(true);
             settings.setUseWideViewPort(true);settings.setLoadWithOverviewMode(true);settings.setSupportZoom(true);
             settings.setBuiltInZoomControls(true);settings.setDisplayZoomControls(false);settings.setTextZoom(Math.round(zoom*Appearance.textScale(this)));
