@@ -32,7 +32,7 @@ final class AppCatalog {
         new Entry(16, "Fundaluri", WallpaperActivity.class),
         new Entry(17, "Favorite", ContactsActivity.class, "favorites", true),
         new Entry(18, "Blocare taste", KeypadLockActivity.class),
-        new Entry(19, "Browser text", BrowserActivity.class),
+        new Entry(19, "Browser", BrowserHubActivity.class),
         new Entry(20, "Configurări rapide", QuickSettingsActivity.class),
         new Entry(21, "Configurare", SetupWizardActivity.class),
         new Entry(22, "Email", EmailActivity.class),

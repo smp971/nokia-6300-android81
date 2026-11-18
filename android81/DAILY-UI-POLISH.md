@@ -114,6 +114,8 @@ The observed kernel command line includes `lpm_levels.sleep_disabled=1`.
 The [MSM reference implementation](https://android.googlesource.com/kernel/msm/+/9a87b7449d33f565ea0f99864e4afb80eeba1c03/drivers/cpuidle/lpm-levels.c)
 uses this parameter to restrict low-power selection. This is a separate kernel
 investigation; no deep-sleep parameter is changed by the UI update.
+The corresponding parameter was unavailable at the checked sysfs path;
+the command line alone does not establish which sleep states this kernel uses.
 
 ## Captured pages
 

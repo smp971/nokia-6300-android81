@@ -7,9 +7,12 @@ modes.add_argument("--app-data",action="store_true",help="build the isolated app
 modes.add_argument("--ui-theme",action="store_true",help="build theme inheritance and live page checks")
 modes.add_argument("--ui-polish",action="store_true",help="build native dialog, form and clock checks")
 modes.add_argument("--daily-polish",action="store_true",help="build daily UI, private Home boundary and display lifecycle checks")
+modes.add_argument("--web-browser",action="store_true",help="build real graphical browser HTTP and DOM checks")
 args=parser.parse_args()
 app_data,ui_theme=args.app_data,args.ui_theme
-if args.daily_polish:
+if args.web_browser:
+ test,package,directory="WebBrowserDeviceTests","ro.leo.visual.webbrowserchecks","web-browser-tests"
+elif args.daily_polish:
  test,package,directory="KeyShellDailyUiTests","ro.leo.visual.dailychecks","daily-polish-tests"
 elif args.ui_polish:
  test,package,directory="UiPolishTests","ro.leo.visual.uipolishchecks","ui-polish-tests"
@@ -23,7 +26,7 @@ r=Path(__file__).resolve().parent;t=r/'output/windows-build-tools';b=r/'output'/
 j=next((t/'jdk').glob('*/bin/java.exe'));sdk=next((t/'platform').glob('*/android.jar'));bt=next((t/'build-tools').iterdir())
 def run(*a):subprocess.run([str(x) for x in a],check=True)
 dependencies=[]
-if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish:
+if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish and not args.web_browser:
  import hashlib,urllib.request
  zxing=r/'output/pocket-zxing-tests.jar'
  if not zxing.exists():zxing.write_bytes(urllib.request.urlopen('https://repo.maven.apache.org/maven2/com/google/zxing/core/3.5.3/core-3.5.3.jar',timeout=30).read())

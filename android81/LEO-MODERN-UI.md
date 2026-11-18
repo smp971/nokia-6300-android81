@@ -211,3 +211,11 @@ It passed 174 new device checks alongside the previous 48 polish and 72 theme
 checks. The physical keypad smoke passed after normal reboot. See
 [Daily UI and resource checks](DAILY-UI-POLISH.md) for current APK identity,
 screenshots, resource measurements and the distinction from the private ROM.
+
+## Graphical browser
+
+Catalog ID 19 opens a native hub with address/search, a graphical page, text
+mode and optional Opera Mini handoff. The reference phone uses software
+rendering for the page after a WebView GPU crash in the image trial. See
+[the browser report](KEYSHELL-WEB-BROWSER.md) for its 56 browser checks,
+current APK identity and the observed Opera Mini startup limitation.

@@ -64,6 +64,8 @@
         <activity android:name=".LongPressSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".RecentAppsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".QuickSettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".WebBrowserActivity" android:exported="false" android:screenOrientation="portrait" android:process=":webapps" android:hardwareAccelerated="false" />
+        <activity android:name=".BrowserHubActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".BrowserActivity" android:exported="false" android:screenOrientation="portrait" android:process=":browser" />
         <activity android:name=".DiagnosticActivity" android:exported="false" android:screenOrientation="portrait" />
         <receiver android:name=".NotificationReadReceiver" android:exported="false" />

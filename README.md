@@ -36,6 +36,10 @@ The boot animation is a rendered preview. Select any thumbnail to open it at
 [Updated lock screen](android81/screenshots/daily-ui/lock.png) ·
 [Daily UI tests and resource measurements](android81/DAILY-UI-POLISH.md)
 
+| Browser hub | HTTPS page | Browser image/JavaScript test |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/browser/hub.png"><img src="android81/screenshots/browser/hub.png" width="160" alt="Native browser hub with graphical browsing, text mode and optional Opera Mini"></a> | <a href="android81/screenshots/browser/https.png"><img src="android81/screenshots/browser/https.png" width="160" alt="External HTTPS page in the integrated browser"></a> | <a href="android81/screenshots/browser/fixture.png"><img src="android81/screenshots/browser/fixture.png" width="160" alt="Controlled local page showing a loaded image and executed JavaScript"></a> |
+
 | Audio player · demo | Internet radio | Terminal |
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/keyshell-2026-11-17/audio-player.png"><img src="android81/screenshots/keyshell-2026-11-17/audio-player.png" width="160" alt="Music player with track artwork, progress and transport controls"></a> | <a href="android81/screenshots/keyshell-2026-11-17/radio.png"><img src="android81/screenshots/keyshell-2026-11-17/radio.png" width="160" alt="Internet radio player with the România Actualități preset"></a> | <a href="android81/screenshots/keyshell-2026-11-17/terminal.png"><img src="android81/screenshots/keyshell-2026-11-17/terminal.png" width="160" alt="Terminal running pwd in a local shell"></a> |
@@ -99,6 +103,10 @@ The boot animation is a rendered preview. Select any thumbnail to open it at
 - **Java ME games.** Open the separately installed J2ME Loader from **Games →
   Java games (J2ME)**. In **Files**, select a local JAR and choose **Open** to
   import it. [J2ME Loader 1.8.2](https://github.com/nikita36078/J2ME-Loader/releases/tag/1.8.2)
+- **Web browsing.** **Browser** provides native address/search, a graphical
+  page, text sizing, JavaScript controls and the existing text reader. The
+  global keypad pointer supports page controls. Opera Mini remains an optional
+  compatibility trial. [Browser guide and device tests](android81/KEYSHELL-WEB-BROWSER.md)
 - **Appearance.** A KaiOS-inspired app grid with selected Mozilla Gaia icons
   and wallpapers, Material-inspired themes, adjustable accents and an
   editable Home layout. **Settings → Appearance → Themes** includes a preview

@@ -12,6 +12,7 @@ FRAMEWORK = Path(__file__).with_name("framework-command.py")
 SERIAL = "695d"
 PACKAGE = "ro.leo.visual"
 HOME = PACKAGE + "/.MainActivity"
+HOME_ACTIVITIES = {HOME, PACKAGE + "/.InternalHome"}
 SETTINGS = PACKAGE + "/.SettingsActivity"
 NOTIFICATIONS = PACKAGE + "/.NotificationsActivity"
 KEYPAD = "/dev/input/event1"
@@ -86,7 +87,7 @@ def pref(file, name, default=None):
 def show_home():
     shell("input keyevent 224; wm dismiss-keyguard; input keyevent 3; "
           "am start -W -a android.intent.action.MAIN -c android.intent.category.HOME")
-    wait_for(lambda: resumed() == HOME, "Leo is not the active Home.")
+    wait_for(lambda: resumed() in HOME_ACTIVITIES, "Leo is not the active Home.")
     return wait_for(lambda: (window := focus()) and PACKAGE + "/" in window and window,
                     "Unlock the Nokia first.")
 
@@ -140,7 +141,7 @@ def preflight():
 def smoke(home):
     press(OK)
     press(SOFT_LEFT)
-    wait_for(lambda: overlay_after(home) and resumed() == HOME, "OK did not reach the app menu and Options.")
+    wait_for(lambda: overlay_after(home) and resumed() in HOME_ACTIVITIES, "OK did not reach the app menu and Options.")
     print("PASS: Home OK opens apps, and the left softkey opens app options.", flush=True)
     press(BACK)
     wait_for(lambda: focus() == home, "Dedicated Back did not dismiss app options.")
@@ -150,7 +151,7 @@ def smoke(home):
              "Dedicated Back did not return to the Home notification shortcut.")
     print("PASS: Dedicated Back returns to Home, where the left softkey opens notifications.", flush=True)
     press(BACK)
-    wait_for(lambda: focus() == home and resumed() == HOME, "Notifications did not close.")
+    wait_for(lambda: focus() == home and resumed() in HOME_ACTIVITIES, "Notifications did not close.")
 
     pins = menu_pins()
     press(MENU)
@@ -176,7 +177,7 @@ def smoke(home):
         wait_for(lambda: (value := settings_list()) and value != next_list,
                  "Left did not switch back to the previous Settings category.")
         press(BACK)
-        wait_for(lambda: resumed() == HOME, "Dedicated Back did not leave Settings.")
+        wait_for(lambda: resumed() in HOME_ACTIVITIES, "Dedicated Back did not leave Settings.")
         require(pref("settings-ui", "category", "0") == initial_category,
                 "Settings did not preserve its original category.")
         print("PASS: Right and Left switch Settings categories and preserve the original tab.", flush=True)
@@ -193,9 +194,9 @@ def main():
     finally:
         try:
             foreground = resumed()
-            if foreground == HOME and focus() != home:
+            if foreground in HOME_ACTIVITIES and focus() != home:
                 press(BACK)
-            if foreground in {HOME, SETTINGS, NOTIFICATIONS}:
+            if foreground in HOME_ACTIVITIES | {SETTINGS, NOTIFICATIONS}:
                 show_home()
         except (SmokeFailure, OSError, subprocess.TimeoutExpired):
             print("Could not restore Home automatically.", file=sys.stderr)

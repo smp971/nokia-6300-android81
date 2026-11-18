@@ -120,6 +120,25 @@ public final class KeyShellDailyUiTests extends Instrumentation {
 
     private void media(){launch(new Intent(getTargetContext(),MediaActivity.class).putExtra("now",true).putExtra("preview",true));check(page.root!=null&&page.root.isShown(),"player uses shared native page");check(page.helpControls().contains("Demo"),"player footer exposes demo state");shot("player");long down=SystemClock.uptimeMillis();dispatch(down,0,KeyEvent.KEYCODE_MENU,0,0);check(KeypadDialog.current()==null,"softkey waits for release");dispatch(down,1,KeyEvent.KEYCODE_MENU,0,KeyEvent.FLAG_CANCELED);check(KeypadDialog.current()==null,"canceled softkey does not open options");press(KeyEvent.KEYCODE_MENU);check(KeypadDialog.current()!=null,"released softkey opens player options");back();close();}
 
+    private void browser(){
+        check(AppCatalog.intent(getTargetContext(),19).getComponent().getClassName().equals(BrowserHubActivity.class.getName()),"stable browser ID opens the native browser hub");
+        check(GlobalSearchActivity.inScope(new GlobalSearchActivity.Hit("Browser",HomeAccess.intent(getTargetContext()).putExtra("open_app",19)),1),"private Home commands remain in app search scope");
+        android.content.SharedPreferences theme=getTargetContext().getSharedPreferences("appearance",0);boolean had=theme.contains("app-theme-BrowserActivity");int before=theme.getInt("app-theme-BrowserActivity",-1);
+        theme.edit().putInt("app-theme-BrowserActivity",2).commit();launch(BrowserHubActivity.class);
+        check(AccessibilityPrefs.contrast(page)||page.palette.background==new Appearance.Palette(Appearance.COLORS[2]).background,"hub inherits the existing browser-specific theme");close();
+        android.content.SharedPreferences.Editor restore=theme.edit();if(had)restore.putInt("app-theme-BrowserActivity",before);else restore.remove("app-theme-BrowserActivity");restore.commit();
+        launch(BrowserHubActivity.class);check(list().getCount()==4,"browser choices stay available");
+        check(((BrowserHubActivity)page).operaAvailable(),"official installed Opera launcher detected");
+        try{Intent web=((BrowserHubActivity)page).operaIntent("https://example.org/");check(web!=null&&Intent.ACTION_VIEW.equals(web.getAction())&&"https://example.org/".equals(web.getDataString()),"web URL intent preserves address");check(!web.getComponent().equals(getTargetContext().getPackageManager().getLaunchIntentForPackage(BrowserHubActivity.OPERA).getComponent()),"URL uses Opera HTTP handler rather than its launcher alias");}catch(IOException invalid){throw new RuntimeException(invalid);}
+        shot("browser");
+        ui(new Runnable(){public void run(){call(page,"address",new Class<?>[]{});}});waitForIdleSync();
+        final ArrayList<EditText> first=new ArrayList<>();collectEditors(page.root,first);check(first.size()==1,"native address editor available");
+        ui(new Runnable(){public void run(){first.get(0).setText("example.org");page.onBackPressed();call(page,"address",new Class<?>[]{});}});waitForIdleSync();
+        final ArrayList<EditText> restored=new ArrayList<>();collectEditors(page.root,restored);check(restored.get(0).getText().toString().equals("example.org"),"address retained after returning");
+        ui(new Runnable(){public void run(){restored.get(0).setText("file:///sdcard/private.txt");page.left.run();}});waitForIdleSync();
+        check(page.hasWindowFocus()&&restored.get(0).isShown(),"non-HTTP URL stays in editor");close();
+    }
+
     private void lock(){
         launch(KeypadLockActivity.class);check(KeypadLockActivity.locked(getTargetContext()),"lock active");shot("lock");
         press(KeyEvent.KEYCODE_STAR);check(KeypadLockActivity.locked(getTargetContext()),"star alone cannot unlock");
@@ -146,7 +165,7 @@ public final class KeyShellDailyUiTests extends Instrumentation {
         for(String name:new String[]{"appearance","keyguard","home-menu"})snapshot(name);
         awake=((PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,"KeyShell:daily-tests");awake.acquire(180000);
         fixtures=new File(getTargetContext().getFilesDir(),"documents/Exemple");if(fixtures.exists())fixtures=new File(getTargetContext().getFilesDir(),"documents/Exemple-"+SystemClock.elapsedRealtime());check(fixtures.mkdirs(),"isolated fixture root");shots=new File(getTargetContext().getFilesDir(),"daily-polish-shots");shots.mkdirs();
-        catalog();weatherAndKeys();files();gallery();media();lock();screenTicker();
+        catalog();weatherAndKeys();files();gallery();media();browser();lock();screenTicker();
         result.putString("result","PASS "+checks+" daily polish checks");code=-1;
     }catch(Throwable failure){result.putString("result","FAIL after "+checks+" checks: "+failure);StringWriter text=new StringWriter();failure.printStackTrace(new PrintWriter(text));result.putString("trace",text.toString());try{shot("failure");}catch(Throwable ignored){}
     }finally{close();restore();if(awake!=null&&awake.isHeld())awake.release();if(fixtures!=null)remove(fixtures);}

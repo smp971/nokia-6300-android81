@@ -24,6 +24,7 @@ final class Appearance {
     static final int[] ACCENTS={0xff58daca,0xffffbe57,0xff8ebcff,0xffff7b9c,0xffbca2ff,0xffa4df78};
     static String themeOwner(String activity){
         switch(activity){
+            case "BrowserHubActivity": case "WebBrowserActivity": return "BrowserActivity";
             case "ContactTimelineActivity": case "ContactExtrasActivity":
             case "ContactDuplicatesActivity": case "PeopleBackupActivity": case "VCardActivity":
                 return "ContactsActivity";
