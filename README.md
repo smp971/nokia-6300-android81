@@ -38,7 +38,11 @@ The boot animation is a rendered preview. Select any thumbnail to open it at
 
 | Browser hub | HTTPS page | Browser image/JavaScript test |
 | :---: | :---: | :---: |
-| <a href="android81/screenshots/browser/hub.png"><img src="android81/screenshots/browser/hub.png" width="160" alt="Native browser hub with graphical browsing, text mode and optional Opera Mini"></a> | <a href="android81/screenshots/browser/https.png"><img src="android81/screenshots/browser/https.png" width="160" alt="External HTTPS page in the integrated browser"></a> | <a href="android81/screenshots/browser/fixture.png"><img src="android81/screenshots/browser/fixture.png" width="160" alt="Controlled local page showing a loaded image and executed JavaScript"></a> |
+| <a href="android81/screenshots/browser/hub.png"><img src="android81/screenshots/browser/hub.png" width="160" alt="Native browser hub with graphical browsing, text mode and optional Opera Mini"></a> | <a href="android81/screenshots/browser/https.png"><img src="android81/screenshots/browser/https.png" width="160" alt="External HTTPS page with the built-in keypad cursor"></a> | <a href="android81/screenshots/browser/fixture.png"><img src="android81/screenshots/browser/fixture.png" width="160" alt="Controlled local page showing the cursor, a loaded image and executed JavaScript"></a> |
+
+The browser starts with a visible cursor: D-pad moves it, OK clicks, and the
+page scrolls at its edges. `#` switches modes outside text fields; **Options →
+Cursor** restores the pointer after editing. See [browser controls and validation](android81/KEYSHELL-WEB-BROWSER.md).
 
 | Audio player · demo | Internet radio | Terminal |
 | :---: | :---: | :---: |

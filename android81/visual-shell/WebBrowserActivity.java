@@ -17,6 +17,7 @@ public final class WebBrowserActivity extends LeoActivity {
     private WebView web;
     private ProgressBar progress;
     private TextView location;
+    private WebCursorView cursor;
     private String current="https://example.org/";
     private boolean javascript=true;
     private int zoom=120;
@@ -52,28 +53,36 @@ public final class WebBrowserActivity extends LeoActivity {
                 public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){callback.onReceiveValue(null);return true;}
             });
             web.setDownloadListener(new DownloadListener(){public void onDownloadStart(final String url,String agent,String disposition,String mime,long bytes){download(url);}});
-            root.addView(web,new LinearLayout.LayoutParams(-1,0,1));
+            FrameLayout page=new FrameLayout(this);
+            page.addView(web,new FrameLayout.LayoutParams(-1,-1));
+            cursor=new WebCursorView(this,web,new WebCursorView.Listener(){public void changed(boolean enabled){cursorFooter();}});
+            if(state!=null)cursor.restore(state.getBoolean("cursor",true),state.getFloat("cursor_x",.5f),state.getFloat("cursor_y",.5f));
+            page.addView(cursor,new FrameLayout.LayoutParams(-1,-1));
+            root.addView(page,new LinearLayout.LayoutParams(-1,0,1));
             left=new Runnable(){public void run(){menu();}};
-            back=new Runnable(){public void run(){if(web.canGoBack())web.goBack();else finish();}};
-            footer(L.t("Opțiuni"),L.t("Selectează"),L.t("Înapoi"));
+            back=new Runnable(){public void run(){cursor.suspend();if(web.canGoBack())web.goBack();else finish();}};
+            cursorFooter();
             if(state==null||web.restoreState(state)==null)load(current);
-            web.requestFocus();
+            if(cursor.enabled())cursor.requestFocus();else web.requestFocus();
         }catch(RuntimeException unavailable){errorPage(L.t("Browser web"),L.t("Motorul web nu poate porni"),new Runnable(){public void run(){recreate();}});}
     }
     static boolean allowed(String url){try{BrowserRules.checked(url);return true;}catch(IOException invalid){return false;}}
-    private void load(String url){if(!allowed(url)){notice(L.t("Doar adrese HTTP / HTTPS"));return;}current=url;location.setText(url);web.loadUrl(url);}
+    private void load(String url){if(!allowed(url)){notice(L.t("Doar adrese HTTP / HTTPS"));return;}if(cursor!=null)cursor.suspend();current=url;location.setText(url);web.loadUrl(url);}
     protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);if(intent.getData()!=null&&web!=null)load(intent.getDataString());}
-    protected void onSaveInstanceState(Bundle state){state.putString("url",current);state.putInt("zoom",zoom);state.putBoolean("javascript",javascript);if(web!=null)web.saveState(state);super.onSaveInstanceState(state);}
+    protected void onSaveInstanceState(Bundle state){state.putString("url",current);state.putInt("zoom",zoom);state.putBoolean("javascript",javascript);if(cursor!=null){state.putBoolean("cursor",cursor.enabled());state.putFloat("cursor_x",cursor.fractionX());state.putFloat("cursor_y",cursor.fractionY());}if(web!=null)web.saveState(state);super.onSaveInstanceState(state);}
+    private void cursorFooter(){footer(L.t("Opțiuni"),L.t(cursor.enabled()?"Clic":"Selectează"),L.t("Înapoi"));}
     private void address(){startActivity(new Intent(this,BrowserHubActivity.class).putExtra("edit_address",true).putExtra("address",current));}
     private void menu(){
-        options(L.t("Browser web"),new String[]{L.t("Adresă / căutare"),L.t("Reîncarcă"),L.t("Oprește încărcarea"),L.t("Text mai mare"),L.t("Text mai mic"),L.t("Înainte"),javascript?L.t("JavaScript · pornit"):L.t("JavaScript · oprit"),L.t("Mod text"),L.t("Ajutor"),L.t("Închide")},new Choice(){public void pick(int index){
+        if(cursor!=null)cursor.suspend();
+        options(L.t("Browser web"),new String[]{L.t(cursor.enabled()?"Cursor · pornit":"Cursor · oprit"),L.t("Adresă / căutare"),L.t("Reîncarcă"),L.t("Oprește încărcarea"),L.t("Text mai mare"),L.t("Text mai mic"),L.t("Înainte"),javascript?L.t("JavaScript · pornit"):L.t("JavaScript · oprit"),L.t("Mod text"),L.t("Ajutor"),L.t("Închide")},new Choice(){public void pick(int row){
+            if(row==0){cursor.setCursorEnabled(!cursor.enabled());return;}int index=row-1;
             if(index==0)address();else if(index==1)web.reload();else if(index==2)web.stopLoading();
             else if(index==3||index==4){zoom=Math.max(80,Math.min(220,zoom+(index==3?10:-10)));web.getSettings().setTextZoom(Math.round(zoom*Appearance.textScale(WebBrowserActivity.this)));}
             else if(index==5){if(web.canGoForward())web.goForward();}
             else if(index==6){javascript=!javascript;web.getSettings().setJavaScriptEnabled(javascript);web.reload();}
             else if(index==7)startActivity(new Intent(WebBrowserActivity.this,BrowserActivity.class).setData(Uri.parse(current)));
             else if(index==9)finish();
-            else options(L.t("Ajutor Browser"),new String[]{L.t("D-pad · selectare și derulare"),L.t("OK · deschide linkul selectat"),L.t("Meniu dedicat → Mouse din taste"),L.t("# · oprește mouse-ul"),L.t("Înapoi · pagina anterioară")},new Choice(){public void pick(int row){}});
+            else options(L.t("Ajutor Browser"),new String[]{L.t("Săgeți · deplasează cursorul"),L.t("OK · clic pe pagină"),L.t("Margini sus / jos · derulare"),L.t("# · cursor pornit / oprit"),L.t("Câmp text · cursorul se ascunde"),L.t("Opțiuni → Cursor · revino la mouse"),L.t("Înapoi · pagina anterioară")},new Choice(){public void pick(int row){}});
         }});
     }
     private void download(final String url){
@@ -81,6 +90,8 @@ public final class WebBrowserActivity extends LeoActivity {
         options(L.t("Descarcă fișierul?"),new String[]{L.t("Anulează"),L.t("Descarcă")},new Choice(){public void pick(int index){if(index!=1)return;try{boolean wifi=getSharedPreferences("downloads",0).getBoolean("wifi",true);((DownloadManager)getSystemService(DOWNLOAD_SERVICE)).enqueue(DownloadsActivity.request(url,wifi));notice(L.t("Descărcare programată"));}catch(RuntimeException failed){notice(L.t("Descărcarea nu a putut fi programată"));}}});
     }
     protected void onResume(){super.onResume();if(web!=null){web.getSettings().setTextZoom(Math.round(zoom*Appearance.textScale(this)));web.onResume();}}
-    protected void onPause(){if(web!=null)web.onPause();super.onPause();}
+    public boolean dispatchKeyEvent(KeyEvent event){if(isJackNavigationNoise(event))return true;if(cursor!=null&&cursor.key(event))return true;return super.dispatchKeyEvent(event);}
+    public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(!focus&&cursor!=null)cursor.suspend();}
+    protected void onPause(){if(cursor!=null)cursor.suspend();if(web!=null)web.onPause();super.onPause();}
     protected void onDestroy(){if(web!=null){web.stopLoading();if(web.getParent() instanceof ViewGroup)((ViewGroup)web.getParent()).removeView(web);web.destroy();web=null;}super.onDestroy();}
 }

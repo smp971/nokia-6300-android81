@@ -70,7 +70,7 @@ public final class BrowserHubActivity extends LeoActivity {
     private void help(){
         list(L.t("Ajutor Browser"),Arrays.asList(L.t("Browser web\nPagini cu imagini în interfața KeyShell."),L.t("Opera Mini\nBrowser separat. Compatibilitatea depinde de versiunea instalată."),
             L.t("Adresă / căutare\nDeschide un site sau caută cuvintele introduse."),
-            L.t("Mouse din taste\nMeniu dedicat → Mouse din taste. D-pad mișcă, OK apasă, # închide cursorul."),
+            L.t("Cursor în pagină\nSăgețile mișcă, OK apasă. La margini derulează. # comută cursorul; în editor folosește Opțiuni → Cursor."),
             L.t("Mod text\nLinkuri și text mai mare, fără JavaScript.")),0,new Choice(){public void pick(int index){}},"",null);
         back=new Runnable(){public void run(){home();}};
     }

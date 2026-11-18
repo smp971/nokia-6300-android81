@@ -10,11 +10,21 @@ when returning to the hub.
 ## Graphical page
 
 The page uses shared KeyShell headers, address subtitle, progress, dialogs and
-softkeys. Options include address/search, reload, stop, text size, forward,
+softkeys. Options include cursor on/off, address/search, reload, stop, text size, forward,
 JavaScript on/off, text mode, help and close. Back follows page history.
-D-pad scrolls and selects where the page supports keyboard focus. The dedicated
-Menu exposes **Mouse din taste** for other controls: D-pad moves the pointer,
-OK clicks and `#` exits. Guidance stays inside Help.
+The graphical page starts with its own visible cursor. D-pad moves it, holding
+a direction accelerates it, and OK sends a single click on a complete uncanceled
+key release. Reaching an edge scrolls the page. `#` switches between cursor and
+normal keyboard navigation outside HTML text fields; **Options → Cursor** always
+provides the switch. Clicking a text field hides the cursor and returns focus to
+the WebView and keypad IME. The IME keeps its `#` mode shortcut while editing.
+Guidance stays inside Help.
+
+The pointer is a small page-local view, with no accessibility grant or global
+overlay required. It draws only when its position/mode changes and schedules
+movement only while a direction is held. Movement and pending touches stop when
+the window loses focus, the activity pauses or the view detaches. Cursor mode
+and relative position are saved with the page state.
 
 WebView runs in the existing `:webapps` process, keeping its runtime out of
 Home and sharing one WebView data directory on API 27. This does not loosen
@@ -62,11 +72,24 @@ of reusing its launcher alias.
 
 ## Validation
 
-The final KeyShell APK passed **188 daily UI checks**, **56 graphical browser
-checks**, **48 prior polish checks**, **72 theme checks**, and the physical
-keypad smoke. The host suite passed **69 checks**. The full Windows build
-compiled **279** sources; the DEX audit retained all **431** baseline dependency
-classes without duplicates.
+The cursor update passed **155 graphical browser checks** on the Nokia. These
+cover actual cursor clicks on links, canceled and held OK, normal navigation,
+edge scrolling and stopping after release, entering an HTML field with the keypad
+IME, and returning to the pointer through Options. The full Windows build
+compiled **280** sources; the DEX audit retained all **431** baseline dependency
+classes without additions or duplicates.
+
+Physical matrix-keypad scans also passed: left softkey opens the native address
+form/page, Right moves the cursor, OK follows a local HTTP link, Back restores the
+page, dedicated Menu opens/closes the global menu, `#` hides the cursor, and
+Options → Cursor restores it. External HTTPS rendered with the cursor visible.
+The standard Home/notifications/global-menu/Settings/tab smoke passed. Its first
+attempt hit the harness's six-second Home-start command limit; starting Home
+explicitly and rerunning completed all five routes.
+
+The preceding browser build (`03ccaac8…`) passed **188 daily UI checks**,
+**56 graphical browser checks**, **48 prior polish checks**, **72 theme checks**
+and the physical keypad smoke. Its host suite passed **69 checks**.
 
 The browser suite serves an isolated loopback HTTP fixture and checks actual
 JavaScript output, image load completion, a link, Back, disabling scripts and
@@ -85,7 +108,7 @@ python android81/smoke-leo-keypad.py --serial 695d
 ```
 
 Running KeyShell data update SHA-256:
-`03ccaac8f784f7f4ccd3b8a69ebc413018fa8b6f74e6459542c426791e246718`.
+`e19bdc76eeeda415920a33476a8bcea554112cc18538ed47e36efc658df63ee1`.
 The bundled system base is
 `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
 The previous private clean ROM predates the browser. Resource measurements in
@@ -97,6 +120,8 @@ do not measure the separate WebView process.
 | Browser hub | HTTPS page | Local image/JavaScript fixture |
 | --- | --- | --- |
 | ![Native browser hub](screenshots/browser/hub.png) | ![External HTTPS page](screenshots/browser/https.png) | ![Graphical browser fixture](screenshots/browser/fixture.png) |
+
+![Physical-key cursor trial](screenshots/browser/cursor.png)
 
 After temporary test packages were removed, Home, appearance, accessibility,
 notification-listener access and IME settings matched the initial snapshot.
