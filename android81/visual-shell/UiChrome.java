@@ -36,12 +36,15 @@ final class UiChrome {
     }
 
     static Drawable row(Appearance.Palette palette, int radius, int stripe) {
+        android.graphics.drawable.GradientDrawable fill=Appearance.surface(palette.selection,0);
+        fill.setStroke(Math.max(1,stripe),palette.accent);
         LayerDrawable selected = new LayerDrawable(new Drawable[]{
-            new ColorDrawable(palette.selection), new ColorDrawable(palette.accent)
+            fill, new ColorDrawable(palette.accent)
         });
         selected.setLayerWidth(1, Math.max(1, stripe) * 3);
         selected.setLayerGravity(1, Gravity.LEFT | Gravity.FILL_VERTICAL);
         StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{-android.R.attr.state_enabled},new ColorDrawable(palette.background));
         states.addState(new int[]{android.R.attr.state_selected}, selected);
         states.addState(new int[]{android.R.attr.state_focused}, selected);
         states.addState(new int[]{android.R.attr.state_pressed}, selected);
@@ -71,7 +74,7 @@ final class UiChrome {
 
     static void listRow(android.content.Context context,TextView row,Appearance.Palette palette) {
         float density=context.getResources().getDisplayMetrics().density;
-        row.setTextSize(19 * Appearance.textScale(context));
+        UiTypography.text(row,19);
         row.setMinHeight(Math.round(44*density));
         row.setMaxLines(3);
         row.setCompoundDrawablePadding(Math.round(12*density));
@@ -82,7 +85,8 @@ final class UiChrome {
     }
 
     static void field(EditText field, Appearance.Palette palette, int padding) {
-        field.setTextColor(Color.WHITE);
+        field.setTextColor(new ColorStateList(new int[][]{new int[]{-android.R.attr.state_enabled},new int[0]},
+            new int[]{palette.secondary(),Color.WHITE}));
         field.setHintTextColor(palette.secondary());
         field.setHighlightColor(Appearance.mix(palette.card, palette.accent, .45f));
         field.setBackground(Appearance.fieldSurface(palette, padding));
@@ -93,10 +97,11 @@ final class UiChrome {
         if (view instanceof EditText) field((EditText) view, palette, padding);
         else if (view instanceof CompoundButton) {
             CompoundButton button = (CompoundButton) view;
-            button.setTextColor(Color.WHITE);
+            button.setTextColor(textColors(palette));
+            button.setBackground(row(palette,0,Math.max(1,padding/8)));
             button.setButtonTintList(new ColorStateList(new int[][]{
-                new int[]{android.R.attr.state_checked}, new int[0]
-            }, new int[]{palette.accent, palette.secondary()}));
+                new int[]{-android.R.attr.state_enabled},new int[]{android.R.attr.state_checked}, new int[0]
+            }, new int[]{palette.secondary(),palette.accent, palette.secondary()}));
         } else if (view instanceof Button) {
             ((Button) view).setTextColor(textColors(palette));
             view.setBackground(row(palette, 0, Math.max(1, padding / 8)));
@@ -120,7 +125,9 @@ final class UiChrome {
         surface.setLayerHeight(1, line * (active ? 3 : 1));
         surface.setLayerGravity(1, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
         StateListDrawable states = new StateListDrawable();
-        states.addState(new int[]{android.R.attr.state_focused}, new ColorDrawable(palette.selection));
+        android.graphics.drawable.GradientDrawable focus=Appearance.surface(palette.selection,0);
+        focus.setStroke(Math.max(1,line)*2,palette.accent);
+        states.addState(new int[]{android.R.attr.state_focused}, focus);
         states.addState(new int[0], surface);
         tab.setBackground(states);
         tab.setTextColor(new ColorStateList(new int[][]{
@@ -129,6 +136,10 @@ final class UiChrome {
     }
 
     static void header(Canvas canvas, String title, Appearance.Palette palette, Paint paint) {
+        header(canvas,title,palette,paint,1f);
+    }
+
+    static void header(Canvas canvas,String title,Appearance.Palette palette,Paint paint,float scale) {
         Typeface previous = paint.getTypeface();
         paint.setShader(null);
         paint.setStyle(Paint.Style.FILL);
@@ -136,9 +147,11 @@ final class UiChrome {
         canvas.drawRect(0, 0, 240, HEADER_DP, paint);
         paint.setTypeface(TITLE);
         paint.setTextAlign(Paint.Align.LEFT);
-        paint.setTextSize(22);
+        paint.setTextSize(22*scale);
         paint.setColor(Color.WHITE);
-        canvas.drawText(KeypadText.fit(paint, title, 216), 12, 26, paint);
+        Paint.FontMetrics metrics=paint.getFontMetrics();
+        canvas.drawText(KeypadText.fit(paint, title, 216), 12,
+            (HEADER_DP-metrics.ascent-metrics.descent)/2,paint);
         paint.setTypeface(previous);
     }
 }

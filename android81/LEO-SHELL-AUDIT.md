@@ -20,6 +20,11 @@ recovery were added in earlier batches; their old findings below describe the
 baseline, rather than the current implementation. The Companion transfer
 boundary requires its own follow-up.
 
+The [21 November shell update](SHELL-SIX-OPTIMIZATIONS.md) adds scale-aware Canvas
+tools, incremental status rows, UI memory-pressure handling and self-update
+journal recovery. Its app install/rollback trial supersedes the historical
+unverified UI-update entry below; it does not validate a recovery/ROM flash.
+
 | Priority | Finding and impact | First corrective step |
 | --- | --- | --- |
 | P1 | **Public Home can execute an internal action.** The [exported Home declaration](visual-shell/AndroidManifest.xml#L48) accepts `open_app` in both [creation](visual-shell/MainActivity.java#L66) and [intent reuse](visual-shell/MainActivity.java#L125). An external app that can start an activity can explicitly target Home with ID 18. The route opens `KeypadLockActivity`, whose [creation writes the lock preference](visual-shell/KeypadLockActivity.java#L42). This is an unauthorized Leo action, with local disruption. Verified by source trace. | Separate internal commands from the public Home entry. Test ordinary Android Home and legitimate shortcuts, plus rejection of an unsolicited lock command. Check the other internal flags at the same boundary. |

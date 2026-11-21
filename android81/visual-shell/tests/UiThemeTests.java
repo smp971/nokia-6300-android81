@@ -105,7 +105,7 @@ public final class UiThemeTests extends Instrumentation {
         Bitmap image = Bitmap.createBitmap(100, 48, Bitmap.Config.ARGB_8888);
         try {
             drawable.setBounds(0, 0, 100, 48);
-            drawable.setState(selected ? new int[]{android.R.attr.state_selected} : new int[0]);
+            drawable.setState(selected ? new int[]{android.R.attr.state_enabled,android.R.attr.state_selected} : new int[]{android.R.attr.state_enabled});
             drawable.draw(new Canvas(image));
             return image.getPixel(50, 24);
         } finally { image.recycle(); }

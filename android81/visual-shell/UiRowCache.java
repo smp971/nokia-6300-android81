@@ -6,4 +6,5 @@ final class UiRowCache {
  int builds;
  CharSequence get(String value){value=UiText.row(value);CharSequence hit=rows.get(value);if(hit!=null)return hit;SpannableString styled=new SpannableString(value);int split=value.indexOf('\n');if(split>=0&&split<value.length()-1){styled.setSpan(new RelativeSizeSpan(.82f),split+1,value.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);styled.setSpan(new StyleSpan(android.graphics.Typeface.BOLD),0,split,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);}rows.put(value,styled);builds++;return styled;}
  int size(){return rows.size();}
+ void clear(){rows.clear();}
 }

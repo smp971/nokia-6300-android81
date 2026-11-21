@@ -147,7 +147,7 @@ and the Battery UI before handing cable control to the user.
 
 ### Artifacts
 
-Running **data-update** APK SHA-256:
+Browser-feature **data-update** APK verified for this report:
 `c9a9822938f9e269162f9c23f76d1bf2f141bd4911aa3238578254758d064dbf`.
 Bundled system base SHA-256:
 `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
@@ -156,8 +156,10 @@ The source also clarifies the Battery Help wording: USB-armed trials save at
 reconnect, while manually started legacy trials must be stopped before charging.
 This help-text-only follow-up built and passed the same DEX/signature audit as
 `a7a094767c35ef6526bbc4a0d1d2333f707737706e173f061bb51b5b092bef52`.
-Its deployment is deferred while the handset's physical trial is armed, keeping
-the measurement build stable until the cable trial is complete.
+It was not installed during this browser measurement batch. The cable trial
+never started before the later shell work; the [21 November shell update](SHELL-SIX-OPTIMIZATIONS.md)
+includes the clarified wording and records the newly installed APK. The still
+armed physical trial will therefore measure that newer build when unplugged.
 
 | Hub with Continue | Contextual search editor | Cursor speeds |
 | --- | --- | --- |

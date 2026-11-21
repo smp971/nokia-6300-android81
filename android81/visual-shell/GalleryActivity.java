@@ -58,7 +58,7 @@ public final class GalleryActivity extends LeoActivity {
         grid();
     }
     private void caption(){headingTitle(L.t(viewer?"Imagine":"Galerie")+" · "+(images.isEmpty()?"0":(selected+1)+" / "+images.size()));if(caption!=null)caption.setText(images.isEmpty()?L.t("Nicio imagine în acest album"):names.get(selected));}
-    private void clearImages() { if(photo!=null) { photo.recycle(); photo=null; } thumbs.clear(); }
+    private void clearImages() {photo=null;thumbs.clear();}
     private void grid() {
         stopSlides();viewer=false; zoom=1; generation++; clearImages(); begin(L.t("Galerie")+" · "+(images.isEmpty()?"0":(selected+1)+" / "+images.size()));caption=subtitle("");caption(); face=new Face(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1));
         left=new Runnable() { public void run() { if(images.isEmpty()) load(); else imageOptions(); } }; footer(L.t("Opțiuni"),L.t("Deschide"),L.t("Înapoi"));
@@ -74,15 +74,32 @@ public final class GalleryActivity extends LeoActivity {
     }
     private void open() {
         if((getIntent().getBooleanExtra("contact_photo",false)||getIntent().getBooleanExtra("pick_image",false))&&!images.isEmpty()){setResult(RESULT_OK,new Intent().setData(images.get(selected)));finish();return;}
-        if(images.isEmpty()) return; slides.removeCallbacks(advance);viewer=true;loadingPhoto=true; zoom=1;rotation=0;panX=panY=0; final int token=++generation; if(photo!=null) { photo.recycle(); photo=null; }
+        if(images.isEmpty()) return; slides.removeCallbacks(advance);viewer=true;zoom=1;rotation=0;panX=panY=0;photo=null;
         begin(L.t("Imagine")+" · "+(selected+1)+" / "+images.size());caption=subtitle(names.get(selected)); face=new Face(); root.addView(face,new LinearLayout.LayoutParams(-1,0,1)); left=new Runnable() { public void run() { imageOptions(); } };
         back=new Runnable() { public void run() { if(getIntent().getBooleanExtra("quick_review",false))finish();else grid(); } }; footer(L.t("Opțiuni"),"Zoom",getIntent().getBooleanExtra("quick_review",false)?L.t("Înapoi"):L.t("Grilă")); face.setFocusableInTouchMode(true); face.requestFocus();
-        final Uri uri=images.get(selected);
+        decodePhoto();
+    }
+    private void decodePhoto(){
+        loadingPhoto=true;final int token=++generation;final Uri uri=images.get(selected);
         worker.execute(new Runnable() { public void run() { Bitmap result=null; try { result=Appearance.decode(GalleryActivity.this,uri,640); } catch(Exception|OutOfMemoryError ignored) { }
             final Bitmap loaded=result; runOnUiThread(new Runnable() { public void run() { if(closed||token!=generation) { if(loaded!=null) loaded.recycle(); return; } photo=loaded;loadingPhoto=false; face.invalidate();if(slideshow)slides.postDelayed(advance,getSharedPreferences("gallery",0).getInt("interval",5)*1000L); if(loaded==null) notice(L.t("Imaginea nu poate fi decodată")); } });
         }});
     }
     private void stopSlides(){slideshow=false;slides.removeCallbacks(advance);}
+    protected void onResume(){
+        super.onResume();
+        if(face!=null&&!images.isEmpty()){
+            if(viewer&&photo==null&&!loadingPhoto)decodePhoto();
+            else if(!viewer&&thumbs.isEmpty())thumbnails();
+        }
+    }
+    void onAppearanceChanged(){if(face!=null){face.labels.appearance();face.invalidate();}}
+    void onUiMemoryTrim(int level){
+        thumbnailCache.evictAll();
+        if(face!=null&&!uiActive){
+            generation++;loadingPhoto=false;photo=null;thumbs.clear();stopSlides();
+        }
+    }
     private void share(){if(images.isEmpty())return;stopSlides();ShareHubActivity.send(this,images.get(selected),"image/*",names.get(selected));}
 
     private void imageOptions() {

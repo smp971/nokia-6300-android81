@@ -73,6 +73,28 @@ def resumed():
     return name.group(1) if name else ""
 
 
+def parse_focused_window(raw):
+    found = re.search(r"mCurrentFocus=(Window\{[^\n]+\})", raw)
+    if not found:
+        return "", None
+    current = found.group(1)
+    for entry in re.finditer(r"(?m)^\s*Window #\d+ (Window\{[^\n]+\}):", raw):
+        if entry.group(1) == current:
+            block = re.split(r"(?m)^\s*Window #", raw[entry.end():], maxsplit=1)[0]
+            kind = re.search(r"\bty=(\d+)\b", block)
+            return current, int(kind.group(1)) if kind else None
+    return current, None
+
+
+def focused_window():
+    return parse_focused_window(shell("dumpsys window windows"))
+
+
+def home_focused():
+    current, kind = focused_window()
+    return resumed() in HOME_ACTIVITIES and PACKAGE in current and kind == 1
+
+
 def pref(file, name, default=None):
     line = shell(f"""grep -F 'name="{name}"' {PREFS}/{file}.xml 2>/dev/null || true""")
     if not line:
@@ -88,13 +110,19 @@ def show_home():
     shell("input keyevent 224; wm dismiss-keyguard; input keyevent 3; "
           "am start -W -a android.intent.action.MAIN -c android.intent.category.HOME")
     wait_for(lambda: resumed() in HOME_ACTIVITIES, "Leo is not the active Home.")
-    return wait_for(lambda: (window := focus()) and PACKAGE + "/" in window and window,
-                    "Unlock the Nokia first.")
+    for _ in range(3):
+        current, kind = focused_window()
+        if kind == 1 or PACKAGE not in current:
+            break
+        press(BACK)
+    wait_for(home_focused, "Unlock the Nokia first.")
+    return focus()
 
 
 def overlay_after(original):
-    current = focus()
-    return current if current != original and PACKAGE in current else ""
+    current, kind = focused_window()
+    # An Activity Dialog (2) may have exactly the same title as its owning Home (1).
+    return current if current != original and PACKAGE in current and kind in {2, 2032} else ""
 
 
 def menu_pins():
@@ -136,6 +164,12 @@ def preflight():
     states = re.findall(r"mCallState=(\d+)", shell("dumpsys telephony.registry | grep mCallState"))
     require(states and set(states) == {"0"}, "Leave calls idle for the keypad smoke test.")
     require(pref("keyguard", "locked") != "true", "Unlock Leo before the keypad smoke test.")
+    enabled = shell("settings get secure enabled_accessibility_services").split(":")
+    require(any(value in enabled for value in (PACKAGE + "/.LeoPointerService",
+            PACKAGE + "/" + PACKAGE + ".LeoPointerService")),
+            "Restore the existing keypad accessibility grant before this test; force-stop removes it.")
+    require(shell("settings get secure accessibility_enabled") == "1",
+            "Accessibility must be enabled for the dedicated global Menu key.")
 
 
 def smoke(home):
@@ -144,14 +178,14 @@ def smoke(home):
     wait_for(lambda: overlay_after(home) and resumed() in HOME_ACTIVITIES, "OK did not reach the app menu and Options.")
     print("PASS: Home OK opens apps, and the left softkey opens app options.", flush=True)
     press(BACK)
-    wait_for(lambda: focus() == home, "Dedicated Back did not dismiss app options.")
+    wait_for(home_focused, "Dedicated Back did not dismiss app options.")
     press(BACK)
     press(SOFT_LEFT)
     wait_for(lambda: "StatusBar" in focus() or resumed() == NOTIFICATIONS,
              "Dedicated Back did not return to the Home notification shortcut.")
     print("PASS: Dedicated Back returns to Home, where the left softkey opens notifications.", flush=True)
     press(BACK)
-    wait_for(lambda: focus() == home and resumed() in HOME_ACTIVITIES, "Notifications did not close.")
+    wait_for(home_focused, "Notifications did not close.")
 
     pins = menu_pins()
     press(MENU)
@@ -194,7 +228,7 @@ def main():
     finally:
         try:
             foreground = resumed()
-            if foreground in HOME_ACTIVITIES and focus() != home:
+            if foreground in HOME_ACTIVITIES and not home_focused():
                 press(BACK)
             if foreground in HOME_ACTIVITIES | {SETTINGS, NOTIFICATIONS}:
                 show_home()

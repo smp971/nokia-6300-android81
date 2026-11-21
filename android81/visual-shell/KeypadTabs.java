@@ -17,8 +17,7 @@ final class KeypadTabs {
             TextView tab=(TextView)bar.getChildAt(index);
             boolean active=index==1;
             tab.setHorizontallyScrolling(false);
-            tab.setAutoSizeTextTypeUniformWithConfiguration(active?15:12,
-                Math.round((active?19:15)*scale),1,android.util.TypedValue.COMPLEX_UNIT_SP);
+            UiTypography.fit(tab,active?15:12,active?19:15);
             tab.getLayoutParams().height=owner.dp(40);
             tab.setPadding(owner.dp(2),0,owner.dp(2),owner.dp(3));
             if(active){
@@ -33,7 +32,7 @@ final class KeypadTabs {
         for(int i=0;i<labels.length;i++){
             final int index=i;TextView tab=owner.text(labels[i],13);tab.setPadding(0,0,0,0);tab.setGravity(Gravity.CENTER);tab.setSingleLine();tab.setEllipsize(android.text.TextUtils.TruncateAt.END);tab.setFocusableInTouchMode(true);
             tab.setSelected(i==selected);
-            tab.setTextSize((i==selected?19:16)*Appearance.textScale(owner));
+            UiTypography.text(tab,i==selected?19:16);
             UiChrome.tab(tab,owner.palette,i==selected,owner.dp(1));
             tab.setOnClickListener(new View.OnClickListener(){public void onClick(View v){choose.pick(index);}});
             tab.setOnTouchListener(new View.OnTouchListener(){public boolean onTouch(View v,MotionEvent e){int action=e.getActionMasked();if(action==MotionEvent.ACTION_DOWN){v.requestFocus();v.setPressed(true);return true;}if(action==MotionEvent.ACTION_UP){v.setPressed(false);if(e.getX()>=0&&e.getX()<v.getWidth()&&e.getY()>=0&&e.getY()<v.getHeight())v.performClick();return true;}if(action==MotionEvent.ACTION_CANCEL)v.setPressed(false);return true;}});

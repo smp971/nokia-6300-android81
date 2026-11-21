@@ -102,7 +102,7 @@ public final class GlobalSearchActivity extends LeoActivity {
     return true;
    }
   };
-  query.setTextSize(18 * Appearance.textScale(this));
+  UiTypography.text(query,18);
   query.setSingleLine(true);
   query.setTextColor(android.graphics.Color.WHITE);
   query.setHintTextColor(palette.secondary());

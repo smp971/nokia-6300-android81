@@ -127,13 +127,15 @@ python android81/framework-command.py --timeout 180 /system/bin/am instrument -w
 python android81/smoke-leo-keypad.py --serial 695d
 ```
 
-Running KeyShell data update SHA-256:
+KeyShell browser-feature APK used for the browser checks above:
 `c9a9822938f9e269162f9c23f76d1bf2f141bd4911aa3238578254758d064dbf`.
 The bundled system base is
 `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
 The previous private clean ROM predates the browser. Resource measurements in
 [the daily UI report](DAILY-UI-POLISH.md) refer to the preceding UI batch and
 do not measure the separate WebView process.
+The [21 November shell report](SHELL-SIX-OPTIMIZATIONS.md) records the newer
+installed APK, UI refinements and current normal-service resource samples.
 
 ## Screenshots
 

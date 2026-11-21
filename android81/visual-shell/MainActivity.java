@@ -53,12 +53,12 @@ public final class MainActivity extends Activity {
         handler.removeCallbacks(refresh);
         handler.post(refresh);
     }
-    private final Runnable clock = new Runnable() {
-        public void run() {
+    private final ScreenTicker clock = new ScreenTicker(this,new ScreenTicker.Work() {
+        public long refresh() {
             if (!screen.grid) screen.refresh();
-            handler.postDelayed(this,android.os.SystemClock.elapsedRealtime()<180000&&(!screen.inService[0]||!screen.inService[1])?2000:60000-System.currentTimeMillis()%60000);
+            return android.os.SystemClock.elapsedRealtime()<180000&&(!screen.inService[0]||!screen.inService[1])?2000:60000-System.currentTimeMillis()%60000;
         }
-    };
+    });
     public void onCreate(Bundle state) {
         super.onCreate(state);
         setIntent(HomeAccess.sanitize(getIntent()));
@@ -94,10 +94,10 @@ public final class MainActivity extends Activity {
         try { subscriptions.addOnSubscriptionsChangedListener(subscriptionListener); }
         catch (RuntimeException ignored) { }
         listenToPhones();
-        handler.removeCallbacks(clock); handler.post(clock);
+        clock.start();
     }
     protected void onPause() {homeVisible=false;favoriteGeneration++;
-        handler.removeCallbacks(clock);handler.removeCallbacks(refresh);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
+        clock.stop();handler.removeCallbacks(refresh);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
         for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();

@@ -7,11 +7,15 @@ import android.os.*;
 import java.io.*;
 
 public final class RecordingService extends Service implements AudioManager.OnAudioFocusChangeListener {
+    static final String CHANGED="ro.leo.visual.RECORDING_CHANGED";
     static RecordingService instance;static String state=L.t("Oprit");static long started,pausedAt,pausedTotal;static boolean paused;
     private MediaRecorder recorder;private File partial,complete;private AudioManager audio;private boolean startedRecorder;
     public IBinder onBind(Intent intent){return null;}
     public void onCreate(){super.onCreate();instance=this;audio=(AudioManager)getSystemService(AUDIO_SERVICE);}
     public int onStartCommand(Intent intent,int flags,int id){
+        try{return handleStart(intent);}finally{changed();}
+    }
+    private int handleStart(Intent intent){
         String action=intent==null?"stop":intent.getAction();
         if("stop".equals(action)){finish(true);stopSelf();return START_NOT_STICKY;}
         if("pause".equals(action)){toggle();return START_NOT_STICKY;}
@@ -43,5 +47,6 @@ public final class RecordingService extends Service implements AudioManager.OnAu
         paused=false;
     }
     public void onAudioFocusChange(int focus){if(focus<=0){finish(true);stopSelf();}}
-    public void onDestroy(){finish(true);audio.abandonAudioFocus(this);stopForeground(true);instance=null;super.onDestroy();}
+    private void changed(){sendBroadcast(new Intent(CHANGED).setPackage(getPackageName()));}
+    public void onDestroy(){finish(true);audio.abandonAudioFocus(this);stopForeground(true);instance=null;changed();super.onDestroy();}
 }

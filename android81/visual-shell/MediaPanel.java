@@ -84,7 +84,7 @@ final class MediaPanel {
         c.scale(width / 240f, height / (s.internet || s.bodyOnly ? 240f : 302f));
         if (s.internet || s.bodyOnly) c.translate(0, -40);
         c.drawColor(palette.background);
-        if (!s.internet && !s.bodyOnly) UiChrome.header(c, s.heading, palette, paint);
+        if (!s.internet && !s.bodyOnly) UiChrome.header(c, s.heading, palette, paint,labels.scale());
         if (s.showSources) {
             source(c, L.t("MUZICĂ"), 12, !s.radio, palette);
             source(c, "RADIO FM", 124, s.radio, palette);

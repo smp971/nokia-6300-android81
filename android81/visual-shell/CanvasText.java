@@ -12,6 +12,7 @@ final class CanvasText {
     private float scale;
     CanvasText(Context context,Paint paint){this.context=context;this.paint=paint;appearance();}
     void appearance(){scale=Appearance.textScale(context);}
+    float scale(){return scale;}
     void prepare(int size,int color,Paint.Align align){
         paint.setTypeface(Typeface.DEFAULT);paint.setShader(null);paint.setStyle(Paint.Style.FILL);
         paint.setTextSize(size*scale);paint.setTextAlign(align);paint.setColor(color);

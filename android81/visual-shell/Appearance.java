@@ -73,7 +73,7 @@ final class Appearance {
     static int mix(int a,int b,float f){return Color.rgb((int)(Color.red(a)*(1-f)+Color.red(b)*f),(int)(Color.green(a)*(1-f)+Color.green(b)*f),(int)(Color.blue(a)*(1-f)+Color.blue(b)*f));}
     static android.graphics.drawable.GradientDrawable surface(int color,int radius){android.graphics.drawable.GradientDrawable d=new android.graphics.drawable.GradientDrawable();d.setColor(color);d.setCornerRadius(Math.min(radius,10));return d;}
     static android.graphics.drawable.StateListDrawable fieldSurface(Palette p,int radius){
-        android.graphics.drawable.GradientDrawable focus=surface(p.card,radius);focus.setStroke(2,p.accent);
+        android.graphics.drawable.GradientDrawable focus=surface(p.card,radius);focus.setStroke(3,p.accent);
         android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();states.addState(new int[]{android.R.attr.state_focused},focus);states.addState(new int[]{},surface(p.card,radius));return states;
     }
     static Bitmap decode(Context context,Uri uri,int bound) throws IOException {

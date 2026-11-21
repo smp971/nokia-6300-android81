@@ -23,6 +23,14 @@ final class KeypadText {
         return new String[]{text.substring(0, cut), fit(paint, text.substring(cut).trim(), width)};
     }
 
+    static String tail(Paint paint,String value,float width){
+        if(paint.measureText(value)<=width)return value;
+        float available=width-paint.measureText("…");if(available<=0)return "";
+        int count=paint.breakText(value,false,available,null),start=value.length()-count;
+        if(start<value.length()&&Character.isLowSurrogate(value.charAt(start)))start++;
+        return "…"+value.substring(start);
+    }
+
     private static int cut(Paint paint, String value, float width) {
         int end = paint.breakText(value, true, width, null);
         if (end > 0 && end < value.length() && Character.isHighSurrogate(value.charAt(end - 1))) end--;

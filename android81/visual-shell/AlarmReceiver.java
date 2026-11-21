@@ -8,6 +8,12 @@ public final class AlarmReceiver extends BroadcastReceiver {
     public void onReceive(Context context,Intent intent) {
         try {
             String action=intent.getAction();
+            if(Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)){
+                final PendingResult pending=goAsync();final Context app=context.getApplicationContext();
+                new Thread(new Runnable(){public void run(){try{UpdateRecovery.reconcile(app,true);}
+                    catch(Exception failure){FaultLedger.record(app,"Update replacement",failure);}
+                    finally{pending.finish();}}},"KeyShellUpdateReplacement").start();
+            }
             if(Intent.ACTION_BOOT_COMPLETED.equals(action) || Intent.ACTION_TIME_CHANGED.equals(action) || Intent.ACTION_TIMEZONE_CHANGED.equals(action) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
                 LeoApplication.repairKeys(context,false);LeoNotificationService.ensure(context);try{AutomationRules.sync(context);}catch(RuntimeException e){FaultLedger.record(context,"Automations",e);}AlarmScheduler.restore(context);CalendarReminders.schedule(context);try{SoundSchedule.sync(context);}catch(RuntimeException e){FaultLedger.record(context,"SoundSchedule",e);}return;
             }

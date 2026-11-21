@@ -20,17 +20,21 @@ public final class QuickSettingsActivity extends LeoActivity {
         volumePage=false;
         final WifiManager wifi=(WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);final BluetoothAdapter bt=BluetoothAdapter.getDefaultAdapter();
         int w=wifi.getWifiState(),b=bt==null?BluetoothAdapter.ERROR:bt.getState();
-        String ws=w==WifiManager.WIFI_STATE_ENABLED?L.t("Pornit"):w==WifiManager.WIFI_STATE_DISABLED?L.t("Oprit"):L.t("În schimbare");
-        String bs=b==BluetoothAdapter.STATE_ON?L.t("Pornit"):b==BluetoothAdapter.STATE_OFF?L.t("Oprit"):bt==null?L.t("Lipsă"):L.t("În schimbare");
-        AudioManager audio=(AudioManager)getSystemService(AUDIO_SERVICE);int r=audio.getRingerMode();
+        String ws=wifiState(w),bs=bt==null?L.t("Lipsă"):bluetoothState(b);
         int brightness=Settings.System.getInt(getContentResolver(),Settings.System.SCREEN_BRIGHTNESS,128);
-        list(L.t("Configurări rapide"),Arrays.asList("Wi-Fi · "+ws,"Bluetooth · "+bs,"Hotspot Wi-Fi",L.t("Sunet · ")+SoundProfiles.current(this),L.t("Luminozitate · ")+Math.round(brightness*100f/255)+"%",L.t("SIM-uri și date mobile"),L.t("Volum · muzică, sonerie, alarmă, apel")),quickSelected,new Choice(){public void pick(int i){
+        List<String> rows=Arrays.asList("Wi-Fi · "+ws,"Bluetooth · "+bs,"Hotspot Wi-Fi",L.t("Sunet · ")+SoundProfiles.current(this),L.t("Luminozitate · ")+Math.round(brightness*100f/255)+"%",L.t("SIM-uri și date mobile"),L.t("Volum · muzică, sonerie, alarmă, apel"));
+        if(replaceRows(L.t("Configurări rapide"),rows))return;
+        list(L.t("Configurări rapide"),rows,quickSelected,new Choice(){public void pick(int i){
             if(i==0){int state=wifi.getWifiState();if(state!=WifiManager.WIFI_STATE_ENABLED&&state!=WifiManager.WIFI_STATE_DISABLED){notice(L.t("Așteaptă schimbarea Wi-Fi"));return;}try{if(!wifi.setWifiEnabled(state!=WifiManager.WIFI_STATE_ENABLED))notice(L.t("Wi-Fi nu acceptă schimbarea"));}catch(RuntimeException e){notice(L.t("Wi-Fi indisponibil"));}}
             else if(i==1){if(bt==null)return;int state=bt.getState();if(state!=BluetoothAdapter.STATE_ON&&state!=BluetoothAdapter.STATE_OFF){notice(L.t("Așteaptă schimbarea Bluetooth"));return;}try{if(!(state==BluetoothAdapter.STATE_ON?bt.disable():bt.enable()))notice(L.t("Bluetooth nu acceptă schimbarea"));}catch(RuntimeException e){notice(L.t("Bluetooth indisponibil"));}}
             else if(i==2)startActivity(new Intent(QuickSettingsActivity.this,ConnectivityActivity.class).putExtra("kind","hotspot"));
             else if(i==3)profiles();else if(i==4)brightness();else if(i==5)startActivity(new Intent(QuickSettingsActivity.this,MobileSettingsActivity.class));else volumes(0);
         }},L.t("Detalii Wi-Fi"),new Runnable(){public void run(){startActivity(new Intent(QuickSettingsActivity.this,ConnectivityActivity.class).putExtra("kind","wifi"));}});
     }
+    static String wifiState(int state){switch(state){case WifiManager.WIFI_STATE_ENABLED:return L.t("Pornit");case WifiManager.WIFI_STATE_DISABLED:return L.t("Oprit");case WifiManager.WIFI_STATE_ENABLING:return L.t("Se pornește…");case WifiManager.WIFI_STATE_DISABLING:return L.t("Se oprește…");default:return L.t("Indisponibil");}}
+    static String bluetoothState(int state){switch(state){case BluetoothAdapter.STATE_ON:return L.t("Pornit");case BluetoothAdapter.STATE_OFF:return L.t("Oprit");case BluetoothAdapter.STATE_TURNING_ON:return L.t("Se pornește…");case BluetoothAdapter.STATE_TURNING_OFF:return L.t("Se oprește…");default:return L.t("Indisponibil");}}
+    String rowMemoryKey(String title,int at,String label){return title+":"+at;}
+    boolean stableRowIcons(){return true;}
     android.graphics.drawable.Drawable rowIcon(String title,int index){return new QuickIcon(title.startsWith(L.t("Volum"))?6:index,dp(29));}
     void onListSelection(String title,int index){if(title.startsWith(L.t("Volum")))volumeSelected=index;else if(title.equals(L.t("Configurări rapide")))quickSelected=index;}
     private void volumes(int selected){volumePage=true;volumeSelected=selected;final AudioManager audio=(AudioManager)getSystemService(AUDIO_SERVICE);String[] names={L.t("Muzică"),L.t("Sonerie"),L.t("Alarmă"),L.t("Apel")};ArrayList<String> labels=new ArrayList<String>();for(int i=0;i<streams.length;i++)labels.add(names[i]+" · "+audio.getStreamVolume(streams[i])+" / "+audio.getStreamMaxVolume(streams[i]));if(replaceRows(L.t("Volum · ← / → nivel"),labels))return;list(L.t("Volum · ← / → nivel"),labels,selected,new Choice(){public void pick(final int slot){int max=audio.getStreamMaxVolume(streams[slot]);String[] levels=new String[max+1];for(int n=0;n<=max;n++)levels[n]=L.t("Nivel ")+n+" / "+max;options(L.t("Volum ")+new String[]{L.t("muzică"),L.t("sonerie"),L.t("alarmă"),L.t("apel")}[slot],levels,new Choice(){public void pick(int value){try{audio.setStreamVolume(streams[slot],value,0);}catch(RuntimeException e){notice(L.t("Nivelul nu poate fi schimbat"));}volumes(slot);}});}},L.t("Înapoi"),new Runnable(){public void run(){show();}});back=new Runnable(){public void run(){show();}};}

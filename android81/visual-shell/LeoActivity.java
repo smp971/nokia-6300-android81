@@ -16,13 +16,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** Common keypad lists/forms for the system applications. */
-abstract class LeoActivity extends Activity {
+abstract class LeoActivity extends Activity implements UiMemory.Client {
     interface Choice { void pick(int index); }
     final ExecutorService worker=Executors.newSingleThreadExecutor();
     LinearLayout root;
     Runnable left,back;
     boolean form;
     Appearance.Palette palette;
+    volatile boolean uiActive;
+    private float textScale;
     private LinearLayout softkeyBar;
     private ListView activeList;private final UiRowCache rowCache=new UiRowCache();private final UiListMemory listMemory=new UiListMemory();
     private String listTitle,listBookmarkTitle;private java.util.ArrayList<String> listRows,listMemoryKeys;private BaseAdapter listAdapter;
@@ -33,26 +35,34 @@ abstract class LeoActivity extends Activity {
     private static final class RowAppearance {
         final int index;
         final Appearance.Palette palette;
-        RowAppearance(int index,Appearance.Palette palette){this.index=index;this.palette=palette;}
+        final float scale;
+        RowAppearance(int index,Appearance.Palette palette,float scale){this.index=index;this.palette=palette;this.scale=scale;}
     }
     protected void onCreate(Bundle state) {
         super.onCreate(state); palette=Appearance.palette(this);SystemChrome.apply(this,palette);
+        textScale=Appearance.textScale(this);UiMemory.register(this);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
     protected void onResume(){
         super.onResume();
+        uiActive=true;
         // Camera and browser pages also run in separate app processes.
         getSharedPreferences("appearance",MODE_MULTI_PROCESS);
+        getSharedPreferences("accessibility",MODE_MULTI_PROCESS);
         Appearance.Palette previous=palette;
         palette=Appearance.palette(this);
         SystemChrome.apply(this,palette);
-        if(!Appearance.samePalette(previous,palette)){
+        float nextScale=Appearance.textScale(this);
+        boolean scaleChanged=textScale!=nextScale;textScale=nextScale;
+        if(!Appearance.samePalette(previous,palette)||scaleChanged){
             refreshAppearance();
+            if(root!=null)UiTypography.refresh(root,textScale);
             onAppearanceChanged();
             getWindow().getDecorView().invalidate();
         }
         if(listPosition!=null&&activeList!=null&&listRows!=null)listPosition.position(activeList.getSelectedItemPosition(),listRows.size());
         ContextHelp.current=new java.lang.ref.WeakReference<LeoActivity>(this);
+        refreshRows();
     }
     void onAppearanceChanged(){}
     private void refreshAppearance(){
@@ -84,11 +94,13 @@ abstract class LeoActivity extends Activity {
         center.setBackground(highlight?Appearance.surface(Appearance.mix(palette.bar,palette.accent,.12f),dp(5)):null);
     }
     String helpControls(){if(softkeyBar==null)return "";StringBuilder out=new StringBuilder();for(int n=0;n<softkeyBar.getChildCount();n++){String value=((TextView)softkeyBar.getChildAt(n)).getText().toString();if(!value.isEmpty())out.append(n==0?L.t("Stânga · "):n==1?"OK · ":L.t("Dreapta · ")).append(value).append("\n");}return out.toString().trim();}
-    protected void onPause(){softkeyRelease.reset();rememberList();if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
-    protected void onDestroy() { worker.shutdownNow(); super.onDestroy(); }
+    protected void onPause(){uiActive=false;softkeyRelease.reset();rememberList();if(activeList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),activeList.getSelectedItemPosition());super.onPause();}
+    protected void onDestroy() {UiMemory.unregister(this);rowCache.clear();worker.shutdownNow();super.onDestroy();}
+    public void trimUiMemory(int level){rowCache.clear();onUiMemoryTrim(level);}
+    void onUiMemoryTrim(int level){}
     int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     TextView text(String value,int size) {
-        TextView view=new TextView(this); view.setText(value); view.setTextSize(size*Appearance.textScale(this));
+        TextView view=new TextView(this); view.setText(value);UiTypography.text(view,size);
         view.setTextColor(Color.WHITE); view.setPadding(dp(8),dp(4),dp(8),dp(4)); return view;
     }
     private void rememberList(){listMemory.remember(listBookmarkTitle,listMemoryKeys,activeList);}
@@ -128,7 +140,7 @@ abstract class LeoActivity extends Activity {
             if(!TextUtils.equals(label.getText(),values[i]))label.setText(values[i]);
             if(attach){label.setSingleLine(true);label.setEllipsize(TextUtils.TruncateAt.END);
             label.setPadding(dp(5),0,dp(5),0);
-            label.setAutoSizeTextTypeUniformWithConfiguration(9,Math.round(12*Appearance.textScale(this)),1,android.util.TypedValue.COMPLEX_UNIT_SP);
+            UiTypography.fit(label,9,12);
             label.setTypeface(UiChrome.TITLE);
             label.setGravity(i==0?Gravity.LEFT|Gravity.CENTER_VERTICAL:i==1?Gravity.CENTER:Gravity.RIGHT|Gravity.CENTER_VERTICAL);
             if(attach)bar.addView(label,new LinearLayout.LayoutParams(0,dp(UiChrome.FOOTER_DP),1));
@@ -165,11 +177,13 @@ abstract class LeoActivity extends Activity {
                 }
                 CharSequence styled=rowText(rows.get(i));if(!TextUtils.equals(label.getText(),styled))label.setText(styled);
                 RowAppearance appearance=label.getTag() instanceof RowAppearance?(RowAppearance)label.getTag():null;
-                if(appearance==null||!Appearance.samePalette(appearance.palette,palette))styleListRow(label);
+                float scale=Appearance.textScale(LeoActivity.this);
+                if(appearance==null||appearance.scale!=scale||!Appearance.samePalette(appearance.palette,palette))styleListRow(label);
                 if(!stableRowIcons()||appearance==null||appearance.index!=i||!Appearance.samePalette(appearance.palette,palette)){
                     label.setCompoundDrawables(rowIcon(title,i),null,null,null);
-                    label.setTag(new RowAppearance(i,palette));
                 }
+                if(appearance==null||appearance.index!=i||appearance.scale!=scale||!Appearance.samePalette(appearance.palette,palette))
+                    label.setTag(new RowAppearance(i,palette,scale));
                 paintSelection(label,i==focused[0]); return label;
             }
         };
@@ -199,7 +213,16 @@ abstract class LeoActivity extends Activity {
     String emptyMessage(String title){if(title.startsWith(L.t("Contacte")))return L.t("Niciun contact. Opțiuni pentru adăugare.");if(title.startsWith(L.t("Mesaje")))return L.t("Nicio conversație. Opțiuni pentru un SMS nou.");if(title.startsWith(L.t("Notificări")))return L.t("Nicio notificare.");if(title.equals(L.t("Istoric apeluri")))return L.t("Niciun apel în jurnal.");return L.t("Nicio intrare");}
     void loading(String title){begin(title);LinearLayout line=new LinearLayout(this);line.setGravity(Gravity.CENTER_VERTICAL);line.setPadding(dp(12),dp(12),dp(12),dp(12));line.addView(new ProgressBar(this),new LinearLayout.LayoutParams(dp(22),dp(22)));line.addView(text(L.t("Se încarcă…"),16));root.addView(line,new LinearLayout.LayoutParams(-1,0,1));footer("","",L.t("Înapoi"));}
     void errorPage(String title,String message,Runnable retry){begin(title);ScrollView body=new ScrollView(this);body.addView(text(message,16));root.addView(body,new LinearLayout.LayoutParams(-1,0,1));left=retry;footer(L.t("Reîncearcă"),"",L.t("Înapoi"));}
-    boolean replaceRows(String title,List<String> rows){if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;if(listRows.equals(rows))return true;listRows.clear();listRows.addAll(rows);listMemoryKeys.clear();for(int i=0;i<rows.size();i++)listMemoryKeys.add(rowMemoryKey(title,i,rows.get(i)));listAdapter.notifyDataSetChanged();return true;}
+    boolean replaceRows(String title,List<String> rows){
+        if(!title.equals(listTitle)||listRows==null||listAdapter==null||rows.size()!=listRows.size())return false;
+        for(int i=0;i<rows.size();i++)if(!TextUtils.equals(listRows.get(i),rows.get(i))){
+            listRows.set(i,rows.get(i));listMemoryKeys.set(i,rowMemoryKey(title,i,rows.get(i)));
+            // Same row identities/count: rebind only the changed visible view. ListView keeps focus and scroll.
+            View visible=activeList.getChildAt(i-activeList.getFirstVisiblePosition());
+            if(visible!=null)listAdapter.getView(i,visible,activeList);
+        }
+        return true;
+    }
     void refreshRows(){if(listAdapter!=null)listAdapter.notifyDataSetChanged();}
     private CharSequence rowText(String value){
         return rowCache.get(value);
@@ -222,7 +245,7 @@ abstract class LeoActivity extends Activity {
     }
     EditText field(LinearLayout fields,String label,String value,int type) {
         fields.addView(text(label,15)); EditText edit=new EditText(this); edit.setId(View.generateViewId());
-        edit.setTextSize(19*Appearance.textScale(this)); edit.setTextColor(Color.WHITE); edit.setHintTextColor(palette.secondary());
+        UiTypography.text(edit,19); edit.setTextColor(Color.WHITE); edit.setHintTextColor(palette.secondary());
         edit.setBackground(Appearance.fieldSurface(palette,dp(7)));edit.setPadding(dp(10),dp(8),dp(10),dp(8)); edit.setInputType(type); edit.setText(value);
         if((type&InputType.TYPE_TEXT_FLAG_MULTI_LINE)==0) edit.setSingleLine(true);
         // setSingleLine replaces the transformation; restore masking for password fields.

@@ -21,6 +21,15 @@ The audio and SMS examples use the built-in demos.
 The boot animation is a rendered preview. Select any thumbnail to open it at
 240 × 320.
 
+The [21 November shell refinements](android81/SHELL-SIX-OPTIMIZATIONS.md) cover
+scaled typography, consistent focus, incremental Quick Settings, idle work,
+memory-pressure handling and recovery after an app update. Weather values below
+are a controlled demonstration at the largest text setting.
+
+| Weather · large text | Calculator · large text | Quick Settings |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/shell-six/weather.png"><img src="android81/screenshots/shell-six/weather.png" width="160" alt="Scale-aware forecast demonstration with shared tabs"></a> | <a href="android81/screenshots/shell-six/calculator.png"><img src="android81/screenshots/shell-six/calculator.png" width="160" alt="Calculator result at the largest text size"></a> | <a href="android81/screenshots/shell-six/quick-settings.png"><img src="android81/screenshots/shell-six/quick-settings.png" width="160" alt="Quick Settings with a preserved selection and common accent focus"></a> |
+
 | Home dashboard | App launcher | Settings |
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/keyshell-2026-11-17/home.png"><img src="android81/screenshots/keyshell-2026-11-17/home.png" width="160" alt="Home with the SIM operator and technology above the clock"></a> | <a href="android81/screenshots/keyshell-2026-11-17/apps.png"><img src="android81/screenshots/keyshell-2026-11-17/apps.png" width="160" alt="Three-column launcher with colorful icons and focused app subtitle"></a> | <a href="android81/screenshots/keyshell-2026-11-17/settings.png"><img src="android81/screenshots/keyshell-2026-11-17/settings.png" width="160" alt="Settings with larger text and keypad tabs"></a> |
@@ -47,7 +56,7 @@ hub can continue the last page. See [daily browser use and resource checks](andr
 
 | Audio player · demo | Internet radio | Terminal |
 | :---: | :---: | :---: |
-| <a href="android81/screenshots/keyshell-2026-11-17/audio-player.png"><img src="android81/screenshots/keyshell-2026-11-17/audio-player.png" width="160" alt="Music player with track artwork, progress and transport controls"></a> | <a href="android81/screenshots/keyshell-2026-11-17/radio.png"><img src="android81/screenshots/keyshell-2026-11-17/radio.png" width="160" alt="Internet radio player with the România Actualități preset"></a> | <a href="android81/screenshots/keyshell-2026-11-17/terminal.png"><img src="android81/screenshots/keyshell-2026-11-17/terminal.png" width="160" alt="Terminal running pwd in a local shell"></a> |
+| <a href="android81/screenshots/keyshell-2026-11-17/audio-player.png"><img src="android81/screenshots/keyshell-2026-11-17/audio-player.png" width="160" alt="Music player with track artwork, progress and transport controls"></a> | <a href="android81/screenshots/keyshell-2026-11-17/radio.png"><img src="android81/screenshots/keyshell-2026-11-17/radio.png" width="160" alt="Internet radio player with the România Actualități preset"></a> | <a href="android81/screenshots/shell-six/terminal.png"><img src="android81/screenshots/shell-six/terminal.png" width="160" alt="Terminal with larger text and a preserved demonstration draft"></a> |
 
 | Global Menu | SIM settings | Boot animation |
 | :---: | :---: | :---: |
@@ -74,7 +83,7 @@ hub can continue the last page. See [daily browser use and resource checks](andr
 
 | Gallery | Camera controls | Voice recorder |
 | :---: | :---: | :---: |
-| <a href="android81/screenshots/keyshell-2026-11-17/gallery.png"><img src="android81/screenshots/keyshell-2026-11-17/gallery.png" width="160" alt="Photo viewer displaying the bundled Gaia sample artwork"></a> | <a href="android81/screenshots/keyshell-2026-11-17/camera.png"><img src="android81/screenshots/keyshell-2026-11-17/camera.png" width="160" alt="Camera options for flash, timer and diagnostics"></a> | <a href="android81/screenshots/keyshell-2026-11-17/recorder.png"><img src="android81/screenshots/keyshell-2026-11-17/recorder.png" width="160" alt="Recorder in its idle state with save location"></a> |
+| <a href="android81/screenshots/keyshell-2026-11-17/gallery.png"><img src="android81/screenshots/keyshell-2026-11-17/gallery.png" width="160" alt="Photo viewer displaying the bundled Gaia sample artwork"></a> | <a href="android81/screenshots/keyshell-2026-11-17/camera.png"><img src="android81/screenshots/keyshell-2026-11-17/camera.png" width="160" alt="Camera options for flash, timer and diagnostics"></a> | <a href="android81/screenshots/shell-six/recorder.png"><img src="android81/screenshots/shell-six/recorder.png" width="160" alt="Recorder in its idle state with save location"></a> |
 
 | Games | Unit converter | About |
 | :---: | :---: | :---: |
