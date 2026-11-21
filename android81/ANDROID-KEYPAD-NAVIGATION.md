@@ -2,6 +2,11 @@
 
 Leo remains the Home interface, while the native Android system components also receive keypad navigation. This is an incremental Android 8.1 adaptation, not a claim that every third-party application works without a pointer.
 
+The [21 November installer rendering update](PACKAGEINSTALLER-RENDERING.md)
+fixes repeated confirmation text and dark app titles in PackageInstaller. That
+later data update changes its rendering flag and six header styles while keeping
+the existing DEX, resource table, package identity and development signer.
+
 ## Installed on 5 November 2026
 
 The common app-local adapter is installed in Settings, SystemUI and PackageInstaller. The update retains each package identity, development signer, manifest, resources and application data.

@@ -33,19 +33,27 @@ public final class SystemDialogsTests extends NativeSystemUiTests {
         for(int n=0;n<16;n++){
             AccessibilityNodeInfo node=target(id);
             if(node==null)return false;
+            // Buttons/sliders expose native input focus. A calendar icon shares
+            // the mint outline color, so a whole-screen color box is ambiguous.
+            if(node.isFocused())return true;
+            key(KeyEvent.KEYCODE_DPAD_DOWN);
             node.refresh();Rect desired=new Rect();node.getBoundsInScreen(desired);
-            key(KeyEvent.KEYCODE_DPAD_DOWN);Rect border=outline();
-            if(!desired.isEmpty() && border.contains(desired.centerX(),desired.centerY())
-                    && border.width()<=desired.width()+12 && border.height()<=desired.height()+12)return true;
+            Rect border=outline(desired);
+            if(!desired.isEmpty()&&border.contains(desired.centerX(),desired.centerY())
+                    &&border.width()<=desired.width()+12&&border.height()<=desired.height()+12)return true;
         }
         return false;
     }
     public void onStart(){
         Bundle result=new Bundle();Activity fixture=null;
+        PowerManager.WakeLock awake=((PowerManager)getTargetContext().getSystemService(Context.POWER_SERVICE))
+                .newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,"keyshell:system-dialog-checks");
+        awake.acquire(120000);
         AudioManager audio=(AudioManager)getTargetContext().getSystemService(Context.AUDIO_SERVICE);
         int[] volumes=new int[6];for(int n=0;n<volumes.length;n++)volumes[n]=audio.getStreamVolume(n);
         AccessibilityServiceInfo info=automation().getServiceInfo();int flags=info.flags;
         try{
+            stage("Opening owned permission fixture");
             info.flags|=AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
                     |AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
             automation().setServiceInfo(info);
@@ -53,12 +61,14 @@ public final class SystemDialogsTests extends NativeSystemUiTests {
             shell("pm revoke ro.leo.systemtests android.permission.READ_CALENDAR");
             fixture=startActivitySync(new Intent(getTargetContext(),PermissionFixtureActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            stage("Selecting Deny with D-pad");
             check(root("com.android.packageinstaller")!=null,"native permission dialog opens");
             check(select("permission_deny_button"),"D-pad selects native Deny button");
             capture("native-permission.png");key(KeyEvent.KEYCODE_DPAD_CENTER);
             for(int n=0;n<30&&!PermissionFixtureActivity.received;n++)SystemClock.sleep(100);
             check(PermissionFixtureActivity.received&&PermissionFixtureActivity.denied,"OK denies fixture permission");
             fixture.finish();fixture=null;
+            stage("Selecting native volume slider");
             fixture=startActivitySync(new Intent(getTargetContext(),KeypadFixtureActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             audio.adjustStreamVolume(AudioManager.STREAM_MUSIC,AudioManager.ADJUST_SAME,AudioManager.FLAG_SHOW_UI);
@@ -73,6 +83,7 @@ public final class SystemDialogsTests extends NativeSystemUiTests {
         }catch(Throwable failure){result.putString("error",android.util.Log.getStackTraceString(failure));
             try{capture("dialog-failure.png");}catch(Exception ignored){} }
         finally{
+            if(awake.isHeld())awake.release();
             for(int n=0;n<volumes.length;n++)if(audio.getStreamVolume(n)!=volumes[n])audio.setStreamVolume(n,volumes[n],0);
             try{shell("pm revoke ro.leo.systemtests android.permission.READ_CALENDAR");}catch(Exception ignored){}
             if(fixture!=null){final Activity close=fixture;runOnMainSync(new Runnable(){public void run(){close.finish();}});}
@@ -80,4 +91,5 @@ public final class SystemDialogsTests extends NativeSystemUiTests {
         }
         finish(result.containsKey("error")?Activity.RESULT_CANCELED:Activity.RESULT_OK,result);
     }
+    private void stage(String name){Bundle status=new Bundle();status.putString("stage",name);sendStatus(0,status);}
 }

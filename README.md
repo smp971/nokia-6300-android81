@@ -54,6 +54,12 @@ page scrolls at its edges. `*` selects scrolling and `#` switches cursor mode
 outside text fields. Favorites/history are shared with the text reader, and the
 hub can continue the last page. See [daily browser use and resource checks](android81/BROWSER-DAILY-USE.md).
 
+| Corrected Android installer | Native permission dialog |
+| :---: | :---: |
+| <a href="android81/screenshots/installer-rendering/after.png"><img src="android81/screenshots/installer-rendering/after.png" width="160" alt="Native installer with readable app title and no repeated text"></a> | <a href="android81/screenshots/installer-rendering/permission.png"><img src="android81/screenshots/installer-rendering/permission.png" width="160" alt="Native permission dialog with Deny selected for the owned test app"></a> |
+
+[Installer rendering fix, scope and device validation](android81/PACKAGEINSTALLER-RENDERING.md)
+
 | Audio player · demo | Internet radio | Terminal |
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/keyshell-2026-11-17/audio-player.png"><img src="android81/screenshots/keyshell-2026-11-17/audio-player.png" width="160" alt="Music player with track artwork, progress and transport controls"></a> | <a href="android81/screenshots/keyshell-2026-11-17/radio.png"><img src="android81/screenshots/keyshell-2026-11-17/radio.png" width="160" alt="Internet radio player with the România Actualități preset"></a> | <a href="android81/screenshots/shell-six/terminal.png"><img src="android81/screenshots/shell-six/terminal.png" width="160" alt="Terminal with larger text and a preserved demonstration draft"></a> |

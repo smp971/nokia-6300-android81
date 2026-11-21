@@ -81,6 +81,9 @@ KeyShell through its private Home alias. These APKs share version code 14;
 this proves same-code replacement/rollback, not a numeric downgrade or a ROM
 recovery flash. Android PackageInstaller's existing text/rendering artifacts
 were visible during confirmation, but D-pad selection and installation worked.
+Those installer artifacts were subsequently fixed in the
+[PackageInstaller rendering update](PACKAGEINSTALLER-RENDERING.md), with a new
+native permission/installation check and before/after screenshots.
 
 Signed and installed data APK SHA-256:
 `4058e901559b260cc6299efedcdebd54564a9832826ad3c22a0bf5a11ad32e20`.

@@ -29,12 +29,17 @@ public class NativeSystemUiTests extends Instrumentation {
         SystemClock.sleep(650);
     }
     Rect outline() {
+        return outline(null);
+    }
+    Rect outline(Rect target) {
         android.graphics.Bitmap shot=automation().takeScreenshot();
         if(shot==null) return new Rect();
         Rect bounds=new Rect();
         try {
             int footer=Math.round(24*getTargetContext().getResources().getDisplayMetrics().density);
-            for(int y=0;y<shot.getHeight()-footer;y++) for(int x=0;x<shot.getWidth();x++) {
+            int left=target==null?0:Math.max(0,target.left-6),right=target==null?shot.getWidth():Math.min(shot.getWidth(),target.right+6);
+            int top=target==null?0:Math.max(0,target.top-6),bottom=target==null?shot.getHeight()-footer:Math.min(shot.getHeight()-footer,target.bottom+6);
+            for(int y=top;y<bottom;y++) for(int x=left;x<right;x++) {
                 // Notification rows animate alpha. The mint chroma ratio remains
                 // stable when composited over their neutral card and shadow.
                 int color=shot.getPixel(x,y), r=(color>>16)&255, g=(color>>8)&255, b=color&255;

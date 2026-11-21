@@ -12,7 +12,11 @@ public final class PermissionFixtureActivity extends Activity {
     public void onCreate(Bundle state) {
         super.onCreate(state);received=false;denied=false;
         label=new TextView(this);label.setText("Local permission fixture");setContentView(label);
-        requestPermissions(new String[]{android.Manifest.permission.READ_CALENDAR},17);
+        // Let startActivitySync observe the fixture's first idle frame before
+        // the separate permission activity takes focus.
+        label.postDelayed(new Runnable(){public void run(){
+            if(!isFinishing()&&!isDestroyed())requestPermissions(new String[]{android.Manifest.permission.READ_CALENDAR},17);
+        }},250);
     }
     public void onRequestPermissionsResult(int code,String[] permissions,int[] results) {
         super.onRequestPermissionsResult(code,permissions,results);
