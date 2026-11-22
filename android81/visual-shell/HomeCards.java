@@ -4,7 +4,7 @@ import android.content.*;import org.json.*;import java.text.SimpleDateFormat;imp
 /** Small snapshots from local app state; no network, media polling or account access. */
 final class HomeCards {
  static final String[] KEYS={"home-weather","home-alarm","home-music","home-favorites","home-agenda"};
- static final class Card {final int type,weatherCode;final long updatedAt;final String title,main,detail;Card(int t,String a,String b,String c){this(t,a,b,c,-1);}Card(int t,String a,String b,String c,int weather){this(t,a,b,c,weather,0);}Card(int t,String a,String b,String c,int weather,long updated){updatedAt=updated;type=t;title=a;main=b;detail=c;weatherCode=weather;}String signature(){return type+title+main+detail+weatherCode;}}
+ static final class Card {final int type,weatherCode;final long updatedAt;final String title,main,detail;Card(int t,String a,String b,String c){this(t,a,b,c,-1);}Card(int t,String a,String b,String c,int weather){this(t,a,b,c,weather,0);}Card(int t,String a,String b,String c,int weather,long updated){updatedAt=updated;type=t;title=a;main=b;detail=c;weatherCode=weather;}String signature(){return type+title+main+detail+weatherCode+":"+updatedAt;}}
  static Card[] read(Context c,long now){return read(c,now,true);}
  static Card[] lockInfo(Context c,long now){return read(c,now,false);}
  static int[] order(String raw){ArrayList<Integer> out=new ArrayList<Integer>();for(String s:raw.split(","))try{int n=Integer.parseInt(s);if(n>=0&&n<5&&!out.contains(n))out.add(n);}catch(NumberFormatException ignored){}for(int n=0;n<5;n++)if(!out.contains(n))out.add(n);int[] ids=new int[5];for(int n=0;n<5;n++)ids[n]=out.get(n);return ids;}

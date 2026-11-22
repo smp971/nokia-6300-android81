@@ -53,7 +53,7 @@ public final class HomeCanvasTests extends Instrumentation {
             split.save(context);HomeCanvasLayout savedSplit=new HomeCanvasLayout(context);savedSplit.splitSims(group,first,second);
             check(savedSplit.x[4]==split.x[4]&&savedSplit.x[7]==secondX,"split layout reload does not remigrate");checks++;
             check(HomeCanvasLayout.nextItem(4,1)==7&&HomeCanvasLayout.nextItem(7,-1)==4&&HomeCanvasLayout.nextItem(6,1)==0,"SIM rows consecutive in editor navigation");checks++;
-            check(BackupEngine.allowed("home-canvas","7visible","boolean")&&BackupEngine.allowed("home-canvas","7x","int")&&!BackupEngine.allowed("home-canvas","8x","int"),"backup accepts the separate second SIM only");checks++;
+            check(BackupEngine.allowed("home-canvas","7visible","boolean")&&BackupEngine.allowed("home-canvas","7x","int")&&BackupEngine.allowed("home-canvas","8x","int")&&!BackupEngine.allowed("home-canvas","9x","int"),"backup accepts SIM/weather items, rejects unknown IDs");checks++;
             result.putString("result","PASS "+checks+" Home canvas persistence, bounds, orientation and visibility checks");
         }catch(Throwable error){result.putString("error",android.util.Log.getStackTraceString(error));}
         finally{context.getSharedPreferences(name,0).edit().clear().commit();image.recycle();}

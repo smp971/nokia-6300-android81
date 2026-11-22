@@ -9,9 +9,9 @@ import android.graphics.RectF;
 
 /** Draftable Home transforms in logical screen coordinates; never rotates Android. */
 final class HomeCanvasLayout {
-    static final String[] NAMES={"Fundal informații","Stare rețea","Ceas","Dată","SIM 1","Carduri","Scurtături","SIM 2"};
+    static final String[] NAMES={"Fundal informații","Stare rețea","Ceas","Dată","SIM 1","Carduri","Scurtături","SIM 2","Meteo compact"};
     static final String PREFERENCES="leo-home-canvas";
-    private static final int[] EDIT_ORDER={0,1,2,3,4,7,5,6};
+    private static final int[] EDIT_ORDER={0,1,2,3,4,7,8,5,6};
     static final int COUNT=NAMES.length;
     final int[] x=new int[COUNT],y=new int[COUNT],size=new int[COUNT],rotation=new int[COUNT],alignment=new int[COUNT];
     final boolean[] visible=new boolean[COUNT];

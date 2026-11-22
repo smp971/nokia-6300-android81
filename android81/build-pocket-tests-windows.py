@@ -11,9 +11,12 @@ modes.add_argument("--web-browser",action="store_true",help="build real graphica
 modes.add_argument("--browser-state",action="store_true",help="build private browser records and battery transition checks")
 modes.add_argument("--shell-optimization",action="store_true",help="build typography, incremental rows and UI memory/lifecycle checks")
 modes.add_argument("--update-recovery",action="store_true",help="build isolated interrupted app-update journal checks")
+modes.add_argument("--home-standby",action="store_true",help="build Home/standby rendering, presets and keypad checks")
 args=parser.parse_args()
 app_data,ui_theme=args.app_data,args.ui_theme
-if args.update_recovery:
+if args.home_standby:
+ test,package,directory="HomeStandbyTests","ro.leo.visual.homestandbychecks","home-standby-tests"
+elif args.update_recovery:
  test,package,directory="UpdateRecoveryTests","ro.leo.visual.updaterecoverychecks","update-recovery-tests"
 elif args.shell_optimization:
  test,package,directory="ShellOptimizationTests","ro.leo.visual.shelloptimizationchecks","shell-optimization-tests"
@@ -35,7 +38,7 @@ r=Path(__file__).resolve().parent;t=r/'output/windows-build-tools';b=r/'output'/
 j=next((t/'jdk').glob('*/bin/java.exe'));sdk=next((t/'platform').glob('*/android.jar'));bt=next((t/'build-tools').iterdir())
 def run(*a):subprocess.run([str(x) for x in a],check=True)
 dependencies=[]
-if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish and not args.web_browser and not args.browser_state and not args.shell_optimization and not args.update_recovery:
+if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish and not args.web_browser and not args.browser_state and not args.shell_optimization and not args.update_recovery and not args.home_standby:
  import hashlib,urllib.request
  zxing=r/'output/pocket-zxing-tests.jar'
  if not zxing.exists():zxing.write_bytes(urllib.request.urlopen('https://repo.maven.apache.org/maven2/com/google/zxing/core/3.5.3/core-3.5.3.jar',timeout=30).read())

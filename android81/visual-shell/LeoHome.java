@@ -3,11 +3,9 @@ package ro.leo.visual;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.graphics.Typeface;
 import ro.leo.i18n.L;
 
@@ -28,11 +26,14 @@ final class LeoHome {
     private final Rect glyphBounds = new Rect();
     private final RectF wallpaperBounds = new RectF(0, 0, WIDTH, BODY);
     private Appearance.Palette palette;
-    private LinearGradient hero;
     private int tile;
     private int focus;
     private int divider;
     private float textScale;
+    private int homeStyle;
+    private boolean highContrast;
+    private HomeWeatherArt weatherArt;
+    private final RectF weatherBounds=new RectF(9,137,231,180);
 
     void draw(Canvas canvas, MainActivity.Screen screen) {
         if (palette != screen.palette) {
@@ -40,10 +41,11 @@ final class LeoHome {
             tile = Appearance.mix(palette.background, palette.card, .88f);
             focus = Appearance.mix(tile, palette.accent, .22f);
             divider = Appearance.mix(palette.background, palette.accent, .26f);
-            hero = new LinearGradient(9, 9, 231, 135,
-                Appearance.mix(palette.card, palette.accent, .18f), tile, Shader.TileMode.CLAMP);
         }
         textScale = screen.textScale;
+        homeStyle=screen.homeStyle;
+        highContrast=screen.highContrast;
+        if(weatherArt==null)weatherArt=new HomeWeatherArt(screen.getContext());
         canvas.drawColor(palette.background);
         if (screen.grid) drawApps(canvas, screen);
         else drawHome(canvas, screen);
@@ -56,34 +58,32 @@ final class LeoHome {
 
     private void drawHome(Canvas canvas, MainActivity.Screen screen) {
         int simSlots = screen.editing ? 3 : screen.showSims ? screen.simSlots : 0;
-        int visibleSims = (screen.homeLayout.visible[4] ? 1 : 0) | (screen.homeLayout.visible[7] ? 2 : 0);
-        boolean showCard = screen.cardAvailable() || screen.editing;
-        if (screen.wallpaper != null) {
+        if (screen.wallpaper != null && homeStyle==0 && !highContrast) {
             paint.setColor(Color.WHITE);
             canvas.drawBitmap(screen.wallpaper, null, wallpaperBounds, paint);
             paint.setColor(0x66000000);
             canvas.drawRect(wallpaperBounds, paint);
         }
-        boolean showSimRow = screen.editing || (simSlots & visibleSims) != 0;
-        int heroBottom = showSimRow ? 142 : 113;
-        if (screen.homePart(canvas, 0, 9, 8, 231, heroBottom)) {
-            paint.setColor(Color.WHITE);
-            if (!screen.highContrast) paint.setShader(hero);
-            else paint.setColor(tile);
-            canvas.drawRoundRect(9, 8, 231, heroBottom, 17, 17, paint);
-            paint.setShader(null);
+        if (screen.homePart(canvas, 0, 6, 4, 234, 131)) {
+            if(homeStyle==0&&!highContrast)
+                surface(canvas,6,4,234,131,9,Appearance.mix(palette.background,palette.card,.32f));
             canvas.restore();
         }
         if (simSlots != 0) drawSims(canvas, screen, simSlots);
         if (!screen.networkBanner.isEmpty() || screen.editing) {
             String banner = screen.networkBanner.isEmpty() ? L.t("Stare rețea") : screen.networkBanner;
-            editableText(canvas, screen, 1, banner, 20, showSimRow ? 131 : 29, 10, palette.accent, MEDIUM);
+            editableText(canvas, screen, 1, banner, 12, 129, 10, palette.accent, MEDIUM);
         }
-        editableText(canvas, screen, 2, screen.time, 17, showSimRow ? 93 : 79,
-            screen.compactClock ? 37 : 52, INK, CLOCK);
-        editableText(canvas, screen, 3, screen.date, 20, showSimRow ? 112 : 100, 13, MUTED, REGULAR);
-        if (showCard) drawCard(canvas, screen, heroBottom + 42);
-        drawShortcuts(canvas, screen, showCard ? heroBottom + 91 : heroBottom + 53);
+        editableText(canvas, screen, 2, screen.time, 12, 89,
+            screen.compactClock ? 40 : 56, INK, highContrast?MEDIUM:CLOCK);
+        editableText(canvas, screen, 3, screen.date, 14, 112, 13, palette.secondary(), REGULAR);
+        if((screen.weatherAvailable()||screen.editing)&&screen.homePart(canvas,8,9,137,231,180)){
+            if(screen.shortcut==MainActivity.Screen.WEATHER_FOCUS)tile(canvas,9,137,231,180,8,true);
+            weatherArt.draw(canvas,palette,screen.weather,weatherBounds,System.currentTimeMillis());
+            canvas.restore();
+        }
+        if(screen.cardAvailable()||screen.editing)drawCard(canvas,screen,185);
+        drawShortcuts(canvas, screen, 235);
 
         if (screen.editing) {
             RectF frame = screen.homeLayout.frames[screen.editItem];
@@ -108,9 +108,9 @@ final class LeoHome {
     }
 
     private void drawSims(Canvas canvas, MainActivity.Screen screen, int slots) {
-        RectF first = new RectF(17, 16, 117, 42);
-        RectF second = new RectF(123, 16, 223, 42);
-        RectF full = new RectF(17, 16, 223, 42);
+        RectF first = new RectF(11, 9, 117, 34);
+        RectF second = new RectF(123, 9, 229, 34);
+        RectF full = new RectF(11, 9, 229, 34);
         screen.homeLayout.splitSims(full, first, second);
         for (int slot = 0; slot < 2; slot++) {
             if ((slots & (1 << slot)) == 0) continue;
@@ -119,7 +119,7 @@ final class LeoHome {
                     ? full : slot == 0 ? first : second;
             if (!screen.homePart(canvas, item, bounds.left, bounds.top, bounds.right, bounds.bottom))
                 continue;
-            surface(canvas, bounds.left, bounds.top, bounds.right, bounds.bottom, 10, palette.bar);
+            if(homeStyle==0&&!highContrast)surface(canvas,bounds.left,bounds.top,bounds.right,bounds.bottom,6,palette.bar);
             float baseline = bounds.top + 17;
             screen.dashboardArt.sim(canvas, bounds.left + 12, baseline, slot, screen.inService[slot]);
             String technology = screen.simTechnology[slot];
@@ -137,14 +137,21 @@ final class LeoHome {
     }
 
     private void drawCard(Canvas canvas, MainActivity.Screen screen, float top) {
-        if (!screen.homePart(canvas, 5, 9, top, 231, top + 44)) return;
-        tile(canvas, 9, top, 231, top + 44, 12, screen.shortcut >= 4);
+        if (!screen.homePart(canvas, 5, 9, top, 231, top + 46)) return;
+        tile(canvas, 9, top, 231, top + 46, 8, screen.shortcut >= 4);
         if (screen.cards.length == 0) {
             text(canvas, L.t("Carduri"), 20, top + 26, 13, MUTED, Paint.Align.LEFT, 195, MEDIUM);
             canvas.restore();
             return;
         }
         HomeCards.Card card = screen.cards[screen.cardIndex];
+        if(card.type==5){
+            String[] lines=card.main.split(" · ",2);
+            text(canvas,lines[0],20,top+19,14,INK,Paint.Align.LEFT,198,MEDIUM);
+            text(canvas,lines.length>1?lines[1]:card.title,20,top+38,12,
+                lines.length>1?INK:palette.secondary(),Paint.Align.LEFT,198,REGULAR);
+            canvas.restore();return;
+        }
         float left = 20;
         if (card.type == 0) {
             screen.dashboardArt.weather(canvas, 28, top + 22, 23, card.weatherCode);
@@ -157,12 +164,9 @@ final class LeoHome {
                 left = 47;
             }
         }
-        text(canvas, card.title, left, top + 13, 9, palette.accent, Paint.Align.LEFT, 165 - left, MEDIUM);
-        text(canvas, card.main, left, top + (card.detail.isEmpty() ? 33 : 29), 12, INK, Paint.Align.LEFT,
+        text(canvas, card.title, left, top + 15, 10, palette.accent, Paint.Align.LEFT, 165 - left, MEDIUM);
+        text(canvas, card.main, left, top + 36, 13, INK, Paint.Align.LEFT,
             223 - left, MEDIUM);
-        if (!card.detail.isEmpty()) {
-            text(canvas, card.detail, left, top + 40, 8, MUTED, Paint.Align.LEFT, 223 - left, REGULAR);
-        }
         if (screen.cards.length > 1) {
             String page = (screen.cardIndex + 1) + "/" + screen.cards.length ;
             text(canvas, page, 220, top + 13, 9, palette.accent, Paint.Align.RIGHT, 47, MEDIUM);
@@ -171,13 +175,13 @@ final class LeoHome {
     }
 
     private void drawShortcuts(Canvas canvas, MainActivity.Screen screen, float top) {
-        if (!screen.homePart(canvas, 6, 9, top, 231, top + 42)) return;
+        if (!screen.homePart(canvas, 6, 9, top, 231, top + 39)) return;
         for (int i = 0; i < screen.shortcuts.length; i++) {
             int app = screen.shortcuts[i];
             float left = 9 + i * 56;
-            tile(canvas, left, top, left + 54, top + 42, 10, screen.shortcut == i);
-            icon(canvas, screen, app, left + 27, top + 16, .52f);
-            text(canvas, screen.names[app], left + 27, top + 37, 9, INK, Paint.Align.CENTER, 49, MEDIUM);
+            if(screen.shortcut==i)tile(canvas,left,top,left+54,top+39,7,true);
+            icon(canvas, screen, app, left + 27, top + 13, .46f);
+            text(canvas, screen.names[app], left + 27, top + 37, 9, INK, Paint.Align.CENTER, 52, MEDIUM);
         }
         canvas.restore();
     }
@@ -239,7 +243,7 @@ final class LeoHome {
         canvas.drawRect(0, BODY, WIDTH, BODY + 1, paint);
         String left = screen.editing ? L.t("Salvează") : screen.grid ? L.t("Opțiuni") : L.t("Notificări");
         String center = screen.grid ? (screen.focusedApp() >= 0 ? L.t("Deschide") : "")
-            : screen.shortcut >= 0 ? L.t("Deschide") : L.t("Meniu");
+            : screen.shortcut != -1 ? L.t("Deschide") : L.t("Aplicații");
         if (screen.editing) center = L.t(HomeCanvasLayout.NAMES[screen.editItem]);
         String right = screen.editing || screen.grid ? L.t("Înapoi") : screen.names[screen.rightApp];
         text(canvas, left, 9, 293, 11, INK, Paint.Align.LEFT, 67, MEDIUM);
@@ -256,10 +260,21 @@ final class LeoHome {
         canvas.scale(scale, scale);
         screen.icon(canvas, app, 0, 0);
         canvas.restore();
+        int count=app==0?UnreadState.calls:app==2?UnreadState.sms:0;
+        if(screen.showUnread&&count>0){
+            String badge=HomeStyle.badge(count);
+            prepare(9,MEDIUM);float width=Math.max(13,paint.measureText(badge)+6);
+            float right=x+26*scale,top=y-29*scale;
+            Paint.FontMetrics metrics=paint.getFontMetrics();
+            float height=Math.max(13,metrics.descent-metrics.ascent+2);
+            surface(canvas,right-width,top,right,top+height,5,palette.accent);
+            label(canvas,badge,right-width/2,top+1-metrics.ascent,HomeStyle.onAccent(palette.accent),Paint.Align.CENTER);
+        }
     }
 
     private void tile(Canvas canvas, float l, float t, float r, float b, float radius, boolean selected) {
-        surface(canvas, l, t, r, b, radius, selected ? focus : tile);
+        if(highContrast)radius=1;
+        if(homeStyle!=1||selected)surface(canvas, l, t, r, b, radius, selected ? focus : tile);
         if (selected) {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(1.5f);
@@ -281,7 +296,7 @@ final class LeoHome {
 
     private void prepare(float size, Typeface font) {
         paint.setTypeface(font);
-        paint.setTextSize(size * (size < 26 ? Math.min(1.18f, textScale) : 1));
+        paint.setTextSize(size * (size < 26 ? textScale : 1));
     }
 
     private void label(Canvas canvas, String text, float x, float y, int color, Paint.Align align) {

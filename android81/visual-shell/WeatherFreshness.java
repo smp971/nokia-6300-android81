@@ -4,6 +4,15 @@ import ro.leo.i18n.L;
 
 /** Labels only the saved observation; never starts a weather request. */
 final class WeatherFreshness {
+    static String compact(long now,long saved){
+        if(saved<=0)return L.t("oră necunoscută");
+        if(saved>now+300000)return L.t("oră de verificat");
+        long minutes=Math.max(0,now-saved)/60000;
+        if(minutes<2)return L.t("acum");
+        if(minutes<60)return minutes+" min";
+        long hours=minutes/60;
+        return (hours>=6?L.t("date vechi · "):"")+(hours<48?hours+" h":hours/24+L.t(" zile"));
+    }
     static boolean stale(long now,long saved){return saved>now+300000 || saved<=0 || now-saved>=6*3600000L;}
     static String label(long now,long saved){
         if(saved<=0)return L.t("Ora actualizării necunoscută");

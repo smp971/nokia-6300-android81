@@ -19,7 +19,7 @@ final class HomePersonalization {
         "home-compact", "home-sims", "home-unread", "home-contextual"
     };
     private static final String[] WIDGET_LABELS = {
-        "Ceas compact", "Starea ambelor SIM-uri", "Puncte pentru notificări", "Carduri automate"
+        "Ceas compact", "Starea ambelor SIM-uri", "Contoare notificări", "Carduri automate"
     };
     private static final String[] ACCENT_LABELS = {
         "Din temă", "Turcoaz", "Auriu", "Albastru", "Roz", "Lavandă", "Lime"
@@ -64,7 +64,8 @@ final class HomePersonalization {
             L.t("Afișare meniu") + " · " + L.t(preferences.getBoolean("list", false) ? "Listă" : "Grilă"),
             L.t("Editor Home"),
             L.t("Acces rapid Home"),
-            L.t("Tasta soft dreapta") + " · " + AppCatalog.NAMES[rightApp]
+            L.t("Tasta soft dreapta") + " · " + AppCatalog.NAMES[rightApp],
+            L.t("Home și standby") + " · " + L.t(HomeStyle.NAMES[HomeStyle.index(activity)])
         };
         dialog(L.t("Personalizare"), rows, selected, new KeypadDialog.Action() {
             public void select(int index) {
@@ -79,6 +80,7 @@ final class HomePersonalization {
                     case RIGHT_APP_ROW:
                         appCategories(RIGHT_APP_KEY, rightApp, AppCatalog.category(rightApp), backToHub(RIGHT_APP_ROW));
                         break;
+                    case 8: HomeStyle.choose(activity, palette.get(), backToHub(8)); break;
                     default: break;
                 }
             }

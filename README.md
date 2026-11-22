@@ -26,13 +26,21 @@ scaled typography, consistent focus, incremental Quick Settings, idle work,
 memory-pressure handling and recovery after an app update. Weather values below
 are a controlled demonstration at the largest text setting.
 
+The [23 November Home and standby refresh](android81/HOME-STANDBY-UI.md) adds
+compact weather, explicit unread counts, clearer softkeys and three shared
+presets. The new Home/standby captures use local weather and unread demonstrations.
+
 | Weather · large text | Calculator · large text | Quick Settings |
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/shell-six/weather.png"><img src="android81/screenshots/shell-six/weather.png" width="160" alt="Scale-aware forecast demonstration with shared tabs"></a> | <a href="android81/screenshots/shell-six/calculator.png"><img src="android81/screenshots/shell-six/calculator.png" width="160" alt="Calculator result at the largest text size"></a> | <a href="android81/screenshots/shell-six/quick-settings.png"><img src="android81/screenshots/shell-six/quick-settings.png" width="160" alt="Quick Settings with a preserved selection and common accent focus"></a> |
 
 | Home dashboard | App launcher | Settings |
 | :---: | :---: | :---: |
-| <a href="android81/screenshots/keyshell-2026-11-17/home.png"><img src="android81/screenshots/keyshell-2026-11-17/home.png" width="160" alt="Home with the SIM operator and technology above the clock"></a> | <a href="android81/screenshots/keyshell-2026-11-17/apps.png"><img src="android81/screenshots/keyshell-2026-11-17/apps.png" width="160" alt="Three-column launcher with colorful icons and focused app subtitle"></a> | <a href="android81/screenshots/keyshell-2026-11-17/settings.png"><img src="android81/screenshots/keyshell-2026-11-17/settings.png" width="160" alt="Settings with larger text and keypad tabs"></a> |
+| <a href="android81/screenshots/home-standby/home-classic.png"><img src="android81/screenshots/home-standby/home-classic.png" width="160" alt="Refreshed Home with compact weather, unread counts and SIM status above the clock"></a> | <a href="android81/screenshots/keyshell-2026-11-17/apps.png"><img src="android81/screenshots/keyshell-2026-11-17/apps.png" width="160" alt="Three-column launcher with colorful icons and focused app subtitle"></a> | <a href="android81/screenshots/keyshell-2026-11-17/settings.png"><img src="android81/screenshots/keyshell-2026-11-17/settings.png" width="160" alt="Settings with larger text and keypad tabs"></a> |
+
+| Standby · colorful classic | Standby · minimal | Standby · high contrast |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/home-standby/standby-classic.png"><img src="android81/screenshots/home-standby/standby-classic.png" width="160" alt="Colorful standby using the shared weather and Gaia SIM artwork"></a> | <a href="android81/screenshots/home-standby/standby-minimal.png"><img src="android81/screenshots/home-standby/standby-minimal.png" width="160" alt="Minimal standby without wallpaper or filled weather panel"></a> | <a href="android81/screenshots/home-standby/standby-contrast.png"><img src="android81/screenshots/home-standby/standby-contrast.png" width="160" alt="High-contrast standby with a stronger clock and explicit unread counts"></a> |
 
 | Updated Clock | Shared keypad options | Android apps |
 | :---: | :---: | :---: |
@@ -42,7 +50,7 @@ are a controlled demonstration at the largest text setting.
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/daily-ui/files.png"><img src="android81/screenshots/daily-ui/files.png" width="160" alt="Files with a storage breadcrumb, readable size and preserved selection"></a> | <a href="android81/screenshots/daily-ui/gallery.png"><img src="android81/screenshots/daily-ui/gallery.png" width="160" alt="Four larger thumbnails with wrapping names"></a> | <a href="android81/screenshots/daily-ui/player.png"><img src="android81/screenshots/daily-ui/player.png" width="160" alt="Music player with the shared native heading and softkeys"></a> |
 
-[Updated lock screen](android81/screenshots/daily-ui/lock.png) ·
+[Large-text standby](android81/screenshots/home-standby/standby-large.png) ·
 [Daily UI tests and resource measurements](android81/DAILY-UI-POLISH.md)
 
 | Browser hub | HTTPS page | Browser image/JavaScript test |

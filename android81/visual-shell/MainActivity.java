@@ -144,7 +144,7 @@ public final class MainActivity extends Activity {
     }
     public void onBackPressed() {
         if(screen.editing){screen.leaveEditor();return;}
-        if (screen.grid || screen.shortcut >= 0 || !screen.message.isEmpty()) {
+        if (screen.grid || screen.shortcut != -1 || !screen.message.isEmpty()) {
             if (screen.grid) screen.saveMenuFocus();
             screen.grid = false;
             screen.shortcut = -1;
@@ -260,7 +260,7 @@ public final class MainActivity extends Activity {
         final String[] names = AppCatalog.NAMES;
 
         Bitmap wallpaper;
-        long wallpaperStamp=-1,wallpaperSize=-1;boolean highContrast;
+        long wallpaperStamp=-1,wallpaperSize=-1;int wallpaperStyle=-1;boolean highContrast;
         void reloadAppearance() {
             android.content.SharedPreferences appearance=getSharedPreferences("appearance",0);
             list=appearance.getBoolean("list",false);
@@ -271,13 +271,14 @@ public final class MainActivity extends Activity {
             order = AppCatalog.menuOrder(MainActivity.this);
             selected = Math.max(0, Math.min(selected, order.length - 1));
             restoreAppFocus(focused);
-            shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=Appearance.textScale(MainActivity.this);
-            palette=Appearance.palette(MainActivity.this);
+            shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=HomeStyle.scale(MainActivity.this);
+            homeStyle=HomeStyle.index(MainActivity.this);
+            palette=HomeStyle.palette(MainActivity.this,Appearance.palette(MainActivity.this));
             SystemChrome.apply(MainActivity.this,palette);getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(palette.background));
             java.io.File file=Appearance.wallpaper(MainActivity.this);long stamp=file.lastModified(),size=file.length();
-            boolean contrast=AccessibilityPrefs.contrast(MainActivity.this);if(stamp!=wallpaperStamp||size!=wallpaperSize||highContrast!=contrast){highContrast=contrast;
+            boolean contrast=HomeStyle.contrast(MainActivity.this);if(stamp!=wallpaperStamp||size!=wallpaperSize||highContrast!=contrast||wallpaperStyle!=homeStyle){highContrast=contrast;wallpaperStyle=homeStyle;
                 if(wallpaper!=null){wallpaper.recycle();wallpaper=null;}
-                if(file.isFile()&&!highContrast)wallpaper=BitmapFactory.decodeFile(file.getPath());
+                if(file.isFile()&&!highContrast&&homeStyle==0)wallpaper=BitmapFactory.decodeFile(file.getPath());
                 wallpaperStamp=stamp;wallpaperSize=size;
             }
             invalidate();
@@ -312,16 +313,25 @@ public final class MainActivity extends Activity {
             selected = Math.floorMod(selected / 9 + direction, pages) * 9;
             invalidate();
         }
-        int shortcut=-1;
+        static final int WEATHER_FOCUS=-2;
+        int shortcut=-1,homeStyle;
+        HomeCards.Card weather;
+        boolean weatherAvailable(){return weather!=null&&homeLayout.visible[8];}
         HomeFavorites.Entry[] favorites=new HomeFavorites.Entry[0];int favoriteIndex;HomeCards.Card[] cards=new HomeCards.Card[0];int cardIndex;
         boolean cardAvailable() { return cards.length > 0 && homeLayout.visible[5]; }
 
         void reloadCards() {
             boolean selectedCard = shortcut >= 4 && cards.length > 0;
             int previousType = cards.length == 0 ? -1 : cards[cardIndex].type;
-            HomeCards.Card[] next = getSharedPreferences("appearance", 0).getBoolean("home-contextual", true)
-                ? HomeContext.read(MainActivity.this, System.currentTimeMillis())
-                : HomeCards.read(MainActivity.this, System.currentTimeMillis());
+            long now=System.currentTimeMillis();
+            HomeCards.Card[] snapshots=HomeCards.read(MainActivity.this,now);
+            weather=null;
+            for(HomeCards.Card card:snapshots)if(card.type==0)weather=card;
+            HomeCards.Card[] candidates = getSharedPreferences("appearance", 0).getBoolean("home-contextual", true)
+                ? HomeContext.read(MainActivity.this, now, snapshots) : snapshots;
+            ArrayList<HomeCards.Card> distinct=new ArrayList<HomeCards.Card>();
+            for(HomeCards.Card card:candidates)if(card.type!=0||!weatherAvailable())distinct.add(card);
+            HomeCards.Card[] next=distinct.toArray(new HomeCards.Card[0]);
             for (int i = 0; i < next.length; i++) {
                 if (next[i].type == 3 && favorites.length > 0) {
                     HomeFavorites.Entry favorite = favorites[Math.min(favoriteIndex, favorites.length - 1)];
@@ -338,15 +348,18 @@ public final class MainActivity extends Activity {
             }
             if (selectedCard) shortcut = found && cardAvailable() ? 4 + cardIndex : -1;
             if (shortcut >= 0 && shortcut < 4 && !homeLayout.visible[6]) shortcut = -1;
+            if(shortcut==WEATHER_FOCUS&&!weatherAvailable())shortcut=-1;
             if (changed && !grid) invalidate();
         }
 
         private void moveHomeFocus(int direction) {
-            int first = homeLayout.visible[6] ? 0 : 4;
-            int end = cardAvailable() ? 4 + cards.length : 4;
-            if (end <= first) return;
-            if (shortcut < first || shortcut >= end) shortcut = direction > 0 ? first : end - 1;
-            else shortcut = first + Math.floorMod(shortcut - first + direction, end - first);
+            ArrayList<Integer> targets=new ArrayList<Integer>();
+            if(homeLayout.visible[6])for(int i=0;i<shortcuts.length;i++)targets.add(i);
+            if(weatherAvailable())targets.add(WEATHER_FOCUS);
+            if(cardAvailable())for(int i=0;i<cards.length;i++)targets.add(4+i);
+            if(targets.isEmpty())return;
+            int at=targets.indexOf(shortcut);
+            shortcut=targets.get(at<0?(direction>0?0:targets.size()-1):Math.floorMod(at+direction,targets.size()));
             if (shortcut >= 4) cardIndex = shortcut - 4;
             invalidate();
         }
@@ -448,6 +461,7 @@ public final class MainActivity extends Activity {
                             open(app);
                         }
                     }
+                    else if(shortcut==WEATHER_FOCUS)open(26);
                     else if(shortcut>=4)openCard();
                     else if(shortcut>=0)open(shortcuts[shortcut]);
                     else { grid = true; message = ""; invalidate(); }
@@ -498,13 +512,6 @@ public final class MainActivity extends Activity {
         void icon(Canvas c, int index, float x, float y) {
             if (!catalogIcons.draw(c, index, x, y)) {
                 artwork.draw(c, index, x, y);
-            }
-            int count = index == 0 ? UnreadState.calls : index == 2 ? UnreadState.sms : 0;
-            if (showUnread && count > 0) {
-                p.setColor(palette.bar);
-                c.drawCircle(x + 20, y - 20, 7, p);
-                p.setColor(0xffff577a);
-                c.drawCircle(x + 20, y - 20, 5, p);
             }
         }
         protected void onDraw(Canvas output) {
