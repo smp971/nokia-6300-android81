@@ -24,11 +24,14 @@ public final class LeoPointerService extends AccessibilityService {
     private String foregroundPackage="",foregroundClass="";private boolean helpHeld,helpShown;private final android.os.Handler helpTimer=new android.os.Handler();private final Runnable holdHelp=new Runnable(){public void run(){if(helpHeld&&!KeypadLockActivity.locked(LeoPointerService.this)&&!InCallActivity.visible&&!AlarmRingService.ringing&&!PowerMenuActivity.visible){helpShown=true;setActive(false);if(menu!=null)menu.dismiss();if(getSharedPreferences("appearance",0).getBoolean("menu-hold-help",false))ContextHelp.open(LeoPointerService.this,foregroundClass);else openPage(RecentAppsActivity.class);}}};
     private int menuGeneration;
     private boolean screenWatching;
+    private final J2meSoftkeys javaKeys=new J2meSoftkeys();
     private final android.content.BroadcastReceiver screenReceiver=new android.content.BroadcastReceiver(){
         public void onReceive(android.content.Context c,android.content.Intent intent){
+            if(android.content.Intent.ACTION_SCREEN_ON.equals(intent.getAction())) javaKeys.screen(true);
             boolean busy=AlarmRingService.ringing;
             try{busy|=((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall();}catch(RuntimeException ignored){}
             if(android.content.Intent.ACTION_SCREEN_OFF.equals(intent.getAction())){
+                javaKeys.screen(false);
                 menuGeneration++;helpHeld=false;helpTimer.removeCallbacks(holdHelp);
                 setActive(false);if(menu!=null)menu.dismiss();
                 if(!busy && getSharedPreferences("keyguard",0).getBoolean("screen_off",false))
@@ -328,6 +331,7 @@ public final class LeoPointerService extends AccessibilityService {
             return true;
         }
         if(menu!=null && menu.isShowing()) return false;
+        if(javaKeys.key(event)) return true;
         if(key==KeyEvent.KEYCODE_POUND && event.getAction()==KeyEvent.ACTION_UP && consumePoundUp) { consumePoundUp=false; return true; }
         if(!active) return false;
         boolean handled=key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN
@@ -380,7 +384,7 @@ public final class LeoPointerService extends AccessibilityService {
         int off=getResources().getIdentifier("global_action_power_off","string","android"),restart=getResources().getIdentifier("global_action_restart","string","android");
         return off!=0&&restart!=0&&event.getText().contains(getString(off))&&event.getText().contains(getString(restart));
     }
-    public void onAccessibilityEvent(AccessibilityEvent event) {if(event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED&&event.getClassName()!=null&&(menu==null||!menu.isShowing()))foregroundClass=event.getClassName().toString();if(event.getEventType()!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)return;if(systemPowerDialog(event)){openPowerMenu();return;}if((menu==null||!menu.isShowing())&&event.getPackageName()!=null)foregroundPackage=event.getPackageName().toString();}
+    public void onAccessibilityEvent(AccessibilityEvent event) {if(event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED&&event.getClassName()!=null&&(menu==null||!menu.isShowing()))foregroundClass=event.getClassName().toString();if(event.getEventType()!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)return;if(systemPowerDialog(event)){openPowerMenu();return;}if((menu==null||!menu.isShowing())&&event.getPackageName()!=null)foregroundPackage=event.getPackageName().toString();javaKeys.foreground(foregroundPackage,foregroundClass);}
     public void onInterrupt() { setActive(false); }
-    public void onDestroy() {helpHeld=false;helpTimer.removeCallbacksAndMessages(null); if(screenWatching)unregisterReceiver(screenReceiver);screenWatching=false;if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
+    public void onDestroy() {javaKeys.close();helpHeld=false;helpTimer.removeCallbacksAndMessages(null); if(screenWatching)unregisterReceiver(screenReceiver);screenWatching=false;if(menu!=null) menu.dismiss(); setActive(false); if(instance==this) instance=null; super.onDestroy(); }
 }

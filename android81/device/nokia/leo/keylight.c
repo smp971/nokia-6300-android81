@@ -31,7 +31,22 @@ static void wake(long long *next){
     if(now()<*next||number("/sys/class/leds/lcd-backlight/brightness")!=0)return;
     char ready[92]={0};if(__system_property_get("sys.boot_completed",ready)<=0||strcmp(ready,"1"))return;
     int child=fork();
-    if(child==0){execl("/system/bin/sh","sh","/system/bin/input","keyevent","224",(char*)0);_exit(127);}
+    if(child==0){
+        char mode[92]={0},sdk[92]={0},time[32];
+        __system_property_get("persist.leo.keylight.wake",mode);
+        __system_property_get("ro.build.version.sdk",sdk);
+        /* Oreo IPowerManager.wakeUp(long,String,String), verified as transaction 9
+         * on this ROM. Keep the previous Input path as an explicit rollback.
+         * No suspend/wake locks or guessed calls on another Android version.
+         */
+        if(!strcmp(sdk,"27")&&strcmp(mode,"legacy")){
+            snprintf(time,sizeof(time),"%lld",now());
+            execl("/system/bin/service","service","call","power","9","i64",time,
+                "s16","leo:keypad","s16","android",(char*)0);
+        }
+        execl("/system/bin/sh","sh","/system/bin/input","keyevent","224",(char*)0);
+        _exit(127);
+    }
     if(child>0)*next=now()+2000;
 }
 int main(void){
@@ -63,6 +78,8 @@ int main(void){
             if(level>max)level=max;
         }
         if(level!=previous){if(brightness(level))break;previous=level;}
+        /* An extinguished LCD ends the illumination window immediately. */
+        if(remaining>0&&number("/sys/class/leds/lcd-backlight/brightness")==0){until=now();remaining=0;}
         int result=poll(inputs,(unsigned)count,remaining>0?250:-1);
         if(result<0){if(!running)break;continue;}
         if(result>0)for(int index=0;index<count;index++){
