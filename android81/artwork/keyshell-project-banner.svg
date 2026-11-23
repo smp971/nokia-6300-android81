@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="title description">
+  <title id="title">N0d3 KeyShell — Android port and interactive shell</title>
+  <desc id="description">An experimental Android 8.1 port with an interactive native keypad shell on Nokia 6300 4G TA-1286. The D-pad is a brand illustration, not a screen capture.</desc>
+  <defs>
+    <linearGradient id="background" x2="1" y2=".4"><stop stop-color="#141218"/><stop offset="1" stop-color="#282034"/></linearGradient>
+    <linearGradient id="key" x2=".8" y2="1"><stop stop-color="#393044"/><stop offset="1" stop-color="#211c29"/></linearGradient>
+    <linearGradient id="accent" x2="1" y2="1"><stop stop-color="#e2ccff"/><stop offset="1" stop-color="#aa80e4"/></linearGradient>
+  </defs>
+  <rect width="1200" height="320" rx="24" fill="url(#background)"/>
+  <path d="M0 296H824L1060 60H1200M0 282H808L1044 46H1200" fill="none" stroke="#41334f" stroke-width="1"/>
+  <circle cx="1090" cy="26" r="174" fill="#342443" opacity=".5"/>
+  <g font-family="DejaVu Sans,Arial,sans-serif">
+    <text x="58" y="54" fill="#c5b8d5" font-size="16" letter-spacing="3">NATIVE ANDROID · PHYSICAL KEYPAD</text>
+    <text x="54" y="135" fill="#f5effa" font-size="72" font-weight="600" letter-spacing="-2">N0d3 KeyShell</text>
+    <text x="58" y="179" fill="#d0bcff" font-size="27">Android 8.1 port · Interactive keypad shell.</text>
+    <text x="58" y="215" fill="#c5b8d5" font-size="18">Home. Apps. System controls. Built around the D-pad.</text>
+    <g font-size="15" font-weight="500">
+      <rect x="58" y="250" width="145" height="32" rx="8" fill="#30283c"/>
+      <text x="130.5" y="271" text-anchor="middle" fill="#eaddff">ANDROID 8.1</text>
+      <rect x="215" y="250" width="123" height="32" rx="8" fill="#213a38"/>
+      <text x="276.5" y="271" text-anchor="middle" fill="#9ee5d5">240 × 320</text>
+      <rect x="350" y="250" width="129" height="32" rx="8" fill="#41351f"/>
+      <text x="414.5" y="271" text-anchor="middle" fill="#f7d58e">TA-1286</text>
+      <text x="501" y="271" fill="#c5b8d5">EXPERIMENTAL DEVELOPMENT</text>
+    </g>
+    <rect x="872" y="24" width="282" height="272" rx="36" fill="#17131d" stroke="#54435f" stroke-width="2"/>
+    <rect x="970" y="58" width="72" height="64" rx="12" fill="url(#key)"/>
+    <rect x="900" y="126" width="66" height="66" rx="12" fill="url(#key)"/>
+    <rect x="970" y="126" width="72" height="66" rx="14" fill="url(#accent)"/>
+    <rect x="1046" y="126" width="66" height="66" rx="12" fill="url(#key)"/>
+    <rect x="970" y="196" width="72" height="64" rx="12" fill="url(#key)"/>
+    <path d="M995 95L1006 83 1017 95M939 148L928 159 939 170M1073 148L1084 159 1073 170M995 223L1006 235 1017 223" fill="none" stroke="#c7b5dc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1006" y="166" text-anchor="middle" fill="#261735" font-size="20" font-weight="600">OK</text>
+    <circle cx="1130" cy="56" r="5" fill="#69d7bd"/>
+    <text x="1013" y="283" text-anchor="middle" fill="#b9abc9" font-size="11" letter-spacing="2">N0D3 · KEYSHELL</text>
+  </g>
+</svg>

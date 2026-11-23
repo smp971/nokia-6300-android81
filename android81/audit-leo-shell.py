@@ -13,6 +13,43 @@ ANDROID = "{http://schemas.android.com/apk/res/android}"
 COMPONENTS = {"activity", "activity-alias", "provider", "receiver", "service"}
 
 
+def catalog_entries(catalog):
+    """Read the explicit registry; reject unknown syntax instead of inventing routes."""
+    block = re.search(r"Entry\[\]\s+APPS\s*=\s*entries\(new Entry\[\]\s*\{(.*?)\}\);", catalog, re.S)
+    hidden = re.search(r"boolean\s+settingsOnly\(int id\)\s*\{\s*return\s+([^;]+);", catalog)
+    if block is None or hidden is None:
+        raise ValueError("AppCatalog format changed; update the audit parser")
+    quoted = r'"(?:[^"\\]|\\.)*"'
+    entry = re.compile(r'new Entry\(\s*(\d+)\s*,\s*(' + quoted +
+                       r')\s*,\s*(\w+Activity)\.class(?:\s*,\s*(' + quoted +
+                       r')\s*,\s*(' + quoted + r'|true|false))?\s*\)\s*,?')
+    rows = {}
+    for line in block[1].splitlines():
+        if not line.strip():
+            continue
+        match = entry.fullmatch(line.strip())
+        if match is None:
+            raise ValueError("Unsupported catalog entry: " + line.strip())
+        app_id = int(match[1])
+        if app_id in rows:
+            raise ValueError("Duplicate catalog ID: " + str(app_id))
+        row = {"id": app_id, "label_ro": json.loads(match[2]), "activity": match[3]}
+        if match[4] is not None:
+            row["extra"] = {"key": json.loads(match[4]), "value": json.loads(match[5])}
+        rows[app_id] = row
+    if not rows or set(rows) != set(range(len(rows))):
+        raise ValueError("Catalog IDs must be contiguous from zero")
+    hidden_ids = set()
+    for condition in hidden[1].split("||"):
+        match = re.fullmatch(r"\s*id\s*==\s*(\d+)\s*", condition)
+        if match is None:
+            raise ValueError("Unsupported settings-only condition")
+        hidden_ids.add(int(match[1]))
+    if not hidden_ids <= rows.keys():
+        raise ValueError("Settings-only ID outside the catalog")
+    return [dict(rows[i], hidden_from_grid=i in hidden_ids) for i in range(len(rows))]
+
+
 def inventory():
     app = ET.parse(SOURCE / "AndroidManifest.xml").getroot().find("application")
     components = []
@@ -32,43 +69,16 @@ def inventory():
             "actions": [action.attrib[ANDROID + "name"] for action in node.findall("intent-filter/action")],
         })
     catalog = (SOURCE / "AppCatalog.java").read_text(encoding="utf-8")
-    names = re.search(r"String\[\] NAMES\s*=\s*L\.array\(new String\[\]\{([^}]+)\}", catalog)
-    hidden = re.search(r"boolean settingsOnly\(int id\)\s*\{return ([^;]+);", catalog)
-    if names is None or hidden is None:
-        raise ValueError("AppCatalog format changed; update the audit parser")
-    labels = re.findall(r'"([^"]+)"', names[1])
-    hidden_ids = {int(i) for i in re.findall(r"id\s*==\s*(\d+)", hidden[1])}
-    if not hidden_ids <= set(range(len(labels))):
-        raise ValueError("Settings-only ID outside the catalog")
-    # Match current dispatch forms explicitly. If the launcher moves to a
-    # registry, read that registry instead of guessing at arbitrary Java code.
+    rows = catalog_entries(catalog)
+    # Main must delegate to the same registry whose IDs were inventoried.
     home = (SOURCE / "MainActivity.java").read_text(encoding="utf-8")
-    dispatch = home.split("void open(int index) {", 1)[1].split("Intent intent;", 1)[0]
-    routes = {}
-    for condition, body in re.findall(r"if\s*\(([^)]+)\)\s*\{([^\n]+)", dispatch):
-        targets = re.findall(r"(\w+Activity)\.class", body)
-        if not targets:
-            continue
-        span = re.fullmatch(r"index\s*>=\s*(\d+)\s*&&\s*index\s*<=\s*(\d+)", condition)
-        ids = list(range(int(span[1]), int(span[2]) + 1)) if span else [
-            int(match) for match in re.findall(r"index\s*==\s*(\d+)", condition)
-        ]
-        if not ids or len(targets) not in (1, len(ids)):
-            raise ValueError(f"Unsupported launch condition: {condition}")
-        for app_id, target in zip(ids, targets * len(ids) if len(targets) == 1 else targets):
-            if app_id in routes:
-                raise ValueError(f"Duplicate route for app {app_id}")
-            routes[app_id] = target
-    if routes.keys() != set(range(len(labels))):
-        raise ValueError(f"Catalog and route IDs differ: {sorted(routes.keys() ^ set(range(len(labels))))}")
+    if not re.search(r"void open\(int index\)\s*\{\s*try\s*\{\s*if\(!AppCatalog\.launch\(MainActivity\.this,index\)\)", home):
+        raise ValueError("Home no longer delegates to the inventoried registry")
     activities = {item["name"] for item in components if item["kind"] == "activity"}
-    if missing := set(routes.values()) - activities:
+    if missing := {row["activity"] for row in rows} - activities:
         raise ValueError(f"Routes missing from manifest: {sorted(missing)}")
     return {
-        "catalog": [
-            {"id": i, "label_ro": label, "activity": routes[i], "hidden_from_grid": i in hidden_ids}
-            for i, label in enumerate(labels)
-        ],
+        "catalog": rows,
         "components": components,
         "source_files": len(list(SOURCE.glob("*.java"))),
         "test_sources": len(list((SOURCE / "tests").glob("*.java"))),

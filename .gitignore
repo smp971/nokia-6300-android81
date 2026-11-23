@@ -35,6 +35,7 @@
 !/android81/tests/test_shell_profile.py
 !/android81/tests/test_keypad_smoke.py
 !/android81/tests/test_packageinstaller_rendering.py
+!/android81/tests/test_shell_inventory.py
 !/android81/repro/
 !/android81/audio-abi/
 !/android81/app-tests/
@@ -48,6 +49,7 @@
 !/android81/leo-storage.fstab
 !/android81/device/
 !/android81/screenshots/
+!/android81/artwork/
 !/android81/radio-runtime/
 !/android81/ims-runtime/
 !/android81/audio-runtime/
