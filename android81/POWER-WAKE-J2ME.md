@@ -112,11 +112,53 @@ prove full-system suspend either. No kernel sleep parameter, CPU governor,
 radio policy or forced suspend command was changed.
 
 The existing Battery page records unplug/reconnect broadcasts, boot identity,
-elapsed realtime and uptime without polling, alarms or wake locks. A real
-screen-off session without USB for at least 15 minutes is still required.
-Elapsed time minus uptime measures system suspension, not screen-off time or
-which process consumed battery. A short session cannot establish daily battery
-life, and percentage-only results can be below the gauge's resolution.
+elapsed realtime and uptime without polling, alarms or wake locks. Elapsed time
+minus uptime measures system suspension, not screen-off time or which process
+consumed battery. The first completed battery-only session is recorded below.
+
+<a id="battery-trial-2026-11-23"></a>
+
+## Completed unplug trial — 23 November 2026
+
+The owner physically disconnected and reconnected USB. The automatic session
+ran from **17:44:42 to 22:06:34 Europe/Bucharest**, on the same boot, with
+`valid=true`, `interrupted=false`, and USB charging reported at completion.
+The session ended automatically at reconnection; opening the Battery page to
+capture the result did not change the saved record.
+
+| Recorded quantity | Result |
+| --- | --- |
+| Elapsed time without USB | **4 h 21 min 52.507 s** (`15,712,507 ms`) |
+| System awake time, from uptime | **13 min 15.369 s** (`795,369 ms`) |
+| System suspension, elapsed minus uptime | **4 h 08 min 37.138 s** (`14,917,138 ms`) |
+| Fraction of the session suspended | **94.94%** |
+| Battery level at unplug / reconnect | **99% → 98%** |
+| Reported charge counter at unplug / reconnect | `1,485,000 → 1,470,000 µAh` |
+| Session state after reconnect | Saved; no longer armed or active |
+
+![Saved battery-only trial on the handset](screenshots/power-java-2026-11-23/battery-trial-result.png)
+
+This confirms real clock-accounted system suspension on the current port,
+beyond simply extinguishing the display or observing CPU idle counters.
+The awake interval includes all system activity and is not a screen-on-time
+measurement. These clocks do not identify the deepest silicon sleep state.
+
+Conditions: Opera remained stopped for the trial, the approved app-op stayed
+`ignore`, and no kernel sleep parameter, governor or SIM/radio policy was
+changed. At reconnect there were no held partial wake locks, the native wake
+service was running, and the same boot identity matched the session.
+
+A one-percentage-point fall near full charge is too coarse to establish daily
+battery life. The reported counter fall is exactly 1% of the driver's reported
+`charge_full=1,500,000 µAh`; it is not treated as an independent precision
+measurement or used to infer mean current. There is no matched battery-only
+before/after trial, so this result cannot isolate the contribution of the
+native wake change from stopping Opera's background work.
+
+Next checks: repeat the measurement at a lower battery level and over a longer
+interval, and explicitly time a physical keypad wake after prolonged unplugged
+suspension. The **0.34 s** wake figure above remains a USB-connected benchmark;
+USB reconnection ending this trial does not establish that keypad latency.
 
 ## Build and installation boundaries
 
@@ -151,8 +193,8 @@ life, and percentage-only results can be below the gauge's resolution.
   official APK kept locally.
 - The battery trial was armed from the Battery UI. Before unplug it remained
   armed/inactive, USB powered, screen Asleep, with zero held partial wake locks
-  and zero reported wake-lock/display suspend blockers. No completed unplugged
-  result is claimed here.
+  and zero reported wake-lock/display suspend blockers. The subsequent valid
+  unplug/reconnect session is recorded above.
 
 | Artifact | Verified SHA-256 |
 | --- | --- |
@@ -161,6 +203,6 @@ life, and percentage-only results can be below the gauge's resolution.
 | Unchanged bundled system KeyShell | `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6` |
 | Unchanged J2ME Loader 1.8.2 | `2bf30066e4c9a664af3d27fbda69b64255e5940904698ac5de4bcb82c6e0e871` |
 
-Battery-only results remain pending until a real unplug/reconnect session
-completes. The previous invalid/interrupted record was preserved while arming;
-actual unplug will create the new session through the normal battery broadcast.
+The previous invalid/interrupted record was preserved while arming. The actual
+unplug created a new session through the normal battery broadcast, and the
+valid completed session now supplies the Battery page's saved result.

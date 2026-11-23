@@ -174,7 +174,7 @@ the original package identity, signer and installation decisions.
 | Area | What still needs work |
 | --- | --- |
 | **Firmware freshness** | Package and validate a firmware kit containing the latest shell, IME and system UI fixes together. Existing firmware downloads are tied to earlier snapshots. |
-| **Power / suspend** | Native keypad screen wake measured about **0.34 s vs 1.64 s** on USB. Opera is stopped for the prepared unplug trial; battery-only suspend and autonomy remain unverified. [Conditions and rollback](android81/POWER-WAKE-J2ME.md#faster-screen-wake) |
+| **Power / suspend** | First valid unplug trial: **4 h 22 min**, **94.9% suspended**, battery **99% → 98%**, with Opera stopped. Native screen wake: **0.34 s vs 1.64 s** on USB. Repeat longer discharge and keypad wake after prolonged unplugged suspend before claiming daily autonomy. [Recorded trial and limits](android81/POWER-WAKE-J2ME.md#battery-trial-2026-11-23) |
 | **Modem / calling** | Broader carrier-call, DTMF, handover, Bluetooth HFP and VoWiFi checks; independent second-stack LTE/IMS evidence before any dual-VoLTE claim. |
 | **USB** | Resolve the intermittent reconnect behavior and complete real MTP transition trials. |
 | **Modern websites** | Assess a compatible newer WebView and repeat cursor/editor/media tests. The current selected provider is WebView 61.0.3163.98. Opera Mini is an optional external integration. |
@@ -318,8 +318,10 @@ project handset, an idle phone and the appropriate prepared host environment.
 
 - [ ] Build one dated firmware kit containing the current shell/IME/system fixes;
   complete clean-install, first-boot, permissions and update/rollback checks.
-- [ ] Finish the physical USB-unplug battery trial, then extend suspend/wake,
-  startup, memory-pressure and longer audio/browser sessions.
+- [x] Complete the first valid physical USB-unplug trial: **4 h 22 min**,
+  **94.9% system suspension**, battery **99% → 98%**. [Evidence and conditions](android81/POWER-WAKE-J2ME.md#battery-trial-2026-11-23)
+- [ ] Repeat longer discharge and physical keypad wake after prolonged unplugged
+  suspend; extend startup, memory-pressure and longer audio/browser sessions.
 - [ ] Diagnose the intermittent USB reconnect and verify real MTP transitions.
 - [ ] Evaluate a newer compatible WebView and repeat cursor, editor, page-resume
   and media checks against the replacement provider.
