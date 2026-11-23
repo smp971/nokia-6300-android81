@@ -14,6 +14,7 @@ import java.util.*;
 /** Accidental-key guard for Leo, not a PIN or Android security lock. */
 public final class KeypadLockActivity extends LeoActivity {
     private long armed;
+    private static long consumedWakeLeft;
     private int previewIndex;
     private LockView screen;
     private final Handler handler=new Handler();
@@ -23,6 +24,7 @@ public final class KeypadLockActivity extends LeoActivity {
     private final SharedPreferences.OnSharedPreferenceChangeListener presentationChanged=new SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(SharedPreferences p,String key){handler.removeCallbacks(presentation);handler.post(presentation);}};
     private final ScreenTicker ticker=new ScreenTicker(this,new ScreenTicker.Work(){public long refresh(){screen.refresh();return 60000-System.currentTimeMillis()%60000;}});
     private final BroadcastReceiver changes=new BroadcastReceiver(){public void onReceive(Context c,Intent intent){
+        if(Intent.ACTION_SCREEN_ON.equals(intent.getAction()))adoptWakeLeft();
         if(Intent.ACTION_BATTERY_CHANGED.equals(intent.getAction())){
             int scale=intent.getIntExtra(BatteryManager.EXTRA_SCALE,100);
             screen.battery=Math.max(0,Math.min(100,intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0)*100/Math.max(1,scale)));
@@ -39,11 +41,25 @@ public final class KeypadLockActivity extends LeoActivity {
         registerReceiver(changes,f);
         for(String name:new String[]{"appearance","accessibility","weather","alarms"})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(presentationChanged);
         ticker.start();
+        adoptWakeLeft();
     }
     protected void onPause(){visible=false;unregisterReceiver(changes);ticker.stop();keys.reset();handler.removeCallbacks(disarm);handler.removeCallbacks(presentation);for(String name:new String[]{"appearance","accessibility","weather","alarms"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(presentationChanged);armed=0;super.onPause();}
     protected void onDestroy(){if(screen.wallpaper!=null)screen.wallpaper.recycle();super.onDestroy();}
     static boolean locked(Context c) { return c.getSharedPreferences("keyguard",0).getBoolean("locked",false); }
     static void unlock(Context c) { c.getSharedPreferences("keyguard",0).edit().putBoolean("locked",false).apply(); }
+    private static long wakeLeftStamp(){
+        try{return Long.parseLong((String)Class.forName("android.os.SystemProperties")
+            .getMethod("get",String.class,String.class).invoke(null,"sys.leo.wake_left","0"));}
+        catch(Exception unavailable){return 0;}
+    }
+    static void discardWakeLeft(){long stamp=wakeLeftStamp();if(stamp>consumedWakeLeft&&stamp<=SystemClock.elapsedRealtime())consumedWakeLeft=stamp;}
+    private void adoptWakeLeft(){
+        long stamp=wakeLeftStamp(),now=SystemClock.elapsedRealtime();
+        if(stamp<=consumedWakeLeft||stamp<=0||stamp>now)return;
+        consumedWakeLeft=stamp;
+        if(now-stamp>=3000||!locked(this))return;
+        armed=stamp;handler.removeCallbacks(disarm);handler.postDelayed(disarm,3000-(now-stamp));screen.invalidate();
+    }
     protected void onCreate(Bundle state) {
         super.onCreate(state);getSharedPreferences("keyguard",0).edit().putBoolean("locked",true).apply();
         getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);

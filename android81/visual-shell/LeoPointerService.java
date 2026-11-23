@@ -30,7 +30,10 @@ public final class LeoPointerService extends AccessibilityService {
             if(android.content.Intent.ACTION_SCREEN_ON.equals(intent.getAction())) javaKeys.screen(true);
             boolean busy=AlarmRingService.ringing;
             try{busy|=((android.telecom.TelecomManager)getSystemService(TELECOM_SERVICE)).isInCall();}catch(RuntimeException ignored){}
+            if(android.content.Intent.ACTION_SCREEN_ON.equals(intent.getAction())
+                &&(busy||!KeypadLockActivity.locked(LeoPointerService.this)))KeypadLockActivity.discardWakeLeft();
             if(android.content.Intent.ACTION_SCREEN_OFF.equals(intent.getAction())){
+                KeypadLockActivity.discardWakeLeft();
                 javaKeys.screen(false);
                 menuGeneration++;helpHeld=false;helpTimer.removeCallbacks(holdHelp);
                 setActive(false);if(menu!=null)menu.dismiss();

@@ -1,5 +1,10 @@
 # Faster keypad wake and physical Java softkeys — 23 November 2026
 
+
+Follow-up: [matrix-keypad wake and the unlock sequence](KEYPAD-WAKE-UNLOCK.md)
+records why the USB wake benchmark did not prove wake from every key during
+real suspend, and the separately prepared boot correction.
+
 This follow-up changes the native keypad observer and the interactive KeyShell
 APK on the existing Android 8.1 port. It does not replace the kernel, boot image,
 modem firmware or bundled firmware downloads.

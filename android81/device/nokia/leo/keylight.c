@@ -6,6 +6,7 @@ extern int open(const char*,int,...),close(int),ioctl(int,unsigned long,...);
 extern long read(int,void*,unsigned long),write(int,const void*,unsigned long);
 extern int strcmp(const char*,const char*),snprintf(char*,unsigned long,const char*,...);
 extern int atoi(const char*),__system_property_get(const char*,char*);
+extern int __system_property_set(const char*,const char*);
 extern int fork(void),execl(const char*,const char*,...);
 extern void _exit(int);
 extern void (*signal(int,void (*)(int)))(int);
@@ -17,7 +18,8 @@ struct input_event {long sec,usec;unsigned short type,code;int value;};
 typedef char arm32_event[sizeof(struct input_event)==16?1:-1];
 static volatile int running=1;
 static void stop(int sig){(void)sig;running=0;}
-static long long now(void){struct timespec t;clock_gettime(1,&t);return t.sec*1000LL+t.nsec/1000000;}
+static long long clockMs(int clock){struct timespec t;clock_gettime(clock,&t);return t.sec*1000LL+t.nsec/1000000;}
+static long long now(void){return clockMs(1);}
 static int number(const char *path){char b[32]={0};int f=open(path,0x80000);if(f<0)return -1;long n=read(f,b,sizeof(b)-1);close(f);return n>0?atoi(b):-1;}
 static int brightness(int value){char b[16];int n=snprintf(b,sizeof(b),"%d\n",value);int f=open("/sys/class/leds/button-backlight/brightness",1|0x80000);if(f<0)return -1;int ok=write(f,b,(unsigned)n)==n;close(f);return ok?0:-1;}
 static int physicalKey(int kind,unsigned code){
@@ -27,12 +29,19 @@ static int physicalKey(int kind,unsigned code){
         case 14:case 103:case 105:case 106:case 107:case 108:case 139:case 158:
         case 212:case 231:case 352:case 522:case 523:return 1;default:return 0;}
 }
-static void wake(long long *next){
-    if(now()<*next||number("/sys/class/leds/lcd-backlight/brightness")!=0)return;
+static void wake(long long *next,int left){
+    /* Rate limiting must include suspended time; uptime stops in deep sleep. */
+    if(clockMs(7)<*next||number("/sys/class/leds/lcd-backlight/brightness")!=0)return;
     char ready[92]={0};if(__system_property_get("sys.boot_completed",ready)<=0||strcmp(ready,"1"))return;
     int child=fork();
     if(child==0){
         char mode[92]={0},sdk[92]={0},time[32];
+        /* A wake softkey also starts the normal left-then-star keypad sequence.
+         * BOOTTIME matches Android elapsedRealtime; this is never an unlock.
+         * Nonpersistent, short-lived metadata contains no recorded key history.
+         */
+        snprintf(time,sizeof(time),"%lld",left?clockMs(7):0LL);
+        __system_property_set("sys.leo.wake_left",time);
         __system_property_get("persist.leo.keylight.wake",mode);
         __system_property_get("ro.build.version.sdk",sdk);
         /* Oreo IPowerManager.wakeUp(long,String,String), verified as transaction 9
@@ -47,7 +56,7 @@ static void wake(long long *next){
         execl("/system/bin/sh","sh","/system/bin/input","keyevent","224",(char*)0);
         _exit(127);
     }
-    if(child>0)*next=now()+2000;
+    if(child>0)*next=clockMs(7)+2000;
 }
 int main(void){
     struct pollfd inputs[3];int kinds[3],count=0;
@@ -89,7 +98,12 @@ int main(void){
             if(read(inputs[index].fd,&e,sizeof(e))!=sizeof(e)){running=0;break;}
             if(e.type==1&&physicalKey(kinds[index],e.code)&&(e.value==1||e.value==2)){
                 until=now()+8000;
-                if(e.value==1)wake(&nextWake);
+                /* This observer requests wake only for star and left softkey.
+                 * Matrix IRQ wake also requires the device-tree wakeup-source
+                 * fix; Android still owns its native POWER/BACK policy.
+                 */
+                if(e.value==1&&((kinds[index]==1&&e.code==522)
+                    ||(kinds[index]==0&&e.code==139)))wake(&nextWake,kinds[index]==0);
             }
         }
     }

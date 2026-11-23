@@ -174,7 +174,7 @@ the original package identity, signer and installation decisions.
 | Area | What still needs work |
 | --- | --- |
 | **Firmware freshness** | Package and validate a firmware kit containing the latest shell, IME and system UI fixes together. Existing firmware downloads are tied to earlier snapshots. |
-| **Power / suspend** | First valid unplug trial: **4 h 22 min**, **94.9% suspended**, battery **99% → 98%**, with Opera stopped. Native screen wake: **0.34 s vs 1.64 s** on USB. Repeat longer discharge and keypad wake after prolonged unplugged suspend before claiming daily autonomy. [Recorded trial and limits](android81/POWER-WAKE-J2ME.md#battery-trial-2026-11-23) |
+| **Power / suspend** | First valid unplug trial: **4 h 22 min**, **94.9% suspended**, battery **99% → 98%**, with Opera stopped. Native screen wake: **0.34 s vs 1.64 s** on USB. Repeat longer discharge and keypad wake after prolonged unplugged suspend before claiming daily autonomy. [Recorded trial](android81/POWER-WAKE-J2ME.md#battery-trial-2026-11-23) · [Keypad wake/unlock follow-up](android81/KEYPAD-WAKE-UNLOCK.md) |
 | **Modem / calling** | Broader carrier-call, DTMF, handover, Bluetooth HFP and VoWiFi checks; independent second-stack LTE/IMS evidence before any dual-VoLTE claim. |
 | **USB** | Resolve the intermittent reconnect behavior and complete real MTP transition trials. |
 | **Modern websites** | Assess a compatible newer WebView and repeat cursor/editor/media tests. The current selected provider is WebView 61.0.3163.98. Opera Mini is an optional external integration. |
