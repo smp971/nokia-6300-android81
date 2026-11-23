@@ -72,7 +72,8 @@ public final class KeypadLockActivity extends LeoActivity {
             if(armed==0&&FmService.playing&&(music==null||!music.playing())&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(key==KeyEvent.KEYCODE_5)stopService(new Intent(this,FmService.class));else if(FmService.instance!=null)FmService.instance.seek(key==KeyEvent.KEYCODE_6);screen.refresh();return true;}
             if(armed==0&&music!=null&&(key==KeyEvent.KEYCODE_4||key==KeyEvent.KEYCODE_5||key==KeyEvent.KEYCODE_6)){if(key==KeyEvent.KEYCODE_5)music.toggle();else music.next(key==KeyEvent.KEYCODE_6);screen.refresh();return true;}
             if(key==KeyEvent.KEYCODE_DPAD_DOWN||key==KeyEvent.KEYCODE_DPAD_UP){previewIndex+=key==KeyEvent.KEYCODE_DPAD_DOWN?1:-1;screen.refresh();return true;}
-            if(key==KeyEvent.KEYCODE_MENU||key==KeyEvent.KEYCODE_SOFT_LEFT) { armed=SystemClock.elapsedRealtime();handler.removeCallbacks(disarm);handler.postDelayed(disarm,3000);screen.invalidate(); }
+            if(key==KeyEvent.KEYCODE_MENU||key==KeyEvent.KEYCODE_SOFT_LEFT
+                ||key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER) { armed=SystemClock.elapsedRealtime();handler.removeCallbacks(disarm);handler.postDelayed(disarm,3000);screen.invalidate(); }
             else if(key==KeyEvent.KEYCODE_STAR && armed>0 && SystemClock.elapsedRealtime()-armed<=3000) { unlock(this);finish(); }
             else {armed=0;screen.invalidate();}
         }

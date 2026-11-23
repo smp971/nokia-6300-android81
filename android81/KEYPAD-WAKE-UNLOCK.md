@@ -8,14 +8,14 @@ with USB attached.
 ## Requested behavior
 
 - The observer requests display wake for the GPIO **star** and the physical
-  **left softkey**. Android retains native **Power** handling.
+  **left softkey** and **OK**. Android retains native **Power** handling.
 - The observer no longer requests wake for pound or the other matrix keys.
   Pound was checked with the display off on USB and left it off.
 - Android's native Back wake policy is unchanged. The right softkey is mapped
   to BACK, so it can still light the display when Android processes that key.
   The observer's allowlist does not override native framework policy.
-- With the keypad guard active, waking with the left softkey also starts the
-  existing **left softkey → star** unlock sequence. A second left press is not
+- With the keypad guard active, waking with left softkey or OK also starts the
+  **left softkey → star** or **OK → star** unlock sequence. A second first-step press is not
   required. Star or Power alone still keeps the guard locked.
 - The three-second window, wrong-key cancellation and canceled/repeated key
   handling remain. This is an accidental-key guard, not an Android PIN lock;
@@ -66,10 +66,20 @@ write only boot, verify readback and check that recovery is unchanged.
 | Prepared matrix-wake boot | `434ec1381679d00e1c284897b5411e7c720491bd6ddfa933c7619f22dbbffeb5` |
 | Unchanged recovery backup | `a8ca049fa84ee83fe40deaf55932b67dfb09de2f1fe97d4e135fd7c0488b1333` |
 
-**Status:** prepared and checked against the live handset; not flashed or
-rebooted yet. Left-softkey wake from real suspend remains pending that step
-and a physical unplugged test. A running Android/root ADB connection is needed
-for the installer's restore action.
+**Status:** installed after explicit owner authorization, read back, and rebooted
+successfully on 23/24 November. The live keypad's `power/wakeup` is now `enabled`;
+the boot digest matches the reviewed image and recovery remains unchanged.
+The boot ID changed from `7b844579-a7d4-4f52-9bf9-ef2a2c3551dd` to
+`37613063-4b9d-4d9f-a339-4db0da74eda2`. A running Android/root ADB connection is
+needed for the installer's restore action.
+
+The owner confirmed an unplugged physical **OK wake → star unlock**: OK lit the
+display quickly and star unlocked it. This short comparison did **not** record
+a completed kernel suspend (`suspend_stats.success=0` and equal awake/boot clocks).
+It therefore validates the physical sequence, not a new deep-suspend latency
+measurement. The earlier 4 h 22 min / 94.9% suspend trial remains a separate,
+valid result; repeat a measured unplug trial before extending that claim to
+the new boot configuration.
 
 Example preparation, using `fdtput` from dtc in a Linux build environment:
 
@@ -90,7 +100,7 @@ The previous monotonic clock stopped during suspend and could preserve the
 remaining cooldown over a long sleep. PowerManager's wake argument still uses
 uptime, as required by Oreo; the two time domains are kept separate.
 
-For a physical left-softkey wake, the native observer publishes one temporary
+For a physical left-softkey or OK wake, the native observer publishes one temporary
 BOOTTIME stamp. The guard consumes a fresh stamp once to arm only the first
 unlock step, with the original remaining three-second timeout. It never changes
 `locked` to false. Star must still complete a normal, uncanceled press. The
@@ -99,6 +109,8 @@ and is not a record of keypad input.
 
 Build the normal helper with `build-keylight.sh`. The optional
 `build-keylight.sh --observe` builds the passive timing probe instead.
+Its optional runtime `--keys` mode captures only named arrow/Back/Call controls,
+bounded to 200 events or 20 minutes without a wake alarm. It never captures digits.
 
 ## Installed and checked before the boot step
 
@@ -124,4 +136,20 @@ Build the normal helper with `build-keylight.sh`. The optional
   armed and no kernel sleep-depth parameter, governor or radio policy changed.
 
 The bundled system APK and firmware/recovery archives have not been regenerated.
-The boot correction has its own pending installation/test boundary above.
+After reboot, the installed helper SHA-256 is
+`0f68f6544f3d95d4e23ee6a87f2b417170c404e44e570d9a3f73f176fbfc0d5a`.
+Both physical left-softkey/star and OK/star routes passed on USB. Seventeen
+isolated guard checks passed, covering cancellation, expiry, wrong second key,
+OK alone, ENTER equivalence and the existing softkey sequence. The subsequent
+dashboard/KaiSIP app build retains these changes; its APK is recorded in
+[the integration report](KEYSHELL-NETWORK-SIP.md).
+
+## Intermittent duplicate-control report
+
+The owner also observed double actions with arrows, Back and dialer controls
+after the display had been on for a while, so this remains independent of wake.
+A passive awake trace captured **148 events / 74 complete presses**, with zero
+repeat events, unmatched releases or unfinished presses. The owner reported no
+duplicate action during that comparison. This does not establish the cause or
+prove a fix. Keep a bounded trace for the next reproduction; no broad debounce
+filter has been added that could swallow quick deliberate presses or T9 input.

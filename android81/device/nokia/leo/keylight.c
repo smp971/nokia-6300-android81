@@ -29,18 +29,18 @@ static int physicalKey(int kind,unsigned code){
         case 14:case 103:case 105:case 106:case 107:case 108:case 139:case 158:
         case 212:case 231:case 352:case 522:case 523:return 1;default:return 0;}
 }
-static void wake(long long *next,int left){
+static void wake(long long *next,int first){
     /* Rate limiting must include suspended time; uptime stops in deep sleep. */
     if(clockMs(7)<*next||number("/sys/class/leds/lcd-backlight/brightness")!=0)return;
     char ready[92]={0};if(__system_property_get("sys.boot_completed",ready)<=0||strcmp(ready,"1"))return;
     int child=fork();
     if(child==0){
         char mode[92]={0},sdk[92]={0},time[32];
-        /* A wake softkey also starts the normal left-then-star keypad sequence.
+        /* A wake left softkey or OK starts the first keypad-unlock step.
          * BOOTTIME matches Android elapsedRealtime; this is never an unlock.
          * Nonpersistent, short-lived metadata contains no recorded key history.
          */
-        snprintf(time,sizeof(time),"%lld",left?clockMs(7):0LL);
+        snprintf(time,sizeof(time),"%lld",first?clockMs(7):0LL);
         __system_property_set("sys.leo.wake_left",time);
         __system_property_get("persist.leo.keylight.wake",mode);
         __system_property_get("ro.build.version.sdk",sdk);
@@ -98,12 +98,12 @@ int main(void){
             if(read(inputs[index].fd,&e,sizeof(e))!=sizeof(e)){running=0;break;}
             if(e.type==1&&physicalKey(kinds[index],e.code)&&(e.value==1||e.value==2)){
                 until=now()+8000;
-                /* This observer requests wake only for star and left softkey.
+                /* This observer requests wake for star, left softkey and OK.
                  * Matrix IRQ wake also requires the device-tree wakeup-source
                  * fix; Android still owns its native POWER/BACK policy.
                  */
                 if(e.value==1&&((kinds[index]==1&&e.code==522)
-                    ||(kinds[index]==0&&e.code==139)))wake(&nextWake,kinds[index]==0);
+                    ||(kinds[index]==0&&(e.code==139||e.code==352))))wake(&nextWake,kinds[index]==0);
             }
         }
     }
