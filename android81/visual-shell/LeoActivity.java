@@ -275,6 +275,7 @@ abstract class LeoActivity extends Activity implements UiMemory.Client {
     void ui(final Runnable action) { runOnUiThread(new Runnable() { public void run() { if(!isFinishing() && !isDestroyed()) action.run(); } }); }
     public boolean dispatchKeyEvent(KeyEvent event) {long start=android.os.SystemClock.elapsedRealtimeNanos();try{return dispatchLeoKey(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     private boolean dispatchLeoKey(KeyEvent event) {
+        KeyDiagnostics.record("activity",event);
         if(isJackNavigationNoise(event)) return true;
         if(navigationPace.consume(this,event))return true;
         if(CircularNavigation.dispatch(this,event))return true;

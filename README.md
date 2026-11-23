@@ -7,7 +7,7 @@
 <p align="center">
   <b>Nokia 6300 4G · TA-1286</b><br>
   <code>AOSP 8.1 / API 27</code> · <code>240 × 320</code> · <code>ARMv7</code> · <code>0.14.0-dev</code><br>
-  <sub>Development snapshot · 23 November 2026</sub>
+  <sub>Development snapshot · 24 November 2026</sub>
 </p>
 
 <p align="center">
@@ -101,11 +101,11 @@ local demonstrations. Radio is shown idle; Terminal executes a real local
 | **Android port** | AOSP `android-8.1.0_r81`, low-RAM product, stock-derived Linux 4.9, Qualcomm msm8909 / Adreno 304 and adapted device services |
 | **Interactive shell** | Home, app grid/list, contextual cards, Settings, global menu, notifications, pointer and native daily apps |
 | **Physical input** | D-pad/softkeys, multi-tap, Romanian T9, personal dictionary and keypad adaptations for Android screens |
-| **Current catalog** | **48 stable destinations**: 34 available in the full launcher and 14 contextual or Settings entries; some share an app implementation |
+| **Current catalog** | **49 stable destinations**: 35 available in the full launcher and 14 contextual or Settings entries; some share an app implementation |
 | **Appearance** | 18 palettes, per-app themes, Gaia icons/wallpapers, adjustable text and three shared Home/standby presets |
 | **Delivery** | Source, signed app builders, versioned app bundles, recovery/ROM packaging and dated hardware reports |
 
-The installed shell snapshot is based on [`3425f78`](https://github.com/smp971/nokia-6300-android81/commit/3425f7871c5d9295bcf616b854372bdce8abd750).
+The 23 November screenshot snapshot is based on [`3425f78`](https://github.com/smp971/nokia-6300-android81/commit/3425f7871c5d9295bcf616b854372bdce8abd750).
 The [capture report](android81/SHOWCASE-2026-11-23.md) identifies the exact APK and
 which scenes use demonstration data.
 
@@ -118,6 +118,16 @@ which scenes use demonstration data.
 uses an owned fixture or demonstration; **Partial** identifies an incomplete
 hardware or compatibility area. The capture session is a UI record, not a new
 carrier, audio or endurance test. Linked reports preserve dates and limits.
+
+The [24 November integration update](android81/KEYSHELL-NETWORK-SIP.md) adds real-state
+VoLTE/Internet badges, a separate keypad-operated Android KaiSIP port, and
+OK → star as an alternative unlock sequence. KaiSIP passes local WebRTC/UI
+checks; PBX registration and real SIP calls remain unverified. An intermittent
+duplicate-key report remains under diagnosis.
+
+| SIM badges · device canvas fixture | KaiSIP · unconfigured on device |
+| :---: | :---: |
+| <a href="android81/KEYSHELL-NETWORK-SIP.md"><img src="android81/screenshots/network-sip-2026-11-24/home-network-0.png" width="160" alt="Synthetic operator names with VoLTE 4G and a globe on the data SIM, rendered on the phone"></a> | <a href="android81/KEYSHELL-NETWORK-SIP.md"><img src="android81/screenshots/network-sip-2026-11-24/kaisip-account.png" width="160" alt="KaiSIP Android account screen, with no account configured"></a> |
 
 ### The interactive shell and its apps
 

@@ -6,6 +6,12 @@ import java.io.InputStream;
 
 /** Compact SIM and weather symbols for Home. */
 final class DashboardArt {
+    void internet(Canvas c,float x,float baseline,int color){
+        p.setColor(color);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1.1f);
+        float y=baseline-3.5f;
+        c.drawCircle(x,y,4.5f,p);c.drawOval(x-2,y-4.5f,x+2,y+4.5f,p);c.drawLine(x-4.5f,y,x+4.5f,y,p);
+        p.setStyle(Paint.Style.FILL);
+    }
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path=new Path();
     private static final ColorFilter[] SIM_COLORS = {

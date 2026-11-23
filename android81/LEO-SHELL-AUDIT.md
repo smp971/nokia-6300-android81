@@ -9,6 +9,12 @@ native route to a declared activity. Fourteen are hidden from the main grid.
 Some IDs use the same activity with different extras. The 63 Java test sources
 include manual trials and historical tests.
 
+Current 24 November inventory: 49 stable destinations (35 launcher / 14 contextual),
+111 activities, one alias, two providers, 12 receivers and 12 services. KaiSIP
+is a separate unprivileged package, reached through the appended ID 48.
+See [network/SIP integration and fresh validation](KEYSHELL-NETWORK-SIP.md).
+The table below retains its historical baseline.
+
 ## Findings in order of priority
 
 This table records the historical 9 November baseline. Current status is

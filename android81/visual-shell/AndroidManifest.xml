@@ -57,6 +57,7 @@
             </intent-filter>
         </activity>
         <activity-alias android:name=".InternalHome" android:targetActivity=".MainActivity" android:exported="false" />
+        <activity android:name=".KaiSipActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".NotificationsActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".DailyAgendaActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".ContactTimelineActivity" android:exported="false" android:screenOrientation="portrait" />

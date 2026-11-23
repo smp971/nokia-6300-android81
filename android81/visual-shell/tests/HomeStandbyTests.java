@@ -14,6 +14,7 @@ import java.util.*;
 public final class HomeStandbyTests extends Instrumentation {
     private int checks;
     private Activity page;
+    private volatile Activity resumedPage;
     private PowerManager.WakeLock awake;
     private File shots;
     private final Map<String,Map<String,?>> saved=new LinkedHashMap<String,Map<String,?>>();
@@ -21,7 +22,17 @@ public final class HomeStandbyTests extends Instrumentation {
     private void ui(final Runnable task){final Throwable[] error={null};runOnMainSync(new Runnable(){public void run(){try{task.run();}catch(Throwable e){error[0]=e;}}});if(error[0]!=null)throw new RuntimeException(error[0]);}
     private Object field(Object object,String name){try{for(Class<?> type=object.getClass();type!=null;type=type.getSuperclass())try{Field f=type.getDeclaredField(name);f.setAccessible(true);return f.get(object);}catch(NoSuchFieldException next){}throw new NoSuchFieldException(name);}catch(Exception error){throw new RuntimeException(error);}}
     private void set(Object object,String name,Object value){try{Field f=object.getClass().getDeclaredField(name);f.setAccessible(true);f.set(object,value);}catch(Exception e){throw new RuntimeException(e);}}
-    private void open(Class<?> type){page=startActivitySync(new Intent(getTargetContext(),type).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));waitForIdleSync();SystemClock.sleep(400);}
+    @Override public void callActivityOnResume(Activity activity){super.callActivityOnResume(activity);resumedPage=activity;}
+    private void open(final Class<?> type){
+        // Android may already have restarted singleTask Home before this runner.
+        // startActivitySync waits for onCreate forever when the intent is reused.
+        if(!type.isInstance(resumedPage)||resumedPage.isFinishing()||resumedPage.isDestroyed()){
+            ui(new Runnable(){public void run(){getTargetContext().startActivity(new Intent(getTargetContext(),type).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}});
+            for(int i=0;i<100&&(!type.isInstance(resumedPage)||resumedPage.isFinishing()||resumedPage.isDestroyed());i++)SystemClock.sleep(100);
+        }
+        check(type.isInstance(resumedPage)&&!resumedPage.isFinishing()&&!resumedPage.isDestroyed(),"bounded page launch "+type.getSimpleName());
+        page=resumedPage;waitForIdleSync();SystemClock.sleep(400);
+    }
     private void close(){if(page!=null){final Activity old=page;ui(new Runnable(){public void run(){old.finish();}});page=null;waitForIdleSync();}}
     private void key(KeyEvent event){KeypadDialog dialog=KeypadDialog.current();if(dialog!=null&&dialog.isShowing())dialog.dispatchKeyEvent(event);else page.dispatchKeyEvent(event);}
     private void press(final int code){ui(new Runnable(){public void run(){long now=SystemClock.uptimeMillis();key(new KeyEvent(now,now,0,code,0));key(new KeyEvent(now,now+30,1,code,0));}});waitForIdleSync();}
@@ -38,7 +49,20 @@ public final class HomeStandbyTests extends Instrumentation {
         getTargetContext().getSharedPreferences("setup",0).edit().putBoolean("complete",true).commit();
         getTargetContext().getSharedPreferences("weather",0).edit().putString("city","București").putString("data","{\"current\":{\"temperature_2m\":8,\"weather_code\":2}}").putLong("updated",System.currentTimeMillis()-20*60000L).commit();
     }
-    private void contracts(){
+    private static void capability(android.net.NetworkCapabilities caps,String method,int value)throws Exception{android.net.NetworkCapabilities.class.getMethod(method,int.class).invoke(caps,value);}
+    private void contracts()throws Exception{
+        check(KeyDiagnostics.control(KeyEvent.KEYCODE_DPAD_DOWN).equals("down")&&KeyDiagnostics.control(KeyEvent.KEYCODE_BACK).equals("back")&&KeyDiagnostics.control(KeyEvent.KEYCODE_CALL).equals("call"),"diagnostic includes reported control kinds");
+        for(int key=KeyEvent.KEYCODE_0;key<=KeyEvent.KEYCODE_9;key++)check(KeyDiagnostics.control(key)==null,"diagnostic never captures dialed digits");
+        check(KeyDiagnostics.control(KeyEvent.KEYCODE_A)==null&&KeyDiagnostics.control(KeyEvent.KEYCODE_STAR)==null&&KeyDiagnostics.control(KeyEvent.KEYCODE_POUND)==null,"text and keypad symbols are excluded from trace");
+        check(HomeNetworkBadges.technology("4G",true).equals("VoLTE 4G"),"voice IMS precedes LTE label");
+        check(HomeNetworkBadges.technology("4G",false).equals("4G")&&HomeNetworkBadges.technology("2G",true).equals("2G"),"LTE alone and IMS on a non-LTE RAT never claim VoLTE");
+        check(HomeNetworkBadges.internetFor(2,2,true)&&!HomeNetworkBadges.internetFor(1,2,true)&&!HomeNetworkBadges.internetFor(-1,-1,true)&&!HomeNetworkBadges.internetFor(2,2,false),"only validated data SIM receives globe");
+        android.net.NetworkCapabilities caps=android.net.NetworkCapabilities.class.getDeclaredConstructor().newInstance();capability(caps,"addTransportType",android.net.NetworkCapabilities.TRANSPORT_CELLULAR);capability(caps,"addCapability",android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        check(!HomeNetworkBadges.validatedCellular(caps)&&!HomeNetworkBadges.validatedCellular(null),"captive or missing network has no internet badge");
+        capability(caps,"addCapability",android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED);check(HomeNetworkBadges.validatedCellular(caps),"validated cellular network qualifies");
+        capability(caps,"removeTransportType",android.net.NetworkCapabilities.TRANSPORT_CELLULAR);capability(caps,"addTransportType",android.net.NetworkCapabilities.TRANSPORT_WIFI);check(!HomeNetworkBadges.validatedCellular(caps),"validated Wi-Fi does not light a SIM globe");
+        int[] oldOrder=AppCatalog.parse("47,0,3");check(oldOrder.length==49&&oldOrder[0]==47&&oldOrder[1]==0&&oldOrder[2]==3&&oldOrder[48]==48,"KaiSIP appended without changing saved app IDs");
+        check(AppCatalog.NAMES.length==IconArt.COLORS.length&&AppCatalog.category(48)==1,"SIP tile has artwork and communication category");
         check(HomeContext.unreadLabel(0,0).isEmpty(),"zero unread omitted");
         check(HomeContext.unreadLabel(2,1).equals("2 mesaje · 1 apel pierdut"),"explicit separate unread kinds");
         check(HomeContext.unreadLabel(-1,2).equals("2 apeluri pierdute"),"negative messages omitted");
@@ -76,6 +100,12 @@ public final class HomeStandbyTests extends Instrumentation {
             screen.shortcut=-1;screen.invalidate();
         }});}finally{image.recycle();}
         for(int preset=0;preset<3;preset++){final int style=preset;ui(new Runnable(){public void run(){appearance().edit().putInt(HomeStyle.KEY,style).apply();screen.reloadAppearance();screen.reloadCards();UnreadState.sms=2;UnreadState.calls=1;screen.cards=new HomeCards.Card[]{new HomeCards.Card(5,"Notificări",HomeContext.unreadLabel(2,1),"")};screen.cardIndex=0;screen.invalidate();}});shot("home-"+preset);}
+        for(int preset=0;preset<3;preset++){
+            final int style=preset;final Bitmap badges=Bitmap.createBitmap(240,302,Bitmap.Config.ARGB_8888);
+            try{ui(new Runnable(){public void run(){appearance().edit().putInt(HomeStyle.KEY,style).apply();screen.reloadAppearance();screen.simSlots=3;screen.simLabels[0]="Operator A";screen.simLabels[1]="Operator B";screen.simTechnology[0]="4G";screen.simTechnology[1]="2G";screen.inService[0]=screen.inService[1]=true;screen.simVolte[0]=true;screen.simVolte[1]=false;screen.simInternet[0]=true;screen.simInternet[1]=false;screen.home.draw(new Canvas(badges),screen);}});
+                try(FileOutputStream out=new FileOutputStream(new File(shots,"home-network-"+preset+".png"))){badges.compress(Bitmap.CompressFormat.PNG,100,out);}
+            }finally{badges.recycle();}
+        }
         getTargetContext().getSharedPreferences("accessibility",0).edit().putInt("text",2).commit();waitForIdleSync();shot("home-large");
         getTargetContext().getSharedPreferences("weather",0).edit().putLong("updated",System.currentTimeMillis()-18*3600000L).commit();waitForIdleSync();shot("home-stale");
         getTargetContext().getSharedPreferences("weather",0).edit().putString("data","").commit();waitForIdleSync();shot("home-empty-weather");
@@ -125,5 +155,7 @@ public final class HomeStandbyTests extends Instrumentation {
         fixture();contracts();home();presets();lock();result.putString("result","PASS "+checks+" Home/standby checks");
     }catch(Throwable e){result.putString("error","after "+checks+" checks: "+android.util.Log.getStackTraceString(e));}finally{
         try{close();restore();UnreadState.refresh(getTargetContext());if(awake!=null&&awake.isHeld())awake.release();}catch(Throwable e){result.putString("restore_error",android.util.Log.getStackTraceString(e));}
-    }finish(result.containsKey("error")||result.containsKey("restore_error")?Activity.RESULT_CANCELED:Activity.RESULT_OK,result);}
+    }
+    try(FileOutputStream out=new FileOutputStream(new File(getTargetContext().getFilesDir(),"home-standby-result.txt"))){out.write(result.toString().getBytes("UTF-8"));}catch(IOException failure){result.putString("report_error",failure.toString());}
+    finish(result.containsKey("error")||result.containsKey("restore_error")?Activity.RESULT_CANCELED:Activity.RESULT_OK,result);}
 }

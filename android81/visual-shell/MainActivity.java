@@ -40,6 +40,14 @@ public final class MainActivity extends Activity {
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
     private final ArrayList<PhoneStateListener> phoneListeners = new ArrayList<PhoneStateListener>();
     private SubscriptionManager subscriptions;
+    private android.net.ConnectivityManager connectivity;
+    private boolean networkWatching;
+    private final android.net.ConnectivityManager.NetworkCallback networkChanges=new android.net.ConnectivityManager.NetworkCallback(){
+        public void onAvailable(android.net.Network network){networkChanged();}
+        public void onLost(android.net.Network network){networkChanged();}
+        public void onCapabilitiesChanged(android.net.Network network,android.net.NetworkCapabilities caps){networkChanged();}
+    };
+    private void networkChanged(){handler.post(new Runnable(){public void run(){queueRefresh();}});}
     private final SubscriptionManager.OnSubscriptionsChangedListener subscriptionListener =
         new SubscriptionManager.OnSubscriptionsChangedListener() {
             public void onSubscriptionsChanged() { listenToPhones(); }
@@ -94,6 +102,8 @@ public final class MainActivity extends Activity {
         try { subscriptions.addOnSubscriptionsChangedListener(subscriptionListener); }
         catch (RuntimeException ignored) { }
         listenToPhones();
+        connectivity=(android.net.ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+        try{connectivity.registerDefaultNetworkCallback(networkChanges);networkWatching=true;}catch(RuntimeException ignored){}
         clock.start();
     }
     protected void onPause() {homeVisible=false;favoriteGeneration++;
@@ -101,6 +111,7 @@ public final class MainActivity extends Activity {
         for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();
+        if(networkWatching){try{connectivity.unregisterNetworkCallback(networkChanges);}catch(RuntimeException ignored){}networkWatching=false;}
         super.onPause();
     }
     protected void onDestroy(){favoriteWorker.shutdownNow();super.onDestroy();}
@@ -153,7 +164,7 @@ public final class MainActivity extends Activity {
             screen.invalidate();
         }
     }
-    public boolean dispatchKeyEvent(KeyEvent event){long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event)||navigationPace.consume(this,event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
+    public boolean dispatchKeyEvent(KeyEvent event){KeyDiagnostics.record("home",event);long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event)||navigationPace.consume(this,event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
     @Override public boolean onKeyUp(int key, KeyEvent event) {
         if (key >= KeyEvent.KEYCODE_2 && key <= KeyEvent.KEYCODE_9 && !screen.grid) {
             boolean shortPress = speedKey == key && !event.isCanceled();
@@ -374,6 +385,7 @@ public final class MainActivity extends Activity {
         String time = "", date = "", message = "", networkBanner=L.t("REȚEA · ÎN AȘTEPTARE");
         final String[] simLabels = {L.t("se verifică"), L.t("se verifică")};
         final String[] simTechnology = {"", ""};
+        final boolean[] simVolte={false,false},simInternet={false,false};
         final boolean[] inService={false,false};
         int simSlots=3;
         Screen() { super(MainActivity.this); setFocusable(true); setFocusableInTouchMode(true); requestFocus(); }
@@ -384,20 +396,24 @@ public final class MainActivity extends Activity {
             String previousFirstTechnology=simTechnology[0],previousSecondTechnology=simTechnology[1];
             int previousSlots=simSlots;
             boolean previousFirstService=inService[0],previousSecondService=inService[1];
+            boolean badgesChanged=false;boolean[] oldVolte=simVolte.clone(),oldInternet=simInternet.clone();
             java.util.TimeZone zone=java.util.TimeZone.getDefault();timeFormat.setTimeZone(zone);dateFormat.setTimeZone(zone);
             Date now = new Date();
             time = timeFormat.format(now);
             date = dateFormat.format(now);
             updateSims();
+            for(int slot=0;slot<2;slot++)badgesChanged|=oldVolte[slot]!=simVolte[slot]||oldInternet[slot]!=simInternet[slot];
             networkBanner=NetworkStartup.label(NetworkStartup.stage(),inService[0]||inService[1],Settings.Global.getInt(getContentResolver(),Settings.Global.AIRPLANE_MODE_ON,0)!=0,android.os.SystemClock.elapsedRealtime());
             // Telemetry is cached while the grid is visible; it has no pixels there.
-            if(!grid&&(!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)||!networkBanner.equals(previousBanner)||!simTechnology[0].equals(previousFirstTechnology)||!simTechnology[1].equals(previousSecondTechnology)||simSlots!=previousSlots||inService[0]!=previousFirstService||inService[1]!=previousSecondService))invalidate();
+            if(!grid&&(badgesChanged||!time.equals(previousTime)||!date.equals(previousDate)||!simLabels[0].equals(first)||!simLabels[1].equals(second)||!networkBanner.equals(previousBanner)||!simTechnology[0].equals(previousFirstTechnology)||!simTechnology[1].equals(previousSecondTechnology)||simSlots!=previousSlots||inService[0]!=previousFirstService||inService[1]!=previousSecondService))invalidate();
         }
         void updateSims() {
             TelephonyManager base = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
+            int internetSubscription=HomeNetworkBadges.internetSubscription(MainActivity.this);
             for(int slot=0;slot<2;slot++) {
                 inService[slot]=false;
                 simTechnology[slot]="";
+                simVolte[slot]=false;simInternet[slot]=false;
                 try {
                     int sim = base.getSimState(slot);
                     int bit = 1 << slot;
@@ -422,6 +438,8 @@ public final class MainActivity extends Activity {
                             inService[slot]=true;
                             simLabels[slot] = name;
                             simTechnology[slot] = NetworkTelemetry.rat(NetworkTelemetry.servingType(phone));
+                            simVolte[slot]="4G".equals(simTechnology[slot])&&ImsStatus.registered(slot);
+                            simInternet[slot]=HomeNetworkBadges.internetFor(info.getSubscriptionId(),internetSubscription,internetSubscription>=0);
                         } else if(service.getState() == ServiceState.STATE_EMERGENCY_ONLY) simLabels[slot] = L.t("doar urgențe");
                         else if(service.getState() == ServiceState.STATE_POWER_OFF) simLabels[slot] = L.t("radio oprit");
                         else simLabels[slot] = L.t("fără serviciu");

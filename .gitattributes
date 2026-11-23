@@ -17,4 +17,5 @@ android81/repro/patches/*.patch -whitespace
 
 # Preserve exact bytes of hash-pinned upstream dependencies across platforms.
 android81/third-party/pocket/* -text -whitespace
+android81/kaisip-android/assets/upstream/** -text -whitespace
 android81/visual-shell/assets/licenses/* -whitespace

@@ -14,7 +14,8 @@ class CatalogTests(unittest.TestCase):
 
     def test_current_manifest_registry_and_private_home(self):
         current = audit.inventory()
-        self.assertEqual(len(current["catalog"]), 48)
+        self.assertEqual(len(current["catalog"]), 49)
+        self.assertEqual(current["catalog"][48]["label_ro"], "KaiSIP")
         self.assertEqual(sum(row["hidden_from_grid"] for row in current["catalog"]), 14)
         self.assertEqual(current["catalog"][39]["extra"], {"key": "podcast", "value": True})
         self.assertTrue(any(row["name"] == "InternalHome" and row["exported"] == "false" for row in current["components"]))

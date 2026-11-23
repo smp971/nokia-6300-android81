@@ -19,7 +19,7 @@ public final class CompactShellTests extends Instrumentation {
  int[] visible=new int[reverse.length];int count=0;
  for (int id:reverse) if (!AppCatalog.settingsOnly(id)) visible[count++]=id;
  int[] expected=Arrays.copyOf(visible,count);
- check(expected.length==34&&Arrays.equals(expected,AppCatalog.menuOrder(fixture)),"flat launcher retains every visible app once in saved order");
+ check(expected.length==35&&Arrays.equals(expected,AppCatalog.menuOrder(fixture)),"flat launcher retains every visible app once in saved order");
  check(Arrays.equals(reverse,AppCatalog.order(fixture)),"filtering does not overwrite saved order");
  if(activate){ThemeCheckpoint.apply(base,5,true);activated=true;}
  page=open(PersonalizationActivity.class);final Activity personal=page;ui(new Runnable(){public void run(){try{check(((List<?>)field(personal,"listRows")).size()==5,"five personalization groups");call(personal,"order",new Class<?>[]{int.class},0);check(((List<?>)field(personal,"listRows")).size()==AppCatalog.menuOrder(base).length,"reordering still includes every launcher app");((Runnable)field(personal,"back")).run();check(((List<?>)field(personal,"listRows")).size()==5,"Back returns to personalization groups");}catch(Exception e){throw new RuntimeException(e);}}});close();

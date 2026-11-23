@@ -217,6 +217,7 @@ public final class PhoneActivity extends LeoActivity {
     private void requestContent(){contentRequested=true;for(int n=0;n<root.getChildCount();n++)if(root.getChildAt(n) instanceof android.widget.ListView&&root.getChildAt(n).requestFocus()){contentRequested=false;return;}}
     private void focusTabs(){if(tabBar!=null)tabBar.getChildAt(page).requestFocus();}
     public boolean dispatchKeyEvent(KeyEvent event) {
+        KeyDiagnostics.record("dialer",event);
         int key=event.getKeyCode();
         // Switch from every non-editor area, including lists that wrap vertically.
         // Keep left/right available for editing a phone number.

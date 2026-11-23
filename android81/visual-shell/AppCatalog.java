@@ -60,7 +60,8 @@ final class AppCatalog {
         new Entry(44, "Arhive ZIP", ZipActivity.class),
         new Entry(45, "Cheltuieli", ExpensesActivity.class),
         new Entry(46, "Metronom", MetronomeActivity.class),
-        new Entry(47, "Coduri QR", QrActivity.class)
+        new Entry(47, "Coduri QR", QrActivity.class),
+        new Entry(48, "KaiSIP", KaiSipActivity.class)
     });
     private static Entry[] entries(Entry[] declared) {
         Entry[] result=new Entry[declared.length];
@@ -97,7 +98,7 @@ final class AppCatalog {
     static int[] order(Context c){return parse(c.getSharedPreferences("appearance",0).getString("app-order",""));}
     static final String[] CATEGORIES=L.array(new String[]{"Principale","Comunicare","Media","Unelte","Relaxare","Sistem","Toate"});
     static boolean settingsOnly(int id){return id==36||id==7||id==15||id==16||id==17||id==18||id==20||id==21||id==24||id==27||id==28||id==29||id==32||id==33;}
-    static int category(int id){if(id==0||id==1||id==2||id==22||id==38||id==41)return 1;if(id==5||id==6||id==12||id==13||id==25||id==34||id==39||id==40)return 2;if(id==3||id==4||id==10||id==11||id==14||id==19||id==26||id==35||id>=42&&id<=47)return 3;if(id==30||id==31||id==37)return 4;return 5;}
+    static int category(int id){if(id==0||id==1||id==2||id==22||id==38||id==41||id==48)return 1;if(id==5||id==6||id==12||id==13||id==25||id==34||id==39||id==40)return 2;if(id==3||id==4||id==10||id==11||id==14||id==19||id==26||id==35||id>=42&&id<=47)return 3;if(id==30||id==31||id==37)return 4;return 5;}
     static boolean primary(int id){return id==0||id==1||id==2||id==3||id==5||id==6||id==8||id==9||id==34;}
     static int[] menuOrder(Context c) {
         boolean simple = ShellMode.simple(c);

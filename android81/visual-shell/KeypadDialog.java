@@ -184,6 +184,7 @@ final class KeypadDialog extends Dialog {
     }
 
     public boolean dispatchKeyEvent(KeyEvent event) {
+        KeyDiagnostics.record("dialog",event);
         if (LeoActivity.isJackNavigationNoise(event)) return true;
         int key = event.getKeyCode();
         boolean digit = numbered && key >= KeyEvent.KEYCODE_1 && key <= KeyEvent.KEYCODE_9;

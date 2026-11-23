@@ -313,6 +313,7 @@ public final class LeoPointerService extends AccessibilityService {
         }
     }
     protected boolean onKeyEvent(KeyEvent event) {
+        KeyDiagnostics.record("accessibility",event);
         if(LeoActivity.isJackNavigationNoise(event)) return true;
         if(PowerMenuActivity.visible)return false;
         int key=event.getKeyCode();

@@ -1,5 +1,6 @@
 /* Bounded, passive wake diagnostic for ARM32 Oreo. No input grab/injection,
- * wake lock or wake alarm. Records timing and device kind, never key codes.
+ * wake lock or wake alarm. Default mode records timing/device kind only;
+ * --keys records an allowlist of navigation controls, never text or digits.
  * The BOOTTIME timer expires after 20 minutes but cannot wake the system.
  */
 extern int open(const char*,int,...),close(int),ioctl(int,unsigned long,...);
@@ -16,11 +17,14 @@ struct input_event {long sec,usec;unsigned short type,code;int value;};
 typedef char arm32_event[sizeof(struct input_event)==16?1:-1];
 static long long ms(int clock){struct timespec t={0,0};if(clock_gettime(clock,&t))return -1;return t.sec*1000LL+t.nsec/1000000;}
 static int lcd(void){char b[32]={0};int f=open("/sys/class/leds/lcd-backlight/brightness",0x80000);if(f<0)return -1;long n=read(f,b,sizeof(b)-1);close(f);return n>0?atoi(b):-1;}
+static const char *control(unsigned code){switch(code){case 103:return "up";case 108:return "down";case 105:return "left";case 106:return "right";case 14:return "back";case 158:return "soft-right";case 231:return "call";default:return (const char*)0;}}
 static void report(int id,const char *kind,long long event,long long seen,long long boot,long long lit,long long active,int value){
     char row[320];int n=snprintf(row,sizeof(row),"wake=%d source=%s event_mono_ms=%lld seen_mono_ms=%lld seen_boot_ms=%lld lcd_delay_boot_ms=%lld lcd_delay_awake_ms=%lld brightness=%d\n",id,kind,event,seen,boot,lit,active,value);
     if(n>0&&(unsigned)n<sizeof(row))write(1,row,(unsigned)n);
 }
-int main(void){
+int main(int argc,char **argv){
+    int keyTrace=argc==2&&!strcmp(argv[1],"--keys");
+    if(argc>1&&!keyTrace)return 64;
     struct pollfd fds[4];int kind[3],count=0;
     for(int i=0;i<16&&count<3;i++){
         char path[40],name[80]={0};snprintf(path,sizeof(path),"/dev/input/event%d",i);
@@ -42,13 +46,22 @@ int main(void){
     static const char ready[]="ready: passive; no wake lock; 20-minute non-waking deadline\n";
     write(1,ready,sizeof(ready)-1);
     int samples=0;
-    while(samples<8){
+    while(samples<(keyTrace?200:8)){
         if(poll(fds,(unsigned)count+1,-1)<0)break;
         if(fds[count].revents)break;
         for(int i=0;i<count;i++){
             if(!(fds[i].revents&1))continue;
             struct input_event e;
             if(read(fds[i].fd,&e,sizeof(e))!=sizeof(e))continue;
+            if(keyTrace){
+                const char *name=control(e.code);
+                if(e.type==1&&kind[i]==0&&name){
+                    char row[160];int n=snprintf(row,sizeof(row),"control=%s value=%d event_us=%lld seen_boot_ms=%lld\n",name,e.value,e.sec*1000000LL+e.usec,ms(7));
+                    if(n>0&&(unsigned)n<sizeof(row))write(1,row,(unsigned)n);
+                    samples++;
+                }
+                continue;
+            }
             if(e.type!=1||e.value!=1||lcd()!=0)continue;
             long long seen=ms(1),boot=ms(7),event=e.sec*1000LL+e.usec/1000;
             if(seen<0||boot<0)continue;

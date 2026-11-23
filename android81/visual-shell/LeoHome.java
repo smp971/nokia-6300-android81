@@ -108,9 +108,10 @@ final class LeoHome {
     }
 
     private void drawSims(Canvas canvas, MainActivity.Screen screen, int slots) {
-        RectF first = new RectF(11, 9, 117, 34);
-        RectF second = new RectF(123, 9, 229, 34);
-        RectF full = new RectF(11, 9, 229, 34);
+        float bottom=9+25*textScale;
+        RectF first = new RectF(11, 9, 117, bottom);
+        RectF second = new RectF(123, 9, 229, bottom);
+        RectF full = new RectF(11, 9, 229, bottom);
         screen.homeLayout.splitSims(full, first, second);
         for (int slot = 0; slot < 2; slot++) {
             if ((slots & (1 << slot)) == 0) continue;
@@ -120,14 +121,26 @@ final class LeoHome {
             if (!screen.homePart(canvas, item, bounds.left, bounds.top, bounds.right, bounds.bottom))
                 continue;
             if(homeStyle==0&&!highContrast)surface(canvas,bounds.left,bounds.top,bounds.right,bounds.bottom,6,palette.bar);
-            float baseline = bounds.top + 17;
+            float baseline = bounds.top + 17*textScale;
             screen.dashboardArt.sim(canvas, bounds.left + 12, baseline, slot, screen.inService[slot]);
-            String technology = screen.simTechnology[slot];
+            String technology = HomeNetworkBadges.technology(screen.simTechnology[slot],screen.simVolte[slot]);
+            boolean internet=screen.simInternet[slot];
+            // Two compact SIM cards need separate operator/detail baselines to
+            // keep the carrier readable beside VoLTE, RAT and the globe.
+            if(bounds.width()<150){
+                text(canvas,screen.simLabels[slot],bounds.left+23,bounds.top+10.5f*textScale,10,INK,Paint.Align.LEFT,bounds.width()-29,MEDIUM);
+                float detailBaseline=bounds.top+22.5f*textScale;
+                text(canvas,technology,bounds.left+23,detailBaseline,9.5f,palette.accent,Paint.Align.LEFT,bounds.width()-29-(internet?14:0),MEDIUM);
+                if(internet)screen.dashboardArt.internet(canvas,bounds.right-10,detailBaseline,palette.accent);
+                canvas.restore();continue;
+            }
             float suffixWidth = 0;
+            float detailRight=bounds.right-6;
+            if(internet){screen.dashboardArt.internet(canvas,bounds.right-10,baseline,palette.accent);detailRight-=14;suffixWidth=14;}
             if (!technology.isEmpty()) {
                 prepare(10, MEDIUM);
-                suffixWidth = paint.measureText(technology) + 6;
-                text(canvas, technology, bounds.right - 6, baseline, 10, palette.accent, Paint.Align.RIGHT,
+                suffixWidth += paint.measureText(technology) + 6;
+                text(canvas, technology, detailRight, baseline, 10, palette.accent, Paint.Align.RIGHT,
                     suffixWidth, MEDIUM);
             }
             text(canvas, screen.simLabels[slot], bounds.left + 23, baseline, 10, INK, Paint.Align.LEFT,
