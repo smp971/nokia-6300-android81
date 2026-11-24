@@ -2,10 +2,55 @@
 (function () {
   'use strict';
   var native = window.NativeKaiSIP;
+  if (window.adapter) { window.adapter.disableLog(true); window.adapter.disableWarnings(true); }
   // The KaiOS SD logger retains an unbounded run in memory. Android keeps no
   // key/account/SIP trace and never requests storage access for diagnostics.
   Log = { i: function () {}, w: function () {}, e: function () {}, flush: function () {},
     onLine: function () {}, fileName: function () { return 'dezactivat pe Android'; }, mode: function () { return 'disabled'; } };
+  // Optional native trace accepts stage names/enums only, expires after at most
+  // 20 minutes and never receives credentials, SDP, addresses or SIP payloads.
+  function stage(name, value) { if (native.trace) { native.trace(name, String(value)); } }
+  function failure(error) { return error && error.name ? error.name : 'Error'; }
+  function watch(peer) {
+    if (peer.__keyshellStage) { return; } peer.__keyshellStage = true;
+    peer.addEventListener('icegatheringstatechange', function () { stage('gather', peer.iceGatheringState); });
+    peer.addEventListener('iceconnectionstatechange', function () { stage('ice', peer.iceConnectionState); });
+    peer.addEventListener('icecandidate', function (event) { stage('candidate', event.candidate ? 'available' : 'complete'); });
+  }
+  function wrap(target, method, name, peer) {
+    var original = target && target[method]; if (!original) { return; }
+    target[method] = function () {
+      if (peer) { watch(this); } stage(name, 'request');
+      var result;
+      try { result = original.apply(this, arguments); }
+      catch (error) { stage(name, failure(error)); throw error; }
+      return result && typeof result.then === 'function' ? result.then(function (value) {
+        stage(name, 'ready'); return value;
+      }, function (error) { stage(name, failure(error)); throw error; }) : result;
+    };
+  }
+  wrap(navigator.mediaDevices, 'getUserMedia', 'media', false);
+  var PC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+  if (PC) { stage('script', 'afterAddTrack-' + typeof PC.prototype.addTrack); stage('script', 'afterGetSenders-' + typeof PC.prototype.getSenders); }
+  if (PC) {
+    wrap(PC.prototype, 'createOffer', 'offer', true); wrap(PC.prototype, 'createAnswer', 'answer', true);
+    wrap(PC.prototype, 'setLocalDescription', 'local', true); wrap(PC.prototype, 'setRemoteDescription', 'remote', true);
+  }
+  if (window.WebSocket) {
+    var send = window.WebSocket.prototype.send;
+    window.WebSocket.prototype.send = function (data) {
+      var method = typeof data === 'string' && /^(INVITE|ACK|CANCEL|BYE|REGISTER) /.exec(data);
+      if (method) { stage('signal', method[1]); } return send.apply(this, arguments);
+    };
+  }
+  Sip.on('ua', function (ua) { ua.on('newRTCSession', function (event) {
+    var session = event.session; stage('session', event.originator === 'local' ? 'outgoing' : 'incoming');
+    session.on('sdp', function (e) { stage('sdp', e.originator + '-' + e.type); });
+    session.on('progress', function (e) { stage('response', e.response ? e.response.status_code : 'progress'); });
+    ['accepted', 'confirmed', 'ended', 'failed'].forEach(function (name) { session.on(name, function () { stage('session', name); }); });
+  }); });
+  window.addEventListener('error', function (event) { stage('script', failure(event.error)); });
+  window.addEventListener('unhandledrejection', function (event) { stage('script', failure(event.reason)); });
   var token = 0;
   navigator.requestWakeLock = function (kind) {
     if (kind !== 'cpu') { throw new Error('Unsupported wake lock'); }
@@ -45,6 +90,13 @@
     setGain: function (value) { if (remote) { remote.gain.gain.value = Math.max(0.2, Math.min(3, value)); } },
     stats: function () { return null; }
   };
+  var dial = Call.dial;
+  if (dial) { Call.dial = function () {
+    if (!PC || typeof PC.prototype.addTrack !== 'function' || typeof PC.prototype.getSenders !== 'function') {
+      return 'Funcțiile audio WebRTC nu sunt disponibile. Verifică instalarea KaiSIP.';
+    }
+    return dial.apply(this, arguments);
+  }; }
   function syncCall() { native.call(Call.inCall()); }
   Call.on('new', syncCall); Call.on('change', syncCall); Call.on('ended', syncCall); Call.on('cleared', syncCall);
   Sip.on('state', function (state) { native.state(state.state || 'unknown'); });

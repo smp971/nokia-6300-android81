@@ -1,0 +1,14 @@
+{
+  "version": "6.4.8",
+  "repository": "https://github.com/webrtcHacks/adapter",
+  "files": {
+    "webrtc-adapter-6.4.8.js": {
+      "url": "https://webrtc.github.io/adapter/adapter-6.4.8.js",
+      "sha256": "7567091c82e695fec68df95cc56c72bb9d20bbca0b372aa817e37ae6e0a4d6d9"
+    },
+    "webrtc-adapter-LICENSE.md": {
+      "url": "https://raw.githubusercontent.com/webrtcHacks/adapter/v6.4.8/LICENSE.md",
+      "sha256": "00a46c6cfc219593b97586398b477e188391556e70487225d3ff9d60ccda6dce"
+    }
+  }
+}

@@ -121,8 +121,9 @@ carrier, audio or endurance test. Linked reports preserve dates and limits.
 
 The [24 November integration update](android81/KEYSHELL-NETWORK-SIP.md) adds real-state
 VoLTE/Internet badges, a separate keypad-operated Android KaiSIP port, and
-OK → star as an alternative unlock sequence. KaiSIP passes local WebRTC/UI
-checks; PBX registration and real SIP calls remain unverified. An intermittent
+OK → star as an alternative unlock sequence. KaiSIP now registers with a PBX
+and establishes an outgoing test call; voice audibility and incoming calls
+still need confirmation. A legacy WebRTC compatibility fix is included. An intermittent
 duplicate-key report remains under diagnosis.
 
 | SIM badges · device canvas fixture | KaiSIP · unconfigured on device |

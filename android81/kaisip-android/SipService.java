@@ -33,6 +33,22 @@ public final class SipService extends Service {
     private PowerManager.WakeLock cpu;
     private final Set<Integer> locks=new HashSet<Integer>();
     private String registration="unconfigured";
+    private long traceRead,traceUntil,traceSession;
+    private int traceCount;
+    private synchronized void trace(String stage,String value){
+        if(!stage.matches("media|offer|answer|local|remote|candidate|gather|ice|signal|session|sdp|response|permission|script")
+            ||!value.matches("[A-Za-z0-9_-]{1,40}"))return;
+        long now=SystemClock.elapsedRealtime();
+        if(now>=traceRead){
+            traceRead=now+1000;
+            try{
+                long until=Long.parseLong((String)Class.forName("android.os.SystemProperties").getMethod("get",String.class,String.class).invoke(null,"sys.leo.siptrace.until","0"));
+                if(until!=traceSession){traceSession=until;traceCount=0;}traceUntil=until;
+            }catch(Exception unavailable){traceUntil=0;}
+        }
+        if(now<traceUntil&&traceUntil-now<=1200000&&traceCount++<256)
+            android.util.Log.i("KaiSIPStage",stage+"="+value);
+    }
     private final AudioManager.OnAudioFocusChangeListener focus=new AudioManager.OnAudioFocusChangeListener(){public void onAudioFocusChange(int change){
         if(change==AudioManager.AUDIOFOCUS_LOSS||change==AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
             script("AndroidPlatform.focusLost()");
@@ -110,10 +126,10 @@ public final class SipService extends Service {
                     if(path.equals("/")||path.equals("/index.html")){
                         String html=new String(asset("upstream/index.html"),"UTF-8");
                         html=html.replace("<meta charset=\"utf-8\">","<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=240,initial-scale=1,user-scalable=no\">");
-                        html=html.replace("<script src=\"js/app.js\"></script>","<script src=\"/android-platform.js\"></script><script src=\"js/app.js\"></script>");
+                        html=html.replace("<script src=\"js/app.js\"></script>","<script src=\"/android-preflight.js\"></script><script src=\"/vendor/webrtc-adapter-6.4.8.js\"></script><script src=\"/android-platform.js\"></script><script src=\"js/app.js\"></script>");
                         return response("text/html",html.getBytes("UTF-8"),200);
                     }
-                    String file=path.equals("/android-platform.js")?"android-platform.js":"upstream"+path;
+                    String file=path.equals("/android-platform.js")||path.equals("/android-preflight.js")||path.equals("/vendor/webrtc-adapter-6.4.8.js")?path.substring(1):"upstream"+path;
                     String mime=path.endsWith(".js")?"application/javascript":path.endsWith(".css")?"text/css":path.endsWith(".png")?"image/png":"application/octet-stream";
                     return response(mime,asset(file),200);
                 }catch(IOException unavailable){return response("text/plain",new byte[0],404);}
@@ -163,6 +179,7 @@ public final class SipService extends Service {
         }
     }
     private final class Platform {
+        @JavascriptInterface public void trace(String stage,String value){if(stage!=null&&value!=null)SipService.this.trace(stage,value);}
         @JavascriptInterface public void editing(boolean value){editing=value;}
         @JavascriptInterface public void editor(String value){if(value.length()<=16384)editor=value;}
         @JavascriptInterface public void background(final boolean value){main.post(new Runnable(){public void run(){continuous=value;updateKeepAlive();}});}
