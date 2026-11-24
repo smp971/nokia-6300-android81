@@ -40,7 +40,8 @@ feature-phone character; the apps use native Android views and Canvas.
 
 ## On the actual phone
 
-**24 new captures, taken on the TA-1286 on 23 November.** Select an image for its
+**The original 24-screen showcase was captured on the TA-1286 on 23 November;
+Messages was refreshed on 24 November.** Select an image for its
 original 240 × 320 version. The following are rendered by the installed app on
 the phone, with Romanian UI selected. English UI is also available.
 Weather, unread counts, SMS/call examples and the music player use
@@ -62,7 +63,7 @@ local demonstrations. Radio is shown idle; Terminal executes a real local
 
 | SMS · local demo | Call screen · local demo | Dedicated global Menu |
 | :---: | :---: | :---: |
-| <a href="android81/screenshots/showcase-2026-11-23/messages-demo.png"><img src="android81/screenshots/showcase-2026-11-23/messages-demo.png" width="170" alt="Built-in demonstration SMS conversation, with no message sent"></a> | <a href="android81/screenshots/showcase-2026-11-23/call-demo.png"><img src="android81/screenshots/showcase-2026-11-23/call-demo.png" width="170" alt="Built-in incoming-call demonstration without a Telecom call"></a> | <a href="android81/screenshots/showcase-2026-11-23/global-menu.png"><img src="android81/screenshots/showcase-2026-11-23/global-menu.png" width="170" alt="Global menu opened through the Nokia's physical dedicated Menu key"></a> |
+| <a href="android81/screenshots/messages-ui-2026-11-24/conversations.png"><img src="android81/screenshots/messages-ui-2026-11-24/conversations.png" width="170" alt="Modern Messages tabs and conversation cards using synthetic messages; no SMS sent"></a> | <a href="android81/screenshots/showcase-2026-11-23/call-demo.png"><img src="android81/screenshots/showcase-2026-11-23/call-demo.png" width="170" alt="Built-in incoming-call demonstration without a Telecom call"></a> | <a href="android81/screenshots/showcase-2026-11-23/global-menu.png"><img src="android81/screenshots/showcase-2026-11-23/global-menu.png" width="170" alt="Global menu opened through the Nokia's physical dedicated Menu key"></a> |
 
 ### Web and daily tools
 
@@ -129,6 +130,10 @@ duplicate-key report remains under diagnosis.
 | SIM badges · device canvas fixture | KaiSIP · unconfigured on device |
 | :---: | :---: |
 | <a href="android81/KEYSHELL-NETWORK-SIP.md"><img src="android81/screenshots/network-sip-2026-11-24/home-network-0.png" width="160" alt="Synthetic operator names with VoLTE 4G and a globe on the data SIM, rendered on the phone"></a> | <a href="android81/KEYSHELL-NETWORK-SIP.md"><img src="android81/screenshots/network-sip-2026-11-24/kaisip-account.png" width="160" alt="KaiSIP Android account screen, with no account configured"></a> |
+
+The [Messages UI refresh](android81/MESSAGES-UI.md) adds Conversations / Drafts /
+Archive tabs, recycled contact cards, clearer message bubbles and a themed editor.
+It retains SMS/draft data and the existing send/confirmation workflow.
 
 ### The interactive shell and its apps
 

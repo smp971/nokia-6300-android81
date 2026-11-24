@@ -15,6 +15,7 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
+import android.view.KeyEvent;
 import android.widget.*;
 import org.json.JSONArray;
 import java.util.*;
@@ -28,10 +29,18 @@ public final class MessagesActivity extends LeoActivity {
         protected boolean removeEldestEntry(Map.Entry<String,Viewport> entry) { return size()>24; }
     };
     private ListView viewportList;
-    private List<Message> viewportRows, buildingThreads;
-    private String viewportPage, buildingThreadPage;
+    private List<Message> viewportRows;
+    private String viewportPage;
     private boolean messageViewport;
     private int folder,organization;
+    private int tabPage;
+    private boolean overview,previewOverview,previewEmpty;
+    private LinearLayout tabs;
+    private BaseAdapter overviewAdapter,conversationAdapter;
+    private TextView overviewSummary,editorBudget;
+    private TextView overviewStatus;
+    private LinearLayout overviewEmpty;
+    private ListPositionDrawable overviewPosition;
     private boolean composing;
     private boolean preview;
     private boolean viewingMessages;
@@ -49,6 +58,8 @@ public final class MessagesActivity extends LeoActivity {
         ContactIdentity identity;
         long date, sent;
         int type, sub, delivery=-1;
+        int slot=Integer.MIN_VALUE;
+        boolean unread,pinned,archived,blocked;
     }
     private static final class Viewport {
         final String id, archiveId;
@@ -92,6 +103,7 @@ public final class MessagesActivity extends LeoActivity {
         viewportList=null;
         viewportRows=null;
         viewportPage=null;
+        overview=false;overviewAdapter=null;conversationAdapter=null;overviewSummary=null;editorBudget=null;tabs=null;overviewStatus=null;overviewEmpty=null;overviewPosition=null;
         super.begin(title);
     }
 
@@ -102,29 +114,44 @@ public final class MessagesActivity extends LeoActivity {
         messageViewport=messages;
     }
 
-    @Override void styleList(TextView heading,ListView list) {
-        if(buildingThreads!=null)trackViewport(buildingThreadPage,list,buildingThreads,false);
-    }
-
-    @Override String rowMemoryKey(String title,int at,String label) {
-        if(buildingThreads==null)return label;
-        return buildingThreadPage+":"+buildingThreads.get(at).address;
-    }
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         preview=getIntent().getBooleanExtra("preview",false);
-        if(preview) { demo(); return; }
+        previewOverview=preview&&getIntent().getBooleanExtra("preview_overview",false);
+        previewEmpty=preview&&getIntent().getBooleanExtra("preview_empty",false);
+        if(preview) { if(previewOverview)load("");else demo(); return; }
         String number=getIntent().getStringExtra("number"),thread=getIntent().getStringExtra("thread");
         if(number!=null) compose(number); else load(thread==null?"":thread);
     }
     protected void onResume() {
         super.onResume();getSharedPreferences("sms-outgoing",0).registerOnSharedPreferenceChangeListener(sentChanged);
-        if(viewingMessages && !preview)load(current);
+        if(!preview){if(overview&&tabPage==1)drafts();else if(viewingMessages)load(current);}
     }
     protected void onPause() {
         if(composing)saveDraft();refreshHandler.removeCallbacks(refresh);
         rememberViewport();
+        if(!preview&&overview&&viewportList!=null)WorkspaceSessions.record(this,getClass().getSimpleName(),Math.max(0,viewportList.getSelectedItemPosition()));
         getSharedPreferences("sms-outgoing",0).unregisterOnSharedPreferenceChangeListener(sentChanged);super.onPause();
+    }
+    @Override void onAppearanceChanged(){
+        if(overviewSummary!=null)overviewSummary.setTextColor(palette.secondary());
+        if(overviewStatus!=null)overviewStatus.setTextColor(palette.accent);
+        if(overviewEmpty!=null)((TextView)overviewEmpty.getChildAt(1)).setTextColor(palette.secondary());
+        if(overview&&viewportList!=null){overviewPosition=new ListPositionDrawable(palette,getResources().getDisplayMetrics().density);overviewPosition.position(viewportList.getSelectedItemPosition(),viewportRows.size());TextView heading=(TextView)root.getChildAt(0);heading.setCompoundDrawables(heading.getCompoundDrawables()[0],null,overviewPosition,null);}
+        if(overviewAdapter!=null)overviewAdapter.notifyDataSetChanged();
+        if(conversationAdapter!=null)conversationAdapter.notifyDataSetChanged();
+        if(editorBudget!=null){editorBudget.setTextColor(palette.secondary());editorBudget.setBackground(Appearance.surface(palette.card,dp(8)));}
+    }
+    @Override String helpControls(){return (overview?L.t("Stânga / dreapta · schimbă tabul")+"\n"+L.t("Sus, la începutul listei · taburi")+"\n":viewingMessages&&!current.isEmpty()?L.t("5 · răspunde în conversație")+"\n":"")+super.helpControls();}
+    @Override public boolean dispatchKeyEvent(KeyEvent event){
+        int key=event.getKeyCode();
+        if(overview&&(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){
+            if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0)switchTab(KeypadTabs.next(tabPage,key==KeyEvent.KEYCODE_DPAD_RIGHT?1:-1,3));return true;
+        }
+        if(overview&&key==KeyEvent.KEYCODE_DPAD_UP&&viewportList!=null&&getCurrentFocus()==viewportList&&viewportList.getSelectedItemPosition()==0){
+            if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0&&tabs!=null)tabs.getChildAt(1).requestFocus();return true;
+        }
+        return super.dispatchKeyEvent(event);
     }
     private String sim(int sub) {
         try { SubscriptionInfo info=SubscriptionManager.from(this).getActiveSubscriptionInfo(sub); return info==null?"SIM ?":"SIM "+(info.getSimSlotIndex()+1); }
@@ -132,9 +159,11 @@ public final class MessagesActivity extends LeoActivity {
     }
     private String key(String address,long sent,String body,int sub) { return PhoneNumberUtils.normalizeNumber(address)+"|"+sent+"|"+sub+"|"+body; }
     private void load(final String address) {
-        if(preview) { demo(); return; }
+        if(address.isEmpty()&&tabPage==1){drafts();return;}
+        if(preview) { composing=false;current=address;if(previewOverview)display(address,previewMessages());else demo(); return; }
         composing=false; viewingMessages=false; loadingMessages=true; current=address;
         loading(L.t("Mesaje"));
+        if(address.isEmpty())overviewTabs();
         final LinearLayout loading=root;
         worker.execute(new Runnable() { public void run() {
             final ArrayList<Message> messages=new ArrayList<Message>();final ArrayList<Message> systemMessages=new ArrayList<Message>();HashSet<String> seen=new HashSet<String>();
@@ -184,59 +213,90 @@ public final class MessagesActivity extends LeoActivity {
             } catch(RuntimeException denied) { ui(new Runnable() { public void run() { if(root==loading) { notice(L.t("Mesajele nu pot fi citite; verifică permisiunile"));display(address,messages); } } }); }
         }});
     }
-    private void display(final String address,ArrayList<Message> messages) {
-        viewingMessages=true;loadingMessages=false;
-        final ArrayList<Message> rows=new ArrayList<Message>(); ArrayList<String> labels=new ArrayList<String>();
-        final HashSet<String> unread=new HashSet<String>();if(!preview)try(SmsStore s=new SmsStore(this);Cursor c=s.getReadableDatabase().rawQuery("SELECT DISTINCT address FROM inbox WHERE unread=1",null)){while(c.moveToNext())unread.add(c.getString(0));}catch(RuntimeException ignored){}HashSet<String> threads=new HashSet<String>();
-        Collections.sort(messages,new Comparator<Message>(){public int compare(Message a,Message b){if(address.isEmpty()){boolean ap=ConversationPrefs.has(MessagesActivity.this,"pinned",a.address),bp=ConversationPrefs.has(MessagesActivity.this,"pinned",b.address);if(ap!=bp)return ap?-1:1;}return Long.compare(b.date,a.date);}});
-        for(Message m:messages) {
-            if(address.isEmpty()) {
-                if(!SmsFolders.accepts(folder,m.type)||!ConversationPrefs.visible(this,organization,m.address))continue;
-                if(!threads.add(m.address)) continue;
-                rows.add(m); labels.add((ConversationPrefs.has(this,"pinned",m.address)?"★ ":"")+(unread.contains(m.address)?"● ":"")+(m.identity==null?m.address:m.identity.name)+" · "+messageSim(m)+"\n"+(m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?"":state(m)+" · ")+m.body);
-            } else if(m.address.equals(address)) {
-                rows.add(m);
+    private void overviewTabs(){
+        overview=true;
+        tabs=KeypadTabs.window(this,MessageUi.TABS,tabPage,new Choice(){public void pick(int page){switchTab(page);}},new Runnable(){public void run(){focusOverview();}});
+        root.addView(tabs,1);
+        back=new Runnable(){public void run(){finish();}};
+    }
+    private void focusOverview(){if(viewportList!=null&&viewportList.getAdapter()!=null&&viewportList.getAdapter().getCount()>0)viewportList.requestFocus();}
+    private void switchTab(int page){
+        if(page==tabPage&&overview&&!loadingMessages){focusOverview();return;}
+        rememberViewport();tabPage=page;organization=page==2?1:0;current="";
+        if(page==1)drafts();else load("");
+    }
+    private void showOrganization(int group){tabPage=group==1?2:0;organization=group;load("");}
+    private int slot(Message message){
+        if(message.slot!=Integer.MIN_VALUE)return message.slot;
+        message.slot=-1;
+        if(preview)message.slot=message.sub;
+        else try{SubscriptionInfo info=SubscriptionManager.from(this).getActiveSubscriptionInfo(message.sub);if(info!=null)message.slot=info.getSimSlotIndex();}catch(RuntimeException ignored){}
+        return message.slot;
+    }
+    private void overviewList(final ArrayList<Message> rows,String page,boolean drafts,Choice choose,Runnable menu){
+        Viewport saved=getIntent().getBooleanExtra("workspace_resume",false)?null:viewports.get(page);
+        int selection=saved==null?0:saved.position(rows,!drafts?false:true);
+        if(getIntent().getBooleanExtra("workspace_resume",false)){selection=WorkspaceSessions.selection(this,getClass().getSimpleName());getIntent().removeExtra("workspace_resume");}
+        begin(L.t("Mesaje"));overviewTabs();
+        String count=drafts?(rows.size()==1?L.t("1 ciornă"):rows.size()+" "+L.t("ciorne")):(rows.size()==1?L.t("1 conversație"):rows.size()+" "+L.t("conversații"));
+        overviewSummary=text(count+(drafts?"":" · "+(organization==2?L.t("Filtrate")+" · ":"")+SmsFolders.LABELS[folder]),12);
+        overviewSummary.setTextColor(palette.secondary());overviewSummary.setPadding(dp(12),dp(5),dp(12),dp(5));overviewSummary.setSingleLine();overviewSummary.setEllipsize(TextUtils.TruncateAt.END);root.addView(overviewSummary);
+        final ListView list=new ListView(this);list.setFocusableInTouchMode(true);list.setClipToPadding(false);list.setSelector(android.R.color.transparent);list.setPadding(dp(8),dp(3),dp(8),dp(5));list.setDivider(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));list.setDividerHeight(dp(6));
+        final int[] focus={Math.max(0,Math.min(selection,rows.size()-1))};
+        final boolean draftRows=drafts;
+        overviewPosition=new ListPositionDrawable(palette,getResources().getDisplayMetrics().density);overviewPosition.position(focus[0],rows.size());
+        TextView heading=(TextView)root.getChildAt(0);heading.setCompoundDrawables(heading.getCompoundDrawables()[0],null,overviewPosition,null);
+        overviewAdapter=new BaseAdapter(){
+            public int getCount(){return rows.size();}public Object getItem(int i){return rows.get(i);}public long getItemId(int i){return i;}
+            public View getView(int i,View reuse,android.view.ViewGroup parent){
+                MessageUi.Row row=reuse instanceof MessageUi.Row?(MessageUi.Row)reuse:new MessageUi.Row(MessagesActivity.this);Message m=rows.get(i);
+                String name=m.identity==null?(m.address.isEmpty()?L.t("SMS nou"):m.address):m.identity.name;
+                String meta=draftRows?L.t("Ciornă"):messageSim(m)+" · "+state(m);
+                row.bind(name,m.body,m.date,meta,draftRows?-1:slot(m),m.unread,m.pinned);row.setSelected(i==focus[0]);return row;
             }
+        };
+        list.setAdapter(overviewAdapter);trackViewport(page,list,rows,drafts);
+        list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onItemSelected(AdapterView<?> p,View v,int i,long id){if(viewportList!=list)return;int old=focus[0];focus[0]=i;View prior=list.getChildAt(old-list.getFirstVisiblePosition());if(prior!=null&&prior!=v)prior.setSelected(false);if(v!=null)v.setSelected(true);if(overviewPosition!=null)overviewPosition.position(i,rows.size());}public void onNothingSelected(AdapterView<?> p){}});
+        final Choice action=choose;
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener(){public void onItemClick(AdapterView<?> p,View v,int i,long id){action.pick(i);}});
+        if(rows.isEmpty())overviewEmpty=MessageUi.empty(this,tabPage);else root.addView(list,new LinearLayout.LayoutParams(-1,0,1));
+        left=menu;back=new Runnable(){public void run(){finish();}};
+        footer(L.t("Opțiuni"),rows.isEmpty()?"":drafts?L.t("Continuă"):L.t("Deschide"),L.t("Înapoi"));
+        if(rows.isEmpty())tabs.getChildAt(1).requestFocus();else {list.requestFocus();if(saved!=null)applyViewport(list,rows,focus[0],saved,drafts);else list.setSelection(focus[0]);}
+    }
+    private void inboxMenu(final ArrayList<Message> messages){
+        options(L.t("Mesaje"),new String[]{L.t("SMS nou"),L.t("Caută în toate mesajele"),L.t("Ciorne salvate"),L.t("Previzualizare notificări"),L.t("Șabloane SMS"),L.t("Dosare mesaje"),L.t("Primite / Arhivate / Filtrate")},new Choice(){public void pick(int i){
+            if(i==6)options(L.t("Conversații"),new String[]{L.t("Principale"),L.t("Arhivate"),L.t("Expeditori filtrați")},new Choice(){public void pick(int n){showOrganization(n);}});
+            else if(i==5)options(L.t("Dosare"),SmsFolders.LABELS,new Choice(){public void pick(int at){folder=at;load("");}});
+            else if(i==4){replyAddress="";templates(false);}else if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)switchTab(1);
+            else {final SharedPreferences prefs=getSharedPreferences("sms-options",0);options(L.t("Text în notificări"),new String[]{L.t("Ascunde textul"),L.t("Arată o previzualizare")},new Choice(){public void pick(int mode){if(!preview)prefs.edit().putBoolean("preview",mode==1).apply();notice(preview?L.t("Demo · fără salvare"):L.t("Preferință salvată pentru mesajele noi"));}});}
+        }});
+    }
+    private void display(final String address,final ArrayList<Message> messages){
+        viewingMessages=true;loadingMessages=false;
+        HashSet<String> unread=new HashSet<String>();
+        if(!preview)try(SmsStore store=new SmsStore(this);Cursor c=store.getReadableDatabase().rawQuery("SELECT DISTINCT address FROM inbox WHERE unread=1",null)){while(c.moveToNext())unread.add(c.getString(0));}catch(RuntimeException ignored){}
+        if(!preview)for(Message m:messages){m.pinned=ConversationPrefs.has(this,"pinned",m.address);m.unread=unread.contains(m.address);}
+        Collections.sort(messages,new Comparator<Message>(){public int compare(Message a,Message b){if(address.isEmpty()&&a.pinned!=b.pinned)return a.pinned?-1:1;return Long.compare(b.date,a.date);}});
+        final ArrayList<Message> rows=new ArrayList<Message>();HashSet<String> threads=new HashSet<String>();
+        for(Message m:messages){
+            if(address.isEmpty()){
+                boolean visible=preview?(organization==2?m.blocked:organization==1?m.archived&&!m.blocked:!m.archived&&!m.blocked):ConversationPrefs.visible(this,organization,m.address);
+                if(!SmsFolders.accepts(folder,m.type)||!visible||!threads.add(m.address))continue;rows.add(m);
+            }else if(m.address.equals(address))rows.add(m);
         }
-        if(!address.isEmpty()) {
-            Collections.reverse(rows);
-            long wanted=getIntent().getLongExtra("search_date",0);
-            if(wanted>0) {
-                int focus=-1;
-                long distance=Long.MAX_VALUE;
-                for(int n=0;n<rows.size();n++){
-                    long delta=Math.abs(rows.get(n).date-wanted);
-                    if(delta<distance){distance=delta;focus=n;}
-                }
-                getIntent().removeExtra("search_date");
-                conversation(address,rows,focus,false);
-            } else conversation(address,rows);
-            if(!preview) { long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through); }
-            return;
+        if(!address.isEmpty()){
+            Collections.reverse(rows);long wanted=getIntent().getLongExtra("search_date",0);
+            if(wanted>0){int focus=-1;long distance=Long.MAX_VALUE;for(int n=0;n<rows.size();n++){long delta=Math.abs(rows.get(n).date-wanted);if(delta<distance){distance=delta;focus=n;}}getIntent().removeExtra("search_date");conversation(address,rows,focus,false);}else conversation(address,rows);
+            if(!preview){long through=0;for(Message m:rows)through=Math.max(through,m.date);UnreadState.readThread(getApplicationContext(),address,through);}return;
         }
-        buildingThreadPage=threadPage();
-        buildingThreads=rows;
-        Viewport saved=getIntent().getBooleanExtra("workspace_resume",false)?null:viewports.get(buildingThreadPage);
-        int threadSelection=saved==null?0:saved.position(rows,false);
-        list(folder==0?L.t("Mesaje"):L.t("Mesaje · ")+SmsFolders.LABELS[folder],labels,threadSelection,new Choice() { public void pick(int i) {
-            load(rows.get(i).address);
-        } },L.t("Opțiuni"),new Runnable() { public void run() {
-            options(L.t("Mesaje"),new String[]{L.t("SMS nou"),L.t("Caută în toate mesajele"),L.t("Ciorne salvate"),L.t("Previzualizare notificări"),L.t("Șabloane SMS"),L.t("Dosare mesaje"),L.t("Primite / Arhivate / Filtrate")},new Choice() { public void pick(int i) {
-                if(i==6){options(L.t("Conversații"),new String[]{L.t("Principale"),L.t("Arhivate"),L.t("Expeditori filtrați")},new Choice(){public void pick(int n){organization=n;load("");}});}else if(i==5){options(L.t("Dosare"),SmsFolders.LABELS,new Choice(){public void pick(int at){folder=at;load("");}});}else if(i==4){replyAddress="";templates(false);}else if(i==0)compose("");else if(i==1)search("",messages);else if(i==2)drafts();else {final SharedPreferences p=getSharedPreferences("sms-options",0);options(L.t("Text în notificări"),new String[]{L.t("Ascunde textul"),L.t("Arată o previzualizare")},new Choice(){public void pick(int mode){p.edit().putBoolean("preview",mode==1).apply();notice(L.t("Preferință salvată pentru mesajele noi"));}});}
-            }});
-        } });
-        buildingThreads=null;
-        buildingThreadPage=null;
-        if(saved!=null&&threadSelection>=0)applyViewport(viewportList,rows,threadSelection,saved,false);
-        TextView folders=text((organization==1?L.t("Arhivate"):organization==2?L.t("Expeditori filtrați"):L.t("Principale"))+" · ‹ "+SmsFolders.LABELS[folder]+L.t(" › · stânga / dreapta"),12);folders.setGravity(Gravity.CENTER);folders.setTextColor(palette.accent);root.addView(folders,1);
-        SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
-        String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):L.t("SMS în așteptare · fără confirmare");
-        if(!status.isEmpty()) root.addView(text(status,14),1);
+        overviewList(rows,threadPage(),false,new Choice(){public void pick(int i){load(rows.get(i).address);}},new Runnable(){public void run(){inboxMenu(messages);}});
+        if(!preview){SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):L.t("SMS în așteptare · fără confirmare");if(!status.isEmpty()){overviewStatus=text(status,13);overviewStatus.setTextColor(palette.accent);root.addView(overviewStatus,3);}}
     }
     private String state(Message m) {
         return m.type==Telephony.Sms.MESSAGE_TYPE_INBOX?L.t("Primit"):m.type==Telephony.Sms.MESSAGE_TYPE_SENT?(m.delivery==1?L.t("Livrat · raport operator"):m.delivery==2?L.t("Livrare eșuată"):m.delivery==3?L.t("Raport · livrare neconfirmată"):m.delivery==0?L.t("Trimis · așteaptă raport"):L.t("Trimis către rețea")):m.type==Telephony.Sms.MESSAGE_TYPE_FAILED?L.t("Eșuat"):L.t("În așteptare");
     }
-    private String messageSim(Message m) { return preview?"SIM "+(m.sub+1):sim(m.sub); }
+    private String messageSim(Message m) { int value=slot(m);return value>=0?"SIM "+(value+1):"SIM ?"; }
     static String statusMark(int type,int delivery){return type==Telephony.Sms.MESSAGE_TYPE_INBOX?"↓":type==Telephony.Sms.MESSAGE_TYPE_FAILED||delivery==2?"!":type==Telephony.Sms.MESSAGE_TYPE_SENT?(delivery==1?"✓✓":"✓"):"…";}
     private void detail(final String address,final ArrayList<Message> rows,final int index) {
         viewingMessages=false;loadingMessages=false;
@@ -252,14 +312,15 @@ public final class MessagesActivity extends LeoActivity {
     private void conversation(String address,ArrayList<Message> rows) { conversation(address,rows,-1,true); }
     private void conversation(final String address,final ArrayList<Message> rows,int requested,boolean restore) {
         composing=false; viewingMessages=true; loadingMessages=false; current=address;
-        String person=!rows.isEmpty()&&rows.get(0).identity!=null?rows.get(0).identity.name:address;begin(preview?L.t("Conversație demo"):person);
+        String person=!rows.isEmpty()&&rows.get(0).identity!=null?rows.get(0).identity.name:address;begin(preview&&!previewOverview?L.t("Conversație demo"):person);
+        TextView heading=(TextView)root.getChildAt(0);heading.setSingleLine();heading.setCompoundDrawables(new AvatarArt(person,dp(26)),null,null,null);
         SharedPreferences outgoing=getSharedPreferences("sms-outgoing",0);
         if(!preview && address.equals(outgoing.getString("number",""))) {
             String status=outgoing.getString("token","").isEmpty()?outgoing.getString("status",""):L.t("SMS în așteptare · fără confirmare");
             if(!status.isEmpty())root.addView(text(status,14));
         }
         final ListView thread=new ListView(this);thread.setFocusableInTouchMode(true);thread.setDivider(null);thread.setSelector(android.R.color.transparent);
-        thread.setPadding(dp(5),0,dp(5),0);
+        thread.setPadding(dp(8),dp(3),dp(8),dp(5));thread.setClipToPadding(false);
         String page=conversationPage(address);
         Viewport saved=restore?viewports.get(page):null;
         int selected=requested>=0?requested:saved==null?rows.size()-1:saved.position(rows,true);
@@ -276,26 +337,26 @@ public final class MessagesActivity extends LeoActivity {
                 if(reuse instanceof LinearLayout) row=(LinearLayout)reuse;
                 else {
                     row=new LinearLayout(MessagesActivity.this);row.setOrientation(1);row.setPadding(0,dp(4),0,dp(4));
-                    TextView date=text("",13);date.setGravity(Gravity.CENTER);row.addView(date);
-                    LinearLayout bubble=new LinearLayout(MessagesActivity.this);bubble.setOrientation(1);bubble.setPadding(dp(8),dp(5),dp(8),dp(5));
-                    TextView body=text("",18);body.setPadding(0,0,0,dp(3));body.setMaxLines(6);body.setEllipsize(TextUtils.TruncateAt.END);bubble.addView(body);
+                    TextView date=text("",12);date.setGravity(Gravity.CENTER);date.setPadding(0,dp(3),0,dp(6));row.addView(date);
+                    LinearLayout bubble=new LinearLayout(MessagesActivity.this);bubble.setOrientation(1);bubble.setPadding(dp(11),dp(8),dp(11),dp(8));
+                    TextView body=text("",19);body.setPadding(0,0,0,dp(5));body.setMaxLines(6);body.setEllipsize(TextUtils.TruncateAt.END);bubble.addView(body);
                     TextView meta=text("",12);meta.setPadding(0,0,0,0);bubble.addView(meta);
                     row.addView(bubble,new LinearLayout.LayoutParams(-1,-2));
                 }
                 Message m=rows.get(i);boolean received=m.type==Telephony.Sms.MESSAGE_TYPE_INBOX;
                 TextView date=(TextView)row.getChildAt(0);
                 String today=day.format(new Date(m.date));
-                date.setText(today);date.setVisibility(i==0 || !today.equals(day.format(new Date(rows.get(i-1).date)))?View.VISIBLE:View.GONE);
+                date.setTextColor(palette.secondary());date.setText(today);date.setVisibility(i==0 || !today.equals(day.format(new Date(rows.get(i-1).date)))?View.VISIBLE:View.GONE);
                 LinearLayout bubble=(LinearLayout)row.getChildAt(1);
                 LinearLayout.LayoutParams lp=(LinearLayout.LayoutParams)bubble.getLayoutParams();
                 lp.leftMargin=received?0:dp(18);lp.rightMargin=received?dp(18):0;bubble.setLayoutParams(lp);
                 ((TextView)bubble.getChildAt(0)).setText(m.body);
                 TextView meta=(TextView)bubble.getChildAt(1);meta.setText(statusMark(m.type,m.delivery)+" "+clock.format(new Date(m.date))+" · "+messageSim(m)+" · "+state(m));
-                int slot=preview?m.sub:-1;try{if(!preview){SubscriptionInfo info=SubscriptionManager.from(MessagesActivity.this).getActiveSubscriptionInfo(m.sub);if(info!=null)slot=info.getSimSlotIndex();}}catch(RuntimeException ignored){}meta.setTextColor(m.type==Telephony.Sms.MESSAGE_TYPE_FAILED||m.delivery==2?0xffffb8ad:slot==0?0xff8fc7ff:slot==1?0xff88e5c6:0xffccd2dd);meta.setCompoundDrawables(new AvatarArt(received?address:L.t("Eu"),dp(19)),null,null,null);meta.setCompoundDrawablePadding(dp(5));
+                meta.setTextColor(m.type==Telephony.Sms.MESSAGE_TYPE_FAILED||m.delivery==2?0xffffb4ab:palette.secondary());meta.setCompoundDrawables(slot(m)>=0&&slot(m)<2?new SimIcon(slot(m),dp(13),palette.accent):null,null,null,null);meta.setCompoundDrawablePadding(dp(4));
                 row.setTag(received);paintBubble(row,i==focus[0]);return row;
             }
         };
-        thread.setAdapter(adapter);
+        conversationAdapter=adapter;thread.setAdapter(adapter);
         thread.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> p,View v,int i,long id) {
                 int old=focus[0];focus[0]=i;
@@ -310,8 +371,8 @@ public final class MessagesActivity extends LeoActivity {
         left=new Runnable() { public void run() {
             messageOptions(address,rows,focus[0]);
         }};
-        back=new Runnable() { public void run() { if(preview)finish();else load(""); } };
-        footer(L.t("Opțiuni"),L.t("5: răspunde"),L.t("Înapoi"));thread.requestFocus();replyAddress=address;
+        back=new Runnable() { public void run() { if(preview&&!previewOverview)finish();else load(""); } };
+        footer(L.t("Opțiuni"),L.t("Detalii"),L.t("Înapoi"));thread.requestFocus();replyAddress=address;
         if(!rows.isEmpty())applyViewport(thread,rows,focus[0],saved,true);
     }
     private static void applyViewport(ListView list,List<Message> rows,int index,Viewport saved,boolean messages) {
@@ -388,10 +449,18 @@ public final class MessagesActivity extends LeoActivity {
     private void paintBubble(View view,boolean selected) {
         if(!(view instanceof LinearLayout))return;
         LinearLayout row=(LinearLayout)view;boolean received=Boolean.TRUE.equals(row.getTag());
-        GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(10));
-        background.setColor(received?palette.card:palette.material()?palette.selection:Appearance.mix(palette.card,palette.accent,.22f));
-        background.setStroke(dp(2),selected?palette.accent:Color.TRANSPARENT);
+        GradientDrawable background=new GradientDrawable();background.setCornerRadius(dp(12));
+        background.setColor(received?palette.card:Appearance.mix(palette.card,palette.accent,.20f));
+        background.setStroke(dp(selected?2:1),selected?palette.accent:palette.divider());
         row.getChildAt(1).setBackground(background);
+    }
+    private ArrayList<Message> previewMessages(){
+        ArrayList<Message> rows=new ArrayList<Message>();if(previewEmpty)return rows;
+        String[] names={"Ana","Ana","Mihai","Mihai","Atelier","Curier","Filtrat"};
+        String[] addresses={"demo:ana","demo:ana","demo:mihai","demo:mihai","demo:atelier","demo:curier","demo:filtrat"};
+        String[] bodies={L.t("Ne vedem mâine la zece?"),L.t("Da, perfect. Îți scriu când ajung."),L.t("Am trimis fotografiile."),L.t("Mulțumesc! Le-am primit."),L.t("Ajung în câteva minute."),L.t("Coletul a fost ridicat. Mulțumim!"),L.t("Mesaj demonstrativ filtrat.")};
+        for(int i=0;i<names.length;i++){Message m=new Message();m.id="preview:"+i;m.address=addresses[i];m.identity=new ContactIdentity(names[i],-1,null);m.body=bodies[i];m.date=System.currentTimeMillis()-i*240000L;m.type=i==1||i==2?2:i==4?5:1;m.sub=i%2;m.delivery=m.type==2?1:-1;m.unread=i==0;m.pinned=i<2;m.archived=i==5;m.blocked=i==6;rows.add(m);}
+        return rows;
     }
     private void demo() {
         ArrayList<Message> messages=new ArrayList<Message>();
@@ -404,28 +473,50 @@ public final class MessagesActivity extends LeoActivity {
     }
     private void saveDraft(){if(preview||recipient==null||body==null)return;String number=recipient.getText().toString(),text=body.getText().toString();try(DraftStore store=new DraftStore(this)){if(number.isEmpty()&&text.isEmpty()){if(draftId!=null)store.remove(draftId);draftId=null;}else draftId=store.save(draftId,number,text);}catch(RuntimeException failure){notice(L.t("Ciorna nu poate fi salvată"));}}
     private void compose(String address){if(preview){draftId=null;editor(address,"",false);return;}DraftStore.Draft existing=null;if(!address.isEmpty())try(DraftStore store=new DraftStore(this)){existing=store.forNumber(address);}draftId=existing==null?null:existing.id;editor(address,existing==null?"":existing.body,false);}
-    private void drafts(){viewingMessages=false;loadingMessages=false;composing=false;final List<DraftStore.Draft> all;try(DraftStore store=new DraftStore(this)){all=store.all();}ArrayList<String> labels=new ArrayList<String>();for(DraftStore.Draft d:all)labels.add((d.number.isEmpty()?L.t("SMS nou"):d.number)+"\n"+d.body);list(L.t("Ciorne · ")+all.size(),labels,0,new Choice(){public void pick(final int at){final DraftStore.Draft d=all.get(at);options(L.t("Ciornă"),new String[]{L.t("Continuă editarea"),L.t("Șterge ciorna")},new Choice(){public void pick(int action){if(action==0){draftId=d.id;editor(d.number,d.body,false);}else options(L.t("Ștergi această ciornă?"),new String[]{L.t("Păstrează"),L.t("Șterge")},new Choice(){public void pick(int yes){if(yes==1){try(DraftStore store=new DraftStore(MessagesActivity.this)){store.remove(d.id);}drafts();}}});}});}},L.t("SMS nou"),new Runnable(){public void run(){compose("");}});back=new Runnable(){public void run(){load(current);}};}
+    private void drafts(){
+        tabPage=1;current="";viewingMessages=false;loadingMessages=true;composing=false;
+        loading(L.t("Mesaje"));overviewTabs();left=new Runnable(){public void run(){compose("");}};
+        final LinearLayout loading=root;
+        worker.execute(new Runnable(){public void run(){
+            final ArrayList<DraftStore.Draft> all=new ArrayList<DraftStore.Draft>();final ArrayList<Message> rows=new ArrayList<Message>();
+            try{
+                if(preview){
+                    if(!previewEmpty){DraftStore.Draft d=new DraftStore.Draft();d.id="preview:draft";d.number="0700000000";d.body=L.t("Salut! Ajung în câteva minute.");d.updated=System.currentTimeMillis()-900000;all.add(d);}
+                }else try(DraftStore store=new DraftStore(MessagesActivity.this)){all.addAll(store.all());}
+                for(DraftStore.Draft d:all){Message m=new Message();m.id=d.id;m.address=d.number;m.body=d.body;m.date=d.updated;m.sub=-1;m.slot=-1;m.identity=preview?new ContactIdentity(L.t("Ciornă demo"),-1,null):d.number.isEmpty()?null:ContactIdentity.find(MessagesActivity.this,d.number);rows.add(m);}
+                ui(new Runnable(){public void run(){if(root!=loading)return;loadingMessages=false;
+                    overviewList(rows,"drafts",true,new Choice(){public void pick(int at){editDraft(all.get(at));}},new Runnable(){public void run(){
+                        final int at=viewportList==null?0:Math.max(0,Math.min(all.size()-1,viewportList.getSelectedItemPosition()));
+                        options(L.t("Ciorne"),all.isEmpty()?new String[]{L.t("SMS nou")}:new String[]{L.t("SMS nou"),L.t("Continuă editarea"),L.t("Șterge ciorna")},new Choice(){public void pick(int action){
+                            if(action==0){compose("");return;}if(all.isEmpty())return;
+                            if(action==1)editDraft(all.get(at));else options(L.t("Ștergi această ciornă?"),new String[]{L.t("Păstrează"),L.t("Șterge")},new Choice(){public void pick(int yes){if(yes==1){if(preview){notice(L.t("Demo · fără salvare"));return;}try(DraftStore store=new DraftStore(MessagesActivity.this)){store.remove(all.get(at).id);}drafts();}}});
+                        }});
+                    }});
+                }});
+            }catch(RuntimeException failure){ui(new Runnable(){public void run(){if(root==loading){loadingMessages=false;errorPage(L.t("Ciorne"),L.t("Ciornele nu pot fi citite"),new Runnable(){public void run(){drafts();}});}}});}
+        }});
+    }
+    private void editDraft(DraftStore.Draft draft){draftId=preview?null:draft.id;editor(draft.number,draft.body,false);}
     private void editor(String number,String initialBody,boolean forwarded) {
         viewingMessages=false;loadingMessages=false;
         LinearLayout fields=fields(forwarded?L.t("Redirecționare"):L.t("SMS nou")); composing=true;
         recipient=field(fields,L.t("Număr"),number,InputType.TYPE_CLASS_PHONE);
         body=field(fields,L.t("Mesaj"),initialBody,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        body.setMinLines(3); body.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(1000)});
-        final TextView count=text(SmsBudget.label(initialBody),13);fields.addView(count);body.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int c,int after){}public void onTextChanged(CharSequence s,int a,int before,int c){}public void afterTextChanged(android.text.Editable e){count.setText(SmsBudget.label(e.toString()));}});
+        body.setMinLines(3);body.setHint(L.t("Scrie un mesaj…"));body.setGravity(Gravity.TOP); body.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(1000)});
+        final TextView count=text(SmsBudget.label(initialBody),14);editorBudget=count;count.setTextColor(palette.secondary());count.setPadding(dp(8),dp(5),dp(8),dp(5));count.setBackground(Appearance.surface(palette.card,dp(8)));fields.addView(count);body.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int c,int after){}public void onTextChanged(CharSequence s,int a,int before,int c){}public void afterTextChanged(android.text.Editable e){count.setText(SmsBudget.label(e.toString()));}});
         recipient.setNextFocusDownId(body.getId()); body.setNextFocusUpId(recipient.getId());
         left=new Runnable() { public void run() { options(L.t("Editor SMS"),new String[]{L.t("Continuă spre trimitere"),L.t("Inserează șablon"),L.t("Salvează ciorna")},new Choice(){public void pick(int n){if(n==0)prepare();else if(n==1)templates(true);else{saveDraft();notice(preview?L.t("Demo · fără salvare"):L.t("Ciornă salvată"));}}}); } };
         back=new Runnable() { public void run() {
-            if(preview) { composing=false;demo();return; }
+            if(preview) { composing=false;if(previewOverview)load(current);else demo();return; }
             saveDraft(); options(L.t("Ciornă SMS"),new String[]{L.t("Continuă"),L.t("Păstrează și închide"),L.t("Șterge ciorna")},new Choice() { public void pick(int i) {
                 if(i==1) load(current); else if(i==2) { try(DraftStore store=new DraftStore(MessagesActivity.this)){if(draftId!=null)store.remove(draftId);}draftId=null;composing=false;load(current); }
             }});
         }};
-        footer(L.t("Opțiuni"),"Editor",L.t("Șterge")); (number.isEmpty()?recipient:body).requestFocus();
+        footer(L.t("Opțiuni"),L.t("Scriere"),L.t("Șterge")); (number.isEmpty()?recipient:body).requestFocus();
     }
     private void templates(final boolean insert){final ArrayList<String> all=SmsTemplates.read(this);list(L.t("Șabloane SMS"),all,0,new Choice(){public void pick(final int n){options(L.t("Șablon"),new String[]{insert?L.t("Inserează în mesaj"):L.t("Folosește pentru răspuns"),L.t("Editează"),L.t("Șterge")},new Choice(){public void pick(int action){if(action==0){if(insert){String text=SmsTemplates.insert(body.getText().toString(),all.get(n),Math.max(0,body.getSelectionStart()));if(text.length()>1000){notice(L.t("Mesajul ar depăși 1000 de caractere"));return;}String address=recipient.getText().toString();editor(address,text,false);}else{if(composing)saveDraft();draftId=null;editor(replyAddress,all.get(n),false);}}else if(action==1)templateEdit(all,n,insert);else options(L.t("Ștergi șablonul?"),new String[]{L.t("Păstrează"),L.t("Șterge")},new Choice(){public void pick(int yes){if(yes==1){all.remove(n);SmsTemplates.save(MessagesActivity.this,all);templates(insert);}}});}});}},L.t("Nou"),new Runnable(){public void run(){if(all.size()>=20)notice(L.t("Maximum 20 de șabloane"));else templateEdit(all,-1,insert);}});viewingMessages=false;loadingMessages=false;back=new Runnable(){public void run(){if(insert)editor(recipient.getText().toString(),body.getText().toString(),false);else if(preview)demo();else load(current);}};}
     private void templateEdit(final ArrayList<String> all,final int at,final boolean insert){LinearLayout f=fields(L.t("Editează șablonul"));final EditText value=field(f,L.t("Text · maximum 240 caractere"),at<0?"":all.get(at),InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);value.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(240)});left=new Runnable(){public void run(){String text=value.getText().toString().trim();if(text.isEmpty()){notice(L.t("Scrie textul șablonului"));return;}if(at<0)all.add(text);else all.set(at,text);SmsTemplates.save(MessagesActivity.this,all);templates(insert);}};back=new Runnable(){public void run(){templates(insert);}};footer(L.t("Salvează"),"Editor",L.t("Șterge"));value.requestFocus();}
     public boolean onKeyDown(int key,android.view.KeyEvent e){if(!composing&&viewingMessages&&!current.isEmpty()&&key==android.view.KeyEvent.KEYCODE_5){if(e.getRepeatCount()==0)compose(current);return true;}return super.onKeyDown(key,e);}
-    public boolean dispatchKeyEvent(android.view.KeyEvent e){int key=e.getKeyCode();if(!composing&&viewingMessages&&current.isEmpty()&&(key==android.view.KeyEvent.KEYCODE_DPAD_LEFT||key==android.view.KeyEvent.KEYCODE_DPAD_RIGHT)){if(e.getAction()==0&&e.getRepeatCount()==0){folder=Math.floorMod(folder+(key==android.view.KeyEvent.KEYCODE_DPAD_RIGHT?1:-1),SmsFolders.LABELS.length);load("");}return true;}return super.dispatchKeyEvent(e);}
     private void prepare() {
         if(preview) { notice(L.t("Demonstrație locală · fără trimitere SMS"));return; }
         final String number=PhoneNumberUtils.normalizeNumber(recipient.getText().toString()),text=body.getText().toString();
