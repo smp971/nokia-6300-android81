@@ -41,7 +41,7 @@ feature-phone character; the apps use native Android views and Canvas.
 ## On the actual phone
 
 **The original 24-screen showcase was captured on the TA-1286 on 23 November;
-Messages was refreshed on 24 November.** Select an image for its
+Messages was refreshed on 24 November and launcher folders on 25 November.** Select an image for its
 original 240 × 320 version. The following are rendered by the installed app on
 the phone, with Romanian UI selected. English UI is also available.
 Weather, unread counts, SMS/call examples and the music player use
@@ -50,7 +50,7 @@ local demonstrations. Radio is shown idle; Terminal executes a real local
 
 | Home dashboard | App launcher | Settings |
 | :---: | :---: | :---: |
-| <a href="android81/screenshots/showcase-2026-11-23/home.png"><img src="android81/screenshots/showcase-2026-11-23/home.png" width="180" alt="Home with SIM status, large clock, compact weather, unread counts and Gaia shortcuts"></a> | <a href="android81/screenshots/showcase-2026-11-23/apps.png"><img src="android81/screenshots/showcase-2026-11-23/apps.png" width="180" alt="Colorful three-column keypad launcher with focused-app subtitle"></a> | <a href="android81/screenshots/showcase-2026-11-23/settings.png"><img src="android81/screenshots/showcase-2026-11-23/settings.png" width="180" alt="Tabbed native Settings with readable rows and physical softkey actions"></a> |
+| <a href="android81/screenshots/showcase-2026-11-23/home.png"><img src="android81/screenshots/showcase-2026-11-23/home.png" width="180" alt="Home with SIM status, large clock, compact weather, unread counts and Gaia shortcuts"></a> | <a href="android81/screenshots/launcher-folders-2026-11-25/menu-tools.png"><img src="android81/screenshots/launcher-folders-2026-11-25/menu-tools.png" width="180" alt="Colorful keypad launcher with five folders and focused-entry subtitle"></a> | <a href="android81/screenshots/showcase-2026-11-23/settings.png"><img src="android81/screenshots/showcase-2026-11-23/settings.png" width="180" alt="Tabbed native Settings with readable rows and physical softkey actions"></a> |
 
 | Digital standby | Audio player · demo | Internet radio · idle |
 | :---: | :---: | :---: |
@@ -135,11 +135,21 @@ The [Messages UI refresh](android81/MESSAGES-UI.md) adds Conversations / Drafts 
 Archive tabs, recycled contact cards, clearer message bubbles and a themed editor.
 It retains SMS/draft data and the existing send/confirmation workflow.
 
+The [launcher folders update](android81/LAUNCHER-FOLDERS.md) reduces the default
+main menu from 35 to 18 entries. Tools, Organizer, Media, Internet and Advanced
+collect secondary apps; Phone, Messages and the other core apps stay direct.
+Use **Options → Move to folder** to change an app’s location. Flat-menu mode and
+all existing shortcuts remain available.
+
+| Tools | Organizer | Internet |
+| :---: | :---: | :---: |
+| <a href="android81/screenshots/launcher-folders-2026-11-25/tools.png"><img src="android81/screenshots/launcher-folders-2026-11-25/tools.png" width="170" alt="Tools folder with Calculator, Recorder, Converter, GPS, ZIP, Metronome and QR"></a> | <a href="android81/screenshots/launcher-folders-2026-11-25/organizer.png"><img src="android81/screenshots/launcher-folders-2026-11-25/organizer.png" width="170" alt="Organizer folder with Notes, Calendar, Dictionary, Study and Expenses"></a> | <a href="android81/screenshots/launcher-folders-2026-11-25/internet.png"><img src="android81/screenshots/launcher-folders-2026-11-25/internet.png" width="170" alt="Internet folder with Email, Web Apps, News and KaiSIP"></a> |
+
 ### The interactive shell and its apps
 
 | Area | Current functionality | Evidence / boundary |
 | --- | --- | --- |
-| **Home and launcher** | Clock/date, real per-SIM operator and RAT, compact cached weather, automatic/manual cards, unread counts, four configurable shortcuts, grid/list and editable layout | **Device + Local:** current Home/standby and physical-key checks; fixture weather/counts in the gallery. [Home guide](android81/LEO-HOME.md) |
+| **Home and launcher** | Clock/date, real per-SIM operator and RAT, compact cached weather, automatic/manual cards, unread counts, four configurable shortcuts, five customizable launcher folders, grid/list and editable layout | **Device + Local:** current Home/standby and physical-key checks; fixture weather/counts in the gallery. [Home guide](android81/LEO-HOME.md) |
 | **Standby and themes** | Digital clock, cached weather with age, alarms, unread counters, media/notification area; classic/minimal/high-contrast presets, text scaling and per-app colors | **Device + Local:** 18 palettes × three text sizes × three Home presets. Standby is an accidental-key guard. [UI refresh](android81/HOME-STANDBY-UI.md) |
 | **Settings and notifications** | Six Settings tabs, native lists/forms/dialogs, app permissions, quick controls, Android notifications and a dedicated global menu | **Device:** keypad routes and selected Android screens/dialogs. Individual third-party app behavior varies. [Android integration](android81/ANDROID-KEYPAD-NAVIGATION.md) |
 | **Physical text input** | Multi-tap, Romanian diacritics, Romanian T9, candidate selection, private personal dictionary and optional learned ranking | **Device + host:** editor/word fixtures and physical typing history. English UI is available; English T9 remains open. [IME](android81/KEYPAD-IME.md) · [T9 follow-up](android81/LEO-DAILY-REFINEMENTS.md) |

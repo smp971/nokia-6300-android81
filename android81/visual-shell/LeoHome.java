@@ -200,15 +200,18 @@ final class LeoHome {
     }
 
     private void drawApps(Canvas canvas, MainActivity.Screen screen) {
-        text(canvas, L.t("Aplicații"), 11, 26, 22, INK, Paint.Align.LEFT, 157, MEDIUM);
+        String title=screen.folder>=0?LauncherFolders.label(LauncherFolders.FIRST+screen.folder):L.t("Aplicații");
+        text(canvas, title, 11, 26, 22, INK, Paint.Align.LEFT, 157, MEDIUM);
         String count = screen.order.length == 0 ? "0" : (screen.selected + 1) + " / " + screen.order.length;
         text(canvas, count, 229, 24, 11, MUTED, Paint.Align.RIGHT, 60, MEDIUM);
-        int app = screen.focusedApp();
+        int app = screen.focusedEntry();
         if (app < 0) {
             text(canvas, L.t("Nicio aplicație"), 120, 144, 16, MUTED, Paint.Align.CENTER, 210, MEDIUM);
             return;
         }
-        text(canvas, screen.names[app], 11, 44, 13, palette.accent, Paint.Align.LEFT, 218, MEDIUM);
+        String subtitle=LauncherFolders.label(app);
+        if(LauncherFolders.isFolder(app))subtitle+=" · "+screen.folderMembers[app-LauncherFolders.FIRST].length;
+        text(canvas, subtitle, 11, 44, 13, palette.accent, Paint.Align.LEFT, 218, MEDIUM);
         if (screen.list) drawList(canvas, screen, 53);
         else drawGrid(canvas, screen, 53);
     }
@@ -224,7 +227,7 @@ final class LeoHome {
             float center = x + APP_TILE_SIZE / 2f;
             tile(canvas, x, y, x + APP_TILE_SIZE, y + APP_TILE_SIZE, 5, i == screen.selected);
             icon(canvas, screen, app, center, y + 27, .84f);
-            String name = app == 9 ? "Android" : screen.names[app];
+            String name = app == 9 ? "Android" : LauncherFolders.label(app);
             text(canvas, name, center, y + 60, 10, INK, Paint.Align.CENTER, APP_TILE_SIZE - 7, MEDIUM);
         }
     }
@@ -238,7 +241,7 @@ final class LeoHome {
             float y = top + row * 33;
             tile(canvas, 9, y, 229, y + 30, 9, index == screen.selected);
             icon(canvas, screen, app, 26, y + 15, .45f);
-            text(canvas, screen.names[app], 46, y + 20, 13, INK, Paint.Align.LEFT, 173, MEDIUM);
+            text(canvas, LauncherFolders.label(app), 46, y + 20, 13, INK, Paint.Align.LEFT, 173, MEDIUM);
         }
         if (screen.order.length > count) {
             float track = 195;
@@ -255,7 +258,7 @@ final class LeoHome {
         paint.setColor(divider);
         canvas.drawRect(0, BODY, WIDTH, BODY + 1, paint);
         String left = screen.editing ? L.t("Salvează") : screen.grid ? L.t("Opțiuni") : L.t("Notificări");
-        String center = screen.grid ? (screen.focusedApp() >= 0 ? L.t("Deschide") : "")
+        String center = screen.grid ? (screen.focusedEntry() >= 0 ? L.t("Deschide") : "")
             : screen.shortcut != -1 ? L.t("Deschide") : L.t("Aplicații");
         if (screen.editing) center = L.t(HomeCanvasLayout.NAMES[screen.editItem]);
         String right = screen.editing || screen.grid ? L.t("Înapoi") : screen.names[screen.rightApp];

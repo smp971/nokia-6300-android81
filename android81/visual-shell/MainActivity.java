@@ -82,7 +82,9 @@ public final class MainActivity extends Activity {
             if (app < 0 && legacyFocus != null && legacyCategory >= 0 && legacyCategory < legacyFocus.length) {
                 app = legacyFocus[legacyCategory];
             }
-            screen.restoreAppFocus(app);
+            int folder = state.getInt("launcher_folder", LauncherFolders.ROOT);
+            if (folder >= 0 && folder < LauncherFolders.COUNT) screen.enterFolder(folder);
+            screen.restoreEntryFocus(state.getInt("focused_entry", app));
         }
         setContentView(screen);
         if(getIntent().getBooleanExtra("open_menu",false)){getIntent().removeExtra("open_menu");screen.grid=true;}
@@ -143,6 +145,8 @@ public final class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle state) {
         state.putBoolean("grid", screen.grid);
         state.putInt("focused_app", screen.focusedApp());
+        state.putInt("focused_entry", screen.focusedEntry());
+        state.putInt("launcher_folder", screen.folder);
         super.onSaveInstanceState(state);
     }
     protected void onNewIntent(Intent intent) {
@@ -151,10 +155,12 @@ public final class MainActivity extends Activity {
         if(intent.getBooleanExtra("edit_home",false)){intent.removeExtra("edit_home");screen.startEditor();return;}
         if(intent.hasExtra("open_app")){int id=intent.getIntExtra("open_app",-1);intent.removeExtra("open_app");if(id>=0&&id<AppCatalog.NAMES.length){screen.open(id);return;}}
         if (screen.grid) screen.saveMenuFocus();
+        screen.leaveFolder();
         screen.grid = false;screen.shortcut=-1; screen.message = ""; screen.refresh();screen.invalidate();
     }
     public void onBackPressed() {
         if(screen.editing){screen.leaveEditor();return;}
+        if(screen.grid && screen.leaveFolder()) return;
         if (screen.grid || screen.shortcut != -1 || !screen.message.isEmpty()) {
             if (screen.grid) screen.saveMenuFocus();
             screen.grid = false;
@@ -225,6 +231,10 @@ public final class MainActivity extends Activity {
         items.add(L.t("Căutare locală"));
         items.add(L.t("Reordonează aplicațiile"));
         if(app>=0)items.add(L.t("Atribuie la soft dreapta"));
+        final int moveAt=app>=0&&LauncherFolders.enabled(this)?items.size():-1;
+        if(moveAt>=0)items.add(L.t("Mută în folder"));
+        final int modeAt=!ShellMode.simple(this)?items.size():-1;
+        if(modeAt>=0)items.add(LauncherFolders.enabled(this)?L.t("Meniu fără foldere"):L.t("Meniu cu foldere"));
         items.add(ContextHelp.label());
         shellDialog(L.t("Opțiuni aplicații"),items.toArray(new String[0]),new KeypadDialog.Action(){
             public void select(int at){
@@ -232,7 +242,27 @@ public final class MainActivity extends Activity {
                 else if(at==1)startActivity(new Intent(MainActivity.this,GlobalSearchActivity.class));
                 else if(at==2)startActivity(new Intent(MainActivity.this,PersonalizationActivity.class).putExtra("order",true));
                 else if(at==3&&app>=0)assignRightApp(app);
+                else if(at==moveAt)moveApp(app);
+                else if(at==modeAt){
+                    getSharedPreferences(LauncherFolders.PREFERENCES,0).edit()
+                        .putBoolean("enabled",!LauncherFolders.enabled(MainActivity.this)).apply();
+                    screen.reloadAppearance();
+                }
                 else ContextHelp.open(MainActivity.this, "MainActivity");
+            }
+        }).show();
+    }
+    private void moveApp(final int app){
+        String[] places=new String[LauncherFolders.COUNT+1];
+        places[0]=L.t("Meniul principal");
+        int current=LauncherFolders.folder(this,app);
+        for(int i=0;i<LauncherFolders.COUNT;i++)places[i+1]=LauncherFolders.label(LauncherFolders.FIRST+i);
+        places[current+1]="✓ "+places[current+1];
+        shellDialog(AppCatalog.NAMES[app],places,new KeypadDialog.Action(){
+            public void select(int at){
+                LauncherFolders.move(MainActivity.this,app,at-1);
+                screen.reloadAppearance();
+                android.widget.Toast.makeText(MainActivity.this,L.t("Aplicație mutată"),android.widget.Toast.LENGTH_SHORT).show();
             }
         }).show();
     }
@@ -278,10 +308,8 @@ public final class MainActivity extends Activity {
             rightApp=HomePersonalization.rightApp(appearance);
             if(!editing)homeLayout=new HomeCanvasLayout(MainActivity.this);
             compactClock=appearance.getBoolean("home-compact",false);showSims=appearance.getBoolean("home-sims",true);showUnread=appearance.getBoolean("home-unread",true);
-            int focused = focusedApp();
-            order = AppCatalog.menuOrder(MainActivity.this);
-            selected = Math.max(0, Math.min(selected, order.length - 1));
-            restoreAppFocus(focused);
+            int focused = focusedEntry();
+            reloadMenu(focused);
             shortcuts=AppCatalog.shortcuts(MainActivity.this);textScale=HomeStyle.scale(MainActivity.this);
             homeStyle=HomeStyle.index(MainActivity.this);
             palette=HomeStyle.palette(MainActivity.this,Appearance.palette(MainActivity.this));
@@ -298,25 +326,63 @@ public final class MainActivity extends Activity {
         int rightApp=1;
         boolean list=getSharedPreferences("appearance",MODE_PRIVATE).getBoolean("list",false);
         int selected;
+        int folder=LauncherFolders.ROOT;
+        int[] childFocus={-1,-1,-1,-1,-1};
+        int[][] folderMembers=new int[LauncherFolders.COUNT][];
         void loadMenuFocus() {
             android.content.SharedPreferences saved = getSharedPreferences("launcher-focus", MODE_PRIVATE);
             int legacyApp = saved.getInt("app-" + saved.getInt("category", 0), -1);
-            restoreAppFocus(saved.getInt("app", legacyApp));
+            for(int i=0;i<childFocus.length;i++)childFocus[i]=saved.getInt("folder-"+i,-1);
+            reloadMenu(saved.getInt("entry",saved.getInt("app", legacyApp)));
         }
         void saveMenuFocus() {
-            getSharedPreferences("launcher-focus", MODE_PRIVATE).edit()
-                .putInt("app", focusedApp()).apply();
+            android.content.SharedPreferences.Editor edit=getSharedPreferences("launcher-focus", MODE_PRIVATE).edit();
+            if(focusedApp()>=0)edit.putInt("app",focusedApp());
+            edit.putInt("entry",folder>=0?LauncherFolders.FIRST+folder:focusedEntry());
+            if(folder>=0){childFocus[folder]=focusedApp();edit.putInt("folder-"+folder,focusedApp());}
+            edit.apply();
         }
-        int focusedApp() {
+        int focusedEntry() {
             return selected >= 0 && selected < order.length ? order[selected] : -1;
         }
+        int focusedApp() {
+            int entry=focusedEntry();
+            return LauncherFolders.isFolder(entry)?-1:entry;
+        }
         void restoreAppFocus(int app) {
+            restoreEntryFocus(app);
+        }
+        void restoreEntryFocus(int entry) {
+            if(folder==LauncherFolders.ROOT&&LauncherFolders.enabled(MainActivity.this)
+                    &&entry>=0&&entry<AppCatalog.NAMES.length){
+                int parent=LauncherFolders.folder(MainActivity.this,entry);
+                if(parent>=0){childFocus[parent]=entry;entry=LauncherFolders.FIRST+parent;}
+            }
             for (int i = 0; i < order.length; i++) {
-                if (order[i] == app) {
+                if (order[i] == entry) {
                     selected = i;
                     return;
                 }
             }
+        }
+        void reloadMenu(int focused){
+            for(int i=0;i<folderMembers.length;i++)folderMembers[i]=LauncherFolders.entries(MainActivity.this,i);
+            if(folder>=0&&folderMembers[folder].length==0)folder=LauncherFolders.ROOT;
+            order=folder>=0?folderMembers[folder]:LauncherFolders.entries(MainActivity.this,LauncherFolders.ROOT);
+            selected=Math.max(0,Math.min(selected,order.length-1));
+            restoreEntryFocus(focused);
+        }
+        void enterFolder(int target){
+            if(target<0||target>=LauncherFolders.COUNT||!LauncherFolders.enabled(MainActivity.this))return;
+            int[] members=LauncherFolders.entries(MainActivity.this,target);
+            if(members.length==0)return;
+            folder=target;order=members;selected=0;restoreEntryFocus(childFocus[target]);
+            saveMenuFocus();invalidate();
+        }
+        boolean leaveFolder(){
+            if(folder<0)return false;
+            int entry=LauncherFolders.FIRST+folder;
+            saveMenuFocus();folder=LauncherFolders.ROOT;selected=0;reloadMenu(entry);invalidate();return true;
         }
         void stepAppPage(int direction) {
             if (order.length <= 9) return;
@@ -376,7 +442,7 @@ public final class MainActivity extends Activity {
         }
         void openCard(){if(!cardAvailable())return;int type=cards[cardIndex].type;if(type==5){startActivity(new Intent(MainActivity.this,NotificationsActivity.class));return;}if(type==3){if(favorites.length>0)startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("contact_id",favorites[favoriteIndex].id));else startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:type==4?DailyAgendaActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
         int[] shortcuts={0,2,6,22};
-        int[] order=AppCatalog.menuOrder(MainActivity.this);
+        int[] order=LauncherFolders.entries(MainActivity.this,LauncherFolders.ROOT);
         float textScale=1f;
         Appearance.Palette palette=Appearance.palette(MainActivity.this);
         boolean compactClock,showSims=true,showUnread=true;
@@ -473,10 +539,11 @@ public final class MainActivity extends Activity {
             if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
                 if (repeat == 0) {
                     if (grid) {
-                        int app=focusedApp();
-                        if(app>=0) {
+                        int entry=focusedEntry();
+                        if(LauncherFolders.isFolder(entry))enterFolder(entry-LauncherFolders.FIRST);
+                        else if(entry>=0) {
                             saveMenuFocus();
-                            open(app);
+                            open(entry);
                         }
                     }
                     else if(shortcut==WEATHER_FOCUS)open(26);
@@ -527,7 +594,9 @@ public final class MainActivity extends Activity {
         final IconArt artwork=new IconArt();
         final CatalogIcons catalogIcons = new CatalogIcons(getContext());
         final DashboardArt dashboardArt = new DashboardArt(getContext());
+        final FolderArt folderArt = new FolderArt();
         void icon(Canvas c, int index, float x, float y) {
+            if(LauncherFolders.isFolder(index)){folderArt.draw(c,this,index,x,y);return;}
             if (!catalogIcons.draw(c, index, x, y)) {
                 artwork.draw(c, index, x, y);
             }

@@ -3060,5 +3060,15 @@
   "Mulțumesc! Le-am primit.": "Thank you! I received them.",
   "Ne vedem mâine la zece?": "Shall we meet tomorrow at ten?",
   "Salut! Ajung în câteva minute.": "Hi! I will be there in a few minutes.",
-  "5 · răspunde în conversație": "5 · reply in the conversation"
+  "5 · răspunde în conversație": "5 · reply in the conversation",
+  "Organizare": "Organizer",
+  "Media": "Media",
+  "Internet": "Internet",
+  "Avansate": "Advanced",
+  "Mută în folder": "Move to folder",
+  "Meniu fără foldere": "Menu without folders",
+  "Meniu cu foldere": "Menu with folders",
+  "Meniul principal": "Main menu",
+  "Aplicație mutată": "App moved",
+  "Foldere: OK deschide folderul, Înapoi revine la meniul principal. Din Opțiuni poți muta aplicația în alt folder sau în meniul principal și poți alege meniul fără foldere.": "Folders: OK opens a folder; Back returns to the main menu. Options lets you move an app to another folder or the main menu, and switch to the menu without folders."
 }

@@ -33,7 +33,8 @@ final class ContextHelp {
         }
         if (page.contains("MainActivity")) {
             return L.t("Acasă: 0 deschide media curentă, 1 deschide căutarea, 2–9 lung deschid scurtăturile. Sus deschide configurările rapide, jos notificările. * schimbă cardul și # îl deschide. Pe cardul Favorite, 4 / 6 schimbă persoana și OK deschide contactul.")
-                + "\n\n" + L.t("Aplicații: săgețile mută selecția, * / # schimbă pagina, 0 trece la pagina următoare. Tastele 1–9 aleg poziția de pe pagină. OK deschide aplicația.");
+                + "\n\n" + L.t("Aplicații: săgețile mută selecția, * / # schimbă pagina, 0 trece la pagina următoare. Tastele 1–9 aleg poziția de pe pagină. OK deschide aplicația.")
+                + "\n\n" + L.t("Foldere: OK deschide folderul, Înapoi revine la meniul principal. Din Opțiuni poți muta aplicația în alt folder sau în meniul principal și poți alege meniul fără foldere.");
         }
         if (page.contains("Wallpaper")) {
             return L.t("Din Fundaluri incluse, stânga și dreapta schimbă imaginea. OK sau Aplică salvează fundalul pentru Acasă și ecranul blocat.");
