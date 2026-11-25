@@ -145,6 +145,19 @@ all existing shortcuts remain available.
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/launcher-folders-2026-11-25/tools.png"><img src="android81/screenshots/launcher-folders-2026-11-25/tools.png" width="170" alt="Tools folder with Calculator, Recorder, Converter, GPS, ZIP, Metronome and QR"></a> | <a href="android81/screenshots/launcher-folders-2026-11-25/organizer.png"><img src="android81/screenshots/launcher-folders-2026-11-25/organizer.png" width="170" alt="Organizer folder with Notes, Calendar, Dictionary, Study and Expenses"></a> | <a href="android81/screenshots/launcher-folders-2026-11-25/internet.png"><img src="android81/screenshots/launcher-folders-2026-11-25/internet.png" width="170" alt="Internet folder with Email, Web Apps, News and KaiSIP"></a> |
 
+### KeyShell, now in your browser
+
+The [WebUI](android81/WEBUI.md) combines an offline keypad demo with a real Nokia
+companion: battery/storage/memory status, five-folder organization, global themes,
+grid/list settings and local file exchange. The phone preview is a navigation demo.
+Connected changes use explicit save buttons, HTTPS and a short-lived session token.
+
+Start it on Nokia from **Settings → Networks → More → KeyShell WebUI**, or try the
+offline version on a PC with `python android81/serve-webui-demo.py` and open
+`http://127.0.0.1:18766/webui/`. Both modes use the same bundled, responsive UI.
+
+<a href="android81/WEBUI.md"><img src="android81/screenshots/webui-2026-11-25/desktop.png" width="900" alt="KeyShell WebUI with an offline dashboard and keypad-navigable virtual phone; demonstration data only"></a>
+
 ### The interactive shell and its apps
 
 | Area | Current functionality | Evidence / boundary |
@@ -207,7 +220,7 @@ the original package identity, signer and installation decisions.
 | **Hardware completeness** | Verify a real GPS fix; finish camera video and test more camera/audio interruptions and removable-storage failures. |
 | **Messaging / language** | MMS is absent. Add English T9 coverage and expand application/editor compatibility. |
 | **Recovery / other devices** | Complete a verified stock-return run and recovery-only QFIL trial; validate SD radio services and investigate Nokia 8000 / other variants separately. |
-| **Extended services** | Harden Companion HTTP/concurrent uploads and expand external email, SSH, feed and long-session validation. Source review and loopback success do not cover every remote service. |
+| **Extended services** | WebUI HTTPS, concurrent-transfer protection and browser/device checks are implemented. Expand external email, SSH, feed, router and long-session validation. [WebUI evidence](android81/WEBUI.md). |
 
 <a id="din-taste"></a>
 
@@ -366,7 +379,8 @@ project handset, an idle phone and the appropriate prepared host environment.
 
 - [ ] Extend English T9 and third-party editor/navigation coverage.
 - [ ] Expand corrupt/large file, removable-card and interrupted import/restore tests.
-- [ ] Harden Companion transport/concurrent uploads and test more external providers.
+- [x] Add offline/connected WebUI, HTTPS sessions and concurrent-upload protection.
+- [ ] Expand external-provider, PC Wi-Fi/router and long-session trials.
 
 <a id="harta-proiectului"></a>
 

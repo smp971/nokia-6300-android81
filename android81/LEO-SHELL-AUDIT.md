@@ -23,8 +23,9 @@ commands now enter through a private alias, app destinations and labels share
 one catalog, and the shared header has current layout checks. The Windows
 builder already builds all shell sources. App-data backup and startup journal
 recovery were added in earlier batches; their old findings below describe the
-baseline, rather than the current implementation. The Companion transfer
-boundary requires its own follow-up.
+baseline, rather than the current implementation. The [25 November WebUI update](WEBUI.md)
+adds HTTPS sessions, serialized upload publication and fresh device/browser checks
+for the Companion boundary. Router/provider and long-session trials remain separate.
 
 The [21 November shell update](SHELL-SIX-OPTIMIZATIONS.md) adds scale-aware Canvas
 tools, incremental status rows, UI memory-pressure handling and self-update

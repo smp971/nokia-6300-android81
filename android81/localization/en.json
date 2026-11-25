@@ -3070,5 +3070,11 @@
   "Meniu cu foldere": "Menu with folders",
   "Meniul principal": "Main menu",
   "Aplicație mutată": "App moved",
-  "Foldere: OK deschide folderul, Înapoi revine la meniul principal. Din Opțiuni poți muta aplicația în alt folder sau în meniul principal și poți alege meniul fără foldere.": "Folders: OK opens a folder; Back returns to the main menu. Options lets you move an app to another folder or the main menu, and switch to the menu without folders."
+  "Foldere: OK deschide folderul, Înapoi revine la meniul principal. Din Opțiuni poți muta aplicația în alt folder sau în meniul principal și poți alege meniul fără foldere.": "Folders: OK opens a folder; Back returns to the main menu. Options lets you move an app to another folder or the main menu, and switch to the menu without folders.",
+  "KeyShell WebUI": "KeyShell WebUI",
+  "KeyShell WebUI · Activ": "KeyShell WebUI · Active",
+  "Transfer local cu autentificare. HTTPS în rețeaua Wi-Fi; pornește sesiunea doar când ai nevoie.": "Authenticated local HTTPS session. Start only when needed.",
+  "La prima conectare, verifică amprenta certificatului în browser și acceptă certificatul local.": "On first connection, check the certificate fingerprint in your browser and accept the local certificate.",
+  "Introdu tokenul în browser. Poți gestiona aspectul, folderele și fișierele Companion. Sesiunea se închide după 15 minute.": "Enter the token in your browser to manage appearance, folders and Companion files. The session closes after 15 minutes.",
+  "KeyShell WebUI\nAspect, foldere și fișiere": "KeyShell WebUI\nAppearance, folders and files"
 }

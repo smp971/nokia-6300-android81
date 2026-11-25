@@ -34,7 +34,7 @@ public final class MainActivity extends Activity {
             if (!screen.grid) queueRefresh();
         }
     };
-    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){screen.reloadAppearance();screen.reloadCards();}};
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){handler.removeCallbacks(appearanceRefresh);handler.post(appearanceRefresh);}};
     private int speedKey=-1;
     private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;int app=HomeKeyActions.app(MainActivity.this,slot);if(app>=0){HomeAccess.open(MainActivity.this,app);return;}String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,L.t("Tasta ")+slot+L.t(" neatribuită · Contacte → Apelare rapidă"),1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
@@ -53,6 +53,7 @@ public final class MainActivity extends Activity {
             public void onSubscriptionsChanged() { listenToPhones(); }
         };
     private final Handler handler = new Handler();
+    private final Runnable appearanceRefresh=new Runnable(){public void run(){if(homeVisible&&screen!=null){screen.reloadAppearance();screen.reloadCards();}}};
     private final Runnable refresh = new Runnable() {
         public void run() { if (homeVisible && !screen.grid) screen.refresh(); }
     };
@@ -94,7 +95,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         UnreadState.watch(this);android.content.IntentFilter filter=new android.content.IntentFilter(UnreadState.CHANGED);filter.addAction("ro.leo.visual.MUSIC_CHANGED");filter.addAction(FmService.CHANGED);filter.addAction(LeoNotificationService.CHANGED);registerReceiver(badges,filter);UnreadState.refresh(this);
-        for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
+        for(String name:new String[]{"appearance","weather","alarms","accessibility",LauncherFolders.PREFERENCES})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
         if(!offeredSetup&&!KeypadLockActivity.locked(this)&&!getSharedPreferences("setup",0).getBoolean("complete",false)){offeredSetup=true;startActivity(new Intent(this,SetupWizardActivity.class));}
         screen.reloadAppearance();
         if (!screen.grid) screen.reloadCards();
@@ -110,7 +111,8 @@ public final class MainActivity extends Activity {
     }
     protected void onPause() {homeVisible=false;favoriteGeneration++;
         clock.stop();handler.removeCallbacks(refresh);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
-        for(String name:new String[]{"appearance","weather","alarms","accessibility"})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
+        handler.removeCallbacks(appearanceRefresh);
+        for(String name:new String[]{"appearance","weather","alarms","accessibility",LauncherFolders.PREFERENCES})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
         stopPhoneListeners();
         if(networkWatching){try{connectivity.unregisterNetworkCallback(networkChanges);}catch(RuntimeException ignored){}networkWatching=false;}
