@@ -1,13 +1,14 @@
 package ro.leo.visual;
 import android.content.*;import java.net.*;import java.io.*;import java.security.*;import java.util.*;import java.util.concurrent.*;import org.json.*;
-/** Small authenticated LAN server; only its own exchange folder is addressable. */
+/** Small password HTTPS server with fixed assets, exchange files and gated phone APIs. */
 final class CompanionServer implements java.io.Closeable {
+ final CompanionControl controls;
  static final int LIMIT=16777216;final Context context;final ServerSocket server;final String token;final String scheme;final CompanionAuth auth;final Set<Socket> sockets=Collections.newSetFromMap(new ConcurrentHashMap<Socket,Boolean>());final ThreadPoolExecutor clients=new ThreadPoolExecutor(2,2,0,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(4));volatile boolean running=true;
  CompanionServer(Context c,InetAddress address,int port,String secret)throws IOException{this(c,address,port,secret,false);}
  CompanionServer(Context c,InetAddress address,int port,String secret,boolean secure)throws IOException{this(c,address,port,secret,null,secure);}
  CompanionServer(Context c,InetAddress address,int port,CompanionAuth auth)throws IOException{this(c,address,port,null,auth,true);}
  private CompanionServer(Context c,InetAddress address,int port,String secret,CompanionAuth access,boolean secure)throws IOException{
-  context=c.getApplicationContext();token=secret;auth=access;scheme=secure?"https":"http";
+  context=c.getApplicationContext();controls=new CompanionControl(context);token=secret;auth=access;scheme=secure?"https":"http";
   if(!address.isLoopbackAddress()&&(!secure||access==null))throw new IOException("Password HTTPS required outside loopback");
   try{server=secure?CompanionTls.socket():new ServerSocket();}catch(Exception e){throw new IOException("TLS identity unavailable",e);}
   try{server.setReuseAddress(true);server.bind(new InetSocketAddress(address,port),4);}catch(IOException e){server.close();throw e;}
@@ -21,7 +22,7 @@ final class CompanionServer implements java.io.Closeable {
  void serve(Socket socket){try(Socket s=socket){s.setSoTimeout(5000);InputStream in=s.getInputStream();OutputStream out=s.getOutputStream();String[] request=line(in).split(" ");if(request.length!=3||!request[2].equals("HTTP/1.1")){reply(out,400,"text/plain","Bad request");return;}Map<String,String> headers=new HashMap<String,String>();int size=0;for(int k=0;k<32;k++){String h=line(in);size+=h.length();if(size>16384)throw new IOException();if(h.isEmpty())break;int split=h.indexOf(':');if(split<1)throw new IOException();String key=h.substring(0,split).trim().toLowerCase(Locale.ROOT);if(headers.containsKey(key))throw new IOException();headers.put(key,h.substring(split+1).trim());if(k==31)throw new IOException();}String host=headers.get("host"),own=server.getInetAddress().getHostAddress()+":"+server.getLocalPort();if(!own.equals(host)){reply(out,403,"text/plain","Host rejected");return;}String origin=headers.get("origin");if(origin!=null&&!origin.equals(scheme+"://"+own)){reply(out,403,"text/plain","Origin rejected");return;}String method=request[0],path=request[1];if(headers.containsKey("transfer-encoding")){reply(out,400,"text/plain","Content-Length required");return;}
    if(method.equals("GET")){
     if(path.equals("/")||path.equals("/index.html")){asset(out,"webui/index.html","text/html; charset=utf-8");return;}
-    if(path.equals("/style.css")||path.equals("/app.js")||path.equals("/catalog.js")){asset(out,"webui"+path,path.endsWith(".css")?"text/css; charset=utf-8":"application/javascript; charset=utf-8");return;}
+    if(path.equals("/style.css")||path.equals("/app.js")||path.equals("/remote.js")||path.equals("/catalog.js")){asset(out,"webui"+path,path.endsWith(".css")?"text/css; charset=utf-8":"application/javascript; charset=utf-8");return;}
     if(path.matches("/catalog-icons/gaia/(phone|contacts|messages|clock|gallery|music|settings|calendar|video|email|fm|camera)\\.png")){asset(out,path.substring(1),"image/png");return;}
    }
    if(method.equals("GET")&&path.equals("/api/info")){reply(out,200,"application/json",new JSONObject().put("theme",CompanionSettings.theme(context)).toString());return;}
@@ -32,6 +33,7 @@ final class CompanionServer implements java.io.Closeable {
    String authorization=headers.get("authorization");JSONObject account=auth==null?(authenticated(authorization,token)?new JSONObject().put("username","fixture").put("role","admin"):null):auth.account(authorization);
    if(!running||account==null){reply(out,401,"text/plain","Authentication required");return;}
    boolean administrator=account.getString("role").equals("admin");
+   if(controls.serve(method,path,authorization,account,in,headers,out))return;
    if(path.equals("/api/logout")&&method.equals("POST")){if(auth!=null)auth.logout(authorization);reply(out,200,"application/json","{}");return;}
    if(path.equals("/api/password")&&method.equals("POST")&&auth!=null){
     try{JSONObject data=json(in,headers);CompanionModel.exact(data,"currentPassword","newPassword");String key=auth.change(authorization,string(data,"currentPassword"),string(data,"newPassword"));reply(out,200,"application/json",new JSONObject().put("token",key).toString());}
@@ -75,6 +77,6 @@ final class CompanionServer implements java.io.Closeable {
  }
  static void reply(OutputStream out,int status,String type,String body)throws IOException{respond(out,status,type,body.getBytes("UTF-8"));}
  static void respond(OutputStream out,int status,String type,byte[] body)throws IOException{head(out,status,type,body.length);out.write(body);out.flush();}
- static void head(OutputStream out,int status,String type,long bytes)throws IOException{String reason=status==200?"OK":status==201?"Created":"Request rejected";out.write(("HTTP/1.1 "+status+" "+reason+"\r\nContent-Type: "+type+"\r\nContent-Length: "+bytes+"\r\nConnection: close\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'\r\n\r\n").getBytes("US-ASCII"));}
- public synchronized void close(){running=false;try{server.close();}catch(IOException ignored){}for(Socket socket:sockets)try{socket.close();}catch(IOException ignored){}clients.shutdownNow();}
+ static void head(OutputStream out,int status,String type,long bytes)throws IOException{String reason=status==200?"OK":status==201?"Created":"Request rejected";out.write(("HTTP/1.1 "+status+" "+reason+"\r\nContent-Type: "+type+"\r\nContent-Length: "+bytes+"\r\nConnection: close\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'\r\n\r\n").getBytes("US-ASCII"));}
+ public synchronized void close(){running=false;controls.close();try{server.close();}catch(IOException ignored){}for(Socket socket:sockets)try{socket.close();}catch(IOException ignored){}clients.shutdownNow();}
 }

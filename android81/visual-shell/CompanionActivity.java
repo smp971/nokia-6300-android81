@@ -65,7 +65,7 @@ public final class CompanionActivity extends PocketActivity {
         }catch(Exception e){problem(e);}
     }
     private void features(){
-        dashboard=false;final String[] keys={"appearance","layout","files"};String[] names={L.t("Aspectul telefonului"),L.t("Aplicații și foldere"),L.t("Transfer de fișiere")};ArrayList<String> rows=new ArrayList<String>();
+        dashboard=false;final String[] keys={"appearance","layout","files","remote","communication"};String[] names={L.t("Aspectul telefonului"),L.t("Aplicații și foldere"),L.t("Transfer de fișiere"),L.t("Ecran și taste la distanță"),L.t("Apeluri, mesaje și contacte")};ArrayList<String> rows=new ArrayList<String>();
         for(int i=0;i<keys.length;i++)rows.add(names[i]+" · "+yes(CompanionSettings.feature(this,keys[i])));
         list(L.t("Funcționalități WebUI"),rows,0,new Choice(){public void pick(int at){getSharedPreferences(CompanionSettings.PREFS,0).edit().putBoolean("feature-"+keys[at],!CompanionSettings.feature(CompanionActivity.this,keys[at])).apply();features();}},"",null);back=new Runnable(){public void run(){showHome();}};
     }

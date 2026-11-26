@@ -1,9 +1,15 @@
-# KeyShell WebUI · 25 November 2026
+# KeyShell WebUI · 26 November 2026
 
 A responsive browser interface with an offline phone demo and an authenticated
 control panel for the real Nokia. **KeyShell** is the shell name; **N0d3** is the
 wider project. The demo illustrates navigation; it does not run Android apps,
 make calls or send messages.
+
+**26 November:** the connected WebUI now also provides a real screen and keypad,
+app launching, Unicode paste, cellular call controls, recent calls, SMS reading/
+composition and contacts. These are separate from the virtual phone demo and
+require an administrator plus the relevant native feature switches.
+See [remote-control guide and fresh evidence](WEBUI-CONTROL.md).
 
 ![KeyShell desktop demo, synthetic data](screenshots/webui-2026-11-25/desktop.png)
 
@@ -62,8 +68,9 @@ theme is independent of the phone's global theme.
   redraws without restarting. Existing app IDs, shortcuts and per-app themes remain.
 
 Connected status covers battery/charging, memory, storage and shell health.
-The API does not stream the screen, inject keys, execute commands, launch apps,
-send messages, read contacts or install received files.
+The separate **Control telefon, Apeluri, Mesaje and Contacte** pages provide the
+authorized phone controls. There is no arbitrary shell-command API or remote
+package-install endpoint. Call audio remains on Nokia.
 
 ## Passwords, sessions and network boundary
 
@@ -131,7 +138,7 @@ python android81/test-webui-browser.py
 python -m unittest discover -s android81/tests -q
 ```
 
-Fresh evidence from TA-1286/API 27, starting at `ba0bf51`:
+25 November password/persistence evidence from TA-1286/API 27, starting at `ba0bf51`:
 
 - **66 native checks** passed: password/role boundaries, reset/token revocation,
   last-admin protection, throttling, strict payloads, feature gates, native controls,
@@ -149,7 +156,7 @@ Fresh evidence from TA-1286/API 27, starting at `ba0bf51`:
   login/status/logout request from the PC over real Wi-Fi passed. The permanent
   service remains enabled on the project handset.
 
-Running **data APK** SHA-256:
+25 November **data APK** SHA-256 (superseded by the [remote-control build](WEBUI-CONTROL.md)):
 `bbd470494c94e5b4fb6466670e46b7252407c7d5da3b12517478cda488584b70`.
 Bundled **system base**, unchanged:
 `abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
@@ -157,5 +164,5 @@ No ROM flash or system promotion was performed. Previous APK/preferences and
 sanitized reports remain under ignored `output/webui-persistent/`.
 
 Battery/deep-sleep response, long uptime and different router configurations still
-need their own trials. Browser navigation remains a demo, rather than remote
-Android display/input. See the [automated keySIP call check](KEYSHELL-NETWORK-SIP.md#keysip-follow-up--25-november-2026).
+need their own trials. The virtual phone remains a demo; **Control telefon** is
+the real screen/keypad interface. See the [automated keySIP call check](KEYSHELL-NETWORK-SIP.md#keysip-follow-up--25-november-2026).

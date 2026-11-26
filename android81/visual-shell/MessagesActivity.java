@@ -532,37 +532,18 @@ public final class MessagesActivity extends LeoActivity {
                 final SmsManager manager=SmsManager.getSmsManagerForSubscriptionId(sims.get(i).getSubscriptionId());
                 final ArrayList<String> parts=manager.divideMessage(text);
                 options(parts.size()+" SMS → "+number,new String[]{L.t("Anulează"),L.t("Trimite SMS")},new Choice() { public void pick(int confirmed) {
-                    if(confirmed==1) send(manager,number,text,parts);
+                    if(confirmed==1) send(manager,number,text);
                 }});
             }});
         } catch(RuntimeException failure) { notice(L.t("Serviciul SMS nu este disponibil")); }
     }
-    private void send(SmsManager manager,String number,String text,ArrayList<String> parts) {
+    private void send(SmsManager manager,String number,String text) {
         if(preview) { notice(L.t("Demonstrație locală · fără trimitere SMS"));return; }
-        saveDraft(); String token=UUID.randomUUID().toString(); JSONArray states=new JSONArray();
-        ArrayList<PendingIntent> callbacks=new ArrayList<PendingIntent>(),deliveries=new ArrayList<PendingIntent>();
-        for(int i=0;i<parts.size();i++) {
-            states.put(0);
-            Intent result=new Intent(this,SmsStatusReceiver.class).setData(Uri.parse("leo-sms:"+token+"/"+i)).putExtra("token",token).putExtra("part",i);
-            callbacks.add(PendingIntent.getBroadcast(this,i,result,PendingIntent.FLAG_UPDATE_CURRENT));
-            Intent delivered=new Intent(this,SmsDeliveryReceiver.class).setData(Uri.parse("leo-delivery:"+token+"/"+i)).putExtra("token",token).putExtra("part",i);deliveries.add(PendingIntent.getBroadcast(this,i,delivered,PendingIntent.FLAG_UPDATE_CURRENT));
-        }
-        long date=System.currentTimeMillis();int sub=manager.getSubscriptionId();
-        try(SmsStore store=new SmsStore(this)) { store.outgoing(token,number,text,date,sub);store.requestDelivery(token,parts.size()); }
-        catch(RuntimeException unavailable) { notice(L.t("Arhiva SMS nu poate fi salvată; mesajul nu a fost trimis"));return; }
-        if(!getSharedPreferences("sms-outgoing",0).edit().putString("token",token).putString("parts",states.toString()).putString("number",number).putString("body",text).putString("draft-id",draftId==null?"":draftId).putLong("date",date).putInt("sub",sub).commit()) {
-            try(SmsStore store=new SmsStore(this)) { store.completed(token,false); }
-            catch(RuntimeException unavailable) { android.util.Log.w("LeoSms","Cannot update unsent archive entry"); }
-            notice(L.t("Starea SMS nu poate fi salvată; mesajul nu a fost trimis"));return;
-        }
+        saveDraft();
         try {
-            manager.sendMultipartTextMessage(number,null,parts,callbacks,deliveries);
+            SmsSender.send(this,manager,number,text,draftId);
             viewports.remove(conversationPage(number));
-            composing=false; load(number); notice(L.t("SMS în curs de trimitere"));
-        } catch(RuntimeException failure) {
-            try(SmsStore store=new SmsStore(this)) { store.completed(token,false); }
-            catch(RuntimeException unavailable) { notice(L.t("Starea SMS nu poate fi arhivată; verifică înainte de reîncercare"));return; }
-            getSharedPreferences("sms-outgoing",0).edit().clear().apply(); notice(L.t("Trimiterea a eșuat; ciorna este păstrată"));
-        }
+            composing=false;load(number);notice(L.t("SMS în curs de trimitere"));
+        } catch(Exception failure) {notice(failure.getMessage()==null?L.t("Trimiterea a eșuat; ciorna este păstrată"):failure.getMessage());}
     }
 }

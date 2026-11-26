@@ -69,7 +69,7 @@
       const response = await fetch(path, {...extra,signal:controller.signal,headers:{Authorization:'Bearer '+token,...(extra.headers || {})},cache:'no-store'});
       if (!response.ok) {
         if (response.status === 401) { disconnect(); throw Error('Autentificare necesară. Verifică utilizatorul și parola sau conectează-te din nou.'); }
-        const messages = {400:'Datele nu sunt valide.',403:'Conectarea este permisă numai din adresa afișată pe Nokia.',409:'Un fișier cu acest nume există deja. Alege alt nume.',413:'Numele sau dimensiunea fișierului nu sunt acceptate.',429:'Prea multe încercări. Așteaptă un minut și încearcă din nou.'};
+        const messages = {400:'Datele nu sunt valide.',403:'Funcționalitatea este oprită sau contul nu are permisiunea necesară.',409:'Operația nu mai este disponibilă sau a fost deja folosită. Actualizează starea înainte de o nouă încercare.',413:'Numele sau dimensiunea fișierului nu sunt acceptate.',429:'Prea multe încercări. Așteaptă un minut și încearcă din nou.'};
         throw Error(messages[response.status] || 'Cererea nu a reușit ('+response.status+').');
       }
       return response;
@@ -98,7 +98,8 @@
     tab = name;
     document.querySelectorAll('.tab-panel').forEach(node => { node.hidden = node.id !== name; });
     document.querySelectorAll('[data-tab]').forEach(button => button.classList.toggle('active',button.dataset.tab === name));
-    $('breadcrumb').textContent = {overview:'Prezentare',apps:'Aplicații și foldere',appearance:'Aspect',files:'Fișiere',security:'Administrare'}[name];
+    $('breadcrumb').textContent = {overview:'Prezentare',apps:'Aplicații și foldere',appearance:'Aspect',files:'Fișiere',security:'Administrare',remote:'Control telefon',calls:'Apeluri',sms:'Mesaje',contacts:'Contacte'}[name] || name;
+    window.dispatchEvent(new CustomEvent('keyshell-tab',{detail:name}));
     if (name === 'files' && live && model.webui.files) busy('load-files', loadFiles);
     if (name === 'security' && live && model.account.role === 'admin') busy('save-webui',loadAdmin);
   }
@@ -190,9 +191,10 @@
     renderPhone(); $('phone-screen').focus({preventScroll:true});
   }
   function render() {
+    window.dispatchEvent(new Event('keyshell-session'));
     $('mode').textContent = live ? 'NOKIA · CONECTAT' : 'DEMO · LOCAL'; $('side-mode').textContent = live ? 'WebUI permanent' : 'Mod demonstrativ';
     $('connection-title').textContent = live ? 'Conectat · '+model.account.username : 'Încearcă-l înainte să te conectezi.';
-    $('connection-note').textContent = live ? 'Starea și setările vin de pe telefon. Butoanele de salvare aplică modificările pe Nokia; previzualizarea rămâne o simulare a navigării.' : 'Acum folosești o demonstrație locală. Pentru Nokia, deschide adresa HTTPS din Setări → Rețele → Mai multe → KeyShell WebUI.';
+    $('connection-note').textContent = live ? 'Datele și comenzile sunt conectate la Nokia. Control telefon arată ecranul real; telefonul virtual din celelalte pagini rămâne o demonstrație.' : 'Acum folosești o demonstrație locală. Pentru Nokia, deschide adresa HTTPS din Setări → Rețele → Mai multe → KeyShell WebUI.';
     $('login-password').hidden = live; $('connect-form').querySelector('label').hidden = live; $('connect-form').querySelector('[type=submit]').hidden = live; $('disconnect').hidden = !live;
     $('username').hidden = live; $('reset-demo').hidden = live;
     $('battery').textContent = model.status.battery < 0 ? '—' : model.status.battery+'%'; $('battery-detail').textContent = !live ? 'Date demonstrative' : model.status.charging ? 'La încărcat' : 'Pe baterie';
@@ -247,7 +249,7 @@
     const data = await (await request('/api/admin')).json();
     $('web-theme').value = data.settings.theme;
     $('auto-start').checked = data.settings.autoStart;
-    ['appearance','layout','files'].forEach(key => { $('feature-'+key).checked = data.settings[key]; });
+    ['appearance','layout','files','remote','communication'].forEach(key => { $('feature-'+key).checked = data.settings[key]; });
     $('user-list').replaceChildren();
     data.users.forEach(user => {
       const row = element('li'), actions = element('span','user-actions');
@@ -295,7 +297,7 @@
     } finally { ['current-password','new-password','confirm-password'].forEach(id => { $(id).value = ''; }); }
   }); };
   $('web-settings-form').onsubmit = event => { event.preventDefault(); busy('save-webui',async () => {
-    const values = {theme:Number($('web-theme').value),autoStart:$('auto-start').checked,appearance:$('feature-appearance').checked,layout:$('feature-layout').checked,files:$('feature-files').checked};
+    const values = {theme:Number($('web-theme').value),autoStart:$('auto-start').checked,appearance:$('feature-appearance').checked,layout:$('feature-layout').checked,files:$('feature-files').checked,remote:$('feature-remote').checked,communication:$('feature-communication').checked};
     await request('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(values)});
     await reload(); notice('Setările WebUI au fost aplicate pe Nokia.');
   }); };
@@ -324,6 +326,7 @@
     if (file.size > 16777216 || !/^[A-Za-z0-9][A-Za-z0-9._ -]{0,79}$/.test(file.name) || file.name.includes('..')) throw Error('Folosește un nume simplu, fără diacritice, și maximum 16 MB.');
     await request('/api/upload',{method:'POST',headers:{'X-Leo-Name':file.name},body:file}); $('upload-file').value = ''; await loadFiles(); notice('Fișier trimis în folderul Companion de pe Nokia.');
   });
+  window.KeyShellWeb = Object.freeze({request,notice,showTab,state:()=>({live,model,tab})});
   loadDemo(); render(); showTab(tab);
   if (location.protocol === 'https:') fetch('/api/info',{cache:'no-store'}).then(r => r.ok ? r.json() : null).then(info => { if (info && !live) applyWebTheme(info.theme); }).catch(() => {});
 })();

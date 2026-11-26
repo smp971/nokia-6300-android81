@@ -7,7 +7,7 @@
 <p align="center">
   <b>Nokia 6300 4G · TA-1286</b><br>
   <code>AOSP 8.1 / API 27</code> · <code>240 × 320</code> · <code>ARMv7</code> · <code>0.14.0-dev</code><br>
-  <sub>Development snapshot · 25 November 2026</sub>
+  <sub>Development snapshot · 26 November 2026</sub>
 </p>
 
 <p align="center">
@@ -167,6 +167,19 @@ offline version on a PC with `python android81/serve-webui-demo.py` and open
 `http://127.0.0.1:18766/webui/`. Both modes use the same bundled, responsive UI.
 
 <a href="android81/WEBUI.md"><img src="android81/screenshots/webui-2026-11-25/desktop.png" width="900" alt="KeyShell WebUI with an offline dashboard and keypad-navigable virtual phone; demonstration data only"></a>
+
+**26 November · real browser control:** new **Control telefon / Apeluri / Mesaje /
+Contacte** pages add a live screen, virtual keypad, Unicode paste, app launch,
+SIM selection, call controls, recent calls, SMS composition and contact lookup.
+Calls/SMS require a final, single-use confirmation. Call audio stays on Nokia.
+Remote input and communications are separate administrator-only switches.
+The real Wi-Fi screen/app/data route passed; call/SMS dispatch was tested with a
+fake transport, so cellular establishment and delivery through these pages remain
+live trials. [Features, boundaries and fresh evidence](android81/WEBUI-CONTROL.md).
+
+<a href="android81/WEBUI-CONTROL.md"><img src="android81/screenshots/webui-control-2026-11-26/actual-phone.png" width="900" alt="Real Nokia Home screen in the authenticated WebUI over Wi-Fi"></a>
+
+<a href="android81/WEBUI-CONTROL.md"><img src="android81/screenshots/webui-control-2026-11-26/messages.png" width="900" alt="New WebUI message page, synthetic contact/message data for documentation"></a>
 
 | Native WebUI controls | Feature switches |
 | :---: | :---: |

@@ -13,6 +13,7 @@ modes.add_argument("--shell-optimization",action="store_true",help="build typogr
 modes.add_argument("--update-recovery",action="store_true",help="build isolated interrupted app-update journal checks")
 modes.add_argument("--home-standby",action="store_true",help="build Home/standby rendering, presets and keypad checks")
 modes.add_argument("--unlock-sequence",action="store_true",help="build isolated softkey/OK then star unlock checks")
+modes.add_argument("--webui-control",action="store_true",help="build isolated remote keypad, phone API and one-use confirmation checks; no real call or SMS")
 modes.add_argument("--webui-access",action="store_true",help="build persistent password WebUI and native-control checks")
 modes.add_argument("--webui",action="store_true",help="build isolated HTTPS WebUI model and transfer checks")
 modes.add_argument("--launcher-folders",action="store_true",help="build isolated folder projection, persistence and keypad navigation checks")
@@ -20,7 +21,9 @@ modes.add_argument("--messages-ui",action="store_true",help="build synthetic mes
 modes.add_argument("--showcase",action="store_true",help="build the local documentation screenshot capture fixture")
 args=parser.parse_args()
 app_data,ui_theme=args.app_data,args.ui_theme
-if args.webui_access:
+if args.webui_control:
+ test,package,directory="WebUiControlTests","ro.leo.visual.webuicontrolchecks","webui-control-tests"
+elif args.webui_access:
  test,package,directory="WebUiAccessTests","ro.leo.visual.webuiaccesschecks","webui-access-tests"
 elif args.webui:
  test,package,directory="WebUiTests","ro.leo.visual.webuichecks","webui-tests"
@@ -74,7 +77,7 @@ values=b/'res/values';values.mkdir(parents=True,exist_ok=True)
 run(bt/'aapt.exe','package','-f','-M',m,'-S',b/'res','-I',sdk,'-F',b/'base.apk')
 classes=r/'output/pocket-apps-build/leo-visual-classes.jar'
 cp=';'.join(map(str,[classes,*dependencies]))
-run(j.with_name('javac.exe'),'-encoding','UTF-8','-source','1.8','-target','1.8','-bootclasspath',sdk,'-classpath',cp,'-d',b/'classes',r/f'visual-shell/tests/{test}.java',*([r/'visual-shell/tests/WebUiTests.java'] if args.webui_access else []),*([r/'visual-shell/tests/ExternalHomeProbe.java'] if args.daily_polish else []))
+run(j.with_name('javac.exe'),'-encoding','UTF-8','-source','1.8','-target','1.8','-bootclasspath',sdk,'-classpath',cp,'-d',b/'classes',r/f'visual-shell/tests/{test}.java',*([r/'visual-shell/tests/WebUiTests.java'] if args.webui_access or args.webui_control else []),*([r/'visual-shell/tests/ExternalHomeProbe.java'] if args.daily_polish else []))
 run(j,'-cp',bt/'lib/d8.jar','com.android.tools.r8.D8','--min-api','27','--lib',sdk,'--classpath',classes,'--output',b/'dex',*dependencies,*sorted((b/'classes').rglob('*.class')))
 with zipfile.ZipFile(b/'base.apk','a',zipfile.ZIP_DEFLATED) as z:z.write(b/'dex/classes.dex','classes.dex')
 run(bt/'zipalign.exe','-f','4',b/'base.apk',b/'aligned.apk')
