@@ -23,7 +23,7 @@ def generate():
     model = {"apps": apps, "folders": [{"id": i, "name": name} for i, name in enumerate(folder_names)],
              "themes": [{"id": i, "name": name, "color": "#" + colors[i][1][-6:], "background": "#" + colors[i][0][-6:]} for i, name in enumerate(names)],
              "settings": {"theme": 17, "list": False, "foldersEnabled": True, "simple": False},
-             "status": {"platform": "N0d3 KeyShell · Android 8.1", "api": 27, "battery": 86, "charging": False,
+             "status": {"platform": "KeyShell · Android 8.1", "api": 27, "battery": 86, "charging": False,
                         "health": "Exemplu demonstrativ", "free_bytes": 1459617792, "ram_free": 201326592, "ram_total": 536870912, "uptime_ms": 7200000}}
     return "/* Generated from native catalog; demo data only. */\nwindow.KEYSHELL_DEMO=" + json.dumps(model, ensure_ascii=False, separators=(",", ":")) + ";\n"
 

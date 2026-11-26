@@ -71,7 +71,7 @@
     channel: function () { return 'content'; },
     begin: function () { this.setSpeaker(Config.get().audioOut === 'speaker'); },
     end: function () { speaker = false; native.route(false, false); },
-    label: function () { return speaker ? (native.headphones() ? 'Căști' : 'Ureche') : 'Difuzor'; },
+    label: function () { return speaker ? 'Difuzor' : (native.headphones() ? 'Căști' : 'Receptor'); },
     onHeadphones: function () {}
   };
   var remote = null;
@@ -93,11 +93,11 @@
   var dial = Call.dial;
   if (dial) { Call.dial = function () {
     if (!PC || typeof PC.prototype.addTrack !== 'function' || typeof PC.prototype.getSenders !== 'function') {
-      return 'Funcțiile audio WebRTC nu sunt disponibile. Verifică instalarea KaiSIP.';
+      return 'Funcțiile audio WebRTC nu sunt disponibile. Verifică instalarea keySIP.';
     }
     return dial.apply(this, arguments);
   }; }
-  function syncCall() { native.call(Call.inCall()); }
+  function syncCall() { var current=Call.current(); native.call(Call.inCall(),current?current.state:'idle',!!(current&&current.number==='200')); }
   Call.on('new', syncCall); Call.on('change', syncCall); Call.on('ended', syncCall); Call.on('cleared', syncCall);
   Sip.on('state', function (state) { native.state(state.state || 'unknown'); });
   function editor() { var e = document.activeElement; return e && /^(INPUT|TEXTAREA)$/.test(e.tagName); }

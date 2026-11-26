@@ -17,7 +17,7 @@ final class CompanionModel {
         Intent battery=c.registerReceiver(null,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         int level=battery==null?-1:battery.getIntExtra(BatteryManager.EXTRA_LEVEL,-1),scale=battery==null?100:battery.getIntExtra(BatteryManager.EXTRA_SCALE,100);
         ActivityManager.MemoryInfo memory=new ActivityManager.MemoryInfo();((ActivityManager)c.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryInfo(memory);
-        JSONObject status=new JSONObject().put("platform","N0d3 KeyShell · Android 8.1").put("api",Build.VERSION.SDK_INT)
+        JSONObject status=new JSONObject().put("platform","KeyShell · Android 8.1").put("api",Build.VERSION.SDK_INT)
             .put("battery",level<0?-1:100*level/Math.max(1,scale)).put("charging",battery!=null&&battery.getIntExtra(BatteryManager.EXTRA_PLUGGED,0)!=0)
             .put("health",ShellHealth.status(c)).put("free_bytes",CompanionServer.folder(c).getUsableSpace()).put("ram_free",memory.availMem).put("ram_total",memory.totalMem)
             .put("uptime_ms",SystemClock.elapsedRealtime()).put("scope","KeyShell appearance, launcher folders and Companion files");

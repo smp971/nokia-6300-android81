@@ -24,7 +24,9 @@ public final class SipService extends Service {
     private WeakReference<MainActivity> owner=new WeakReference<MainActivity>(null);
     private MutableContextWrapper webContext;
     private WebView web;
-    private boolean bound,continuous,callActive,foreground,audioOwned;
+    private boolean bound,foreground,audioOwned;
+    private volatile boolean continuous,callActive,testDestination;
+    private volatile String callState="idle";
     volatile boolean editing;
     volatile String editor="{}";
     private int oldMode;
@@ -59,7 +61,7 @@ public final class SipService extends Service {
         super.onCreate();audio=(AudioManager)getSystemService(AUDIO_SERVICE);
         cpu=((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"kaisip:explicit-session");cpu.setReferenceCounted(false);
         NotificationManager notifications=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        notifications.createNotificationChannel(new NotificationChannel("session","Conexiune KaiSIP",NotificationManager.IMPORTANCE_LOW));
+        notifications.createNotificationChannel(new NotificationChannel("session","Conexiune keySIP",NotificationManager.IMPORTANCE_LOW));
         createWebView();
     }
     public IBinder onBind(Intent intent){bound=true;return binder;}
@@ -125,13 +127,16 @@ public final class SipService extends Service {
                 try{
                     if(path.equals("/")||path.equals("/index.html")){
                         String html=new String(asset("upstream/index.html"),"UTF-8");
+                        html=html.replace("<title>KaiSIP</title>","<title>keySIP</title>");
                         html=html.replace("<meta charset=\"utf-8\">","<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=240,initial-scale=1,user-scalable=no\">");
                         html=html.replace("<script src=\"js/app.js\"></script>","<script src=\"/android-preflight.js\"></script><script src=\"/vendor/webrtc-adapter-6.4.8.js\"></script><script src=\"/android-platform.js\"></script><script src=\"js/app.js\"></script>");
                         return response("text/html",html.getBytes("UTF-8"),200);
                     }
                     String file=path.equals("/android-platform.js")||path.equals("/android-preflight.js")||path.equals("/vendor/webrtc-adapter-6.4.8.js")?path.substring(1):"upstream"+path;
                     String mime=path.endsWith(".js")?"application/javascript":path.endsWith(".css")?"text/css":path.endsWith(".png")?"image/png":"application/octet-stream";
-                    return response(mime,asset(file),200);
+                    byte[] payload=asset(file);
+                    if(path.equals("/js/ui.js"))payload=new String(payload,"UTF-8").replace("\'KaiSIP \'","\'keySIP \'").getBytes("UTF-8");
+                    return response(mime,payload,200);
                 }catch(IOException unavailable){return response("text/plain",new byte[0],404);}
             }
         });
@@ -152,7 +157,7 @@ public final class SipService extends Service {
             startService(new Intent(this,SipService.class));
             Intent open=new Intent(this,MainActivity.class);PendingIntent pending=PendingIntent.getActivity(this,0,open,PendingIntent.FLAG_UPDATE_CURRENT);
             PendingIntent stop=PendingIntent.getService(this,1,new Intent(this,SipService.class).setAction("stop"),PendingIntent.FLAG_UPDATE_CURRENT);
-            Notification notification=new Notification.Builder(this,"session").setSmallIcon(android.R.drawable.sym_action_call).setContentTitle("KaiSIP")
+            Notification notification=new Notification.Builder(this,"session").setSmallIcon(android.R.drawable.sym_action_call).setContentTitle("keySIP")
                 .setContentText(callActive?"Apel SIP în curs":"Conexiune în fundal · "+registration).setContentIntent(pending).setOngoing(true).addAction(android.R.drawable.ic_menu_close_clear_cancel,"Oprește",stop).build();
             startForeground(17,notification);foreground=true;if(!cpu.isHeld())cpu.acquire();
         }else{
@@ -184,12 +189,15 @@ public final class SipService extends Service {
         @JavascriptInterface public void editor(String value){if(value.length()<=16384)editor=value;}
         @JavascriptInterface public void background(final boolean value){main.post(new Runnable(){public void run(){continuous=value;updateKeepAlive();}});}
         @JavascriptInterface public void cpu(final int token,final boolean acquire){main.post(new Runnable(){public void run(){if(acquire){if(locks.size()<16)locks.add(token);}else locks.remove(token);updateKeepAlive();}});}
-        @JavascriptInterface public void call(final boolean active){main.post(new Runnable(){public void run(){callActive=active;updateKeepAlive();}});}
+        @JavascriptInterface public void call(final boolean active,final String state,final boolean test){main.post(new Runnable(){public void run(){callActive=active;callState=state!=null&&state.matches("idle|calling|ringing|incoming|incall|ended")?state:"unknown";testDestination=test;updateKeepAlive();}});}
         @JavascriptInterface public void state(final String value){main.post(new Runnable(){public void run(){registration=value.matches("[a-z]{1,20}")?value:"unknown";if(foreground)updateKeepAlive();}});}
         @JavascriptInterface public void route(final boolean begin,final boolean speaker){main.post(new Runnable(){public void run(){SipService.this.route(begin,speaker);}});}
         @JavascriptInterface public boolean headphones(){return audio.isWiredHeadsetOn()||audio.isBluetoothScoOn();}
         @JavascriptInterface public void foreground(){main.post(new Runnable(){public void run(){startActivity(new Intent(SipService.this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));}});}
         @JavascriptInterface public void close(){main.post(new Runnable(){public void run(){MainActivity activity=owner.get();if(activity!=null)activity.finish();}});}
+    }
+    protected void dump(java.io.FileDescriptor fd,java.io.PrintWriter writer,String[] args){
+        writer.println("keySIP call_active="+callActive+" call_state="+callState+" test_destination_200="+testDestination+" registration="+registration);
     }
     public void onDestroy(){
         route(false,false);locks.clear();if(cpu.isHeld())cpu.release();stopForeground(true);

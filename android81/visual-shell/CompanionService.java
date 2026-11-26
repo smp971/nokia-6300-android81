@@ -1,16 +1,98 @@
 package ro.leo.visual;
-import android.app.*;import android.content.*;import android.os.*;import java.net.*;
-/** Explicit, 15-minute Wi-Fi session; never starts at boot and never exposes a shell. */
+import android.app.*;
+import android.content.*;
+import android.net.*;
+import android.os.*;
+import java.net.*;
+
+/** Owner-enabled foreground WebUI. Event-driven Wi-Fi rebinding; no expiry, polling or wake lock. */
 public final class CompanionService extends Service {
- static volatile CompanionService instance;volatile CompanionServer server;String address="",secret="",fingerprint="";boolean starting,destroyed;final Handler timer=new Handler();boolean registered;
- static InetAddress wifi(Context c)throws Exception{android.net.ConnectivityManager cm=(android.net.ConnectivityManager)c.getSystemService(CONNECTIVITY_SERVICE);for(android.net.Network n:cm.getAllNetworks()){android.net.NetworkCapabilities cap=cm.getNetworkCapabilities(n);android.net.LinkProperties lp=cm.getLinkProperties(n);if(cap!=null&&lp!=null&&cap.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI))for(android.net.LinkAddress a:lp.getLinkAddresses())if(a.getAddress() instanceof Inet4Address&&!a.getAddress().isLoopbackAddress()&&!a.getAddress().isLinkLocalAddress())return a.getAddress();}throw new java.io.IOException("Connect Nokia to Wi-Fi first");}
- final BroadcastReceiver connectivity=new BroadcastReceiver(){public void onReceive(Context c,Intent i){try{if(server!=null&&!wifi(c).equals(server.server.getInetAddress()))stopSelf();}catch(Exception e){stopSelf();}}};
- public IBinder onBind(Intent i){return null;}
- public int onStartCommand(Intent i,int f,int id){if(i!=null&&"stop".equals(i.getAction())){stopSelf();return START_NOT_STICKY;}NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);nm.createNotificationChannel(new NotificationChannel("leo-companion","Companion",NotificationManager.IMPORTANCE_LOW));PendingIntent stop=PendingIntent.getService(CompanionService.this,0,new Intent(CompanionService.this,CompanionService.class).setAction("stop"),0);startForeground(737,new Notification.Builder(CompanionService.this,"leo-companion").setSmallIcon(android.R.drawable.stat_sys_upload).setContentTitle("KeyShell WebUI · Wi-Fi").setContentText("HTTPS · 15 minute session").setContentIntent(PendingIntent.getActivity(CompanionService.this,0,new Intent(CompanionService.this,CompanionActivity.class),0)).addAction(android.R.drawable.ic_menu_close_clear_cancel,"Stop",stop).build());if(server==null&&!starting){starting=true;new Thread(new Runnable(){public void run(){
-  try{final InetAddress bind=wifi(CompanionService.this);final String key=CompanionServer.token();final String digest=CompanionTls.fingerprint();final CompanionServer ready=new CompanionServer(CompanionService.this,bind,18764,key,true);
-   synchronized(CompanionService.this){if(destroyed){ready.close();return;}server=ready;}
-   timer.post(new Runnable(){public void run(){if(destroyed){ready.close();return;}try{server=ready;secret=key;fingerprint=digest;address="https://"+bind.getHostAddress()+":18764/";server.start();instance=CompanionService.this;registerReceiver(connectivity,new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));registered=true;timer.postDelayed(new Runnable(){public void run(){stopSelf();}},15*60000);}catch(Exception e){ready.close();getSharedPreferences("companion",0).edit().putString("error",e.getMessage()).apply();stopSelf();}}});
-  }catch(final Exception e){timer.post(new Runnable(){public void run(){if(!destroyed){getSharedPreferences("companion",0).edit().putString("error",e.getMessage()).apply();stopSelf();}}});}
- }},"KeyShellWebUIStart").start();}return START_NOT_STICKY;}
- public synchronized void onDestroy(){destroyed=true;instance=null;timer.removeCallbacksAndMessages(null);if(registered)unregisterReceiver(connectivity);if(server!=null)server.close();secret="";stopForeground(true);super.onDestroy();}
+    static final String CHANGED="ro.leo.visual.WEBUI_CHANGED";
+    static volatile CompanionService instance;
+    static boolean active(){CompanionService live=instance;return live!=null&&live.server!=null&&live.server.running&&!live.address.isEmpty();}
+    volatile CompanionServer server;
+    CompanionAuth auth;
+    volatile String address="",fingerprint="",status="";
+    private final Handler handler=new Handler();
+    private ConnectivityManager connectivity;
+    private boolean destroyed,registered,preparing;
+    private int generation;
+    private InetAddress desired;
+    private Network lost;
+    static void ensureStarted(Context c){
+        if(CompanionSettings.enabled(c)&&new CompanionAuth(c).configured()&&instance==null)
+            c.startForegroundService(new Intent(c,CompanionService.class));
+    }
+    static InetAddress wifi(Context c)throws Exception{return wifi(c,null);}
+    private static InetAddress wifi(Context c,Network lost)throws Exception{
+        ConnectivityManager cm=(ConnectivityManager)c.getSystemService(CONNECTIVITY_SERVICE);
+        for(Network network:cm.getAllNetworks()){
+            if(network.equals(lost))continue;
+            NetworkCapabilities cap=cm.getNetworkCapabilities(network);LinkProperties lp=cm.getLinkProperties(network);
+            if(cap!=null&&lp!=null&&cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
+                for(LinkAddress a:lp.getLinkAddresses())if(a.getAddress() instanceof Inet4Address&&!a.getAddress().isLoopbackAddress()&&!a.getAddress().isLinkLocalAddress())return a.getAddress();
+        }
+        throw new java.io.IOException("Wi-Fi unavailable");
+    }
+    private final ConnectivityManager.NetworkCallback networks=new ConnectivityManager.NetworkCallback(){
+        public void onAvailable(Network network){if(network.equals(lost))lost=null;queueRefresh();}
+        public void onLinkPropertiesChanged(Network network,LinkProperties properties){queueRefresh();}
+        public void onLost(Network network){lost=network;queueRefresh();}
+    };
+    private final Runnable refresh=new Runnable(){public void run(){refreshBinding();}};
+    private void queueRefresh(){handler.removeCallbacks(refresh);handler.postDelayed(refresh,250);}
+    private void notifyState(String text){
+        status=text;sendBroadcast(new Intent(CHANGED).setPackage(getPackageName()));NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        nm.createNotificationChannel(new NotificationChannel("leo-companion","KeyShell WebUI",NotificationManager.IMPORTANCE_LOW));
+        PendingIntent stop=PendingIntent.getService(this,0,new Intent(this,CompanionService.class).setAction("stop"),0);
+        startForeground(737,new Notification.Builder(this,"leo-companion").setSmallIcon(android.R.drawable.stat_sys_upload)
+            .setContentTitle("KeyShell WebUI").setContentText(text).setOngoing(true)
+            .setContentIntent(PendingIntent.getActivity(this,0,new Intent(this,CompanionActivity.class),0))
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel,ro.leo.i18n.L.t("Oprește"),stop).build());
+    }
+    public void onCreate(){super.onCreate();auth=new CompanionAuth(this);instance=this;connectivity=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);notifyState(ro.leo.i18n.L.t("WebUI · inițializare"));}
+    public IBinder onBind(Intent i){return null;}
+    public int onStartCommand(Intent intent,int flags,int id){
+        if(intent!=null&&"stop".equals(intent.getAction())){CompanionSettings.enabled(this,false);stopSelf();return START_NOT_STICKY;}
+        if(!CompanionSettings.enabled(this)||!auth.configured()){stopSelf();return START_NOT_STICKY;}
+        if(status.isEmpty())notifyState(ro.leo.i18n.L.t("Permanent în fundal · așteaptă Wi-Fi"));
+        if(!registered){
+            try{connectivity.registerNetworkCallback(new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(),networks,handler);registered=true;}
+            catch(RuntimeException e){notifyState(ro.leo.i18n.L.t("WebUI · rețeaua nu poate fi urmărită"));stopSelf();return START_NOT_STICKY;}
+        }
+        refreshBinding();return START_STICKY;
+    }
+    private void refreshBinding(){
+        if(destroyed)return;
+        try{bindTo(wifi(this,lost));}catch(Exception unavailable){bindTo(null);}
+    }
+    private synchronized void bindTo(final InetAddress target){
+        if(destroyed)return;
+        if(java.util.Objects.equals(target,desired)&&(preparing||server!=null))return;
+        final int ticket=++generation;desired=target;preparing=false;
+        if(server!=null){server.close();server=null;}address="";
+        if(target==null){notifyState(ro.leo.i18n.L.t("Permanent în fundal · așteaptă Wi-Fi"));return;}
+        preparing=true;notifyState(ro.leo.i18n.L.t("WebUI · conectare HTTPS"));
+        new Thread(new Runnable(){public void run(){
+            CompanionServer built=null;
+            try{
+                final String digest=CompanionTls.fingerprint();built=new CompanionServer(CompanionService.this,target,18764,auth);
+                final CompanionServer ready=built;
+                synchronized(CompanionService.this){if(destroyed||ticket!=generation){ready.close();return;}server=ready;}
+                handler.post(new Runnable(){public void run(){
+                    if(destroyed||ticket!=generation){ready.close();return;}
+                    preparing=false;fingerprint=digest;address="https://"+target.getHostAddress()+":18764/";ready.start();
+                    notifyState(ro.leo.i18n.L.t("Permanent în fundal · HTTPS activ"));
+                }});
+            }catch(Exception error){
+                if(built!=null)built.close();
+                handler.post(new Runnable(){public void run(){if(!destroyed&&ticket==generation){preparing=false;server=null;desired=null;notifyState(ro.leo.i18n.L.t("WebUI · reîncercare conexiune"));handler.postDelayed(refresh,30000);}}});
+            }
+        }},"KeyShellWebUIBind").start();
+    }
+    public synchronized void onDestroy(){
+        destroyed=true;generation++;if(instance==this)instance=null;handler.removeCallbacksAndMessages(null);
+        if(registered)connectivity.unregisterNetworkCallback(networks);if(server!=null){server.close();server=null;}
+        auth.clear();address="";sendBroadcast(new Intent(CHANGED).setPackage(getPackageName()));stopForeground(true);super.onDestroy();
+    }
 }

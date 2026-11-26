@@ -16,7 +16,7 @@ final class CompanionTls {
                 .setKeySize(2048).setDigests(KeyProperties.DIGEST_NONE,KeyProperties.DIGEST_SHA256,KeyProperties.DIGEST_SHA384,KeyProperties.DIGEST_SHA512)
                 .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE,KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-                .setCertificateSubject(new X500Principal("CN=N0d3 KeyShell WebUI"))
+                .setCertificateSubject(new X500Principal("CN=KeyShell WebUI"))
                 .setCertificateSerialNumber(new BigInteger(128,new SecureRandom()).add(BigInteger.ONE))
                 .setCertificateNotBefore(new Date(0)).setCertificateNotAfter(new Date(4102444800000L)).build());generator.generateKeyPair();
         }return store;

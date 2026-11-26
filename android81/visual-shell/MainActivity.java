@@ -94,7 +94,8 @@ public final class MainActivity extends Activity {
     }
     protected void onResume() {
         super.onResume();
-        UnreadState.watch(this);android.content.IntentFilter filter=new android.content.IntentFilter(UnreadState.CHANGED);filter.addAction("ro.leo.visual.MUSIC_CHANGED");filter.addAction(FmService.CHANGED);filter.addAction(LeoNotificationService.CHANGED);registerReceiver(badges,filter);UnreadState.refresh(this);
+        CompanionService.ensureStarted(this);
+        UnreadState.watch(this);android.content.IntentFilter filter=new android.content.IntentFilter(UnreadState.CHANGED);filter.addAction("ro.leo.visual.MUSIC_CHANGED");filter.addAction(FmService.CHANGED);filter.addAction(LeoNotificationService.CHANGED);filter.addAction(CompanionService.CHANGED);registerReceiver(badges,filter);UnreadState.refresh(this);
         for(String name:new String[]{"appearance","weather","alarms","accessibility",LauncherFolders.PREFERENCES})getSharedPreferences(name,0).registerOnSharedPreferenceChangeListener(homeChanged);
         if(!offeredSetup&&!KeypadLockActivity.locked(this)&&!getSharedPreferences("setup",0).getBoolean("complete",false)){offeredSetup=true;startActivity(new Intent(this,SetupWizardActivity.class));}
         screen.reloadAppearance();

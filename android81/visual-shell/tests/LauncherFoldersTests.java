@@ -61,9 +61,9 @@ public final class LauncherFoldersTests extends Instrumentation {
     }
     private void contracts()throws Exception{
         final Context base=getTargetContext();Context fixture=new ContextWrapper(base){@Override public SharedPreferences getSharedPreferences(String name,int mode){return base.getSharedPreferences(token+name,mode);}};
-        check(AppCatalog.NAMES.length==49,"stable catalog unchanged");
+        check(AppCatalog.NAMES.length==50,"stable catalog unchanged");
         check(LauncherFolders.entries(fixture,-1).length==18,"13 direct apps plus five folders");coverage(fixture);
-        int[] expected={7,5,4,4,2};for(int i=0;i<5;i++)check(LauncherFolders.entries(fixture,i).length==expected[i],"default folder size "+i);
+        int[] expected={7,5,4,4,3};for(int i=0;i<5;i++)check(LauncherFolders.entries(fixture,i).length==expected[i],"default folder size "+i);
         fixture.getSharedPreferences("appearance",0).edit().putInt("shortcut0",4).putInt(HomePersonalization.RIGHT_APP_KEY,10).commit();
         LauncherFolders.move(fixture,4,1);coverage(fixture);check(LauncherFolders.folder(fixture,4)==1,"move between folders");
         LauncherFolders.move(fixture,4,-1);check(contains(LauncherFolders.entries(fixture,-1),4),"move out to main menu");
@@ -72,14 +72,14 @@ public final class LauncherFoldersTests extends Instrumentation {
         check(!contains(LauncherFolders.entries(fixture,-1),1004),"empty folder hidden");
         fixture.getSharedPreferences(LauncherFolders.PREFERENCES,0).edit().putInt("app4",999).putString("app10","bad").commit();
         check(LauncherFolders.folder(fixture,4)==0&&LauncherFolders.folder(fixture,10)==1,"invalid overrides fall back safely");
-        int[] reverse=new int[49];for(int i=0;i<49;i++)reverse[i]=48-i;AppCatalog.save(fixture,reverse);
+        int[] reverse=new int[50];for(int i=0;i<50;i++)reverse[i]=49-i;AppCatalog.save(fixture,reverse);
         check(Arrays.equals(reverse,AppCatalog.order(fixture)),"legacy global order preserved");
         int[] members=LauncherFolders.entries(fixture,0);check(members[0]==47,"folder follows existing saved app order");
         fixture.getSharedPreferences(LauncherFolders.PREFERENCES,0).edit().putBoolean("enabled",false).commit();
         check(Arrays.equals(LauncherFolders.entries(fixture,-1),AppCatalog.menuOrder(fixture)),"flat mode restores legacy order");
         fixture.getSharedPreferences("appearance",0).edit().putBoolean("simple-mode",true).commit();
         check(LauncherFolders.entries(fixture,-1).length==6&&LauncherFolders.entries(fixture,0).length==0,"simple mode remains six direct apps");
-        check(BackupEngine.allowed(LauncherFolders.PREFERENCES,"app48","int")&&!BackupEngine.allowed(LauncherFolders.PREFERENCES,"app49","int"),"backup restricts real app IDs");
+        check(BackupEngine.allowed(LauncherFolders.PREFERENCES,"app49","int")&&!BackupEngine.allowed(LauncherFolders.PREFERENCES,"app50","int"),"backup restricts real app IDs");
         check(!BackupEngine.allowed(LauncherFolders.PREFERENCES,"app1","string")&&BackupEngine.allowed(LauncherFolders.PREFERENCES,"enabled","boolean"),"backup restricts setting types");
         check(BackupEngine.category(LauncherFolders.PREFERENCES).equals("appearance"),"folder layout belongs to appearance backup");
         JSONObject group=new JSONObject().put("enabled",new JSONObject().put("type","boolean").put("value",true)).put("app4",new JSONObject().put("type","int").put("value",1));
@@ -115,7 +115,7 @@ public final class LauncherFoldersTests extends Instrumentation {
         check(screen().folder==-1&&screen().focusedEntry()==1000,"saved focus restores containing folder at root");
         press(KeyEvent.KEYCODE_DPAD_CENTER);check(screen().focusedApp()==13,"saved member focus survives reload");press(KeyEvent.KEYCODE_BACK);
         press(KeyEvent.KEYCODE_MENU);for(int i=0;i<3;i++)press(KeyEvent.KEYCODE_DPAD_DOWN);press(KeyEvent.KEYCODE_DPAD_CENTER);
-        check(!LauncherFolders.enabled(getTargetContext())&&screen().order.length==35,"Options restores full flat menu");
+        check(!LauncherFolders.enabled(getTargetContext())&&screen().order.length==36,"Options restores full flat menu");
         press(KeyEvent.KEYCODE_MENU);for(int i=0;i<4;i++)press(KeyEvent.KEYCODE_DPAD_DOWN);press(KeyEvent.KEYCODE_DPAD_CENTER);
         check(LauncherFolders.enabled(getTargetContext())&&screen().order.length==18,"Options restores five folders");
         ui(new Runnable(){public void run(){screen().enterFolder(4);LauncherFolders.move(getTargetContext(),23,-1);LauncherFolders.move(getTargetContext(),41,-1);screen().reloadAppearance();}});

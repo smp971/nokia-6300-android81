@@ -33,6 +33,7 @@ final class LeoHome {
     private int homeStyle;
     private boolean highContrast;
     private HomeWeatherArt weatherArt;
+    private final WebUiSatellite satellite=new WebUiSatellite();
     private final RectF weatherBounds=new RectF(9,137,231,180);
 
     void draw(Canvas canvas, MainActivity.Screen screen) {
@@ -84,6 +85,12 @@ final class LeoHome {
         }
         if(screen.cardAvailable()||screen.editing)drawCard(canvas,screen,185);
         drawShortcuts(canvas, screen, 235);
+        if(CompanionService.active()){
+            float top=Math.max(39,11+25*textScale);
+            surface(canvas,212,top,237,top+24,7,palette.card);
+            satellite.draw(canvas,224.5f,top+12,.9f,palette.accent);
+            paint.setColor(highContrast?palette.accent:0xff92deb8);canvas.drawCircle(233,top+21,2.2f,paint);
+        }
 
         if (screen.editing) {
             RectF frame = screen.homeLayout.frames[screen.editItem];

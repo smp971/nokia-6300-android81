@@ -205,7 +205,7 @@ public final class ConnectivityActivity extends LeoActivity {
         if(apState()!=11) { notice(L.t("Oprește întâi hotspotul")); return; }
         WifiConfiguration old=null; try { old=apConfig(); } catch(Exception ignored) { }
         LinearLayout panel=fields(L.t("Configurare hotspot"));
-        final EditText ssid=field(panel,L.t("Nume rețea"),old!=null?old.SSID:"N0d3 KeyShell",InputType.TYPE_CLASS_TEXT);
+        final EditText ssid=field(panel,L.t("Nume rețea"),old!=null?old.SSID:"KeyShell",InputType.TYPE_CLASS_TEXT);
         final EditText password=field(panel,L.t("Parolă WPA2 · 8–63 caractere"),old!=null && old.preSharedKey!=null?old.preSharedKey:"",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
         left=new Runnable(){public void run(){
             String name=ssid.getText().toString(),key=password.getText().toString();

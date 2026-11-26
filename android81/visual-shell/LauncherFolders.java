@@ -15,7 +15,7 @@ final class LauncherFolders {
     private static final String[] NAMES = {"Unelte", "Organizare", "Media", "Internet", "Avansate"};
     private static final int[][] DEFAULTS = {
         {4, 13, 14, 35, 44, 46, 47}, {10, 11, 42, 43, 45},
-        {12, 30, 39, 40}, {22, 37, 38, 48}, {23, 41}
+        {12, 30, 39, 40}, {22, 37, 38, 48}, {23, 41, 49}
     };
 
     static boolean isFolder(int entry) { return entry >= FIRST && entry < FIRST + COUNT; }

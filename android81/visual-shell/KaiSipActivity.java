@@ -11,8 +11,8 @@ public final class KaiSipActivity extends LeoActivity {
     private void open(){
         Intent launch=getPackageManager().getLaunchIntentForPackage(PACKAGE);
         if(launch!=null)try{startActivity(launch);finish();return;}catch(ActivityNotFoundException unavailable){}
-        list("KaiSIP",java.util.Arrays.asList(L.t("KaiSIP nu este instalat"),L.t("Ajutor")),0,new Choice(){public void pick(int at){
-            notice(L.t("Instalează portul KaiSIP pentru Android. Ai nevoie de un cont SIP și de un server WSS cu WebRTC. Conexiunea permanentă este oprită implicit."));
+        list("keySIP",java.util.Arrays.asList(L.t("keySIP nu este instalat"),L.t("Ajutor")),0,new Choice(){public void pick(int at){
+            notice(L.t("Instalează portul keySIP pentru Android. Ai nevoie de un cont SIP și de un server WSS cu WebRTC. Conexiunea permanentă este oprită implicit."));
         }},L.t("Reîncearcă"),new Runnable(){public void run(){open();}});
     }
 }

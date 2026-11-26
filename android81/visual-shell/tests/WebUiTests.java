@@ -12,8 +12,8 @@ import javax.net.ssl.*;
 import org.json.*;
 
 /** Isolated TLS loopback and settings tests. Optional short browser fixture; never exposes production files. */
-public final class WebUiTests extends Instrumentation {
-    int checks;boolean serve,tryService;CompanionServer server;Context fixture;File directory;PowerManager.WakeLock awake;volatile MainActivity home;
+public class WebUiTests extends Instrumentation {
+    int checks;String bearer;boolean serve,tryService;CompanionServer server;Context fixture;File directory;PowerManager.WakeLock awake;volatile MainActivity home;
     final String prefix="webui-check-"+UUID.randomUUID()+"-";final Set<String> groups=new HashSet<String>();
     void check(boolean ok,String why){if(!ok)throw new AssertionError(why);checks++;}
     SSLSocket socket()throws Exception{
@@ -34,17 +34,17 @@ public final class WebUiTests extends Instrumentation {
             }return bytes.toString("UTF-8");
         }
     }
-    String api(String method,String path,JSONObject data)throws Exception{return request(method,path,server.token,data==null?null:"Content-Type: application/json\r\n",data==null?null:data.toString().getBytes("UTF-8"));}
+    String api(String method,String path,JSONObject data)throws Exception{return request(method,path,server.auth==null?server.token:bearer,data==null?null:"Content-Type: application/json\r\n",data==null?null:data.toString().getBytes("UTF-8"));}
     void tests()throws Exception{
         try(SSLSocket socket=socket()){check(socket.getSession().getProtocol().equals("TLSv1.2"),"TLS 1.2 negotiated");}
         check(CompanionTls.fingerprint().matches("([A-F0-9]{2}:){31}[A-F0-9]{2}"),"visible SHA-256 identity");
-        check(request("GET","/",null,null,null).contains("N0d3 KeyShell"),"public WebUI served");
+        check(request("GET","/",null,null,null).contains("KeyShell"),"public WebUI served");
         for(String path:new String[]{"/style.css","/app.js","/catalog.js","/catalog-icons/gaia/phone.png"})check(request("GET",path,null,null,null).startsWith("HTTP/1.1 200"),"asset served "+path);
         check(request("GET","/api/desktop",null,null,null).startsWith("HTTP/1.1 401"),"API requires token");
         check(request("GET","/api/desktop","wrong",null,null).startsWith("HTTP/1.1 401"),"bad token rejected");
         check(request("GET","/api/desktop",server.token,"Origin: https://evil.invalid\r\n",null).startsWith("HTTP/1.1 403"),"cross-origin rejected");
         check(request("GET","/api/desktop",server.token,"Origin: http://127.0.0.1:"+server.server.getLocalPort()+"\r\n",null).startsWith("HTTP/1.1 403"),"downgraded origin rejected");
-        JSONObject before=CompanionModel.snapshot(fixture);check(before.getJSONArray("apps").length()==35&&before.getJSONArray("folders").length()==5,"native catalog projection complete");
+        JSONObject before=CompanionModel.snapshot(fixture);check(before.getJSONArray("apps").length()==36&&before.getJSONArray("folders").length()==5,"native catalog projection complete");
         check(api("GET","/api/desktop",null).contains("ram_free"),"live device model");
         JSONObject appearance=new JSONObject().put("theme",17).put("list",true);
         check(api("POST","/api/appearance",appearance).startsWith("HTTP/1.1 200")&&fixture.getSharedPreferences("appearance",0).getBoolean("list",false),"appearance persisted through HTTPS");
@@ -88,19 +88,33 @@ public final class WebUiTests extends Instrumentation {
         }finally{restore(real,"appearance",appearance);restore(real,LauncherFolders.PREFERENCES,folders);if(home!=null)ui(new Runnable(){public void run(){screen().grid=false;screen().reloadAppearance();}});}
     }
     boolean contains(int[] values,int id){for(int value:values)if(value==id)return true;return false;}
-    void service(Context real)throws Exception{
-        if(CompanionService.instance!=null)throw new IllegalStateException("Existing WebUI session left untouched");
-        CompanionServer loopback=server;
-        try{real.startForegroundService(new Intent(real,CompanionService.class));for(int i=0;i<100&&CompanionService.instance==null;i++)SystemClock.sleep(100);
-            CompanionService live=CompanionService.instance;check(live!=null,"production Wi-Fi service starts");server=live.server;
-            check(server.scheme.equals("https")&&!server.server.getInetAddress().isLoopbackAddress(),"production session binds Wi-Fi with HTTPS");
-            check(api("GET","/api/status",null).contains("N0d3 KeyShell"),"authenticated status over actual Wi-Fi binding");
-        }finally{real.stopService(new Intent(real,CompanionService.class));server=loopback;for(int i=0;i<50&&CompanionService.instance!=null;i++)SystemClock.sleep(100);}
-        check(CompanionService.instance==null,"production session stops and revokes token");
-        real.startForegroundService(new Intent(real,CompanionService.class));SystemClock.sleep(20);real.stopService(new Intent(real,CompanionService.class));SystemClock.sleep(500);waitForIdleSync();
-        check(CompanionService.instance==null,"immediate stop cannot publish a late session");
-        try(java.net.ServerSocket probe=new java.net.ServerSocket()){probe.bind(new InetSocketAddress(CompanionService.wifi(real),18764));check(true,"immediate stop closes a pending TLS listener");}
+    void service(final Context real)throws Exception{
+        if(CompanionService.instance!=null)throw new IllegalStateException("Existing WebUI left untouched");
+        Map<String,?> prefs=new HashMap<String,Object>(real.getSharedPreferences(CompanionSettings.PREFS,0).getAll()),credentials=new HashMap<String,Object>(real.getSharedPreferences(CompanionAuth.PREFS,0).getAll());
+        CompanionServer loopback=server;String oldBearer=bearer;
+        String user="check-"+UUID.randomUUID().toString().substring(0,8),password=UUID.randomUUID().toString();
+        try{
+            new CompanionAuth(real).add(user,password,"admin");real.getSharedPreferences(CompanionSettings.PREFS,0).edit().putBoolean("enabled",true).commit();
+            real.startForegroundService(new Intent(real,CompanionService.class));awaitServer();
+            CompanionService live=CompanionService.instance;check(live!=null&&live.server!=null,"persistent Wi-Fi service starts");server=live.server;bearer=live.auth.login(user,password);
+            check(server.scheme.equals("https")&&!server.server.getInetAddress().isLoopbackAddress(),"production Wi-Fi uses password HTTPS");
+            check(api("GET","/api/status",null).contains("KeyShell"),"password session works on Wi-Fi binding");
+            check(CompanionService.active(),"satellite active only with a listening server");
+            final CompanionService current=live;
+            ui(new Runnable(){public void run(){try{java.lang.reflect.Method m=CompanionService.class.getDeclaredMethod("bindTo",InetAddress.class);m.setAccessible(true);m.invoke(current,new Object[]{null});}catch(Exception e){throw new RuntimeException(e);}}});
+            check(CompanionService.instance==current&&!CompanionService.active()&&current.address.isEmpty(),"Wi-Fi wait keeps service and hides satellite");
+            ui(new Runnable(){public void run(){try{java.lang.reflect.Method m=CompanionService.class.getDeclaredMethod("refreshBinding");m.setAccessible(true);m.invoke(current);}catch(Exception e){throw new RuntimeException(e);}}});awaitServer();server=current.server;
+            check(CompanionService.active()&&api("GET","/api/status",null).contains("KeyShell"),"rebinding restores satellite and browser session");
+            real.stopService(new Intent(real,CompanionService.class));awaitStopped();check(CompanionSettings.enabled(real),"unexpected service stop retains owner preference");
+            CompanionService.ensureStarted(real);awaitServer();check(CompanionService.active(),"enabled service can resume automatically");
+            CompanionSettings.enabled(real,false);awaitStopped();check(!CompanionService.active(),"explicit off stops service and satellite");
+            real.getSharedPreferences(CompanionSettings.PREFS,0).edit().putBoolean("enabled",true).commit();real.startForegroundService(new Intent(real,CompanionService.class));SystemClock.sleep(20);real.stopService(new Intent(real,CompanionService.class));SystemClock.sleep(600);waitForIdleSync();
+            check(CompanionService.instance==null,"immediate stop cannot publish late server");
+            try(java.net.ServerSocket probe=new java.net.ServerSocket()){probe.bind(new InetSocketAddress(CompanionService.wifi(real),18764));check(true,"pending TLS listener closes");}
+        }finally{CompanionSettings.enabled(real,false);awaitStopped();restore(real,CompanionSettings.PREFS,prefs);restore(real,CompanionAuth.PREFS,credentials);server=loopback;bearer=oldBearer;}
     }
+    void awaitServer(){for(int i=0;i<150&&!CompanionService.active();i++)SystemClock.sleep(100);check(CompanionService.active(),"bounded WebUI bind");}
+    void awaitStopped(){for(int i=0;i<100&&CompanionService.instance!=null;i++)SystemClock.sleep(50);check(CompanionService.instance==null,"bounded WebUI stop");}
     public void onCreate(Bundle args){serve=args!=null&&"true".equals(args.getString("serve"));tryService=args!=null&&"true".equals(args.getString("service"));start();}
     public void onStart(){Bundle result=new Bundle();final Context real=getTargetContext();File session=new File(real.getFilesDir(),"webui-fixture-session.json"),done=new File(real.getFilesDir(),"webui-fixture.done");try{
         getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);awake=((PowerManager)real.getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,"keyshell:webui-checks");awake.acquire(240000);

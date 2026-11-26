@@ -5,11 +5,25 @@
   const clone = value => JSON.parse(JSON.stringify(value));
   const seed = window.KEYSHELL_DEMO;
   const iconNames = {0:'phone',1:'contacts',2:'messages',3:'clock',5:'gallery',6:'music',8:'settings',11:'calendar',12:'video',22:'email',25:'fm',34:'camera'};
-  const glyphs = {4:'∑',9:'▦',10:'▤',13:'♩',14:'⇄',19:'◎',23:'>_',26:'☁',30:'▥',31:'✣',35:'⌖',37:'◇',38:'☷',39:'◉',40:'◈',41:'⌘',42:'▣',43:'▱',44:'▧',45:'▰',46:'△',47:'▦',48:'☎'};
+  const glyphs = {4:'∑',9:'▦',10:'▤',13:'♩',14:'⇄',19:'◎',23:'>_',26:'☁',30:'▥',31:'✣',35:'⌖',37:'◇',38:'☷',39:'◉',40:'◈',41:'⌘',42:'▣',43:'▱',44:'▧',45:'▰',46:'△',47:'▦',48:'☎',49:'🛰'};
   let model = clone(seed), live = false, token = '', tab = 'overview';
   let folder = -1, selected = 0, grid = false, appPage = null;
   const lastChild = new Map();
   const pending = new Set();
+
+  function applyWebTheme(theme) {
+    document.documentElement.dataset.webTheme = String([0,1,2].includes(theme) ? theme : 0);
+  }
+  function disabled(id) {
+    if (!live) return ['upload','load-files','change-password','save-webui','save-user'].includes(id);
+    const admin = model.account.role === 'admin', features = model.webui;
+    if (id === 'upload') return !admin || !features.files;
+    if (id === 'load-files') return !features.files;
+    if (id === 'save-layout') return !admin || !features.layout;
+    if (id === 'save-appearance') return !admin || !features.appearance;
+    if (id === 'save-webui' || id === 'save-user') return !admin;
+    return false;
+  }
 
   function element(tag, cls, text) {
     const node = document.createElement(tag);
@@ -50,12 +64,12 @@
   }
   async function request(path, extra = {}) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), ['/api/login','/api/password','/api/admin/users'].includes(path) ? 60000 : 15000);
     try {
       const response = await fetch(path, {...extra,signal:controller.signal,headers:{Authorization:'Bearer '+token,...(extra.headers || {})},cache:'no-store'});
       if (!response.ok) {
-        if (response.status === 401) { disconnect(); throw Error('Token greșit sau sesiune expirată. Pornește o sesiune nouă pe Nokia.'); }
-        const messages = {400:'Datele nu sunt valide.',403:'Conectarea este permisă numai din adresa afișată pe Nokia.',409:'Un fișier cu acest nume există deja. Alege alt nume.',413:'Numele sau dimensiunea fișierului nu sunt acceptate.'};
+        if (response.status === 401) { disconnect(); throw Error('Autentificare necesară. Verifică utilizatorul și parola sau conectează-te din nou.'); }
+        const messages = {400:'Datele nu sunt valide.',403:'Conectarea este permisă numai din adresa afișată pe Nokia.',409:'Un fișier cu acest nume există deja. Alege alt nume.',413:'Numele sau dimensiunea fișierului nu sunt acceptate.',429:'Prea multe încercări. Așteaptă un minut și încearcă din nou.'};
         throw Error(messages[response.status] || 'Cererea nu a reușit ('+response.status+').');
       }
       return response;
@@ -68,7 +82,7 @@
     if (pending.has(id)) return;
     pending.add(id); $(id).disabled = true;
     try { await action(); } catch (error) { notice(error.message, true); }
-    finally { pending.delete(id); $(id).disabled = (id === 'upload' || id === 'load-files') && !live; }
+    finally { pending.delete(id); $(id).disabled = disabled(id); }
   }
   async function reload() {
     const next = await (await request('/api/desktop')).json();
@@ -76,15 +90,17 @@
     model = next; folder = -1; selected = 0; appPage = null; render();
   }
   function disconnect() {
-    live = false; token = ''; $('token').value = ''; grid = false; folder = -1; selected = 0; appPage = null;
+    live = false; token = ''; $('login-password').value = ''; grid = false; folder = -1; selected = 0; appPage = null;
+    document.querySelectorAll('input[type=password]').forEach(input => { input.value = ''; });
     loadDemo(); render(); $('file-list').replaceChildren();
   }
   function showTab(name) {
     tab = name;
     document.querySelectorAll('.tab-panel').forEach(node => { node.hidden = node.id !== name; });
     document.querySelectorAll('[data-tab]').forEach(button => button.classList.toggle('active',button.dataset.tab === name));
-    $('breadcrumb').textContent = {overview:'Prezentare',apps:'Aplicații și foldere',appearance:'Aspect',files:'Fișiere'}[name];
-    if (name === 'files' && live) busy('load-files', loadFiles);
+    $('breadcrumb').textContent = {overview:'Prezentare',apps:'Aplicații și foldere',appearance:'Aspect',files:'Fișiere',security:'Administrare'}[name];
+    if (name === 'files' && live && model.webui.files) busy('load-files', loadFiles);
+    if (name === 'security' && live && model.account.role === 'admin') busy('save-webui',loadAdmin);
   }
   function visibleApps() { return model.apps.filter(app => !model.settings.simple || [0,1,2,3,6,8].includes(app.id)); }
   function entries(parent = folder) {
@@ -174,17 +190,20 @@
     renderPhone(); $('phone-screen').focus({preventScroll:true});
   }
   function render() {
-    $('mode').textContent = live ? 'NOKIA · CONECTAT' : 'DEMO · LOCAL'; $('side-mode').textContent = live ? 'Sesiune pe telefon' : 'Mod demonstrativ';
-    $('connection-title').textContent = live ? 'Nokia este conectat.' : 'Încearcă-l înainte să te conectezi.';
+    $('mode').textContent = live ? 'NOKIA · CONECTAT' : 'DEMO · LOCAL'; $('side-mode').textContent = live ? 'WebUI permanent' : 'Mod demonstrativ';
+    $('connection-title').textContent = live ? 'Conectat · '+model.account.username : 'Încearcă-l înainte să te conectezi.';
     $('connection-note').textContent = live ? 'Starea și setările vin de pe telefon. Butoanele de salvare aplică modificările pe Nokia; previzualizarea rămâne o simulare a navigării.' : 'Acum folosești o demonstrație locală. Pentru Nokia, deschide adresa HTTPS din Setări → Rețele → Mai multe → KeyShell WebUI.';
-    $('token').hidden = live; $('connect-form').querySelector('label').hidden = live; $('connect-form').querySelector('[type=submit]').hidden = live; $('disconnect').hidden = !live;
-    $('reset-demo').hidden = live;
+    $('login-password').hidden = live; $('connect-form').querySelector('label').hidden = live; $('connect-form').querySelector('[type=submit]').hidden = live; $('disconnect').hidden = !live;
+    $('username').hidden = live; $('reset-demo').hidden = live;
     $('battery').textContent = model.status.battery < 0 ? '—' : model.status.battery+'%'; $('battery-detail').textContent = !live ? 'Date demonstrative' : model.status.charging ? 'La încărcat' : 'Pe baterie';
     $('storage').textContent = bytes(model.status.free_bytes); $('memory').textContent = bytes(model.status.ram_free); $('health').textContent = model.status.health;
     $('app-count').textContent = model.apps.length; $('root-count').textContent = entries(-1).length+' poziții în meniu';
     $('folders-enabled').checked = model.settings.foldersEnabled; $('view-mode').value = model.settings.list ? 'list' : 'grid';
     $('save-layout').textContent = live ? 'Aplică pe Nokia' : 'Salvează aranjamentul'; $('save-appearance').textContent = live ? 'Aplică pe Nokia' : 'Salvează aspectul';
-    $('upload').disabled = !live; $('load-files').disabled = !live; $('upload-file').disabled = !live; $('files-note').textContent = live ? 'Doar folderul Companion este partajat. APK-urile primite se instalează separat, de pe telefon.' : 'Conectează telefonul pentru transferuri reale.';
+    ['upload','load-files','save-layout','save-appearance','change-password','save-webui','save-user'].forEach(id => { $(id).disabled = pending.has(id) || disabled(id); }); $('upload-file').disabled = disabled('upload'); $('files-note').textContent = live ? 'Doar folderul Companion este partajat. APK-urile primite se instalează separat, de pe telefon.' : 'Conectează telefonul pentru transferuri reale.';
+    $('security-private').hidden = !live; $('admin-controls').hidden = !live || model.account.role !== 'admin';
+    $('security-note').textContent = !live ? 'Conectează-te la Nokia pentru parole, utilizatori și funcționalități.' : model.account.role === 'admin' ? 'Administrator · modificările sunt aplicate pe telefon.' : 'Acces doar pentru citire · îți poți schimba parola personală.';
+    if (live) applyWebTheme(model.webui.theme);
     $('folder-cards').replaceChildren();
     model.folders.forEach(group => {
       const card = element('button','folder-card'); const count = model.apps.filter(a => a.folder === group.id).length;
@@ -196,12 +215,12 @@
     model.apps.forEach(app => {
       const row = element('div','app-row'), select = document.createElement('select'); select.setAttribute('aria-label','Folder pentru '+app.name);
       [{id:-1,name:'Meniul principal'},...model.folders].forEach(group => { const option = document.createElement('option'); option.value = group.id; option.textContent = group.name; select.append(option); });
-      select.value = app.folder; select.onchange = () => { app.folder = Number(select.value); renderPhone(); notice('Aranjament modificat în previzualizare. Apasă Salvează pentru a-l păstra.'); };
+      select.value = app.folder; select.disabled = live && (model.account.role !== 'admin' || !model.webui.layout); select.onchange = () => { app.folder = Number(select.value); renderPhone(); notice('Aranjament modificat în previzualizare. Apasă Salvează pentru a-l păstra.'); };
       row.append(icon(app),element('strong','',app.name),select); $('app-table').append(row);
     });
     $('themes').replaceChildren();
     model.themes.forEach(theme => {
-      const card = element('button','theme-card'); card.style.setProperty('--theme-color',theme.color); card.setAttribute('aria-pressed',String(theme.id === model.settings.theme)); card.append(element('i'),element('span','',theme.name));
+      const card = element('button','theme-card'); card.style.setProperty('--theme-color',theme.color); card.setAttribute('aria-pressed',String(theme.id === model.settings.theme)); card.disabled = live && (model.account.role !== 'admin' || !model.webui.appearance); card.append(element('i'),element('span','',theme.name));
       card.onclick = () => { model.settings.theme = theme.id; render(); notice('Tema este în previzualizare. Apasă Aplică pentru a o păstra.'); };
       $('themes').append(card);
     }); renderPhone();
@@ -215,6 +234,35 @@
       }); $('file-list').append(row);
     }); if (!files.length) $('file-list').append(element('li','','Folderul Companion este gol.'));
   }
+  function userForm(action = 'add', user = null) {
+    $('user-form').dataset.action = action;
+    $('user-name').value = user ? user.username : '';
+    $('user-name').readOnly = action !== 'add';
+    $('user-password').value = '';
+    $('user-role').hidden = $('user-role-label').hidden = action !== 'add';
+    $('user-form-title').textContent = action === 'add' ? 'Adaugă utilizator' : 'Parolă nouă · '+user.username;
+    $('save-user').textContent = action === 'add' ? 'Adaugă utilizator' : 'Schimbă parola';
+  }
+  async function loadAdmin() {
+    const data = await (await request('/api/admin')).json();
+    $('web-theme').value = data.settings.theme;
+    $('auto-start').checked = data.settings.autoStart;
+    ['appearance','layout','files'].forEach(key => { $('feature-'+key).checked = data.settings[key]; });
+    $('user-list').replaceChildren();
+    data.users.forEach(user => {
+      const row = element('li'), actions = element('span','user-actions');
+      row.append(element('span','',user.username+' · '+(user.role === 'admin' ? 'Administrator' : 'Doar citire')));
+      const password = element('button','','Parolă'); password.type = 'button'; password.onclick = () => userForm('password',user);
+      const remove = element('button','','Șterge'); remove.type = 'button'; remove.onclick = () => {
+        if (!window.confirm('Ștergi utilizatorul '+user.username+'?')) return;
+        busy('save-user',async () => {
+          await request('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',username:user.username})});
+          await loadAdmin(); notice('Utilizator șters. Cel puțin un administrator este păstrat.');
+        });
+      };
+      actions.append(password,remove); row.append(actions); $('user-list').append(row);
+    });
+  }
   document.querySelectorAll('[data-tab]').forEach(button => { button.onclick = () => showTab(button.dataset.tab); });
   document.querySelector('.brand').onclick = () => showTab('overview');
   document.querySelectorAll('[data-key]').forEach(button => { button.onclick = () => key(button.dataset.key); });
@@ -226,11 +274,38 @@
   $('phone-screen').addEventListener('click', event => { if (event.target === $('phone-screen')) $('phone-screen').focus(); });
   $('connect-form').onsubmit = event => { event.preventDefault(); busy('refresh',async () => {
     if (location.protocol !== 'https:') throw Error('Pentru conectare reală, deschide adresa HTTPS afișată pe Nokia. Aici poți folosi demonstrația.');
-    token = $('token').value.trim(); if (!/^[a-f0-9]{32}$/.test(token)) throw Error('Introdu tokenul de 32 de caractere afișat pe Nokia.');
-    try { await reload(); live = true; $('token').value = ''; render(); notice('Conectat prin HTTPS. Datele afișate acum vin de pe Nokia.'); }
+    const username = $('username').value, password = $('login-password').value;
+    if (!username || !password) throw Error('Introdu utilizatorul și parola configurate pe Nokia.');
+    notice('Se verifică parola…');
+    const login = await (await request('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})})).json();
+    token = login.token; $('login-password').value = '';
+
+    try { await reload(); live = true; $('login-password').value = ''; render(); notice('Conectat prin HTTPS. Datele afișate acum vin de pe Nokia.'); }
     catch (error) { token = ''; throw error; }
   }); };
-  $('disconnect').onclick = () => { disconnect(); notice('Deconectat. Demonstrația este din nou locală.'); };
+  $('disconnect').onclick = () => { request('/api/logout',{method:'POST'}).catch(() => {}); disconnect(); notice('Deconectat. Demonstrația este din nou locală.'); };
+  $('password-form').onsubmit = event => { event.preventDefault(); busy('change-password',async () => {
+    if (!live) return;
+    const currentPassword = $('current-password').value, newPassword = $('new-password').value;
+    if (newPassword.length < 8 || newPassword !== $('confirm-password').value) throw Error('Verifică parola nouă și confirmarea ei.');
+    notice('Se salvează parola…');
+    try {
+      const response = await (await request('/api/password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword,newPassword})})).json();
+      token = response.token; notice('Parola a fost schimbată. Celelalte sesiuni ale acestui utilizator au fost închise.');
+    } finally { ['current-password','new-password','confirm-password'].forEach(id => { $(id).value = ''; }); }
+  }); };
+  $('web-settings-form').onsubmit = event => { event.preventDefault(); busy('save-webui',async () => {
+    const values = {theme:Number($('web-theme').value),autoStart:$('auto-start').checked,appearance:$('feature-appearance').checked,layout:$('feature-layout').checked,files:$('feature-files').checked};
+    await request('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(values)});
+    await reload(); notice('Setările WebUI au fost aplicate pe Nokia.');
+  }); };
+  $('new-user').onclick = () => userForm();
+  $('user-form').onsubmit = event => { event.preventDefault(); busy('save-user',async () => {
+    const values = {action:$('user-form').dataset.action,username:$('user-name').value,password:$('user-password').value};
+    if (values.action === 'add') values.role = $('user-role').value;
+    try { await request('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(values)});userForm();await loadAdmin();notice('Utilizator salvat.'); }
+    finally { $('user-password').value = ''; }
+  }); };
   $('refresh').onclick = () => busy('refresh',async () => { if (live) { await reload(); notice('Stare actualizată de pe telefon.'); } else notice('Mod demonstrativ. Datele telefonului apar după conectare.'); });
   $('folders-enabled').onchange = () => { model.settings.foldersEnabled = $('folders-enabled').checked; folder = -1; selected = 0; renderPhone(); };
   $('view-mode').onchange = () => { model.settings.list = $('view-mode').value === 'list'; renderPhone(); };
@@ -250,4 +325,5 @@
     await request('/api/upload',{method:'POST',headers:{'X-Leo-Name':file.name},body:file}); $('upload-file').value = ''; await loadFiles(); notice('Fișier trimis în folderul Companion de pe Nokia.');
   });
   loadDemo(); render(); showTab(tab);
+  if (location.protocol === 'https:') fetch('/api/info',{cache:'no-store'}).then(r => r.ok ? r.json() : null).then(info => { if (info && !live) applyWebTheme(info.theme); }).catch(() => {});
 })();

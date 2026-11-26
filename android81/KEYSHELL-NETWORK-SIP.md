@@ -1,5 +1,62 @@
 # Network badges, Android KaiSIP and keypad follow-up · 24 November 2026
 
+## keySIP follow-up · 25 November 2026
+
+The visible Android name is now **keySIP**. Its package `ro.n0d3.kaisip`, local
+HTTPS origin and pinned upstream files stay unchanged to preserve the existing
+account. Served title/About labels and notifications use the new name. This
+section supersedes the older routing/validation status below.
+
+The Android adapter uses the existing `AudioManager.MODE_IN_COMMUNICATION`
+routing with voice-call volume keys and focus ownership. The route label was
+reversed: it now correctly shows **Difuzor** for speaker and **Receptor** for
+earpiece (or **Căști** when a wired/SCO route is reported). Native cellular
+`MODE_IN_CALL` is still protected; no additional Telecom/root routing is added.
+
+Two authorized, bounded live tests called the owner's chosen test extension **200**:
+
+- Direct core call: registration ready, INVITE/ACK, `incall`, 17 RTP packets sent
+  and 15 received. Speaker and receiver switches both passed.
+- Window-key route **2 → 0 → 0 → Call**: registration ready, `incall`, communication
+  audio mode 3, **26 RTP packets sent / 17 received**, 4,472 / 2,924 bytes.
+  Speaker and receiver switches both passed. The runner then hung up its own call,
+  ended its audio route and released its temporary wake lock.
+
+These establish call signaling, media packet flow in both directions and Android
+route state. **Audible voice quality, incoming calls, DTMF, messaging and PTT still
+need human/peer trials.** No call audio was recorded, and reports contain no SIP
+credentials, account/server identifiers, SDP or media payloads.
+
+The repeatable host check is explicit and never scheduled:
+
+```text
+python android81/test-keysip-call.py --serial 695d --allow-live --destination 200
+```
+
+It requires the current production APK and existing account. Before starting
+instrumentation (which restarts the app), it checks both cellular state and the
+service's sanitized call-state hook; active or unreadable states are refused.
+It builds/installs only its disposable runner, verifies an empty Home dashboard,
+enters exactly 200, verifies that number before pressing Call, waits at most
+25 seconds for connection, samples RTP, changes routes and hangs up its own call.
+It removes the runner afterward, saves an ignored sanitized report and does not
+retry automatically. Key injection exercises the Activity/JS path; it is not a
+raw matrix-scancode test. A carrier/SIP call arriving during setup remains a
+timing limitation of intrusive instrumentation; use the test only on an idle phone.
+
+The first keypad harness attempt expected an empty `.dialnum` element. Upstream
+renders a dashboard until the first digit, so that attempt stopped before dialing.
+The corrected runner checks the actual empty dashboard; it does not count the
+earlier attempt as a pass. Production call behavior was unchanged by this harness fix.
+
+Installed keySIP APK SHA-256:
+`424cf849b3a37fb9c4da2e960afda7c45f9056582c439527cac362d837687837`.
+The permanent KeyShell WebUI stayed enabled during this live call check.
+Node adapter contracts, including route labels, pass. Separate fresh-account
+instrumentation remains isolated under `ro.n0d3.kaisip.fixture`.
+
+The sections below retain the 24 November bring-up and evidence.
+
 This is a source and data-APK update for the project's TA-1286, Android 8.1/API 27.
 It retains the deployed [matrix wake/unlock changes](KEYPAD-WAKE-UNLOCK.md).
 The bundled system APK and firmware/recovery archives have not been regenerated.

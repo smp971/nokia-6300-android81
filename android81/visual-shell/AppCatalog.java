@@ -61,7 +61,8 @@ final class AppCatalog {
         new Entry(45, "Cheltuieli", ExpensesActivity.class),
         new Entry(46, "Metronom", MetronomeActivity.class),
         new Entry(47, "Coduri QR", QrActivity.class),
-        new Entry(48, "KaiSIP", KaiSipActivity.class)
+        new Entry(48, "keySIP", KaiSipActivity.class),
+        new Entry(49, "WebUI", CompanionActivity.class)
     });
     private static Entry[] entries(Entry[] declared) {
         Entry[] result=new Entry[declared.length];

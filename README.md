@@ -1,13 +1,13 @@
-# [DEV] Android 8.1 port + N0d3 KeyShell
+# [DEV] Android 8.1 port + KeyShell
 
 <p align="center">
-  <img src="android81/artwork/keyshell-project-banner.svg" width="100%" alt="N0d3 KeyShell — Android 8.1 port and interactive keypad shell">
+  <img src="android81/artwork/keyshell-project-banner.svg" width="100%" alt="KeyShell — Android 8.1 port and interactive keypad shell">
 </p>
 
 <p align="center">
   <b>Nokia 6300 4G · TA-1286</b><br>
   <code>AOSP 8.1 / API 27</code> · <code>240 × 320</code> · <code>ARMv7</code> · <code>0.14.0-dev</code><br>
-  <sub>Development snapshot · 24 November 2026</sub>
+  <sub>Development snapshot · 25 November 2026</sub>
 </p>
 
 <p align="center">
@@ -21,9 +21,10 @@
 </p>
 
 **An experimental Android 8.1 port for a physical-key phone, with an interactive
-native shell: N0d3 KeyShell.** Android supplies the device services and application
+native shell: KeyShell.** Android supplies the device services and application
 runtime. KeyShell brings the dashboard, launcher, Settings, everyday apps and
 system controls together around the D-pad, OK, number keys and two softkeys.
+**N0d3** is the wider project; **KeyShell** names its interactive Android shell.
 
 The reference handset boots Android and runs this interface on its real
 **240 × 320 non-touch display**. The project includes device integration,
@@ -102,7 +103,7 @@ local demonstrations. Radio is shown idle; Terminal executes a real local
 | **Android port** | AOSP `android-8.1.0_r81`, low-RAM product, stock-derived Linux 4.9, Qualcomm msm8909 / Adreno 304 and adapted device services |
 | **Interactive shell** | Home, app grid/list, contextual cards, Settings, global menu, notifications, pointer and native daily apps |
 | **Physical input** | D-pad/softkeys, multi-tap, Romanian T9, personal dictionary and keypad adaptations for Android screens |
-| **Current catalog** | **49 stable destinations**: 35 available in the full launcher and 14 contextual or Settings entries; some share an app implementation |
+| **Current catalog** | **50 stable destinations**: 36 available in the full launcher and 14 contextual or Settings entries; some share an app implementation |
 | **Appearance** | 18 palettes, per-app themes, Gaia icons/wallpapers, adjustable text and three shared Home/standby presets |
 | **Delivery** | Source, signed app builders, versioned app bundles, recovery/ROM packaging and dated hardware reports |
 
@@ -150,13 +151,26 @@ all existing shortcuts remain available.
 The [WebUI](android81/WEBUI.md) combines an offline keypad demo with a real Nokia
 companion: battery/storage/memory status, five-folder organization, global themes,
 grid/list settings and local file exchange. The phone preview is a navigation demo.
-Connected changes use explicit save buttons, HTTPS and a short-lived session token.
+Connected changes use explicit save buttons, HTTPS, username/password login and
+memory-only sessions. The service stays available in the background, resumes on
+Wi-Fi changes and can start automatically. A satellite marks it on the dashboard.
 
-Start it on Nokia from **Settings → Networks → More → KeyShell WebUI**, or try the
+Control it on Nokia from **Applications → Advanced → WebUI**: enable/disable,
+current IP/HTTPS address, theme, password, users and feature switches. Browser
+**Administrare** also provides password changes and administrator/viewer accounts.
+The separate SIP app is now named **keySIP**; an automated 2–0–0 → Call trial
+connected with bidirectional RTP and verified receiver/speaker switching.
+Human voice audibility remains to be confirmed. [Call evidence and repeatable check](android81/KEYSHELL-NETWORK-SIP.md#keysip-follow-up--25-november-2026).
+
+The existing **Settings → Networks → More → KeyShell WebUI** route also works. Try the
 offline version on a PC with `python android81/serve-webui-demo.py` and open
 `http://127.0.0.1:18766/webui/`. Both modes use the same bundled, responsive UI.
 
 <a href="android81/WEBUI.md"><img src="android81/screenshots/webui-2026-11-25/desktop.png" width="900" alt="KeyShell WebUI with an offline dashboard and keypad-navigable virtual phone; demonstration data only"></a>
+
+| Native WebUI controls | Feature switches |
+| :---: | :---: |
+| <img src="android81/screenshots/webui-controls-2026-11-25/native-controls.png" width="180" alt="Real Nokia native WebUI control app, stopped state"> | <img src="android81/screenshots/webui-controls-2026-11-25/native-features.png" width="180" alt="Real Nokia WebUI feature switches"> |
 
 ### The interactive shell and its apps
 
@@ -316,7 +330,8 @@ exact-device prerequisites and tested post-install fixes.
 Common components own typography, focus, softkeys and lifecycle handling. App
 destinations live in one stable registry. Android IDs `ro.leo.visual` and
 `ro.leo.keypad` preserve compatible updates; the visible project identity is
-**N0d3 KeyShell**.
+**KeyShell**, part of the wider **N0d3** project. The separate SIP client is
+**keySIP**; its existing package and origin preserve the owner's account.
 
 <a id="building-leo"></a>
 <a id="pentru-cei-care-vor-să-construiască"></a>

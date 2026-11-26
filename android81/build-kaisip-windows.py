@@ -37,7 +37,7 @@ def main(fixture=False):
     unsigned=output/"unsigned.apk";aligned=output/"aligned.apk";apk=output/"kaisip-android.apk"
     manifest=SOURCE/"AndroidManifest.xml"
     if fixture:
-        text=manifest.read_text(encoding="utf-8").replace('package="ro.n0d3.kaisip"','package="ro.n0d3.kaisip.fixture"').replace('android:name=".MainActivity"','android:name="ro.n0d3.kaisip.MainActivity"').replace('android:name=".SipService"','android:name="ro.n0d3.kaisip.SipService"').replace('android:label="KaiSIP"','android:label="KaiSIP local fixture"')
+        text=manifest.read_text(encoding="utf-8").replace('package="ro.n0d3.kaisip"','package="ro.n0d3.kaisip.fixture"').replace('android:name=".MainActivity"','android:name="ro.n0d3.kaisip.MainActivity"').replace('android:name=".SipService"','android:name="ro.n0d3.kaisip.SipService"').replace('android:label="keySIP"','android:label="keySIP local fixture"')
         manifest=output/"AndroidManifest.xml";manifest.write_text(text,encoding="utf-8")
     run(build/"aapt.exe","package","-f","-M",manifest,"-S",SOURCE/"res",
         "-A",SOURCE/"assets","-I",sdk,"-F",unsigned)

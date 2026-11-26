@@ -3,8 +3,9 @@ import android.graphics.*;
 /** Original flat vector artwork for Leo apps without a Gaia asset. */
 final class IconArt {
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final WebUiSatellite satellite=new WebUiSatellite();
     private final RectF box=new RectF();private final Path path=new Path();
-    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc,0xff288cda,0xff239a82,0xff548fe0,0xffa651d6,0xffb67a35,0xffd95183,0xff1aabb0,0xff478de0,0xff5b748b,0xff18a99d,0xff4269c7,0xff12ad99,0xffed8b25,0xffa553cc,0xff189faa,0xff23855d,0xff3479d8,0xff9b68d7,0xffdca42a,0xff31a477,0xffdc6378,0xff5369bd,0xff1aafa0};
+    static final int[] COLORS={0xff16c578,0xff1aa9ed,0xffffb51b,0xff9858ef,0xff5268ed,0xfff05691,0xffff596b,0xfff2a11d,0xff637fa5,0xff5ebc35,0xffffae39,0xff328fee,0xffef435b,0xffdc4e9d,0xff14aebc,0xff3e88ee,0xffa35bed,0xffffb716,0xff41ac8c,0xff16a9d4,0xff985ed7,0xff3db987,0xff249be9,0xff2b9e7b,0xffe77a32,0xff00a7bc,0xff288cda,0xff239a82,0xff548fe0,0xffa651d6,0xffb67a35,0xffd95183,0xff1aabb0,0xff478de0,0xff5b748b,0xff18a99d,0xff4269c7,0xff12ad99,0xffed8b25,0xffa553cc,0xff189faa,0xff23855d,0xff3479d8,0xff9b68d7,0xffdca42a,0xff31a477,0xffdc6378,0xff5369bd,0xff1aafa0,0xff7255b8};
     private void round(Canvas c,float l,float t,float r,float b,float radius,int color){p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(color);c.drawRoundRect(l,t,r,b,radius,radius,p);}
     private void line(Canvas c,float a,float b,float x,float y){c.drawLine(a,b,x,y,p);}
         void draw(Canvas c,int index,float x,float y) {
@@ -23,6 +24,7 @@ final class IconArt {
             p.setStrokeWidth(3f);
             p.setStrokeCap(Paint.Cap.ROUND);
             switch(index) {
+                case 49:satellite.draw(c,0,2,1.65f,0xfffbfbff);break;
                 case 48:c.drawArc(-14,-12,12,14,95,170,false,p);line(c,-12,-8,-5,-3);line(c,-5,-3,-1,-9);line(c,0,9,6,4);line(c,6,4,11,11);c.drawArc(2,-14,16,0,270,90,false,p);break;
                 case 38:c.drawArc(-14,-14,14,14,270,90,false,p);c.drawArc(-8,-8,8,8,270,90,false,p);c.drawCircle(-10,10,2,p);break;
                 case 39:c.drawCircle(0,-5,6,p);c.drawArc(-13,-14,13,12,195,150,false,p);line(c,0,2,0,14);line(c,-7,14,7,14);break;

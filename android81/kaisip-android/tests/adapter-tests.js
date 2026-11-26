@@ -19,7 +19,7 @@ class Peer {
   getSenders() { return []; }
 }
 class Socket { send(value) { this.last = value; return 17; } }
-const native = { trace(stage, value) { traces.push([stage, value]); }, editing() {}, editor() {}, background() {}, call() {}, state() {} };
+const native = { trace(stage, value) { traces.push([stage, value]); }, editing() {}, editor() {}, background() {}, call() {}, state() {}, headphones() { return false; }, route() {} };
 const context = {
   navigator: { mediaDevices: media }, RTCPeerConnection: Peer, WebSocket: Socket,
   NativeKaiSIP: native, addEventListener(name, fn) { events[name] = fn; },
@@ -32,6 +32,8 @@ const context = {
 context.window = context;
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/android-platform.js'), 'utf8'), context);
 (async () => {
+  context.Route.setSpeaker(true); assert.equal(context.Route.label(), 'Difuzor');
+  context.Route.setSpeaker(false); assert.equal(context.Route.label(), 'Receptor');
   assert.equal(context.Call.dial('test-extension'), 'mock-result'); assert.equal(dialReceiver, context.Call);
   const addTrack = Peer.prototype.addTrack; delete Peer.prototype.addTrack;
   assert.match(context.Call.dial('test-extension'), /WebRTC/); assert.equal(dialCount, 1, 'missing API cannot begin a stuck call');

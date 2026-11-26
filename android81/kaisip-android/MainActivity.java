@@ -28,6 +28,7 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle state){
         super.onCreate(state);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setVolumeControlStream(android.media.AudioManager.STREAM_VOICE_CALL);
         content=new FrameLayout(this);setContentView(content);
     }
     protected void onStart(){super.onStart();bound=bindService(new Intent(this,SipService.class),connection,BIND_AUTO_CREATE);}
@@ -89,7 +90,7 @@ public final class MainActivity extends Activity {
             if(!id.matches("[A-Za-z0-9_-]{1,80}"))return;
             final SipService active=session;final Dialog dialog=new Dialog(this,android.R.style.Theme_Material_Dialog_NoActionBar);editor=dialog;
             LinearLayout panel=new LinearLayout(this);panel.setOrientation(1);panel.setPadding(12,12,12,12);
-            TextView title=new TextView(this);title.setText(data.optString("label","KaiSIP"));title.setTextSize(20);panel.addView(title);
+            TextView title=new TextView(this);title.setText(data.optString("label","keySIP"));title.setTextSize(20);panel.addView(title);
             final EditText input=new EditText(this);String type=data.optString("type","text");
             input.setInputType(type.equals("password")?InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD:type.equals("tel")||type.equals("number")?InputType.TYPE_CLASS_PHONE:InputType.TYPE_CLASS_TEXT|(data.optBoolean("multiline",false)?InputType.TYPE_TEXT_FLAG_MULTI_LINE:0));
             input.setSingleLine(!data.optBoolean("multiline",false));

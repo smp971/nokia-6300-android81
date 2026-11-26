@@ -13,13 +13,16 @@ modes.add_argument("--shell-optimization",action="store_true",help="build typogr
 modes.add_argument("--update-recovery",action="store_true",help="build isolated interrupted app-update journal checks")
 modes.add_argument("--home-standby",action="store_true",help="build Home/standby rendering, presets and keypad checks")
 modes.add_argument("--unlock-sequence",action="store_true",help="build isolated softkey/OK then star unlock checks")
+modes.add_argument("--webui-access",action="store_true",help="build persistent password WebUI and native-control checks")
 modes.add_argument("--webui",action="store_true",help="build isolated HTTPS WebUI model and transfer checks")
 modes.add_argument("--launcher-folders",action="store_true",help="build isolated folder projection, persistence and keypad navigation checks")
 modes.add_argument("--messages-ui",action="store_true",help="build synthetic message tabs, draft/editor and theme checks without sending SMS")
 modes.add_argument("--showcase",action="store_true",help="build the local documentation screenshot capture fixture")
 args=parser.parse_args()
 app_data,ui_theme=args.app_data,args.ui_theme
-if args.webui:
+if args.webui_access:
+ test,package,directory="WebUiAccessTests","ro.leo.visual.webuiaccesschecks","webui-access-tests"
+elif args.webui:
  test,package,directory="WebUiTests","ro.leo.visual.webuichecks","webui-tests"
 elif args.launcher_folders:
  test,package,directory="LauncherFoldersTests","ro.leo.visual.launcherfolderchecks","launcher-folders-tests"
@@ -53,7 +56,7 @@ r=Path(__file__).resolve().parent;t=r/'output/windows-build-tools';b=r/'output'/
 j=next((t/'jdk').glob('*/bin/java.exe'));sdk=next((t/'platform').glob('*/android.jar'));bt=next((t/'build-tools').iterdir())
 def run(*a):subprocess.run([str(x) for x in a],check=True)
 dependencies=[]
-if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish and not args.web_browser and not args.browser_state and not args.shell_optimization and not args.update_recovery and not args.home_standby and not args.showcase and not args.unlock_sequence and not args.messages_ui and not args.launcher_folders and not args.webui:
+if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish and not args.web_browser and not args.browser_state and not args.shell_optimization and not args.update_recovery and not args.home_standby and not args.showcase and not args.unlock_sequence and not args.messages_ui and not args.launcher_folders and not args.webui and not args.webui_access:
  import hashlib,urllib.request
  zxing=r/'output/pocket-zxing-tests.jar'
  if not zxing.exists():zxing.write_bytes(urllib.request.urlopen('https://repo.maven.apache.org/maven2/com/google/zxing/core/3.5.3/core-3.5.3.jar',timeout=30).read())
@@ -71,7 +74,7 @@ values=b/'res/values';values.mkdir(parents=True,exist_ok=True)
 run(bt/'aapt.exe','package','-f','-M',m,'-S',b/'res','-I',sdk,'-F',b/'base.apk')
 classes=r/'output/pocket-apps-build/leo-visual-classes.jar'
 cp=';'.join(map(str,[classes,*dependencies]))
-run(j.with_name('javac.exe'),'-encoding','UTF-8','-source','1.8','-target','1.8','-bootclasspath',sdk,'-classpath',cp,'-d',b/'classes',r/f'visual-shell/tests/{test}.java',*([r/'visual-shell/tests/ExternalHomeProbe.java'] if args.daily_polish else []))
+run(j.with_name('javac.exe'),'-encoding','UTF-8','-source','1.8','-target','1.8','-bootclasspath',sdk,'-classpath',cp,'-d',b/'classes',r/f'visual-shell/tests/{test}.java',*([r/'visual-shell/tests/WebUiTests.java'] if args.webui_access else []),*([r/'visual-shell/tests/ExternalHomeProbe.java'] if args.daily_polish else []))
 run(j,'-cp',bt/'lib/d8.jar','com.android.tools.r8.D8','--min-api','27','--lib',sdk,'--classpath',classes,'--output',b/'dex',*dependencies,*sorted((b/'classes').rglob('*.class')))
 with zipfile.ZipFile(b/'base.apk','a',zipfile.ZIP_DEFLATED) as z:z.write(b/'dex/classes.dex','classes.dex')
 run(bt/'zipalign.exe','-f','4',b/'base.apk',b/'aligned.apk')
