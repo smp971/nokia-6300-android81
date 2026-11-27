@@ -1,5 +1,8 @@
 # KeyShell · browser control · 26 November 2026
 
+Historical bring-up record. [Current 27 November WebUI](WEBUI.md) removes the
+offline preview and adds the faster handset control path.
+
 The persistent [password WebUI](WEBUI.md) now controls the real Nokia through
 four additional pages. Its virtual phone preview remains a separate demo.
 Existing accounts, certificate, Wi-Fi port and saved launcher IDs are preserved.

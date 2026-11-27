@@ -39,7 +39,7 @@ public class WebUiTests extends Instrumentation {
         try(SSLSocket socket=socket()){check(socket.getSession().getProtocol().equals("TLSv1.2"),"TLS 1.2 negotiated");}
         check(CompanionTls.fingerprint().matches("([A-F0-9]{2}:){31}[A-F0-9]{2}"),"visible SHA-256 identity");
         check(request("GET","/",null,null,null).contains("KeyShell"),"public WebUI served");
-        for(String path:new String[]{"/style.css","/app.js","/catalog.js","/catalog-icons/gaia/phone.png"})check(request("GET",path,null,null,null).startsWith("HTTP/1.1 200"),"asset served "+path);
+        for(String path:new String[]{"/style.css","/app.js","/catalog-icons/gaia/phone.png"})check(request("GET",path,null,null,null).startsWith("HTTP/1.1 200"),"asset served "+path);
         check(request("GET","/api/desktop",null,null,null).startsWith("HTTP/1.1 401"),"API requires token");
         check(request("GET","/api/desktop","wrong",null,null).startsWith("HTTP/1.1 401"),"bad token rejected");
         check(request("GET","/api/desktop",server.token,"Origin: https://evil.invalid\r\n",null).startsWith("HTTP/1.1 403"),"cross-origin rejected");

@@ -70,7 +70,6 @@ def build(vcard, vcard_source):
     build_tools = only_tool("build-tools/*/aapt.exe").parent
     BUILD.mkdir(parents=True, exist_ok=True)
     run(sys.executable, ROOT / "localization/generate.py")
-    run(sys.executable, ROOT / "build-webui-demo.py")
     with tempfile.TemporaryDirectory(prefix="source-", dir=BUILD) as temporary:
         work = Path(temporary)
         classes = work / "classes"

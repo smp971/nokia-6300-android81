@@ -1,168 +1,111 @@
-# KeyShell WebUI · 26 November 2026
+# KeyShell WebUI · 27 November 2026
 
-A responsive browser interface with an offline phone demo and an authenticated
-control panel for the real Nokia. **KeyShell** is the shell name; **N0d3** is the
-wider project. The demo illustrates navigation; it does not run Android apps,
-make calls or send messages.
+A phone-backed HTTPS control panel for the Android 8.1 Nokia port. The real
+screen is framed in a keypad handset, with working D-pad, softkeys, number keys,
+Call/End, Menu and Back. The disconnected page contains a sign-in form and empty
+status fields. Applications, statistics, themes and folders come from Nokia after
+authentication. There is no offline phone simulator or sample catalog in the APK.
 
-**26 November:** the connected WebUI now also provides a real screen and keypad,
-app launching, Unicode paste, cellular call controls, recent calls, SMS reading/
-composition and contacts. These are separate from the virtual phone demo and
-require an administrator plus the relevant native feature switches.
-See [remote-control guide and fresh evidence](WEBUI-CONTROL.md).
+![Real Nokia control in a keypad handset](screenshots/webui-fast-2026-11-27/remote.png)
 
-![KeyShell desktop demo, synthetic data](screenshots/webui-2026-11-25/desktop.png)
+## Connect
 
-## Use the real phone
+1. Connect Nokia and the PC to the same Wi-Fi network.
+2. On Nokia, open **Applications → Advanced → WebUI**. The existing
+   **Settings → Networks → More → KeyShell WebUI** route also works.
+3. Enable WebUI and open the complete **HTTPS address** displayed in the first
+   row. The port is **18764**; the Wi-Fi IP can change after reconnection.
+4. At first connection, compare the certificate's SHA-256 fingerprint with the
+   phone's **Address WebUI** page before accepting its local certificate.
+5. Sign in. **Control telefon** opens first. Use its phone keys or focus the
+   screen and use arrows, Enter, Escape/Backspace, digits, `*` and `#`.
 
-1. Connect the PC and Nokia to the same Wi-Fi network.
-2. Open **Applications → Advanced → WebUI** on Nokia. The existing
-   **Settings → Networks → More → KeyShell WebUI** entry also works.
-3. Create an administrator and password if this is a new installation, then enable
-   WebUI. Its first row displays the complete **HTTPS address**, including the
-   phone's Wi-Fi IP and port **18764**. Open that address on the PC.
-4. At first connection, compare the browser's certificate SHA-256 fingerprint
-   with **Address WebUI** on Nokia before accepting the local certificate.
-   Each installation has its own self-signed identity; investigate any mismatch.
-5. Sign in with a username and password. Change your password from
-   **Administrare → Parola mea**, or reset it from the native phone controls.
+Create an administrator on a new installation. There is no factory password in
+source. Existing accounts, passwords, certificate and phone preferences survive
+this update. Change your password under **Administrare → Parola mea**, or reset
+it from the native WebUI app.
 
-There is no factory password in the source. The project handset's owner supplied
-its initial password privately. Passwords and account snapshots are not published.
+The owner-enabled service stays in the background, waits for Wi-Fi and rebinds
+when its address changes. Automatic startup controls boot/package-update startup;
+Home also resumes an enabled service. Disabling WebUI or its notification's Stop
+action persists the off state. A satellite on Home indicates an active listener.
+No production wake lock is held. If the display is asleep, use **Trezește**, then
+**OK → \*** or **soft left → \*** if the keypad guard is active.
 
-WebUI remains enabled in a visible **foreground service**, without the former
-15-minute limit. Closing its phone page or the PC browser leaves the service
-running. It waits for Wi-Fi when offline and binds again when the address returns
-or changes. The phone page shows the current address. A small **satellite and
-green dot** on the dashboard indicates a live HTTPS listener.
+## Pages
 
-**Automatic startup** controls boot/package-update startup. Android may restart
-the sticky service after reclaiming its process; Home also resumes an owner-enabled
-service. **Disable WebUI** or the notification's **Stop** action persists the off
-state. Availability still depends on Wi-Fi, Android scheduling and the phone being
-awake enough to answer; persistent operation does not mean a CPU wake lock.
+| Page | Available controls |
+| --- | --- |
+| **Control telefon** | Real display, adaptive refresh, physical keypad, click-to-tap, wake/sleep/volume, Unicode clipboard paste, app launch |
+| **Apeluri** | SIM choice, explicit call confirmation, active-call actions, speaker/receiver, mute, DTMF and recent history |
+| **Mesaje** | Recent messages, search, compose/reply, SIM choice, segment count and explicit send confirmation |
+| **Contacte** | Phone numbers, search and filling the call/SMS form without transmitting |
+| **Prezentare** | Actual battery/charging, storage, RAM, health and catalog counts |
+| **Aplicații și foldere / Aspect** | Stage folder/theme/grid changes and explicitly apply them on Nokia |
+| **Fișiere** | Upload/download in the existing Companion exchange directory |
+| **Administrare** | Own password, administrator/viewer accounts, WebUI theme, automatic startup and feature switches |
 
-| Native controls · real phone | Feature controls · real phone |
-| :---: | :---: |
-| ![Stopped controls, no credentials or address](screenshots/webui-controls-2026-11-25/native-controls.png) | ![Appearance, folders and transfer switches](screenshots/webui-controls-2026-11-25/native-features.png) |
+Call audio stays on Nokia. Active-call actions require KeyShell's default-dialer
+integration. Remote screen/input and the dedicated communication APIs have
+separate switches and require an administrator. Full keypad control can still
+perform actions through the native apps; the API switches are not an app sandbox.
+Read-only accounts cannot access remote input or private communications.
 
-## Controls and accounts
+## Input and image performance
 
-The native **WebUI** app supports enable/disable, automatic startup, browser theme,
-administrator password reset, users, feature switches, received files and the
-existing package/rollback page. It works without a PC or active listener.
-Forms use the existing keypad, masked passwords and confirmation fields.
+The browser sends ordered keys independently of frame updates. Rapid presses
+are retained in a bounded queue; a missing receipt cancels unsent presses and
+never repeats an ambiguous action automatically. No 750-ms post-key delay remains.
 
-Browser **Administrare** adds three WebUI themes (**Violet, Graphite, Ocean**),
-startup and feature controls, password changes and user management. The WebUI
-theme is independent of the phone's global theme.
+One UID-checked local helper reuses Android's input and screen-capture APIs during
+active control. It starts lazily and exits after 15 idle seconds, with no wake
+lock or polling. Softkeys preserve scans **139/158**, and dedicated Menu uses
+**212**. The helper accepts fixed key/tap/capture operations, not shell commands.
+Its read-only capture fallback retains compatibility with this port.
 
-- Up to **eight users**: administrator or read-only viewer. Viewers can change
-  their own password; account management and settings writes require an administrator.
-- The final administrator cannot be removed. Resetting a password or removing a
-  user invalidates their sessions. Own-password change issues a replacement token
-  for the current browser.
-- Appearance, app/folder layout and file exchange have separate switches, enforced
-  by the server as well as the browser. Their saved settings survive restarts.
-- Connected changes use explicit save buttons. Home observes folder changes and
-  redraws without restarting. Existing app IDs, shortcuts and per-app themes remain.
+Frames share a 200-ms capture cache. Content hashes allow **304 Not Modified**
+without retransmitting unchanged PNGs. Geometry and screen state travel in frame
+headers, avoiding a separate status request per image. Refresh adapts to screen
+activity and stops when its page is hidden. Images are decoded before replacing
+the visible frame, avoiding a blank flash between updates.
 
-Connected status covers battery/charging, memory, storage and shell health.
-The separate **Control telefon, Apeluri, Mesaje and Contacte** pages provide the
-authorized phone controls. There is no arbitrary shell-command API or remote
-package-install endpoint. Call audio remains on Nokia.
+See [fresh timing, device checks and build identity](WEBUI-REMOTE-FAST.md).
 
-## Passwords, sessions and network boundary
+## Authentication and scope
 
-Passwords use **bcrypt cost 10**, from the already bundled library, with unique
-salts and private app storage. The range is at least eight characters and at most
-**72 UTF-8 bytes**, with NUL rejected. Password work runs outside the UI thread
-and the preference-store lock. PBKDF2-SHA256 at 600,000 iterations was tried on
-this Nokia and exceeded 20 seconds; it is not the deployed verifier. This legacy
-choice follows the [OWASP bcrypt guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#bcrypt).
+Passwords use private bcrypt cost-10 verifiers, unique salts, at least eight
+characters and at most 72 UTF-8 bytes. Up to eight users and 16 in-memory sessions
+are supported. Sessions last at most 12 hours; reset/removal invalidates the user's
+sessions. Five failed login/current-password attempts cause a 60-second cooldown.
+The final administrator cannot be removed.
 
-Login creates a random 128-bit bearer token held only in server/browser memory.
-Tokens expire after **12 hours**, with at most 16 sessions. Five failed login or
-current-password attempts cause a 60-second cooldown. Logout invalidates its token.
-Passwords/tokens are never placed in URLs, browser local/session storage or cookies.
-Service-process restart clears sessions, requiring sign-in again.
+Production binds only the phone's Wi-Fi IPv4 address, using TLS 1.2 and its
+AndroidKeyStore identity. Host/Origin checks and bundled-only CSP remain enforced.
+Tokens, passwords, private rows and frames are not saved in browser storage.
+Logout clears loaded phone data. The obsolete local-preview preference is removed
+on page startup. Test fixtures live outside the packaged assets.
 
-Production listens only on the phone's **Wi-Fi IPv4 address**, using TLS 1.2,
-ECDHE-RSA/AES-GCM and its AndroidKeyStore certificate. The private key and password
-verifiers are excluded from the general settings backup. No router forwarding or
-public Internet access is configured. Loopback token constructors remain only for
-compatibility tests. Public API information contains the login-page theme, not
-phone status or accounts. Host/Origin checks, fixed asset paths and a bundled-only
-Content Security Policy remain enforced.
+Only `files/documents/Companion` is shared: 16 MiB per transfer, bounded ASCII
+names, no overwrites, staged/synced uploads and serialized publication. The two
+server workers retain bounded queues and socket deadlines. There is no arbitrary
+command, filesystem-path, Intent or remote package-install API.
 
-Only `files/documents/Companion` is shared. Files use bounded ASCII names, a
-**16 MiB** transfer limit and a maximum 64-entry listing. Existing files are never
-replaced: staged, synced uploads are published under a shared lock; concurrent
-same-name requests produce one 201 and one 409. Interrupted staging is removed.
-The service has two workers, four queued requests and five-second socket deadlines.
-Stopping closes accepted sockets and the listener. Network changes use callbacks;
-there is no production wake lock or periodic status poll. Binding errors alone
-schedule a 30-second retry.
+Calls/SMS use session-bound, single-use 60-second confirmation tickets and explicit
+physical SIM resolution. Native/browser SMS share the archive and sent/delivery
+callbacks. [Transport boundaries and earlier validation](WEBUI-CONTROL.md).
 
-## Offline demo
+## Build and checks
 
 ```text
-python android81/serve-webui-demo.py
-```
-
-Open <http://127.0.0.1:18766/webui/>. The same plain HTML/CSS/JS assets can be
-opened locally with their parent icon directory. No npm, external font, cloud
-account or analytics is needed. Example time, weather, networks and statistics
-are synthetic. Demo choices stay under `keyshell-demo-v1` in that browser.
-
-Click the virtual screen, then use arrows, Enter and Escape. Digits 1–9 choose
-a position; `*`, `#` and `0` change pages. Back follows app → folder → menu →
-dashboard. Each folder retains its selection. On-screen controls also work.
-
-| Appearance preview | Folder organization preview |
-| :---: | :---: |
-| ![Theme demo](screenshots/webui-2026-11-25/appearance.png) | ![Folder demo](screenshots/webui-2026-11-25/folders.png) |
-
-## Build and verification
-
-`catalog.js` is regenerated from `AppCatalog`, `LauncherFolders` and `Appearance`.
-It contains public defaults and synthetic statistics, never daily phone data.
-The catalog has **50 stable destinations: 36 launcher and 14 contextual**.
-WebUI is appended at **ID 49**, in Advanced; old IDs 0–48 remain stable.
-
-```text
-python android81/build-webui-demo.py
 python android81/build-pocket-apps-windows.py
-python android81/build-pocket-tests-windows.py --webui-access
+python android81/build-pocket-tests-windows.py --webui-control
 python android81/test-webui-browser.py
+python android81/test-webui-control-browser.py
 python -m unittest discover -s android81/tests -q
 ```
 
-25 November password/persistence evidence from TA-1286/API 27, starting at `ba0bf51`:
-
-- **66 native checks** passed: password/role boundaries, reset/token revocation,
-  last-admin protection, throttling, strict payloads, feature gates, native controls,
-  real Wi-Fi service binding/rebinding, explicit off, immediate stop, pending-listener
-  cleanup and Home updates. Test preferences were restored. The boot receiver was
-  invoked under controlled preferences; no physical reboot was performed.
-- **34 Edge browser checks** passed using an isolated, certificate-pinned on-phone
-  fixture: responsive demo, 36 apps/five folders, appearance/layout, files,
-  administrator/viewer behavior and password rotation. Fixture accounts are separate
-  from the owner's account.
-- **107 host checks**, catalog/manifest and signed-APK compatibility audits passed.
-  The shell compiles **304 production Java sources**; **2,306 candidate classes**
-  preserve all 431 baseline external classes.
-- The actual owner account was provisioned privately. A separate, pinned HTTPS
-  login/status/logout request from the PC over real Wi-Fi passed. The permanent
-  service remains enabled on the project handset.
-
-25 November **data APK** SHA-256 (superseded by the [remote-control build](WEBUI-CONTROL.md)):
-`bbd470494c94e5b4fb6466670e46b7252407c7d5da3b12517478cda488584b70`.
-Bundled **system base**, unchanged:
-`abcb93b6ee1305ededb7e52105a2d5dc232f8c795e67420834e49564cb89f0e6`.
-No ROM flash or system promotion was performed. Previous APK/preferences and
-sanitized reports remain under ignored `output/webui-persistent/`.
-
-Battery/deep-sleep response, long uptime and different router configurations still
-need their own trials. The virtual phone remains a demo; **Control telefon** is
-the real screen/keypad interface. See the [automated keySIP call check](KEYSHELL-NETWORK-SIP.md#keysip-follow-up--25-november-2026).
+The retired offline server, demo generator and packaged sample catalog are removed.
+`webui-test-fixture.py` supplies isolated browser-test data only; it is not served
+or included in the Android APK. Actual cellular calling/SMS delivery through the
+browser, long uptime, battery/deep-sleep response and other routers remain separate
+live trials. No real call or SMS was sent during this update.

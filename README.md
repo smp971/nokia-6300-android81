@@ -7,7 +7,7 @@
 <p align="center">
   <b>Nokia 6300 4G · TA-1286</b><br>
   <code>AOSP 8.1 / API 27</code> · <code>240 × 320</code> · <code>ARMv7</code> · <code>0.14.0-dev</code><br>
-  <sub>Development snapshot · 26 November 2026</sub>
+  <sub>Development snapshot · 27 November 2026</sub>
 </p>
 
 <p align="center">
@@ -146,44 +146,34 @@ all existing shortcuts remain available.
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/launcher-folders-2026-11-25/tools.png"><img src="android81/screenshots/launcher-folders-2026-11-25/tools.png" width="170" alt="Tools folder with Calculator, Recorder, Converter, GPS, ZIP, Metronome and QR"></a> | <a href="android81/screenshots/launcher-folders-2026-11-25/organizer.png"><img src="android81/screenshots/launcher-folders-2026-11-25/organizer.png" width="170" alt="Organizer folder with Notes, Calendar, Dictionary, Study and Expenses"></a> | <a href="android81/screenshots/launcher-folders-2026-11-25/internet.png"><img src="android81/screenshots/launcher-folders-2026-11-25/internet.png" width="170" alt="Internet folder with Email, Web Apps, News and KaiSIP"></a> |
 
-### KeyShell, now in your browser
+### KeyShell, controlled from your browser
 
-The [WebUI](android81/WEBUI.md) combines an offline keypad demo with a real Nokia
-companion: battery/storage/memory status, five-folder organization, global themes,
-grid/list settings and local file exchange. The phone preview is a navigation demo.
-Connected changes use explicit save buttons, HTTPS, username/password login and
-memory-only sessions. The service stays available in the background, resumes on
-Wi-Fi changes and can start automatically. A satellite marks it on the dashboard.
+The [WebUI](android81/WEBUI.md) shows the **real Nokia screen inside a keypad
+handset**. Its D-pad, softkeys, digits, Call/End, Menu and Back operate the phone.
+You can paste Unicode text, launch apps, manage files/themes/folders, consult
+contacts/messages/history and prepare calls or SMS with explicit confirmation.
+Call audio stays on Nokia.
 
-Control it on Nokia from **Applications → Advanced → WebUI**: enable/disable,
-current IP/HTTPS address, theme, password, users and feature switches. Browser
-**Administrare** also provides password changes and administrator/viewer accounts.
-The separate SIP app is now named **keySIP**; an automated 2–0–0 → Call trial
-connected with bidirectional RTP and verified receiver/speaker switching.
-Human voice audibility remains to be confirmed. [Call evidence and repeatable check](android81/KEYSHELL-NETWORK-SIP.md#keysip-follow-up--25-november-2026).
+**27 November · faster remote control:** ordered input, a reusable local helper,
+adaptive frames and unchanged-image responses replace per-key process startup
+and fixed display delays. The interface contains real device data after sign-in;
+the offline simulator and sample catalog have been removed.
+[Measurements and current build](android81/WEBUI-REMOTE-FAST.md).
 
-The existing **Settings → Networks → More → KeyShell WebUI** route also works. Try the
-offline version on a PC with `python android81/serve-webui-demo.py` and open
-`http://127.0.0.1:18766/webui/`. Both modes use the same bundled, responsive UI.
+<a href="android81/WEBUI.md"><img src="android81/screenshots/webui-fast-2026-11-27/remote.png" width="900" alt="Authenticated real Nokia control inside a handset with working physical keys"></a>
 
-<a href="android81/WEBUI.md"><img src="android81/screenshots/webui-2026-11-25/desktop.png" width="900" alt="KeyShell WebUI with an offline dashboard and keypad-navigable virtual phone; demonstration data only"></a>
+Enable it on Nokia from **Applications → Advanced → WebUI**. Its first row shows
+its current Wi-Fi HTTPS address. The service can stay in the background and start
+automatically. Native controls and browser **Administrare** provide passwords,
+users, theme and feature switches. Remote input and dedicated communications
+require an administrator; read-only accounts cannot access those private controls.
 
-**26 November · real browser control:** new **Control telefon / Apeluri / Mesaje /
-Contacte** pages add a live screen, virtual keypad, Unicode paste, app launch,
-SIM selection, call controls, recent calls, SMS composition and contact lookup.
-Calls/SMS require a final, single-use confirmation. Call audio stays on Nokia.
-Remote input and communications are separate administrator-only switches.
-The real Wi-Fi screen/app/data route passed; call/SMS dispatch was tested with a
-fake transport, so cellular establishment and delivery through these pages remain
-live trials. [Features, boundaries and fresh evidence](android81/WEBUI-CONTROL.md).
-
-<a href="android81/WEBUI-CONTROL.md"><img src="android81/screenshots/webui-control-2026-11-26/actual-phone.png" width="900" alt="Real Nokia Home screen in the authenticated WebUI over Wi-Fi"></a>
-
-<a href="android81/WEBUI-CONTROL.md"><img src="android81/screenshots/webui-control-2026-11-26/messages.png" width="900" alt="New WebUI message page, synthetic contact/message data for documentation"></a>
-
-| Native WebUI controls | Feature switches |
-| :---: | :---: |
-| <img src="android81/screenshots/webui-controls-2026-11-25/native-controls.png" width="180" alt="Real Nokia native WebUI control app, stopped state"> | <img src="android81/screenshots/webui-controls-2026-11-25/native-features.png" width="180" alt="Real Nokia WebUI feature switches"> |
+Device/browser checks exercise actual input, image capture, UI routes and private
+API boundaries. Call/SMS dispatch uses a fake test transport; cellular establishment
+and delivery from these browser pages remain live trials. The separate **keySIP**
+[extension-200 trial](android81/KEYSHELL-NETWORK-SIP.md#keysip-follow-up--25-november-2026)
+confirms SIP signaling, bidirectional RTP and route switches; voice audibility
+still needs a listening result.
 
 ### The interactive shell and its apps
 
@@ -407,7 +397,7 @@ project handset, an idle phone and the appropriate prepared host environment.
 
 - [ ] Extend English T9 and third-party editor/navigation coverage.
 - [ ] Expand corrupt/large file, removable-card and interrupted import/restore tests.
-- [x] Add offline/connected WebUI, HTTPS sessions and concurrent-upload protection.
+- [x] Add authenticated phone WebUI, remote keypad/screen and concurrent-upload protection.
 - [ ] Expand external-provider, PC Wi-Fi/router and long-session trials.
 
 <a id="harta-proiectului"></a>

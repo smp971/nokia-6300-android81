@@ -35,33 +35,29 @@ final class CompanionRemote {
         byte[] png=command("/system/bin/screencap -p",1048576);
         if(png.length<8||png[0]!=(byte)137||png[1]!=80||png[2]!=78||png[3]!=71)throw new IOException("Screen capture unavailable");return png;
     }
-    static JSONObject key(Context c,JSONObject data)throws Exception {
+    static JSONObject key(Context c,JSONObject data,CompanionInputSession input)throws Exception {
         CompanionModel.exact(data,"key");String name=CompanionServer.string(data,"key");Integer code=KEYS.get(name);
         if(code==null)throw new IllegalArgumentException("Unknown key");
         // Scancodes distinguish physical softkeys from dedicated Menu/Back.
         if(name.equals("softLeft")||name.equals("softRight")||name.equals("menu")){
             int scan=name.equals("softLeft")?139:name.equals("softRight")?158:212;
-            inject(c,code,scan);
-        }else command("/system/bin/input keyevent "+code,4096);
+            input.send(1,code,scan);
+        }else input.send(1,code,0);
         return new JSONObject().put("accepted",true);
     }
-    private static void inject(Context c,int code,int scan)throws Exception {
-        String apk=c.getPackageCodePath();if(!apk.matches("[A-Za-z0-9_./=+-]+"))throw new IOException("APK path");
-        command("CLASSPATH="+apk+" /system/bin/app_process /system/bin ro.leo.visual.CompanionInputBridge "+code+" "+scan,4096);
-    }
-    static JSONObject tap(Context c,JSONObject data)throws Exception {
+    static JSONObject tap(Context c,JSONObject data,CompanionInputSession input)throws Exception {
         CompanionModel.exact(data,"x","y");int x=CompanionModel.integer(data,"x"),y=CompanionModel.integer(data,"y");Point p=size(c);
         if(x<0||y<0||x>=p.x||y>=p.y)throw new IllegalArgumentException("Outside display");
-        command("/system/bin/input tap "+x+" "+y,4096);return new JSONObject().put("accepted",true);
+        input.send(2,x,y);return new JSONObject().put("accepted",true);
     }
-    static JSONObject text(final Context c,JSONObject data)throws Exception {
+    static JSONObject text(final Context c,JSONObject data,CompanionInputSession input)throws Exception {
         CompanionModel.exact(data,"text");final String value=CompanionServer.string(data,"text");
         if(value.isEmpty()||value.length()>2048||value.indexOf(0)>=0)throw new IllegalArgumentException("Text length");
         // Android's native paste supports Unicode, unlike `input text` on Oreo.
         final CountDownLatch done=new CountDownLatch(1);final RuntimeException[] error={null};
         new Handler(Looper.getMainLooper()).post(new Runnable(){public void run(){try{((ClipboardManager)c.getSystemService(Context.CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("KeyShell WebUI",value));}catch(RuntimeException e){error[0]=e;}finally{done.countDown();}}});
         if(!done.await(2,TimeUnit.SECONDS)||error[0]!=null)throw new IOException("Clipboard unavailable");
-        command("/system/bin/input keyevent 279",4096);return new JSONObject().put("accepted",true).put("clipboard",true);
+        input.send(1,279,0);return new JSONObject().put("accepted",true).put("clipboard",true);
     }
     static JSONObject launch(final Context c,JSONObject data)throws Exception {
         CompanionModel.exact(data,"id");final int id=CompanionModel.integer(data,"id");

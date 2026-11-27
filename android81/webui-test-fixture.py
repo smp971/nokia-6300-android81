@@ -1,4 +1,4 @@
-"""Generate public demo data from native registries, never from a phone or user preferences."""
+"""Synthetic model for isolated browser tests only. Not packaged in the Android app."""
 from pathlib import Path
 import json
 import re
@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "visual-shell"
 
 
-def generate():
+def model():
     catalog = (SOURCE / "AppCatalog.java").read_text(encoding="utf-8")
     folders = (SOURCE / "LauncherFolders.java").read_text(encoding="utf-8")
     appearance = (SOURCE / "Appearance.java").read_text(encoding="utf-8")
@@ -25,9 +25,4 @@ def generate():
              "settings": {"theme": 17, "list": False, "foldersEnabled": True, "simple": False},
              "status": {"platform": "KeyShell · Android 8.1", "api": 27, "battery": 86, "charging": False,
                         "health": "Exemplu demonstrativ", "free_bytes": 1459617792, "ram_free": 201326592, "ram_total": 536870912, "uptime_ms": 7200000}}
-    return "/* Generated from native catalog; demo data only. */\nwindow.KEYSHELL_DEMO=" + json.dumps(model, ensure_ascii=False, separators=(",", ":")) + ";\n"
-
-
-if __name__ == "__main__":
-    (SOURCE / "assets/webui/catalog.js").write_text(generate(), encoding="utf-8")
-    print("Generated WebUI demo catalog from native registries")
+    return model

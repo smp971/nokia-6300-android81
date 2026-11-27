@@ -25,6 +25,9 @@ public final class WebUiControlTests extends WebUiTests {
         status(403,"GET","/api/remote/info",null);status(403,"GET","/api/phone/state",null);
         fixture.getSharedPreferences(CompanionSettings.PREFS,0).edit().putBoolean("feature-remote",true).putBoolean("feature-communication",true).commit();
         status(200,"GET","/remote.js",null);status(200,"GET","/api/remote/info",null);
+        check(request("GET","/",null,null,null).indexOf("catalog.js")<0,"no packaged sample catalog requested");
+        status(404,"GET","/catalog.js",null);
+        check(!CompanionInputBridge.allowed(26,0)&&!CompanionInputBridge.allowed(82,0)&&!CompanionInputBridge.allowed(4,212),"root helper rejects unapproved key/scan combinations");
         status(400,"POST","/api/remote/key",new JSONObject().put("key","home;reboot"));
         status(400,"POST","/api/remote/key",new JSONObject().put("key","home").put("shell","id"));
         status(400,"POST","/api/remote/tap",new JSONObject().put("x",-1).put("y",0));
@@ -60,8 +63,12 @@ public final class WebUiControlTests extends WebUiTests {
         try{failing.confirm("a",sendOnce);check(false,"transport failure expected");}catch(IllegalStateException expected){check(attempts[0]==1,"simulated transport failure after consumption");}
         try{failing.confirm("a",sendOnce);check(false,"ambiguous transport replay accepted");}catch(IllegalStateException expected){check(attempts[0]==1,"ambiguous result cannot cause automatic duplicate call");}
         JSONObject state=body(api("GET","/api/phone/state",null));check(state.has("sims")&&state.has("calls")&&state.has("smsPending"),"bounded phone state available");
-        status(200,"GET","/api/remote/screen",null);
+        String first=api("GET","/api/remote/screen",null);check(first.startsWith("HTTP/1.1 200")&&first.contains("X-KeyShell-Interactive:"),"frame includes real geometry and screen state");
+        java.util.regex.Matcher tag=java.util.regex.Pattern.compile("ETag: ([^\\r\\n]+)").matcher(first);check(tag.find(),"frame content identity returned");
+        java.lang.reflect.Field captured=CompanionControl.class.getDeclaredField("captured");captured.setAccessible(true);captured.setLong(server.controls,SystemClock.elapsedRealtime()+5000);
+        check(request("GET","/api/remote/screen",server.token,"If-None-Match: "+tag.group(1)+"\r\n",null).startsWith("HTTP/1.1 304"),"unchanged cached frame has no image payload");captured.setLong(server.controls,0);
         status(200,"POST","/api/remote/key",new JSONObject().put("key","wake"));
+        java.lang.reflect.Field socket=CompanionInputSession.class.getDeclaredField("socket");socket.setAccessible(true);Object warmSocket=socket.get(server.controls.input);check(warmSocket!=null,"lazy input session opened");
         page=startActivitySync(new Intent(getTargetContext(),TerminalActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         // Paste text into an empty command field, without Enter: no shell command is executed.
         java.lang.reflect.Field command=TerminalActivity.class.getDeclaredField("command");command.setAccessible(true);final EditText field=(EditText)command.get(page);
@@ -70,11 +77,16 @@ public final class WebUiControlTests extends WebUiTests {
         check(field.getText().toString().equals("WebUI șț test"),"Unicode paste reaches real Android editor");
         status(200,"POST","/api/remote/key",new JSONObject().put("key","softRight"));SystemClock.sleep(250);
         check(field.getText().toString().equals("WebUI șț tes"),"right softkey carries physical scan 158 and deletes once");
+        check(socket.get(server.controls.input)==warmSocket,"paste and softkey reuse one input helper");
+        runOnMainSync(new Runnable(){public void run(){field.setText("");field.setInputType(android.text.InputType.TYPE_CLASS_PHONE);((android.view.inputmethod.InputMethodManager)getTargetContext().getSystemService(Context.INPUT_METHOD_SERVICE)).restartInput(field);}});SystemClock.sleep(300);
+        for(String digit:new String[]{"1","2","3","4","5","6"})status(200,"POST","/api/remote/key",new JSONObject().put("key",digit));SystemClock.sleep(300);
+        check(field.getText().toString().equals("123456"),"rapid numeric input remains ordered and exact (length "+field.length()+")");
         runOnMainSync(new Runnable(){public void run(){field.setText("");page.finish();}});page=null;
         // Remove only the empty Calculator task created by our earlier launch fixture.
         for(ActivityManager.AppTask task:((ActivityManager)getTargetContext().getSystemService(Context.ACTIVITY_SERVICE)).getAppTasks()){ActivityManager.RecentTaskInfo info=task.getTaskInfo();if(info.baseActivity!=null&&info.baseActivity.getClassName().equals(CalculatorActivity.class.getName()))task.finishAndRemoveTask();}
         ActivityMonitor monitor=addMonitor(CalculatorActivity.class.getName(),null,false);
         status(200,"POST","/api/remote/launch",new JSONObject().put("id",4));Activity opened=waitForMonitorWithTimeout(monitor,4000);removeMonitor(monitor);check(opened instanceof CalculatorActivity,"remote launch reaches native Calculator");
+        for(int i=0;i<80&&!opened.hasWindowFocus();i++)SystemClock.sleep(50);check(opened.hasWindowFocus(),"Calculator window ready before testing Back");waitForIdleSync();
         status(200,"POST","/api/remote/key",new JSONObject().put("key","back"));SystemClock.sleep(500);
         check(opened.isFinishing()||opened.isDestroyed(),"remote app Back finishes Calculator");
         status(200,"POST","/api/remote/key",new JSONObject().put("key","home"));
@@ -83,6 +95,9 @@ public final class WebUiControlTests extends WebUiTests {
         status(403,"GET","/api/remote/screen",null);status(403,"GET","/api/phone/contacts",null);status(403,"GET","/api/phone/messages",null);status(403,"POST","/api/phone/confirm",confirm);
         bearer=auth.login("owner","fixture-password");fixture.getSharedPreferences(CompanionSettings.PREFS,0).edit().putBoolean("feature-remote",false).putBoolean("feature-communication",false).commit();
         status(403,"GET","/api/remote/screen",null);status(403,"GET","/api/phone/state",null);
+        status(400,"POST","/api/logout",new JSONObject().put("unexpected",true));
+        status(200,"POST","/api/logout",new JSONObject());
+        status(401,"GET","/api/desktop",null);
     }
     public void onStart(){Bundle result=new Bundle();final Context real=getTargetContext();try{
         getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
