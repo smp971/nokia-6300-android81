@@ -57,6 +57,12 @@ local demonstrations. Radio is shown idle; Terminal executes a real local
 | :---: | :---: | :---: |
 | <a href="android81/screenshots/showcase-2026-11-23/standby.png"><img src="android81/screenshots/showcase-2026-11-23/standby.png" width="180" alt="Digital standby with the shared SIM artwork, cached weather and unread counts"></a> | <a href="android81/screenshots/showcase-2026-11-23/music-demo.png"><img src="android81/screenshots/showcase-2026-11-23/music-demo.png" width="180" alt="Built-in silent music-player demonstration with artwork and transport controls"></a> | <a href="android81/screenshots/showcase-2026-11-23/internet-radio-idle.png"><img src="android81/screenshots/showcase-2026-11-23/internet-radio-idle.png" width="180" alt="Dedicated Internet radio player showing a public preset without starting playback"></a> |
 
+**27 November · [modern quick controls](android81/QUICK-SETTINGS.md):** five
+Gaia icon tiles, brightness/media sliders, live Android state, keypad control and
+shared themes. Verified on the Nokia with 90 targeted checks.
+
+<a href="android81/screenshots/quick-settings-2026-11-27/quick-settings.png"><img src="android81/screenshots/quick-settings-2026-11-27/quick-settings.png" width="200" alt="Native Quick settings with Wi-Fi, Bluetooth, location, hotspot and profile tiles above brightness and media sliders"></a>
+
 <details>
 <summary><b>Open the full gallery — communication, web, tools and appearance</b></summary>
 

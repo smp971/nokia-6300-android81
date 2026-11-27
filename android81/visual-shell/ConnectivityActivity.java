@@ -183,10 +183,7 @@ public final class ConnectivityActivity extends LeoActivity {
             } catch(ReflectiveOperationException failure) { notice(L.t("Profilul selectat nu este disponibil")); }
         }});
     }
-    private int apState() {
-        try { return ((Integer)wifi.getClass().getMethod("getWifiApState").invoke(wifi)).intValue(); }
-        catch(Exception unavailable) { return -1; }
-    }
+    private int apState() { return HotspotControl.state(this); }
     private WifiConfiguration apConfig() throws ReflectiveOperationException {
         return (WifiConfiguration)wifi.getClass().getMethod("getWifiApConfiguration").invoke(wifi);
     }
@@ -223,7 +220,7 @@ public final class ConnectivityActivity extends LeoActivity {
         try {
             int state=apState();
             if(state==12 || state==10) { notice(L.t("Așteaptă schimbarea stării")); return; }
-            if(state==13) { manager.getClass().getMethod("stopTethering",int.class).invoke(manager,0); return; }
+            if(state==13) { HotspotControl.stop(this); return; }
             WifiConfiguration config=apConfig();
             if(config==null || config.preSharedKey==null || config.preSharedKey.length()<8 || !config.allowedKeyManagement.get(AP_WPA2_PSK)) { notice(L.t("Configurează mai întâi WPA2 și parola")); return; }
             if(wifi.isWifiEnabled()) {
@@ -234,12 +231,9 @@ public final class ConnectivityActivity extends LeoActivity {
     private void startHotspot(ConnectivityManager manager) {
         try {
             hotspotResult=L.t("Pornire solicitată");
-            Field field=ConnectivityManager.class.getDeclaredField("mService"); field.setAccessible(true); Object service=field.get(manager);
-            Method start=service.getClass().getMethod("startTethering",int.class,ResultReceiver.class,boolean.class,String.class);
-            start.setAccessible(true);
-            start.invoke(service,0,new ResultReceiver(new Handler(Looper.getMainLooper())) {
+            HotspotControl.start(this,new ResultReceiver(new Handler(Looper.getMainLooper())) {
                 protected void onReceiveResult(int code,Bundle data) { hotspotResult=code==0?L.t("Cerere acceptată"):L.t("Eroare hotspot · cod ")+code; notice(hotspotResult); if(!form) show(); }
-            },true,getPackageName());
+            });
         } catch(Exception unavailable) {
             Throwable cause=unavailable instanceof InvocationTargetException?((InvocationTargetException)unavailable).getTargetException():unavailable;
             hotspotResult=L.t("Refuzat · ")+cause.getClass().getSimpleName();

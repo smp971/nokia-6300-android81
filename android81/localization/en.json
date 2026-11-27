@@ -3110,5 +3110,10 @@
   "keySIP nu este instalat": "keySIP is not installed",
   "Instalează portul keySIP pentru Android. Ai nevoie de un cont SIP și de un server WSS cu WebRTC. Conexiunea permanentă este oprită implicit.": "Install the Android keySIP port. A SIP account and WebRTC WSS server are required. Persistent background connection is off by default.",
   "Adresă WebUI": "WebUI address",
-  "WebUI · inițializare": "WebUI · initializing"
+  "WebUI · inițializare": "WebUI · initializing",
+  "Comută": "Toggle",
+  "Hotspot Wi-Fi": "Wi-Fi hotspot",
+  "Localizarea nu poate fi schimbată": "Location cannot be changed",
+  "Nivel": "Level",
+  "Săgețile aleg plăcuțele. OK schimbă Wi-Fi, Bluetooth sau localizarea și deschide alegerea profilului. Pe slidere, stânga/dreapta schimbă luminozitatea în pași de 5% și volumul media cu un nivel; OK alege nivelul exact. Opțiuni păstrează detaliile de rețea, SIM-urile și volumele separate. Hotspotul cere confirmare dacă trebuie oprit Wi-Fi-ul. Localizare activă nu înseamnă că o aplicație a obținut deja o poziție GPS.": "Use the arrows to choose tiles. OK toggles Wi-Fi, Bluetooth or location and opens the sound profile picker. On sliders, left/right changes brightness by 5% and media volume by one step; OK picks the exact level. Options keeps network details, SIM controls and separate audio volumes. Hotspot asks for confirmation before switching off Wi-Fi. Location being enabled does not mean an app already has a GPS fix."
 }

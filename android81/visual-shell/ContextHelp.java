@@ -31,6 +31,7 @@ final class ContextHelp {
         if (page.contains("HomeEditor")) {
             return L.t("Săgețile mută elementul. * / # schimbă elementul selectat. OK deschide opțiunile de aspect. Soft stânga salvează.");
         }
+        if (page.contains("QuickSettings")) return L.t("Săgețile aleg plăcuțele. OK schimbă Wi-Fi, Bluetooth sau localizarea și deschide alegerea profilului. Pe slidere, stânga/dreapta schimbă luminozitatea în pași de 5% și volumul media cu un nivel; OK alege nivelul exact. Opțiuni păstrează detaliile de rețea, SIM-urile și volumele separate. Hotspotul cere confirmare dacă trebuie oprit Wi-Fi-ul. Localizare activă nu înseamnă că o aplicație a obținut deja o poziție GPS.");
         if (page.contains("Companion")) return L.t("WebUI: activare permanentă, pornire automată, tema panoului web, parole, utilizatori și funcționalități. Adresa HTTPS apare în prima intrare când Wi-Fi este disponibil. Administratorii pot modifica setările; utilizatorii cu acces doar pentru citire pot consulta datele și schimba parola proprie. Parolele au minimum 8 caractere. Satelitul de pe Home indică un server activ.");
         if (page.contains("MainActivity")) {
             return L.t("Acasă: 0 deschide media curentă, 1 deschide căutarea, 2–9 lung deschid scurtăturile. Sus deschide configurările rapide, jos notificările. * schimbă cardul și # îl deschide. Pe cardul Favorite, 4 / 6 schimbă persoana și OK deschide contactul.")
