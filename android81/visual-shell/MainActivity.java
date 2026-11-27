@@ -35,8 +35,33 @@ public final class MainActivity extends Activity {
         }
     };
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeChanged=new android.content.SharedPreferences.OnSharedPreferenceChangeListener(){public void onSharedPreferenceChanged(android.content.SharedPreferences p,String key){handler.removeCallbacks(appearanceRefresh);handler.post(appearanceRefresh);}};
-    private int speedKey=-1;
-    private final Runnable speed=new Runnable(){public void run(){int slot=speedKey-KeyEvent.KEYCODE_0;speedKey=-1;if(slot<2||slot>9)return;int app=HomeKeyActions.app(MainActivity.this,slot);if(app>=0){HomeAccess.open(MainActivity.this,app);return;}String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");if(number.isEmpty())android.widget.Toast.makeText(MainActivity.this,L.t("Tasta ")+slot+L.t(" neatribuită · Contacte → Apelare rapidă"),1).show();else startActivity(new Intent(MainActivity.this,PhoneActivity.class).putExtra("number",number));}};
+    private final HomeKeyPress homeKeys=new HomeKeyPress(new Handler(),new HomeKeyPress.Actions(){
+        public void shortPress(int key){homeTap(key);}
+        public void longPress(int key){homeHold(key);}
+    });
+    private void homeTap(int key){
+        if(key>=KeyEvent.KEYCODE_0&&key<=KeyEvent.KEYCODE_9){
+            startActivity(new Intent(this,PhoneActivity.class).putExtra("number",String.valueOf(key-KeyEvent.KEYCODE_0)));
+        }else if(!screen.cardAvailable()){
+            startActivity(new Intent(this,PhoneActivity.class).putExtra("number",key==KeyEvent.KEYCODE_STAR?"*":"#"));
+        }else screen.key(key,0);
+    }
+    private void homeHold(int key){
+        if(key==KeyEvent.KEYCODE_STAR){screen.open(18);return;}
+        if(key==KeyEvent.KEYCODE_POUND){
+            try{android.media.AudioManager audio=(android.media.AudioManager)getSystemService(AUDIO_SERVICE);SoundProfiles.apply(this,audio.getRingerMode()==android.media.AudioManager.RINGER_MODE_NORMAL?1:0);android.widget.Toast.makeText(this,SoundProfiles.current(this),0).show();screen.refresh();}
+            catch(RuntimeException denied){android.widget.Toast.makeText(this,denied.getMessage()==null?L.t("Profil nesalvat"):denied.getMessage(),1).show();}
+            return;
+        }
+        if(key==KeyEvent.KEYCODE_0){startActivity(new Intent(this,NowPlayingActivity.class));return;}
+        if(key==KeyEvent.KEYCODE_1){startActivity(new Intent(this,GlobalSearchActivity.class).putExtra("apps_first",true));return;}
+        int slot=key-KeyEvent.KEYCODE_0,app=HomeKeyActions.app(this,slot);
+        if(app>=0){HomeAccess.open(this,app);return;}
+        String number=getSharedPreferences("speed-dial",0).getString("number"+slot,"");
+        if(!number.isEmpty()){startActivity(new Intent(this,PhoneActivity.class).putExtra("number",number));return;}
+        if(slot==5){startActivity(new Intent(this,QuickHomeActivity.class));return;}
+        android.widget.Toast.makeText(this,L.t("Tasta ")+slot+L.t(" neatribuită · Contacte → Apelare rapidă"),1).show();
+    }
     private final ArrayList<TelephonyManager> phones = new ArrayList<TelephonyManager>();
     private final ArrayList<PhoneStateListener> phoneListeners = new ArrayList<PhoneStateListener>();
     private SubscriptionManager subscriptions;
@@ -111,7 +136,7 @@ public final class MainActivity extends Activity {
         clock.start();
     }
     protected void onPause() {homeVisible=false;favoriteGeneration++;
-        clock.stop();handler.removeCallbacks(refresh);handler.removeCallbacks(speed);speedKey=-1;unregisterReceiver(badges);
+        clock.stop();handler.removeCallbacks(refresh);homeKeys.cancel();unregisterReceiver(badges);
         handler.removeCallbacks(appearanceRefresh);
         for(String name:new String[]{"appearance","weather","alarms","accessibility",LauncherFolders.PREFERENCES})getSharedPreferences(name,0).unregisterOnSharedPreferenceChangeListener(homeChanged);
         if (subscriptions != null) subscriptions.removeOnSubscriptionsChangedListener(subscriptionListener);
@@ -174,43 +199,14 @@ public final class MainActivity extends Activity {
         }
     }
     public boolean dispatchKeyEvent(KeyEvent event){KeyDiagnostics.record("home",event);long start=android.os.SystemClock.elapsedRealtimeNanos();try{if(LeoActivity.isJackNavigationNoise(event)||navigationPace.consume(this,event))return true;return super.dispatchKeyEvent(event);}finally{if(event.getAction()==KeyEvent.ACTION_DOWN)UiMetrics.key(android.os.SystemClock.elapsedRealtimeNanos()-start);}}
-    @Override public boolean onKeyUp(int key, KeyEvent event) {
-        if (key >= KeyEvent.KEYCODE_2 && key <= KeyEvent.KEYCODE_9 && !screen.grid) {
-            boolean shortPress = speedKey == key && !event.isCanceled();
-            handler.removeCallbacks(speed);
-            speedKey = -1;
-            if (shortPress && key == KeyEvent.KEYCODE_5) {
-                startActivity(new Intent(this, QuickHomeActivity.class));
-            } else if (shortPress && getSharedPreferences("appearance", 0).getBoolean("home-type-search", false)) {
-                startActivity(new Intent(this, GlobalSearchActivity.class)
-                    .putExtra("query", String.valueOf(key - KeyEvent.KEYCODE_0)).putExtra("home_digits", true));
-            } else if (shortPress) {
-                startActivity(new Intent(this, PhoneActivity.class)
-                    .putExtra("number", String.valueOf(key - KeyEvent.KEYCODE_0)));
-            }
-            return true;
-        }
-        return super.onKeyUp(key, event);
+    @Override public boolean onKeyUp(int key,KeyEvent event){
+        if(!screen.editing&&!screen.grid&&HomeKeyPress.handles(key)){homeKeys.up(event);return true;}
+        return super.onKeyUp(key,event);
     }
-    public boolean onKeyDown(int key, KeyEvent event) {
+    public boolean onKeyDown(int key,KeyEvent event){
         if(screen.editing)return screen.editorKey(key,event.getRepeatCount());
-        if (!screen.grid && screen.shortcut >= 4 && screen.cardAvailable()
-                && screen.cards[screen.cardIndex].type == 3
-                && (key == KeyEvent.KEYCODE_4 || key == KeyEvent.KEYCODE_5 || key == KeyEvent.KEYCODE_6)) {
-            if (event.getRepeatCount() == 0) {
-                if (key == KeyEvent.KEYCODE_5) screen.openCard();
-                else if (screen.favorites.length > 0) {
-                    screen.favoriteIndex = CircularNavigation.step(screen.favoriteIndex,
-                        key == KeyEvent.KEYCODE_4 ? -1 : 1, screen.favorites.length);
-                    screen.reloadCards();
-                    screen.invalidate();
-                }
-            }
-            return true;
-        }
-        if(!screen.grid&&key==KeyEvent.KEYCODE_1){if(event.getRepeatCount()==0)startActivity(new Intent(this,GlobalSearchActivity.class).putExtra("apps_first",true));return true;}
-        if(!screen.grid&&key==KeyEvent.KEYCODE_0){if(event.getRepeatCount()==0)startActivity(new Intent(this,NowPlayingActivity.class));return true;}
-        if(!screen.grid&&key>=KeyEvent.KEYCODE_2&&key<=KeyEvent.KEYCODE_9){if(event.getRepeatCount()==0){speedKey=key;handler.postDelayed(speed,650);}return true;}
+        if(!screen.grid&&HomeKeyPress.handles(key)){homeKeys.down(event);return true;}
+        homeKeys.cancel();
         if(key==KeyEvent.KEYCODE_MENU && event.getScanCode()==212) {
             if(event.getRepeatCount()==0) options();
             return true;
@@ -443,7 +439,7 @@ public final class MainActivity extends Activity {
             if (shortcut >= 4) cardIndex = shortcut - 4;
             invalidate();
         }
-        void openCard(){if(!cardAvailable())return;int type=cards[cardIndex].type;if(type==5){startActivity(new Intent(MainActivity.this,NotificationsActivity.class));return;}if(type==3){if(favorites.length>0)startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("contact_id",favorites[favoriteIndex].id));else startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:type==4?DailyAgendaActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
+        void openCard(){if(!cardAvailable())return;int type=cards[cardIndex].type;if(type==5){startActivity(new Intent(MainActivity.this,NotificationsActivity.class));return;}if(type==3){if(favorites.length>1){final HomeFavorites.Entry[] entries=favorites.clone();String[] names=new String[entries.length];for(int at=0;at<names.length;at++)names[at]=entries[at].name;shellDialog(L.t("Favorite"),names,new KeypadDialog.Action(){public void select(int at){startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("contact_id",entries[at].id));}}).initialSelection(favoriteIndex).show();}else if(favorites.length==1)startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("contact_id",favorites[0].id));else startActivity(new Intent(MainActivity.this,ContactsActivity.class).putExtra("favorites",true));return;}Intent i=new Intent(MainActivity.this,type==0?WeatherActivity.class:type==1?ClockActivity.class:type==4?DailyAgendaActivity.class:NowPlayingActivity.class);if(type==1)i.putExtra("tab",1);startActivity(i);}
         int[] shortcuts={0,2,6,22};
         int[] order=LauncherFolders.entries(MainActivity.this,LauncherFolders.ROOT);
         float textScale=1f;

@@ -61,7 +61,12 @@ local demonstrations. Radio is shown idle; Terminal executes a real local
 Gaia icon tiles, brightness/media sliders, live Android state, keypad control and
 shared themes. Verified on the Nokia with 90 targeted checks.
 
-<a href="android81/screenshots/quick-settings-2026-11-27/quick-settings.png"><img src="android81/screenshots/quick-settings-2026-11-27/quick-settings.png" width="200" alt="Native Quick settings with Wi-Fi, Bluetooth, location, hotspot and profile tiles above brightness and media sliders"></a>
+[Held Home keys and USSD](android81/HOME-KEYS-USSD.md) add the agreed hold map
+and SIM-specific service-code preparation (56 device checks; carrier reply trials
+remain separate). [Native Android notification contrast](android81/NATIVE-NOTIFICATION-CONTRAST.md)
+restores readable standard cards, with nine native keypad integration checks.
+
+<a href="android81/screenshots/quick-settings-2026-11-27/quick-settings-live.png"><img src="android81/screenshots/quick-settings-2026-11-27/quick-settings-live.png" width="200" alt="Native Quick settings with Wi-Fi, Bluetooth, location, hotspot and profile tiles above brightness and media sliders"></a>
 
 <details>
 <summary><b>Open the full gallery — communication, web, tools and appearance</b></summary>

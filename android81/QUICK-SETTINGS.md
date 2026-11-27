@@ -47,8 +47,9 @@ Nokia 6300 4G TA-1286, serial 695d, Android 8.1/API 27:
 - Home, accessibility, notification listener and keypad IME were rechecked.
   Persistent WebUI was resumed after instrumentation.
 
-Running data APK SHA-256:
+Quick-controls verification APK SHA-256:
 `b1ada3a9c1ab13ad37233d9bcfa4f161007c62df44fd49027486ae817701caed`.
+The final combined shell APK is recorded in [Home keys / USSD](HOME-KEYS-USSD.md).
 The bundled `/system` shell APK was not promoted or replaced.
 
 [Media focus](screenshots/quick-settings-2026-11-27/media-slider.png) ·

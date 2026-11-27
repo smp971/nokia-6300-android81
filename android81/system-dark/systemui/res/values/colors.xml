@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Oreo apps generate dark notification text against this light template.
+         A dark SystemUI-only card breaks that contrast for ordinary RemoteViews. -->
+    <color name="notification_material_background_color">#fffafafa</color>
+</resources>

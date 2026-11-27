@@ -78,7 +78,9 @@ def patch(source):
     text = colors.read_text(encoding='utf-8')
     for name, value in {'system_bar_background_opaque': '#ff0b121b',
                         'notification_panel_solid_background': '#ff101923',
-                        'notification_material_background_color': '#ff192633'}.items():
+                        # Keep Oreo's light notification template: apps resolve
+                        # their RemoteViews text colors before SystemUI sees them.
+                        'notification_material_background_color': '#fffafafa'}.items():
         # Some Oreo branches have no explicit notification material color.
         text = re.sub(r'(<color name="' + name + r'">)[^<]+(</color>)', lambda m: m[1] + value + m[2], text)
     changes[colors] = text

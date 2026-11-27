@@ -20,9 +20,12 @@ modes.add_argument("--launcher-folders",action="store_true",help="build isolated
 modes.add_argument("--messages-ui",action="store_true",help="build synthetic message tabs, draft/editor and theme checks without sending SMS")
 modes.add_argument("--showcase",action="store_true",help="build the local documentation screenshot capture fixture")
 modes.add_argument("--quick-settings",action="store_true",help="build native quick-control navigation, slider and rendering checks without toggling radios")
+modes.add_argument("--home-dial",action="store_true",help="build held-Home-key and USSD preparation checks; never sends operator requests")
 args=parser.parse_args()
 app_data,ui_theme=args.app_data,args.ui_theme
-if args.quick_settings:
+if args.home_dial:
+ test,package,directory="HomeDialTests","ro.leo.visual.homedialchecks","home-dial-tests"
+elif args.quick_settings:
  test,package,directory="QuickSettingsTests","ro.leo.visual.quicksettingschecks","quick-settings-tests"
 elif args.webui_control:
  test,package,directory="WebUiControlTests","ro.leo.visual.webuicontrolchecks","webui-control-tests"
@@ -62,7 +65,7 @@ r=Path(__file__).resolve().parent;t=r/'output/windows-build-tools';b=r/'output'/
 j=next((t/'jdk').glob('*/bin/java.exe'));sdk=next((t/'platform').glob('*/android.jar'));bt=next((t/'build-tools').iterdir())
 def run(*a):subprocess.run([str(x) for x in a],check=True)
 dependencies=[]
-if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish and not args.web_browser and not args.browser_state and not args.shell_optimization and not args.update_recovery and not args.home_standby and not args.showcase and not args.unlock_sequence and not args.messages_ui and not args.launcher_folders and not args.webui and not args.webui_access and not args.quick_settings:
+if not app_data and not ui_theme and not args.ui_polish and not args.daily_polish and not args.web_browser and not args.browser_state and not args.shell_optimization and not args.update_recovery and not args.home_standby and not args.showcase and not args.unlock_sequence and not args.messages_ui and not args.launcher_folders and not args.webui and not args.webui_access and not args.quick_settings and not args.home_dial:
  import hashlib,urllib.request
  zxing=r/'output/pocket-zxing-tests.jar'
  if not zxing.exists():zxing.write_bytes(urllib.request.urlopen('https://repo.maven.apache.org/maven2/com/google/zxing/core/3.5.3/core-3.5.3.jar',timeout=30).read())

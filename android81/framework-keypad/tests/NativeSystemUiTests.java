@@ -110,6 +110,13 @@ public class NativeSystemUiTests extends Instrumentation {
             // Synthetic keyboard events do not wake this device by themselves.
             // A black sleeping display must not count as a missing focus outline.
             shell("input keyevent 224");
+            Context sysui=getTargetContext().createPackageContext("com.android.systemui",0);
+            int background=sysui.getResources().getColor(sysui.getResources().getIdentifier(
+                    "notification_material_background_color","color","com.android.systemui"),null);
+            check(android.graphics.Color.red(background)>=240
+                    &&android.graphics.Color.green(background)>=240
+                    &&android.graphics.Color.blue(background)>=240,
+                    "ordinary Oreo notification cards retain a light background for dark RemoteViews text");
             original.flags |= AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
                     | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
             automation().setServiceInfo(original);

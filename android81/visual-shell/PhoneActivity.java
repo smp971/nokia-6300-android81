@@ -100,7 +100,7 @@ public final class PhoneActivity extends LeoActivity {
         number=new EditText(this);number.setId(View.generateViewId());number.setInputType(InputType.TYPE_CLASS_PHONE);number.setSingleLine(true);
         number.setText(draft);number.setHint(L.t("Introdu numărul"));number.setHintTextColor(palette.secondary());
         number.setTextDirection(View.TEXT_DIRECTION_LTR);UiTypography.text(number,23);number.setTextColor(Color.WHITE);number.setGravity(Gravity.CENTER);number.setPadding(dp(5),0,dp(5),0);
-        number.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(32)});
+        number.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(64)});
         number.setBackground(PhoneTheme.focus(palette,palette.card));fields.addView(number,new LinearLayout.LayoutParams(-1,dp(46)));number.setSelection(number.length());
         matches=new Button(this);matches.setAllCaps(false);matches.setTextSize(13);matches.setTextColor(palette.accent);matches.setBackground(Appearance.fieldSurface(palette,dp(7)));matches.setVisibility(View.GONE);matches.setPadding(dp(5),0,dp(5),0);matches.setMinHeight(0);matches.setMinimumHeight(0);
         matches.setOnClickListener(new View.OnClickListener(){public void onClick(View view){final ArrayList<ContactMatch> found=new ArrayList<ContactMatch>(candidates);ArrayList<String> labels=new ArrayList<String>();for(ContactMatch match:found)labels.add(match.name+"\n"+match.number);options(L.t("Contacte găsite"),labels.toArray(new String[0]),new Choice(){public void pick(int i){number.setText(found.get(i).number);number.setSelection(number.length());number.requestFocus();}});}});fields.addView(matches,new LinearLayout.LayoutParams(-1,dp(52)));
@@ -149,18 +149,22 @@ public final class PhoneActivity extends LeoActivity {
     private void favoriteMenu(final int slot){options(L.t("Favorit ")+(slot+1),new String[]{L.t("Alege contact"),L.t("Golește căsuța"),L.t("Înapoi")},new Choice(){public void pick(int i){if(i==0)pickFavorite(slot);else if(i==1){getSharedPreferences("dialer-favorites",0).edit().remove("name"+slot).remove("number"+slot).apply();favoriteCards();}}});}
     private void chooseSim() {
         if(localCode())return;
-        final String destination=PhoneNumberUtils.normalizeNumber(number.getText().toString());
-        if(destination.isEmpty()) { notice(L.t("Introdu numărul")); return; }
-        if(!destination.matches("\\+?[0-9]{3,15}") || destination.replace("+","").matches("0+")) { notice(L.t("Număr invalid")); return; }
+        final String raw=number.getText().toString();
+        final String destination=DialDestination.parse(raw);
+        if(destination.isEmpty()) { notice(raw.trim().isEmpty()?L.t("Introdu numărul"):L.t("Număr sau cod USSD invalid")); return; }
         final TelecomManager telecom=(TelecomManager)getSystemService(TELECOM_SERVICE);
         try {
-            final List<PhoneAccountHandle> accounts=telecom.getCallCapablePhoneAccounts();
+            final List<PhoneAccountHandle> accounts=new ArrayList<PhoneAccountHandle>();
+            for(PhoneAccountHandle handle:telecom.getCallCapablePhoneAccounts()){
+                PhoneAccount account=telecom.getPhoneAccount(handle);
+                if(!DialDestination.serviceCode(destination)||account!=null&&account.hasCapabilities(PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION))accounts.add(handle);
+            }
             if(accounts.isEmpty()) { notice(L.t("Niciun SIM disponibil pentru apel")); return; }
             String[] labels=new String[accounts.size()];
             for(int i=0;i<labels.length;i++) { PhoneAccount account=telecom.getPhoneAccount(accounts.get(i)); labels[i]=accountSlot(accounts.get(i).getId())+" · "+(account==null?L.t("Cont de apel"):account.getLabel().toString()); }
-            options(L.t("Alege SIM pentru apel"),labels,new Choice() { public void pick(final int index) {
+            options(DialDestination.serviceCode(destination)?L.t("Alege SIM pentru USSD"):L.t("Alege SIM pentru apel"),labels,new Choice() { public void pick(final int index) {
                 Bundle extras=new Bundle(); extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,accounts.get(index));
-                try { telecom.placeCall(Uri.fromParts("tel",destination,null),extras); }
+                try { telecom.placeCall(DialDestination.uri(destination),extras); }
                 catch(RuntimeException failure) { notice(L.t("Apelul nu a putut fi inițiat")); }
             }});
         } catch(SecurityException denied) { notice(L.t("Permisiunea de telefonie lipsește")); }
